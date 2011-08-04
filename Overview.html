@@ -1,0 +1,2177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"><html lang="en-US"><head>
+  <title>Cross-Origin Resource Sharing</title>
+  <style type="text/css">
+   .example { margin-left:1em; padding-left:1em; border-left:double; color:#222; background:#fcfcfc }
+   .example code strong { color:inherit; background:#ff0 }
+   .note { margin-left:2em; font-weight:bold; font-style:italic; color:green }
+   .note pre { font-weight:normal; font-style:normal }
+   .warning { margin-left:2em; font-weight:bold; font-style:italic; color:red }
+   p.warning::before { content:"Warning: " }
+   pre > code, li > code { color:inherit; background:transparent }
+   p.note::before { content:"Note: " }
+   .XXX { padding:.5em; border:solid #f00 }
+   p.XXX::before { content:"Issue: " }
+   dl.switch { padding-left:2em }
+   dl.switch > dt { text-indent:-1.5em }
+   dl.switch > dt:before { content:'\21AA'; padding:0 0.5em 0 0; display:inline-block; width:1em; text-align:right; line-height:0.5em }
+   em.ct { text-transform:lowercase; font-variant:small-caps; font-style:normal }
+   dfn { font-weight:bold; font-style:normal }
+   code { color:orangered; }
+   code :link, code :visited { color:inherit }
+   hr:not(.top) { display:block; background:none; border:none; padding:0; margin:2em 0; height:auto }
+  </style>
+  <link href="http://www.w3.org/StyleSheets/TR/W3C-ED" rel="stylesheet">
+ </head>
+ <body>
+  <div class="head">
+
+<!--begin-logo-->
+<p><a href="http://www.w3.org/"><img alt="W3C" height="48" src="http://www.w3.org/Icons/w3c_home" width="72"></a></p>
+<!--end-logo-->
+
+   <h1 id="cors">Cross-Origin Resource Sharing</h1>
+
+   <h2 class="no-num no-toc" id="w3c-doctype">Editor's Draft 4 August 2011</h2>
+
+   <dl>
+    <dt>This Version:</dt>
+    <dd class="dontpublish"><a href="http://dvcs.w3.org/hg/cors/raw-file/tip/Overview.html">http://dvcs.w3.org/hg/cors/raw-file/tip/Overview.html</a></dd>
+    <dt>Previous Versions:</dt>
+    <dd><a href="http://www.w3.org/TR/2010/WD-cors-20100727/">http://www.w3.org/TR/2010/WD-cors-20100727/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2009/WD-cors-20090317/">http://www.w3.org/TR/2009/WD-cors-20090317/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2008/WD-access-control-20080912/">http://www.w3.org/TR/2008/WD-access-control-20080912/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2008/WD-access-control-20080214/">http://www.w3.org/TR/2008/WD-access-control-20080214/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2007/WD-access-control-20071126/">http://www.w3.org/TR/2007/WD-access-control-20071126/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2007/WD-access-control-20071001/">http://www.w3.org/TR/2007/WD-access-control-20071001/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2007/WD-access-control-20070618/">http://www.w3.org/TR/2007/WD-access-control-20070618/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2007/WD-access-control-20070215/">http://www.w3.org/TR/2007/WD-access-control-20070215/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2006/WD-access-control-20060517/">http://www.w3.org/TR/2006/WD-access-control-20060517/</a></dd>
+    <dd><a href="http://www.w3.org/TR/2005/NOTE-access-control-20050613/">http://www.w3.org/TR/2005/NOTE-access-control-20050613/</a></dd>
+
+    <dt>Editor:</dt>
+    <dd><a href="http://annevankesteren.nl/">Anne van Kesteren</a>
+    (<a href="http://www.opera.com/">Opera Software ASA</a>)
+    &lt;<a href="mailto:annevk@opera.com">annevk@opera.com</a>&gt;</dd>
+   </dl>
+
+<!--begin-copyright-->
+<p class="copyright"><a href="http://www.w3.org/Consortium/Legal/ipr-notice#Copyright">Copyright</a> &copy; 2011 <a href="http://www.w3.org/"><abbr title="World Wide Web Consortium">W3C</abbr></a><sup>&reg;</sup> (<a href="http://www.csail.mit.edu/"><abbr title="Massachusetts Institute of Technology">MIT</abbr></a>, <a href="http://www.ercim.eu/"><abbr title="European Research Consortium for Informatics and Mathematics">ERCIM</abbr></a>, <a href="http://www.keio.ac.jp/">Keio</a>), All Rights Reserved. W3C <a href="http://www.w3.org/Consortium/Legal/ipr-notice#Legal_Disclaimer">liability</a>, <a href="http://www.w3.org/Consortium/Legal/ipr-notice#W3C_Trademarks">trademark</a> and <a href="http://www.w3.org/Consortium/Legal/copyright-documents">document use</a> rules apply.</p>
+<!--end-copyright-->
+  </div>
+
+  <hr>
+
+
+
+
+  <h2 class="no-num no-toc" id="abstract">Abstract</h2>
+
+  <p>This document defines a mechanism to enable client-side cross-origin
+  requests. Specifications that enable an API to make cross-origin requests
+  to resources can use the algorithms defined by this specification. If
+  such an API is used on <code>http://example.org</code> resources, a
+  resource on <code>http://hello-world.example</code> can opt in using the
+  mechanism described by this specification (e.g., specifying
+  <code>Access-Control-Allow-Origin: http://example.org</code> as response
+  header), which would allow that resource to be fetched cross-origin from
+  <code>http://example.org</code>.</p>
+
+
+
+
+  <h2 class="no-num no-toc" id="sotd">Status of this Document</h2>
+
+  <p><em>This section describes the status of this document at the time of
+  its publication. Other documents may supersede this document. A list of
+  current W3C publications and the latest revision of this technical report
+  can be found in the
+  <a href="http://www.w3.org/TR/">W3C technical reports index</a> at
+  http://www.w3.org/TR/.</em></p>
+
+  <p>This is the 4 August 2011 Editor's Draft of the
+  "Cross-Origin Resource Sharing" document. It is expected that
+  this document will progress along the W3C Recommendation track. This
+  document is produced by the
+  <a href="http://www.w3.org/2008/webapps/">Web Applications</a> (WebApps) Working Group.
+  The WebApps Working Group is part of the
+  <a href="http://www.w3.org/2006/rwc/Activity">Rich Web Clients Activity</a>
+  in the W3C <a href="http://www.w3.org/Interaction/">Interaction Domain</a>.</p>
+
+  <p>This draft was also known as "Access Control for Cross-Site Requests",
+  "Enabling Read Access for Web Resources", and
+  "Authorizing Read Access to XML Content Using the &lt;?access-control?&gt; Processing Instruction 1.0"
+  in reverse chronological order.</p>
+
+  <p>Please send comments to the WebApps Working Group's public mailing list
+  <a href="mailto:public-webapps@w3.org?subject=%5Bcors%5D">public-webapps@w3.org</a>
+  with <kbd title="">[cors]</kbd> at the start of the subject line.
+  <a href="http://lists.w3.org/Archives/Public/public-webapps/">Archives</a>
+  of this list are available. See also <a href="http://www.w3.org/Mail/">W3C
+  mailing list and archive usage guidelines</a>.</p>
+
+  <p>This document was produced by a group operating under the
+  <a href="http://www.w3.org/Consortium/Patent-Policy-20040205/">5 February 2004
+  W3C Patent Policy</a>. W3C maintains a
+  <a href="http://www.w3.org/2004/01/pp-impl/42538/status" rel="disclosure">public
+  list of any patent disclosures</a> made in connection with the deliverables of
+  the group; that page also includes instructions for disclosing a patent. An
+  individual who has actual knowledge of a patent which the individual believes
+  contains
+  <a href="http://www.w3.org/Consortium/Patent-Policy-20040205/#def-essential">Essential
+  Claim(s)</a> must disclose the information in accordance with
+  <a href="http://www.w3.org/Consortium/Patent-Policy-20040205/#sec-Disclosure">section
+  6 of the W3C Patent Policy</a>.</p>
+
+  <p>Publication as a Working Draft does not imply endorsement by the
+  <acronym title="World Wide Web Consortium">W3C</acronym> Membership. This
+  is a draft document and may be updated, replaced or obsoleted by other
+  documents at any time. It is inappropriate to cite this document as other
+  than work in progress.</p>
+
+
+
+
+  <h2 class="no-num no-toc" id="toc">Table of Contents</h2>
+
+  
+<!--begin-toc-->
+<ol class="toc">
+ <li><a href="#introduction"><span class="secno">1 </span>Introduction</a></li>
+ <li><a href="#conformance"><span class="secno">2 </span>Conformance Criteria</a></li>
+ <li><a href="#terminology"><span class="secno">3 </span>Terminology</a></li>
+ <li><a href="#security"><span class="secno">4 </span>Security Considerations</a></li>
+ <li><a href="#syntax"><span class="secno">5 </span>Syntax</a>
+  <ol class="toc">
+   <li><a href="#access-control-allow-origin-response-header"><span class="secno">5.1 </span><code title="">Access-Control-Allow-Origin</code> Response Header</a></li>
+   <li><a href="#access-control-allow-credentials-response-header"><span class="secno">5.2 </span><code title="">Access-Control-Allow-Credentials</code> Response Header</a></li>
+   <li><a href="#access-control-expose-headers-response-header"><span class="secno">5.3 </span><code title="">Access-Control-Expose-Headers</code> Response Header</a></li>
+   <li><a href="#access-control-max-age-response-header"><span class="secno">5.4 </span><code title="">Access-Control-Max-Age</code> Response Header</a></li>
+   <li><a href="#access-control-allow-methods-response-header"><span class="secno">5.5 </span><code title="">Access-Control-Allow-Methods</code> Response Header</a></li>
+   <li><a href="#access-control-allow-headers-response-header"><span class="secno">5.6 </span><code title="">Access-Control-Allow-Headers</code> Response Header</a></li>
+   <li><a href="#origin-request-header"><span class="secno">5.7 </span><code title="">Origin</code> Request Header</a></li>
+   <li><a href="#access-control-request-method-request-header"><span class="secno">5.8 </span><code title="">Access-Control-Request-Method</code> Request Header</a></li>
+   <li><a href="#access-control-request-headers-request-header"><span class="secno">5.9 </span><code title="">Access-Control-Request-Headers</code> Request Header</a></ol></li>
+ <li><a href="#resource-processing-model"><span class="secno">6 </span>Resource Processing Model</a>
+  <ol class="toc">
+   <li><a href="#resource-requests"><span class="secno">6.1 </span>Simple Cross-Origin Request, Actual Request, and
+  Redirects</a></li>
+   <li><a href="#resource-preflight-requests"><span class="secno">6.2 </span>Preflight Request</a></li>
+   <li><a href="#resource-security"><span class="secno">6.3 </span>Security</a></ol></li>
+ <li><a href="#user-agent-processing-model"><span class="secno">7 </span>User Agent Processing Model</a>
+  <ol class="toc">
+   <li><a href="#cross-origin-request-0"><span class="secno">7.1 </span>Cross-Origin Request</a>
+    <ol class="toc">
+     <li><a href="#handling-a-response-to-a-cross-origin-request"><span class="secno">7.1.1 </span>Handling a Response to a Cross-Origin Request</a></li>
+     <li><a href="#cross-origin-request-status-0"><span class="secno">7.1.2 </span>Cross-Origin Request Status</a></li>
+     <li><a href="#source-origin-0"><span class="secno">7.1.3 </span>Source Origin</a></li>
+     <li><a href="#simple-cross-origin-request-0"><span class="secno">7.1.4 </span>Simple Cross-Origin Request</a></li>
+     <li><a href="#cross-origin-request-with-preflight-0"><span class="secno">7.1.5 </span>Cross-Origin Request with Preflight</a></li>
+     <li><a href="#preflight-result-cache-0"><span class="secno">7.1.6 </span>Preflight Result Cache</a></li>
+     <li><a href="#generic-cross-origin-request-algorithms"><span class="secno">7.1.7 </span>Generic Cross-Origin Request Algorithms</a></ol></li>
+   <li><a href="#resource-sharing-check-0"><span class="secno">7.2 </span>Resource Sharing Check</a></li>
+   <li><a href="#user-agent-security"><span class="secno">7.3 </span>Security</a></ol></li>
+ <li><a href="#cors-api-specification-advice"><span class="secno">8 </span>CORS API Specification Advice</a>
+  <ol class="toc">
+   <li><a href="#cors-api-specifiation-request"><span class="secno">8.1 </span>Constructing a Cross-Origin Request</a></li>
+   <li><a href="#cors-api-specification-redirect"><span class="secno">8.2 </span>Dealing with Same Origin to Cross-Origin Redirects</a></li>
+   <li><a href="#cors-api-specification-response"><span class="secno">8.3 </span>Dealing with the
+  Cross-Origin Request Status</a></li>
+   <li><a href="#cors-api-specification-security"><span class="secno">8.4 </span>Security</a></ol></li>
+ <li><a class="no-num" href="#requirements">Requirements</a></li>
+ <li><a class="no-num" href="#use-cases">Use Cases</a></li>
+ <li><a class="no-num" href="#design-decision-faq">Design Decision FAQ</a></li>
+ <li><a class="no-num" href="#references">References</a>
+  <ol class="toc">
+   <li><a class="no-num" href="#normative-references">Normative references</a></li>
+   <li><a class="no-num" href="#informative-references">Informative references</a></ol></li>
+ <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
+<!--end-toc-->
+
+
+
+
+  <h2 id="introduction"><span class="secno">1 </span>Introduction</h2>
+
+  <p><em>This section is non-normative.</em></p>
+
+  <p>User agents commonly apply same-origin restrictions to network
+  requests. These restrictions prevent a client-side Web application
+  running from one origin from obtaining data retrieved from another origin,
+  and also limit unsafe HTTP requests that can be automatically launched
+  toward destinations that differ from the running application's origin.</p>
+
+  <p>In user agents that follow this pattern, network requests typically use
+  ambient authentication and session management information, including HTTP
+  authentication and cookie information.</p>
+
+  <p>This specification extends this model in several ways:
+
+  <ul>
+   <li>
+    <p>A response can include an
+    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+    header, with the origin of where the request originated from as the
+    value, to allow access to the resource's contents.</p>
+
+    <p>The user agent validates that the value and origin of where the
+    request originated match.</p>
+   </li>
+
+   <li>
+    <p>User agents can discover via a <a href="#preflight-request">preflight request</a> whether
+    a cross-origin resource is prepared to accept requests, using a
+    non-<a href="#simple-method">simple method</a>, from a given origin.</p>
+
+    <p>This is again validated by the user agent.</p>
+   </li>
+
+   <li>
+    <p>Server-side applications are enabled to discover that an HTTP request
+    was deemed a cross-origin request by the user agent, through the
+    <code title="http-origin"><a href="#http-origin">Origin</a></code> header.</p>
+
+    <p>This extension enables server-side applications to enforce
+    limitations (e.g. returning nothing) on the cross-origin requests that
+    they are willing to service.</p>
+   </li>
+  </ul>
+
+  <p>This specification is a building block for other specifications,
+  so-called CORS API specifications, which will define the precise model by
+  which this specification is used. Among others, such specifications are
+  likely to include Server-Sent Events, XBL, and XMLHttpRequest.
+  <a class="informative" href="#refsEVENTSOURCE">[EVENTSOURCE]</a>
+  <a class="informative" href="#refsXBL">[XBL]</a>
+  <a class="informative" href="#refsXHR">[XHR]</a>
+
+  <p>The design of this specification introduces is based on
+  <a href="#requirements">requirements</a> and <a href="#use-cases">use
+  cases</a>, both included as appendix. A FAQ describing the
+  <a href="#design-decision-faq">design decisions</a> is also available.</p>
+
+  <div class="example">
+   <p>If a resource author has a simple text resource residing at
+   <code>http://example.com/hello</code> which contains the string
+   "Hello World!" and would like <code>http://hello-world.example</code> to
+   be able to access it, the response combined with a header
+   introduced by this specification could look as follows:</p>
+
+   <pre><code>Access-Control-Allow-Origin: http://hello-world.example
+
+Hello World!</code></pre>
+
+   <p>Using <code>XMLHttpRequest</code> a client-side Web application on
+   <code>http://hello-world.example</code> can access this resource as
+   follows:</p>
+
+   <pre><code>var client = new XMLHttpRequest();
+client.open("GET", "http://example.com/hello")
+client.onreadystatechange = function() { /* do something */ }
+client.send()</code></pre>
+
+   <p>It gets slightly more complicated if the resource author wants to be
+   able to handle cross-origin requests using methods other than
+   <a href="#simple-method" title="simple method">simple methods</a>. In that case
+   the author needs to reply to a preflight request that uses the
+   <code>OPTIONS</code> method and then needs to handle the actual request
+   that uses the desired method (<code>DELETE</code> in this example) and
+   give an appropriate response. The response to the preflight request could
+   have the following headers specified:</p>
+
+   <pre><code>Access-Control-Allow-Origin: http://hello-world.example
+Access-Control-Max-Age: 3628800
+Access-Control-Allow-Methods: PUT, DELETE</code></pre>
+
+   <p>The
+   <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
+   header indicates how long the response can be cached, so that for
+   subsequent requests, within the specified time, no preflight request has
+   to be made. The
+   <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
+   header indicates the methods that can be used in the actual request. The
+   response to the actual request can simply contain this header:</p>
+
+   <pre><code>Access-Control-Allow-Origin: http://hello-world.example</code></pre>
+
+   <p>The complexity of invoking the additional preflight request is
+   the task of the user agent. Using <code>XMLHttpRequest</code> again and
+   assuming the application were hosted at
+   <code>http://calendar.example/app</code> the author could use the
+   following ECMAScript snippet:</p>
+
+   <pre><code>function deleteItem(itemId, updateUI) {
+  var client = new XMLHttpRequest()
+  client.open("DELETE", "http://calendar.example/app")
+  client.onload = updateUI
+  client.onerror = updateUI
+  client.onabort = updateUI
+  client.send("id=" + itemId)
+}</code></pre>
+
+   <p class="note"><code>XMLHttpRequest</code> Level 2 includes support for
+   <a href="#cross-origin-request" title="cross-origin request">cross-origin requests</a>.</p>
+  </div>
+
+
+
+
+  <h2 id="conformance"><span class="secno">2 </span>Conformance Criteria</h2>
+
+  <p>This specification is written for resource authors and user agents. It
+  includes advice for specifications that define APIs that use the
+  <a href="#cross-origin-request">cross-origin request</a> algorithm defined in this specification
+  &mdash; CORS API specifications &mdash; and the general
+  <a href="#security">security considerations</a> section includes some
+  advice for client-side Web application authors.</p>
+
+  <p>As well as sections and appendices marked as non-normative, all
+  diagrams, examples, and notes in this specification are non-normative.
+  Everything else in this specification is normative.</p>
+
+  <p>In this specification, The words must and
+  may are to be interpreted as described in RFC 2119.
+  <a href="#refsRFC2119">[RFC2119]</a></p>
+
+  <p>Requirements phrased in the imperative as part of algorithms (e.g.
+  "terminate the algorithm") are to be interpreted with the meaning of the
+  key word (e.g. must) used in introducing the
+  algorithm.</p>
+
+  <p>A conformant resource is one that implements all the requirements
+  listed in this specification that are applicable to resources.</p>
+
+  <p>A conformant user agent is one that implements all the requirements
+  listed in this specification that are applicable to user agents.</p>
+
+  <p>User agents and resource authors may employ any
+  algorithm to implement this specification, so long as the end result is
+  indistinguishable from the result that would be obtained by the
+  specification's algorithms.</p>
+
+
+  <h2 id="terminology"><span class="secno">3 </span>Terminology</h2>
+
+  <p>Some terminology in this specification is from
+  <cite>The Web Origin Concept</cite>
+  <cite>HTML</cite>,<!--fetch-->
+  <cite>HTTP</cite>
+  and
+  <cite>URI</cite>.
+  <a href="#refsORIGIN">[ORIGIN]</a>
+  <a href="#refsHTML">[HTML]</a>
+  <a href="#refsHTTP">[HTTP]</a>
+  <a href="#refsURI">[URI]</a>
+
+  <p>Terminology is generally defined throughout the specification. However,
+  the few definitions that did not really fit anywhere else are defined here
+  instead.</p>
+
+  <!-- These definitions are copies of those in HTML and DOM Core.
+       XXX should they be in a separate document? -->
+
+  <p>Comparing two strings in a
+  <dfn id="case-sensitive">case-sensitive</dfn> manner means comparing them
+  exactly, codepoint for codepoint.</p>
+
+  <p>Comparing two strings in an
+  <dfn id="ascii-case-insensitive">ASCII case-insensitive</dfn> manner means
+  comparing them exactly, codepoint for codepoint, except that the
+  characters in the range U+0041 LATIN CAPITAL LETTER A to U+005A
+  LATIN CAPITAL LETTER Z and the corresponding characters in the range
+  U+0061 LATIN SMALL LETTER A to U+007A LATIN SMALL LETTER Z are
+  considered to also match.</p>
+
+  <p><dfn id="converted-to-ascii-lowercase" title="converted to ASCII lowercase">Converting a string to ASCII lowercase</dfn>
+  means replacing all characters in the range U+0041 LATIN CAPITAL LETTER A
+  to U+005A LATIN CAPITAL LETTER Z with the corresponding characters in the
+  range U+0061 LATIN SMALL LETTER A to U+007A LATIN SMALL LETTER Z).</p>
+
+  <p>The term <dfn id="user-credentials">user credentials</dfn> for the purposes of this
+  specification means cookies, HTTP authentication, and client-side SSL
+  certificates. Specifically it does not refer to proxy authentication or
+  the <code title="http-origin"><a href="#http-origin">Origin</a></code> header.
+  <a href="#refsCOOKIES">[COOKIES]</a><!-- XXX ref? --></p>
+
+  <p>The term <dfn id="cross-origin">cross-origin</dfn> is used to mean non
+  <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5">same origin</a>.</p>
+
+  <p>A <var title="">method</var> is said to be a
+  <dfn id="simple-method">simple method</dfn> if it is a
+  <a href="#case-sensitive">case-sensitive</a> match for one of the following:</p>
+
+  <ul>
+   <li><code>GET</code></li>
+   <li><code>HEAD</code></li>
+   <li><code>POST</code></li>
+  </ul>
+
+  <p>A <var title="">header</var> is said to be a
+  <dfn id="simple-header">simple header</dfn> if the header field name is an
+  <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for <code>Accept</code>,
+  <code>Accept-Language</code>, or <code>Content-Language</code>, or if it
+  is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for
+  <code>Content-Type</code> and the header field value media type (excluding
+  parameters) is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for
+  <code>application/x-www-form-urlencoded</code>,
+  <code>multipart/form-data</code>, or <code>text/plain</code>.</p>
+
+  <!-- XXX there is an email complaining about the parameters -->
+
+  <p>A <var title="">header</var> is said to be a
+  <dfn id="simple-response-header">simple response header</dfn> if the
+  header field name is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for one
+  of the following:</p>
+
+  <ul>
+   <li><code>Cache-Control</code></li>
+   <li><code>Content-Language</code></li>
+   <li><code>Content-Type</code></li>
+   <li><code>Expires</code></li>
+   <li><code>Last-Modified</code></li>
+   <li><code>Pragma</code></li>
+  </ul>
+
+  <p>When
+  <dfn id="header-parsing" title="header parsing">parsing a header</dfn> the
+  header must be parsed per the corresponding ABNF
+  production in the <a href="#syntax">syntax</a> section. If the header does
+  not match the production it is said that
+  <dfn id="header-parsing-failed">header parsing failed</dfn>.</p>
+
+
+
+
+  <h2 id="security"><span class="secno">4 </span>Security Considerations</h2>
+
+  <p><em>This section is non-normative.</em></p>
+
+  <p>Security requirements and considerations are listed throughout this
+  specification. This section lists advice that did not fit anywhere
+  else.</p>
+
+  <hr>
+
+  <p>Authors of client-side Web applications are strongly encouraged to
+  validate content retrieved from a <a href="#cross-origin">cross-origin</a> resource as it
+  might be harmful.</p>
+
+  <p>Authors of client-side Web applications using a URL of the type
+  <code>people.example.org/~<var>author-name</var>/</code> are to be aware
+  that only <a href="#cross-origin">cross-origin</a> security is provided and that
+  therefore using a distinct <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4">origin</a>
+  rather than distinct path is vital for secure client-side Web
+  applications.</p>
+
+
+
+
+  <h2 id="syntax"><span class="secno">5 </span>Syntax</h2>
+
+  <p>This section defines the syntax of the new headers this specification
+  introduces. It also provides a short description of the function of each
+  header.</p>
+
+  <p>The <a href="#resource-processing-model">resource processing model</a>
+  section details how resources are to use these headers in a response.
+  Likewise, the
+  <a href="#user-agent-processing-model">user agent processing model</a>
+  section details how user agents are to use these headers.</p>
+
+  <p>The ABNF syntax used in this section is from HTTP/1.1.
+  <a href="#refsHTTP">[HTTP]</a></p>
+
+  <p class="note">HTTP/1.1 is used as ABNF basis to ensure that the new
+  headers have equivalent parsing rules to those introduced in that
+  specification.</p>
+
+  <p class="XXX">HTTP/1.1 currently does not make leading OWS implied in
+  header value definitions so please assume it is for now.</p>
+
+
+  <h3 id="access-control-allow-origin-response-header"><span class="secno">5.1 </span><code title="">Access-Control-Allow-Origin</code> Response Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>
+  header indicates whether a resource can be shared based by returning the
+  value of the <code title="http-origin"><a href="#http-origin">Origin</a></code> request header in the
+  response. ABNF:</p>
+
+  <pre>Access-Control-Allow-Origin = "Access-Control-Allow-Origin" ":" <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-7.1">origin-list-or-null</a> | "*"</pre>
+
+  <!-- XXX need to put OWS productions here? -->
+
+
+  <h3 id="access-control-allow-credentials-response-header"><span class="secno">5.2 </span><code title="">Access-Control-Allow-Credentials</code> Response Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>
+  header indicates whether the response to request can be
+  exposed when the <var title="">credentials flag</var> is true. When part
+  of the response to a <a href="#preflight-request">preflight request</a> it indicates that the
+  <a href="#actual-request">actual request</a> can be made with <a href="#user-credentials">user credentials</a>.
+  ABNF:</p>
+
+  <pre>Access-Control-Allow-Credentials: "Access-Control-Allow-Credentials" ":" true
+                            true: %x74.72.75.65 ; "true", case-sensitive</pre>
+
+
+  <h3 id="access-control-expose-headers-response-header"><span class="secno">5.3 </span><code title="">Access-Control-Expose-Headers</code> Response Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-expose-headers" title="http-access-control-expose-headers"><code>Access-Control-Expose-Headers</code></dfn>
+  header indicates which headers are safe to expose to the API of a
+  CORS API specification. ABNF:</p>
+
+  <pre>Access-Control-Expose-Headers = "Access-Control-Expose-Headers" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
+
+
+  <h3 id="access-control-max-age-response-header"><span class="secno">5.4 </span><code title="">Access-Control-Max-Age</code> Response Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-max-age" title="http-access-control-max-age"><code>Access-Control-Max-Age</code></dfn>
+  header indicates how long the results of a <a href="#preflight-request">preflight request</a>
+  can be cached in a <a href="#preflight-result-cache">preflight result cache</a>. ABNF:</p>
+
+  <pre>Access-Control-Max-Age = "Access-Control-Max-Age" ":" <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-3.3.2">delta-seconds</a></pre>
+
+
+  <h3 id="access-control-allow-methods-response-header"><span class="secno">5.5 </span><code title="">Access-Control-Allow-Methods</code> Response Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-allow-methods" title="http-access-control-allow-methods"><code>Access-Control-Allow-Methods</code></dfn>
+  header indicates, as part of the response to a
+  <a href="#preflight-request">preflight request</a>, which methods can be used during the
+  <a href="#actual-request">actual request</a>. ABNF:</p>
+
+  <pre>Access-Control-Allow-Methods: "Access-Control-Allow-Methods" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a></pre>
+
+
+
+  <h3 id="access-control-allow-headers-response-header"><span class="secno">5.6 </span><code title="">Access-Control-Allow-Headers</code> Response Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-allow-headers" title="http-access-control-allow-headers"><code>Access-Control-Allow-Headers</code></dfn>
+  header indicates, as part of the response to a
+  <a href="#preflight-request">preflight request</a>, which header field names can be used
+  during the <a href="#actual-request">actual request</a>. ABNF:</p>
+
+  <pre>Access-Control-Allow-Headers: "Access-Control-Allow-Headers" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
+
+
+  <h3 id="origin-request-header"><span class="secno">5.7 </span><code title="">Origin</code> Request Header</h3>
+
+  <p>The
+  <dfn id="http-origin" title="http-origin"><code>Origin</code></dfn>
+  header indicates where the <a href="#cross-origin-request">cross-origin request</a> or
+  <a href="#preflight-request">preflight request</a> originates from.
+  <a href="#refsORIGIN">[ORIGIN]</a></p>
+
+
+  <h3 id="access-control-request-method-request-header"><span class="secno">5.8 </span><code title="">Access-Control-Request-Method</code> Request Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-request-method" title="http-access-control-request-method"><code>Access-Control-Request-Method</code></dfn>
+  header indicates which method will be used in the
+  <a href="#actual-request">actual request</a> as part of the
+  <a href="#preflight-request">preflight request</a>. ABNF:</p>
+
+  <pre>Access-Control-Request-Method: "Access-Control-Request-Method" ":" <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a></pre>
+
+
+  <h3 id="access-control-request-headers-request-header"><span class="secno">5.9 </span><code title="">Access-Control-Request-Headers</code> Request Header</h3>
+
+  <p>The
+  <dfn id="http-access-control-request-headers" title="http-access-control-request-headers"><code>Access-Control-Request-Headers</code></dfn>
+  header indicates which headers will be used in the
+  <a href="#actual-request">actual request</a> as part of the
+  <a href="#preflight-request">preflight request</a>. ABNF:</p>
+
+  <pre>Access-Control-Request-Headers: "Access-Control-Request-Headers" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
+
+
+
+
+  <h2 id="resource-processing-model"><span class="secno">6 </span>Resource Processing Model</h2>
+
+  <!-- XXX
+  <p><em>This section only applies to servers.</em></p>
+  -->
+
+  <p>This section describes the processing models that resources have to
+  implement. Each type of request a resource might have to deal with is
+  described in its own subsection.</p>
+
+  <p>The resource sharing policy described by this specification is bound to
+  a particular resource. For the purposes of this section each resource is
+  bound to the following:</p>
+
+  <ul>
+   <li>
+    <p>A <dfn id="list-of-origins">list of origins</dfn> consisting of zero or more
+    <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4" title="origin">origins</a> that are
+    allowed access to the resource.</p>
+
+    <p class="note">This can include the
+    <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4">origin</a> of the resource itself
+    though be aware that requests to <a href="#cross-origin">cross-origin</a> resources can
+    be redirected back to the resource.</p>
+   </li>
+
+   <li><p>A <dfn id="list-of-methods">list of methods</dfn> consisting of zero or more methods
+   that are supported by the resource.</li>
+
+   <li><p>A <dfn id="list-of-headers">list of headers</dfn> consisting of zero or more header
+   field names that are supported by the resource.</li>
+
+   <li><p>A <dfn id="list-of-exposed-headers">list of exposed headers</dfn> consisting of zero or more
+   header field names of headers other than the
+   <a href="#simple-response-header" title="simple response header">simple response headers</a> that the resource might use and can be exposed.</li>
+
+   <li><p>A <dfn id="supports-credentials">supports credentials</dfn> flag that indicates whether the
+   resource supports <a href="#user-credentials">user credentials</a> in the request. It is
+   true when the resource does and false otherwise.</li>
+  </ul>
+
+
+  <h3 id="resource-requests"><span class="secno">6.1 </span>Simple Cross-Origin Request, Actual Request, and
+  Redirects</h3>
+
+  <p>In response to a <a href="#simple-cross-origin-request">simple cross-origin request</a> or
+  <a href="#actual-request">actual request</a> the resource indicates whether or not to share
+  the response.</p>
+
+  <p>If the resource has been relocated, it indicates whether to share
+  its new <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a>.</p>
+
+  <p>Resources must use the following set of steps to
+  determine which additional headers to use in the response:</p>
+
+  <ol>
+   <li><p>If the <code title="http-origin"><a href="#http-origin">Origin</a></code> header is not
+   present terminate this set of steps. The request is outside the scope of
+   this specification.</li>
+
+   <li>
+    <p>Split the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
+    header on the U+0020 SPACE character and if any of the resulting tokens
+    is not a <a href="#case-sensitive">case-sensitive</a> match for any of the values in
+    <a href="#list-of-origins">list of origins</a> do not set any additional headers and
+    terminate this set of steps.</p>
+
+    <p class="note">Always matching is acceptable since the
+    <a href="#list-of-origins">list of origins</a> can be unbounded.</p>
+   </li>
+
+   <li>
+    <p>If the resource <a href="#supports-credentials">supports credentials</a> add a single
+    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+    header, with the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
+    header as value, and add a single
+    <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
+    header with the <a href="#case-sensitive">case-sensitive</a> string
+    "<code title="">true</code>" as value.</p>
+
+    <p>Otherwise, add a single
+    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+    header, with either the value of the
+    <code title="http-origin"><a href="#http-origin">Origin</a></code> header or the string
+    "<code title="">*</code>" as value.</p>
+
+    <p class="note">The string "<code title="">*</code>" cannot be used for a
+    resource that <a href="#supports-credentials">supports credentials</a>.</p>
+   </li>
+
+   <li><p>If the <a href="#list-of-exposed-headers">list of exposed headers</a> is not empty add one
+   or more
+   <code title="http-access-control-expose-headers"><a href="#http-access-control-expose-headers">Access-Control-Expose-Headers</a></code>
+   headers, with as values the header field names given in the
+   <a href="#list-of-exposed-headers">list of exposed headers</a>.</li>
+  </ol>
+
+  <p class="note">By not adding the appropriate headers resource can also
+  clear the <a href="#preflight-result-cache">preflight result cache</a> of all entries where
+  <a href="#cache-origin" title="cache-origin">origin</a> is a <a href="#case-sensitive">case-sensitive</a>
+  match for the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
+  header and <a href="#cache-url" title="cache-url">url</a> is a
+  <a href="#case-sensitive">case-sensitive</a> match for the
+  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a> of the
+  resource.</p>
+
+
+  <h3 id="resource-preflight-requests"><span class="secno">6.2 </span>Preflight Request</h3>
+
+  <p>In response to a <a href="#preflight-request">preflight request</a> the resource indicates
+  which methods and headers (other than
+  <a href="#simple-method" title="simple method">simple methods</a> and
+  <a href="#simple-header" title="simple header">simple headers</a>) it is willing to handle
+  and whether it <a href="#supports-credentials">supports credentials</a>.</p>
+
+  <p>Resources must use the following set of steps to
+  determine which additional headers to use in the response:</p>
+
+  <ol>
+   <li><p>If the <code title="http-origin"><a href="#http-origin">Origin</a></code> header is not
+   present terminate this set of steps. The request is outside the scope of
+   this specification.</li>
+
+   <li>
+    <p>If the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
+    header is not a <a href="#case-sensitive">case-sensitive</a> match for any of the
+    values in <a href="#list-of-origins">list of origins</a> do not set any additional headers
+    and terminate this set of steps.</p>
+
+    <p class="note">Always matching is acceptable since the
+    <a href="#list-of-origins">list of origins</a> can be unbounded.</p>
+
+    <p class="note">The <code title="http-origin"><a href="#http-origin">Origin</a></code> header can
+    only contain a single <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4">origin</a> as the
+    user agent will not follow redirects.</p>
+   </li>
+
+   <li>
+    <p>Let <var title="">method</var> be the value as result of
+    <a href="#header-parsing" title="header parsing">parsing</a> the
+    <code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>
+    header.</p>
+
+    <p>If there is no
+    <code tilte="http-access-control-request-method">Access-Control-Request-Method</code>
+    header or if <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>,
+    do not set any additional headers and terminate this set of steps. The
+    request is outside the scope of this specification.</p>
+   </li>
+
+   <li>
+    <p>Let <var title="">header field-names</var> be the values as result of
+    <a href="#header-parsing" title="header parsing">parsing</a> the
+    <code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
+    headers.</p>
+
+    <p>If there are no
+    <code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
+    headers let <var title="">header field-names</var> be the empty list.
+
+    <p>If <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a> do not
+    set any additional headers and terminate this set of steps. The request
+    is outside the scope of this specification.</p>
+   </li>
+
+   <li>
+    <p>If <var title="">method</var> is not a <a href="#case-sensitive">case-sensitive</a>
+    match for any of the values in <a href="#list-of-methods">list of methods</a> do not set
+    any additional headers and terminate this set of steps.</p>
+
+    <p class="note">Always matching is acceptable since the
+    <a href="#list-of-methods">list of methods</a> can be unbounded.</p>
+   </li>
+
+   <li>
+    <p>If any of the <var title="">header field-names</var> is not a
+    <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for any of the values in
+    <a href="#list-of-headers">list of headers</a> do not set any additional headers and
+    terminate this set of steps.</p>
+
+    <p class="note">Always matching is acceptable since the
+    <a href="#list-of-headers">list of headers</a> can be unbounded.</p>
+   </li>
+
+   <li>
+    <p>If the resource <a href="#supports-credentials">supports credentials</a> add a single
+    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+    header, with the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
+    header as value, and add a single
+    <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
+    header with the <a href="#case-sensitive">case-sensitive</a> string
+    "<code title="">true</code>" as value.</p>
+
+    <p>Otherwise, add a single
+    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+    header, with either the value of the
+    <code title="http-origin"><a href="#http-origin">Origin</a></code> header or the string
+    "<code title="">*</code>" as value.</p>
+
+    <p class="note">The string "<code title="">*</code>" cannot be used for a
+    resource that <a href="#supports-credentials">supports credentials</a>.</p>
+   </li>
+
+   <li><p>Optionally add a single
+   <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
+   header with as value the amount of seconds the user agent is allowed to
+   cache the result of the request.</li>
+   <!-- there is no limit -->
+
+   <li>
+    <p>If <var title="">method</var> is a <a href="#simple-method">simple method</a>
+    this step may be skipped.</p>
+
+    <p>Add one or more
+    <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
+    headers consisting of (a subset of) the
+    <a href="#list-of-methods">list of methods</a>.</p>
+
+    <p class="note">If a method is a <a href="#simple-method">simple method</a> it does not
+    need to be listed, but this is not prohibited.</p>
+
+    <p class="note">Since the <a href="#list-of-methods">list of methods</a> can be unbounded
+    simply returning <var title="">method</var> can be enough.</p>
+   </li>
+
+   <li>
+    <p>If each of the <var title="">header field-names</var> is a
+    <a href="#simple-header">simple header</a> this step may be
+    skipped.</p>
+
+    <p>Add one or more
+    <code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>
+    headers consisting of (a subset of) the
+    <a href="#list-of-headers">list of headers</a>.</p>
+
+    <p class="note">If a header field name is a <a href="#simple-header">simple header</a>
+    it does not need to be listed, but this is not prohibited.</p>
+
+    <p class="note">Since the <a href="#list-of-headers">list of headers</a> can be unbounded
+    simply returning <var title="">headers</var> can be enough.</p>
+   </li>
+  </ol>
+
+
+  <h3 id="resource-security"><span class="secno">6.3 </span>Security</h3>
+
+  <p><em>This section is non-normative.</em></p>
+
+  <p>Resource authors are strongly encouraged to ensure that requests using
+  safe methods, e.g. <code>GET</code> or <code>OPTIONS</code>, have no side
+  effects so potential attackers cannot modify the user's data easily. If
+  resources are set up like this attackers would effectively have to be on
+  the <a href="#list-of-origins">list of origins</a> to do harm.</p>
+
+  <p>In addition to checking the <code title="http-origin"><a href="#http-origin">Origin</a></code>
+  header, resource authors are strongly encouraged to also check the
+  <code>Host</code> header. That is, make sure that the host name provided
+  by that header matches the host name of the server on which the resource
+  resides. This will provide protection against DNS rebinding attacks.</p>
+
+  <p>To provide integrity protection of resource sharing policy statements
+  usage of SSL/TLS is encouraged.</p>
+
+
+
+
+  <h2 id="user-agent-processing-model"><span class="secno">7 </span>User Agent Processing Model</h2>
+
+  <!-- XXX
+  <p><em>This section only applies to user agents.</em></p>
+  -->
+
+  <p>This section describes the processing models that user agents have to
+  implement.</p>
+
+  <p>The processing models in this sections need to be referenced by a
+  CORS API specification that defines when the algorithm is invoked and how
+  the return values are to be handled. The processing models are not
+  suitable for standalone use.</p>
+
+
+  <h3 id="cross-origin-request-0"><span class="secno">7.1 </span>Cross-Origin Request</h3>
+
+  <p>The <dfn id="cross-origin-request">cross-origin request</dfn>
+  algorithm takes the following parameters:
+
+  <dl>
+   <dt><dfn id="request-url">request URL</dfn></dt>
+   <dd>
+    <p>The <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a> to be
+    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#fetch" title="fetch">fetched</a>.</p>
+
+    <p class="note">The <a href="#request-url">request URL</a> is modified in face of
+    redirects.</p>
+   </dd>
+
+   <dt><dfn id="request-method">request method</dfn></dt>
+   <dd><p>The method for the request. <code>GET</code>, unless explicitly
+   set.</dd>
+
+   <dt><dfn id="author-request-headers">author request headers</dfn></dt>
+   <dd><p>A list of headers set by authors for the request. Empty, unless
+   explicitly set.</dd>
+
+   <dt><dfn id="request-entity-body">request entity body</dfn></dt>
+   <dd><p>The entity body for the request. Missing, unless explicitly
+   set.</dd>
+
+   <dt><dfn id="source-origin">source origin</dfn></dt>
+   <dd>
+    <p>The <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4">origin</a> of the request.</p>
+    <p class="note">Due to the specifics of some APIs this cannot be defined
+    in a generic way and therefore it has to be provided as argument.</p>
+   </dd>
+
+   <dt><dfn id="follow-redirects-flag">follow redirects flag</dfn></dt>
+   <dd><p>True when redirects are to be followed. False when they are
+   not. True, unless explicitly set.</dd>
+
+   <dt><dfn id="credentials-flag">credentials flag</dfn></dt>
+   <dd><p>True when <a href="#user-credentials">user credentials</a> are to be included in the
+   request. False when they are to be excluded in the request and when
+   cookies are to be ignored in its response. True, unless explicitly
+   set.</dd>
+
+   <dt><dfn id="force-preflight-flag">force preflight flag</dfn></dt>
+   <dd><p>True when a <a href="#preflight-request">preflight request</a> is to be forced. False
+   otherwise. False, unless explicitly set.</dd>
+  </dl>
+
+  <p>The <a href="#cross-origin-request">cross-origin request</a> algorithm can be used by
+  CORS API specifications who wish to allow cross-origin requests for the
+  network APIs they define.</p>
+
+  <p class="note">CORS API specifications are free to limit the abilities of
+  a <a href="#cross-origin-request">cross-origin request</a>. E.g., the
+  <var title="">credentials flag</var> could always be false.</p>
+
+  <p>When the <a href="#cross-origin-request">cross-origin request</a> algorithm is invoked,
+  these steps must be followed:</p>
+
+  <ol>
+   <li>
+    <p>If for some reason the user agent does not want to make the request
+    terminate this algorithm and set the
+    <a href="#cross-origin-request-status">cross-origin request status</a> to <i>network error</i>.</p>
+
+    <p class="note">E.g. the <a href="#request-url">request URL</a> could have been
+    blacklisted by the user in some fashion.</p>
+   </li>
+
+   <li>
+    <p>If the <a href="#force-preflight-flag">force preflight flag</a> is false and the following
+    conditions are all true, follow the
+    <a href="#simple-cross-origin-request">simple cross-origin request</a> algorithm:
+
+    <ul>
+     <li><p>The <a href="#request-method">request method</a> is a
+     <a href="#simple-method">simple method</a>.</li>
+
+     <li><p>Each of the <a href="#author-request-headers">author request headers</a> is a
+     <a href="#simple-header">simple header</a> or <a href="#author-request-headers">author request headers</a> is
+     empty.</li>
+    </ul>
+   </li>
+
+   <li><p>Otherwise, follow the
+   <a href="#cross-origin-request-with-preflight">cross-origin request with preflight</a> algorithm.</li>
+  </ol>
+
+  <p class="note">Cross-origin requests using a method that is
+  <a href="#simple-method" title="simple method">simple</a> with
+  <a href="#author-request-headers">author request headers</a> that are not
+  <a href="#simple-header" title="simple header">simple</a> will have a
+  <a href="#preflight-request">preflight request</a> to ensure that the resource can handle
+  those headers. (Similarly to requests using a method that is not a
+  <a href="#simple-method">simple method</a>.)</p>
+
+
+  <h4 id="handling-a-response-to-a-cross-origin-request"><span class="secno">7.1.1 </span>Handling a Response to a Cross-Origin Request</h4>
+
+  <p>User agents must filter out all response headers
+  other than those that are a <a href="#simple-response-header">simple response header</a> or of
+  which the field name is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for
+  one of the values of the
+  <code title="http-access-control-expose-headers"><a href="#http-access-control-expose-headers">Access-Control-Expose-Headers</a></code>
+  headers (if any), before exposing response headers to APIs defined in
+  CORS API specifications.</p>
+
+  <p class="note">E.g. the <code>getResponseHeader()</code> method of
+  <code>XMLHttpRequest</code> will therefore not expose any header not
+  indicated above.</p>
+
+
+  <h4 id="cross-origin-request-status-0"><span class="secno">7.1.2 </span>Cross-Origin Request Status</h4>
+
+  <p>Each <a href="#cross-origin-request">cross-origin request</a> has an associated
+  <dfn id="cross-origin-request-status">cross-origin request status</dfn>
+  that CORS API specifications that enable an API to make
+  <a href="#cross-origin-request" title="cross-origin request">cross-origin requests</a> can hook
+  into. It can take at most two distinct values over the course of a
+  <a href="#cross-origin-request">cross-origin request</a>. The values are:</p>
+
+  <dl>
+   <dt><i>preflight complete</i></dt>
+   <dd>The user agent is about to make the <a href="#actual-request">actual request</a>.</dd>
+
+   <dt><i>success</i>
+   <dd>The resource can be shared.</dd>
+
+   <dt><i>abort error</i>
+   <dd>The user aborted the request.</dd>
+
+   <dt><i>network error</i>
+   <dd>A DNS error, TLS negotation failure, or other type of network error
+   occured. <span class="note">This does not include HTTP responses that
+   indicate some type of error, such as HTTP status code 410.</span></dd>
+   <!-- shared with XMLHttpRequest -->
+  </dl>
+
+
+  <h4 id="source-origin-0"><span class="secno">7.1.3 </span>Source Origin</h4>
+
+  <p>The <a href="#source-origin">source origin</a> is the initial origin that user agents
+  must use for the
+  <code title="http-origin"><a href="#http-origin">Origin</a></code> header. In case of redirects the
+  user agents must follow the requirements set forth in
+  the specification for that header.</p>
+
+
+  <h4 id="simple-cross-origin-request-0"><span class="secno">7.1.4 </span>Simple Cross-Origin Request</h4>
+
+  <p>The steps below describe what user agents must do
+  for a
+  <dfn id="simple-cross-origin-request">simple cross-origin request</dfn>:</p>
+
+  <ol>
+   <li>
+    <p>Apply the <a href="#make-a-request-steps">make a request steps</a> and observe the
+    <i>request rules</i> below while making the request.</p>
+
+    <dl class="switch">
+     <dt>If the <a href="#follow-redirects-flag">follow redirects flag</a> is true and the response
+     has an HTTP status code of 301, 302, 303, or 307</dt>
+     <dd><p>Apply the <a href="#redirect-steps">redirect steps</a>.</dd>
+
+     <dt>If the end user cancels the request</dt>
+     <dd><p>Apply the <a href="#abort-steps">abort steps</a>.</dd>
+
+     <dt>If there is a network error</dt>
+     <dd>
+      <p>In case of DNS errors, TLS negotiation failure, or other type of
+      network errors, apply the <a href="#network-error-steps">network error steps</a>. Do not
+      request any kind of end user interaction.</p>
+
+      <p class="note">This does not include HTTP responses that indicate
+      some type of error, such as HTTP status code 410.</p>
+     </dd>
+
+     <dt>Otherwise</dt>
+     <dd><p>Perform a <a href="#resource-sharing-check">resource sharing check</a>. If it returns
+     fail, apply the <a href="#network-error-steps">network error steps</a>. Otherwise, if it
+     returns pass, terminate this algorithm and set the
+     <a href="#cross-origin-request-status">cross-origin request status</a> to <i>success</i>. Do not
+     actually terminate the request.</dd>
+    </dl>
+   </li>
+  </ol>
+
+
+  <h4 id="cross-origin-request-with-preflight-0"><span class="secno">7.1.5 </span>Cross-Origin Request with Preflight</h4>
+
+  <p>To protect resources against cross-origin requests that could not
+  originate from certain user agents before this specification existed a
+  <a href="#preflight-request">preflight request</a> is made to ensure that the resource is
+  aware of this specification. The result of this request is stored in a
+  <a href="#preflight-result-cache">preflight result cache</a>.</p>
+
+  <p>The steps below describe what user agents must do
+  for a
+  <dfn id="cross-origin-request-with-preflight">cross-origin request with preflight</dfn>.
+  This is a request to a non same-origin URL that first needs to be
+  authorized using either a <a href="#preflight-result-cache">preflight result cache</a> entry or a
+  <a href="#preflight-request">preflight request</a>.</p>
+
+  <ol>
+   <li>
+    <p>Go to the next step if the following conditions are true:
+
+    <ul>
+     <li>
+      <p>For <a href="#request-method">request method</a> there either is a
+      <a href="#preflight-result-cache-method-match">method cache match</a> or it is a
+      <a href="#simple-method">simple method</a>.</p>
+     </li>
+
+     <li>
+      <p>For every header of <a href="#author-request-headers">author request headers</a>
+      there either is a <a href="#preflight-result-cache-header-match">header cache match</a> for the field name
+      or it is a <a href="#simple-header">simple header</a>.</p>
+     </li>
+    </ul>
+
+
+    <!-- the preflight request -->
+    <p>Otherwise, make a
+    <dfn id="preflight-request">preflight request</dfn>.
+    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#fetch">Fetch</a> the <a href="#request-url">request URL</a>
+    from <i title="">origin</i> <a href="#source-origin">source origin</a> with the
+    <i title="">manual redirect flag</i> and the
+    <i title="">block cookies flag</i> set, using the method
+    <code>OPTIONS</code>, and with the following additional constraints:</p>
+
+    <ul>
+     <li><p>Include an
+     <code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>
+     header with as header field value the <a href="#request-method">request method</a> (even
+     when that is a <a href="#simple-method">simple method</a>).</li>
+
+     <li><p>If <a href="#author-request-headers">author request headers</a> is not empty include an
+     <code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
+     header with as header field value a comma-separated list of the header
+     field names from <a href="#author-request-headers">author request headers</a> in lexicographical
+     order, each <a href="#converted-to-ascii-lowercase">converted to ASCII lowercase</a> (even when one or
+     more are a <a href="#simple-header">simple header</a>).</li>
+
+     <li><p>Exclude the <a href="#author-request-headers">author request headers</a>.</li>
+
+     <li><p>Exclude <a href="#user-credentials">user credentials</a>.</li>
+
+     <li><p>Exclude the <code title="http-referer">Referer</code> header if
+     <a href="#source-origin">source origin</a> is a globally unique identifier.</li>
+
+     <li><p>Exclude the <a href="#request-entity-body">request entity body</a>.</li>
+    </ul>
+
+    <p>The following <i>request rules</i> are to be observed while making
+    the <a href="#preflight-request">preflight request</a>:</p>
+
+    <dl class="switch">
+     <dt>If the end user cancels the request</dt>
+     <dd><p>Apply the <a href="#abort-steps">abort steps</a>.</dd>
+
+     <dt>If the response has an HTTP status code that is not 200</dt>
+     <dd>
+      <p>Apply the <a href="#network-error-steps">network error steps</a>.</p>
+
+      <p class="note">The <a href="#cache-and-network-error-steps">cache and network error steps</a> are not
+      used here as this is about an actual network error.</p>
+     </dd>
+
+     <dt>If there is a network error</dt>
+     <dd>
+      <p>In case of DNS errors, TLS negotiation failure, or other type of
+      network errors, apply the <a href="#network-error-steps">network error steps</a>. Do not
+      request any kind of end user interaction.</p>
+
+      <p class="note">This does not include HTTP responses that indicate
+      some type of error, such as HTTP status code 410.</p>
+
+      <p class="note">The <a href="#cache-and-network-error-steps">cache and network error steps</a> are not
+      used here as this is about an actual network error.</p>
+     </dd>
+
+     <dt>Otherwise (the HTTP status code is 200)</dt>
+     <dd>
+      <ol>
+       <li><p>If the <a href="#resource-sharing-check">resource sharing check</a> returns fail,
+       apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</li>
+
+       <li><p>Let <var title="">methods</var> be the empty list.</li>
+
+       <li>
+        <p>If there are one or more
+        <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
+        headers let <var title="">methods</var> be the values as result of
+        <a href="#header-parsing" title="header parsing">parsing</a> the headers.</p>
+
+        <p>If <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>
+        apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</p>
+       </li>
+
+       <li><p>Let <var title="">headers</var> be the empty list.</li>
+
+       <li>
+        <p>If there are one or more
+        <code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>
+        headers let <var title="">headers</var> be the values as result of
+        <a href="#header-parsing" title="header parsing">parsing</a> the headers.</p>
+
+        <p>If <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>
+        apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</p>
+       </li>
+
+       <li><p>If <a href="#request-method">request method</a> is not a
+       <a href="#case-sensitive">case-sensitive</a> match for any method in
+       <var title="">methods</var> and is not a <a href="#simple-method">simple method</a>,
+       apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</li>
+
+       <li><p>If the field name of each header in
+       <a href="#author-request-headers">author request headers</a> is not an
+       <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for one of the
+       header field names in <var title="">headers</var> and the header is
+       not a <a href="#simple-header">simple header</a>, apply the
+       <a href="#cache-and-network-error-steps">cache and network error steps</a>.</li>
+
+       <li><p>If for some reason the user agent is unable to provide a
+       <a href="#preflight-result-cache">preflight result cache</a> (e.g. because of limited disk
+       space) go to the next step in the overall set of steps (i.e. the
+       <a href="#actual-request">actual request</a>).</li>
+
+       <li>
+        <p>If there is a single
+        <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
+        header, <a href="#header-parsing" title="header parsing">parse</a> it and let
+        <var title="">max-age</var> be the resulting value.</p>
+
+        <p>If there is no such header, there is more than one such header,
+        or <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>, let
+        <var title="">max-age</var> be a value at the discretion of the user
+        agent (zero is allowed).</p>
+
+        <p>If the user agent imposes a limit on the
+        <a href="#cache-max-age" title="cache-max-age">max-age</a> field value and
+        <var title="">max-age</var> is greater than that limit let
+        <var title="">max-age</var> be the limit.</p>
+       </li>
+
+       <li>
+        <p>For each method in <var title="">methods</var> for which there is
+        a <a href="#preflight-result-cache-method-match">method cache match</a> set the
+        <a href="#cache-max-age" title="cache-max-age">max-age</a> field value of the
+        matching entry to <var title="">max-age</var>.</p>
+
+        <p>For each method in <var title="">methods</var> for which there is
+        <em>no</em> <a href="#preflight-result-cache-method-match">method cache match</a> create a new entry in
+        the <a href="#preflight-result-cache">preflight result cache</a> with the various fields set
+        as follows:</p>
+
+        <dl>
+         <dt><a href="#cache-origin" title="cache-origin">origin</a></dt>
+         <dd>The <a href="#source-origin">source origin</a>.</dd>
+
+         <dt><a href="#cache-url" title="cache-url">url</a></dt>
+         <dd>The <a href="#request-url">request URL</a>.</dd>
+
+         <dt><a href="#cache-max-age" title="cache-max-age">max-age</a></dt>
+         <dd>The <var title="">max-age</var>.</dd>
+
+         <dt><a href="#cache-credentials" title="cache-credentials">credentials</a></dt>
+         <dd>The <a href="#credentials-flag">credentials flag</a>.</dd>
+
+         <dt><a href="#cache-method" title="cache-method">method</a></dt>
+         <dd>The given method.</dd>
+
+         <dt><a href="#cache-header" title="cache-header">header</a></dt>
+         <dd>Empty.</dd>
+        </dl>
+       </li>
+
+       <li>
+        <p>For each header in <var title="">headers</var> for which there is
+        a <a href="#preflight-result-cache-header-match">header cache match</a> set the
+        <a href="#cache-max-age" title="cache-max-age">max-age</a> field value of the
+        matching entry to <var title="">max-age</var>.</p>
+
+        <p>For each header in <var title="">headers</var> for which there is
+        <em>no</em> <a href="#preflight-result-cache-header-match">header cache match</a> create a new entry in
+        the <a href="#preflight-result-cache">preflight result cache</a> with the various fields set
+        as follows:</p>
+
+        <dl>
+         <dt><a href="#cache-origin" title="cache-origin">origin</a></dt>
+         <dd>The <a href="#source-origin">source origin</a>.</dd>
+
+         <dt><a href="#cache-url" title="cache-url">url</a></dt>
+         <dd>The <a href="#request-url">request URL</a>.</dd>
+
+         <dt><a href="#cache-max-age" title="cache-max-age">max-age</a></dt>
+         <dd>The <var title="">max-age</var>.</dd>
+
+         <dt><a href="#cache-credentials" title="cache-credentials">credentials</a></dt>
+         <dd>The <a href="#credentials-flag">credentials flag</a>.</dd>
+
+         <dt><a href="#cache-method" title="cache-method">method</a></dt>
+         <dd>Empty.</dd>
+
+         <dt><a href="#cache-header" title="cache-header">header</a></dt>
+         <dd>The given header.</dd>
+        </dl>
+       </li>
+      </ol>
+     </dd>
+    </dl>
+   </li>
+
+   <li><p>Set the <a href="#cross-origin-request-status">cross-origin request status</a> to
+   <i>preflight complete</i>.</li>
+
+   <!-- the actual request -->
+   <li>
+    <p>This is the <dfn id="actual-request">actual request</dfn>. Apply the
+    <a href="#make-a-request-steps">make a request steps</a> and observe the <i>request rules</i>
+    below while making the request.</p>
+
+    <dl class="switch">
+     <dt>If the response has an HTTP status code of 301, 302, 303, or 307</dt>
+
+     <dd><p>Apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</dd>
+
+     <dt>If the end user cancels the request</dt>
+
+     <dd><p>Apply the <a href="#abort-steps">abort steps</a>.</dd>
+
+     <dt>If there is a network error</dt>
+     <dd>
+      <p>In case of DNS errors, TLS negotiation failure, or other type of
+      network errors, apply the <a href="#network-error-steps">network error steps</a>. Do not
+      request any kind of end user interaction.</p>
+
+      <p class="note">This does not include HTTP responses that indicate
+      some type of error, such as HTTP status code 410.</p>
+     </dd>
+
+
+     <dt>Otherwise</dt>
+
+     <dd><p>Perform a <a href="#resource-sharing-check">resource sharing check</a>. If it returns
+     fail, apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>. Otherwise,
+     if it returns pass, terminate this algorithm and set the
+     <a href="#cross-origin-request-status">cross-origin request status</a> to <i>success</i>. Do not
+     actually terminate the request.</dd>
+    </dl>
+  </ol>
+
+  <div class="example">
+   <p>Consider the following scenario:</p>
+
+   <ol>
+    <li><p>The user agent gets the request from an API, such as
+    <code>XMLHttpRequest</code>, to perform a cross-origin request using the
+    custom <code>XMODIFY</code> method from <a href="#source-origin">source origin</a>
+    <code>http://example.org</code> to
+    <code>http://blog.example/entries/hello-world</code>.
+
+    <li><p>The user agent performs a <a href="#preflight-request">preflight request</a> using
+    the <code>OPTIONS</code> method to
+    <code>http://blog.example/entries/hello-world</code> and includes the
+    <code title="http-origin"><a href="#http-origin">Origin</a></code> and
+    <code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>
+    headers with the appropriate values.</li>
+
+    <li>
+     <p>The response to that request includes the following headers:</p>
+     <pre>Access-Control-Allow-Origin: http://example.org
+Access-Control-Max-Age: 2520
+Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
+
+    <li><p>The user agent then performs the desired request using the
+    <code>XMODIFY</code> method to
+    <code>http://blog.example/entries/hello-world</code> as this was allowed
+    by the resource. In addition, for the coming forty-two minutes, no
+    <a href="#preflight-request">preflight request</a> will be needed.
+   </ol>
+  </div>
+
+
+  <h4 id="preflight-result-cache-0"><span class="secno">7.1.6 </span>Preflight Result Cache</h4>
+
+  <p>As mentioned, a <a href="#cross-origin-request-with-preflight">cross-origin request with preflight</a>
+  uses a <dfn id="preflight-result-cache">preflight result cache</dfn>. This
+  cache consists of a set of entries. Each entry consists of the following
+  fields:</p>
+
+  <dl>
+   <dt><dfn id="cache-origin" title="cache-origin">origin</dfn></dt>
+   <dd>Holds the <a href="#source-origin">source origin</a>.</dd>
+
+   <dt><dfn id="cache-url" title="cache-url">url</dfn></dt>
+   <dd>Holds the <a href="#request-url">request URL</a>.</dd>
+
+   <dt><dfn id="cache-max-age" title="cache-max-age">max-age</dfn></dt>
+   <dd>Holds the
+   <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
+   header value.</dd>
+
+   <dt><dfn id="cache-credentials" title="cache-credentials">credentials</dfn></dt>
+   <dd>Holds the value of the <a href="#credentials-flag">credentials flag</a>.</dd>
+
+   <dt><dfn id="cache-method" title="cache-method">method</dfn></dt>
+   <dd>Empty if <a href="#cache-header" title="cache-header">header</a> is not empty;
+   otherwise one of the values from the
+   <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
+   headers.</dd>
+
+   <dt><dfn id="cache-header" title="cache-header">header</dfn></dt>
+   <dd>Empty if <a href="#cache-method" title="cache-method">method</a> is not empty;
+   otherwise one of the values from the
+   <code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>
+   headers.</dd>
+  </dl>
+
+  <p class="note">To be clear, the <a href="#cache-method" title="cache-method">method</a>
+  and <a href="#cache-header" title="cache-header">header</a> fields are mutually
+  exclusive. When one of them is empty the other is non-empty.</p>
+
+  <p class="note">The primary key of an entry consists of all fields
+  excluding the <a href="#cache-max-age" title="cache-max-age">max-age</a> field.</p>
+
+  <p>Entries must be removed when the time specified in
+  the <a href="#cache-max-age" title="cache-max-age">max-age</a> field has passed since
+  storing the entry. Entries can also be added and removed per the
+  algorithms below. They are added and removed in such a way that there can
+  never be duplicate items in the cache.</p>
+
+  <p>User agents may clear cache entries before the
+  time specified in the <a href="#cache-max-age" title="cache-max-age">max-age</a> field has
+  passed.</p>
+
+  <p class="note">Although this effectively makes the
+  <a href="#preflight-result-cache">preflight result cache</a> optional, user agents are strongly
+  encouraged to support it.</p>
+
+
+  <h4 id="generic-cross-origin-request-algorithms"><span class="secno">7.1.7 </span>Generic Cross-Origin Request Algorithms</h4>
+
+  <p>The variables used in the generic set of steps are part of the
+  algorithms that invoke these set of steps.</p>
+
+  <hr>
+
+  <p>Whenever the <dfn id="make-a-request-steps">make a request steps</dfn> are applied,
+  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#fetch">fetch</a> the <a href="#request-url">request URL</a> from
+  <i title="">origin</i> <a href="#source-origin">source origin</a> with the
+  <i title="">manual redirect flag</i> set, and the
+  <i title="">block cookies flag</i> set if the
+  <a href="#credentials-flag">credentials flag</a> is false. Use method
+  <a href="#request-method">request method</a>, entity body <a href="#request-entity-body">request entity body</a>,
+  including the <a href="#author-request-headers">author request headers</a>, and include
+  <a href="#user-credentials">user credentials</a> if the <a href="#credentials-flag">credentials flag</a> is true. Exclude the <code title="http-referer">Referer</code> header if
+  <a href="#source-origin">source origin</a> is a globally unique identifier.</p>
+
+  <p>Whenever the <dfn id="redirect-steps">redirect steps</dfn> are applied,
+  follow this set of steps:</p>
+
+  <ol>
+   <li><p>Let <a href="#request-url">request URL</a> be the
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a> conveyed by
+   the <code>Location</code> header in the redirect response.</li>
+   <!-- XXX should be resolved URL per HTML5 algorithms ... -->
+
+   <li><p>If the <a href="#request-url">request URL</a> &lt;scheme&gt; is not supported,
+   infinite loop precautions are violated, or the user agent does not wish
+   to make the new request for some other reason, apply the
+   <a href="#network-error-steps">network error steps</a> and terminate this set of
+   steps.</li>
+
+   <li><p>If the <a href="#request-url">request URL</a> contains the
+   <code class="external"><a href="http://tools.ietf.org/html/rfc2616/#section-3.2.1">userinfo</a></code> production apply the
+   <a href="#network-error-steps">network error steps</a>.</li>
+
+   <li><p>If the <a href="#resource-sharing-check">resource sharing check</a> for the current resource
+   returns fail, apply the <span>generic network steps</span>.</li>
+   <!--This prevents intranet data leakage.-->
+
+   <li><p>Otherwise, transparently follow the redirect while observing the
+   set of <i>request rules</i>.</li>
+   <!-- XXX or should this use the make a request steps? -->
+  </ol>
+
+  <p class="note">A redirect to a URL that is
+  <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5">same origin</a> with the
+  <a href="#source-origin">source origin</a> is handled identically to any other
+  URL.</p>
+
+  <p class="note">A redirect to a URL that is <a href="#cross-origin">cross-origin</a> has
+  consequences for the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
+  header as detailed by its specification.</p>
+
+  <hr>
+
+  <p>Whenever the <dfn id="abort-steps">abort steps</dfn> are applied,
+  terminate the algorithm that invoked this set of steps and set the
+  <a href="#cross-origin-request-status">cross-origin request status</a> to <i>abort error</i>.</p>
+
+  <hr>
+
+  <p>Whenever the <dfn id="network-error-steps">network error steps</dfn>
+  are applied, terminate the algorithm that invoked this set of steps and
+  set the <a href="#cross-origin-request-status">cross-origin request status</a> to
+  <i>network error</i>.</p>
+
+  <p>Whenever the
+  <dfn id="cache-and-network-error-steps">cache and network error steps</dfn>
+  are applied, follow this set of steps:</p>
+
+  <ol>
+   <li><p>Remove the entries in the <a href="#preflight-result-cache">preflight result cache</a>
+   where <a href="#cache-origin" title="cache-origin">origin</a> field value is a
+   <a href="#case-sensitive">case-sensitive</a> match for <a href="#source-origin">source origin</a>
+   and <a href="#cache-url" title="cache-url">url</a> field value is a
+   <a href="#case-sensitive">case-sensitive</a> match for <a href="#request-url">request URL</a>.</li>
+
+   <li><p>Apply the <a href="#network-error-steps">network error steps</a> acting as if the
+   algorithm that invoked the <a href="#cache-and-network-error-steps">cache and network error steps</a>
+   invoked the <a href="#network-error-steps">network error steps</a> instead.</p>
+  </ol>
+
+  <hr>
+
+  <p>There is a
+  <dfn id="preflight-result-cache-match">cache match</dfn>
+  when there is a cache entry in the <a href="#preflight-result-cache">preflight result cache</a>
+  for which the following is true:</p>
+
+  <ul>
+   <li><p>The <a href="#cache-origin" title="cache-origin">origin</a> field value is a
+   <a href="#case-sensitive">case-sensitive</a> match for
+   <a href="#source-origin">source origin</a>.</li>
+
+   <li><p>The <a href="#cache-url" title="cache-url">url</a> field value is a
+   <a href="#case-sensitive">case-sensitive</a> match for
+   <a href="#request-url">request URL</a>.</li>
+
+   <li><p>The <a href="#cache-credentials" title="cache-credentials">credentials</a> field value
+   is equal to the <a href="#credentials-flag">credentials flag</a>.</li>
+  </ul>
+
+  <p>There is a
+  <dfn id="preflight-result-cache-method-match">method cache match</dfn>
+  when there is a cache entry for which there is a <a href="#preflight-result-cache-match">cache match</a>
+  and the <a href="#cache-method" title="cache-method">method</a> field value is a
+  <a href="#case-sensitive">case-sensitive</a> match for the given method.</p>
+
+  <p>There is a
+  <dfn id="preflight-result-cache-header-match">header cache match</dfn>
+  when there is a cache entry for which there is a <a href="#preflight-result-cache-match">cache match</a>
+  and the <a href="#cache-header" title="cache-header">header</a> field value is an
+  <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for the given header field
+  name.</p>
+
+
+  <h3 id="resource-sharing-check-0"><span class="secno">7.2 </span>Resource Sharing Check</h3>
+
+  <p>The <dfn id="resource-sharing-check">resource sharing check</dfn>
+  algorithm for a given resource is as follows:</p>
+
+  <ol>
+   <li><p>If the response includes zero or more than one
+   <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+   header values return fail and terminate this algorithm.</li>
+
+   <li><p>If the
+   <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+   header value is the literal "<code>*</code>" character and the
+   <a href="#credentials-flag">credentials flag</a> is false return pass and terminate this
+   algorithm.</li>
+
+   <li><p>If the value of
+   <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+   is not a <a href="#case-sensitive">case-sensitive</a> match for the value of the
+   <code title="http-origin"><a href="#http-origin">Origin</a></code> header as defined by its
+   specification return fail and terminate this algorithm.</li>
+
+   <li><p>If the <a href="#credentials-flag">credentials flag</a> is true and the response
+   includes zero or more than one
+   <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
+   header values return fail and terminate this algorithm.</li>
+
+   <li><p>If the <a href="#credentials-flag">credentials flag</a> is true and the
+   <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
+   header value is not a <a href="#case-sensitive">case-sensitive</a> match for
+   "<code>true</code>" return fail and terminate this algorithm.</li>
+
+   <li><p>Return pass.</li>
+  </ol>
+
+  <p class="note">The above algorithm also functions when the
+  <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-6.2">ASCII serialization of an origin</a> is
+  the string "<code>null</code>".</p>
+
+
+  <h3 id="user-agent-security"><span class="secno">7.3 </span>Security</h3>
+
+  <p><em>This section is non-normative.</em></p>
+
+  <p>At various places user agents are allowed to take additional
+  precautions. E.g. user agents are allowed to not store cache items, remove
+  cache items before they reached their
+  <a href="#cache-max-age" title="cache-max-age">max-age</a>, and not connect to certain
+  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url" title="URL">URLs</a>.</p>
+
+  <p>User agents are encouraged to impose a limit on
+  <a href="#cache-max-age" title="cache-max-age">max-age</a> so items cannot stay in the
+  <a href="#preflight-result-cache">preflight result cache</a> for unreasonable amounts of time.</p>
+
+  <p>As indicated as the first step of the <a href="#cross-origin-request">cross-origin request</a>
+  algorithm and in the <a href="#redirect-steps">redirect steps</a> algorithm user agents
+  are allowed to terminate the algorithm and not make a request. This could
+  be done because e.g.:</p>
+
+  <ul>
+   <li>The server on which the resource resides is blacklisted.</li>
+   <li>The server on which the resource resides is known to be part of an
+   intranet.</li>
+   <li>The URL &lt;scheme&gt; is not supported.</li>
+   <li><code>https</code> to <code>http</code> is not allowed.</li>
+   <li><code>https</code> to <code>https</code> is not allowed because e.g.
+   the certificates differ.</li>
+  </ul>
+
+  <p>User agents are encouraged to apply security decisions on a generic
+  level and not just to the resource sharing policy. E.g. if a user agent
+  disallows requests from the <code>https</code> to the <code>http</code>
+  scheme for a <a href="#cross-origin-request">cross-origin request</a> it is encouraged to do the
+  same for the HTML <code>img</code> element.</p>
+
+
+
+
+  <h2 id="cors-api-specification-advice"><span class="secno">8 </span>CORS API Specification Advice</h2>
+
+  <p><em>This section is non-normative.</em></p>
+
+  <p>This specification defines a resource sharing policy that cannot be
+  implemented without an API that utilizes it. The specification that
+  defines the API that uses the policy is a CORS API specification.</p>
+
+  <p>In case a CORS API specification defines multiple APIs that utilize the
+  policy the advice is to be considered separately for each API.</p>
+
+
+  <h3 id="cors-api-specifiation-request"><span class="secno">8.1 </span>Constructing a Cross-Origin Request</h3>
+
+  <p>For all requests APIs can make that are <a href="#cross-origin">cross-origin</a> for
+  which the resource sharing policy in this specification is supposed to
+  apply, the CORS API specification needs to reference the
+  <a href="#cross-origin-request">cross-origin request</a> algorithm and set the following input
+  variables appropriately: <a href="#request-url">request URL</a>,
+  <a href="#request-method">request method</a>, <a href="#author-request-headers">author request headers</a>,
+  <a href="#request-entity-body">request entity body</a>, <a href="#source-origin">source origin</a>,
+  <a href="#credentials-flag">credentials flag</a>, and the
+  <a href="#force-preflight-flag">force preflight flag</a>.</p>
+
+  <p>CORS API specifications are allowed to let these input variables be
+  controlled by the API, but can also set fixed values.</p>
+
+  <p class="example">A CORS API specification for an API that only allows
+  requests using the <code>GET</code> method might set
+  <a href="#request-method">request method</a> to <code>GET</code>,
+  <a href="#request-entity-body">request entity body</a> to empty, and <a href="#source-origin">source origin</a>
+  to some appropriate value and let the other variables be controlled by the
+  API.</p>
+
+
+  <h3 id="cors-api-specification-redirect"><span class="secno">8.2 </span>Dealing with Same Origin to Cross-Origin Redirects</h3>
+
+  <p>Since browsers are based on a
+  <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5">same origin</a> security model and the
+  policy outlined in this specification is intended for APIs used in
+  browsers, it is expected that APIs that will utilize this policy will have
+  to handle a <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5">same origin</a> request that
+  results in a redirect that is <a href="#cross-origin">cross-origin</a> in a special
+  way.</p>
+
+  <p>For APIs that transparently handle redirects CORS API specifications
+  are encouraged to handle this scenario transparently as well by "catching"
+  the redirect and invoking the <a href="#cross-origin-request">cross-origin request</a> algorithm
+  on the (<a href="#cross-origin">cross-origin</a>) redirect URL.</p>
+
+  <p class="note">The <code>XMLHttpRequest</code> Level 2 specification does
+  this.</p>
+
+
+  <h3 id="cors-api-specification-response"><span class="secno">8.3 </span>Dealing with the
+  Cross-Origin Request Status</h3>
+
+  <p>While a <a href="#cross-origin-request">cross-origin request</a> is progressing its
+  associated <a href="#cross-origin-request-status">cross-origin request status</a> is updated.
+  Depending on the value of the <a href="#cross-origin-request-status">cross-origin request status</a> the
+  API is to react in a different way:</p>
+
+  <dl>
+   <dt><i>preflight complete</i></dt>
+   <dd>
+    <p>Features that can only be safely exposed after a
+    <a href="#preflight-request">preflight request</a> can now be enabled.</p>
+
+    <p class="note">E.g. upload progress events in
+    <code>XMLHttpRequest</code>.</p>
+   </dd>
+
+   <dt><i>success</i></dt>
+   <dd>
+    <p>The contents of the response can be shared with the API, including
+    headers that have not been filtered out.</p>
+
+    <p class="note">The request itself can still be progressing. I.e. the
+    <a href="#cross-origin-request-status">cross-origin request status</a> value does not indicate that
+    the request has completed.</p>
+   </dd>
+
+   <dt><i>abort error</i></dt>
+   <dd><p>Handle analogous to requests where the user aborted the request.
+   This can be handled equivalently to how <i>network error</i> is
+   handled. Ensure not to reveal any further information about the
+   request.</dd>
+
+   <dt><i>network error</i></dt>
+   <dd><p>Handle analogous to requests where some kind of error
+   occured. Ensure not the reveal any further information about the
+   request.</dd>
+  </dl>
+
+
+  <h3 id="cors-api-specification-security"><span class="secno">8.4 </span>Security</h3>
+
+  <p>Similarly to <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5">same origin</a> requests,
+  CORS API specifications are encouraged to properly limit headers, methods,
+  and <a href="#user-credentials">user credentials</a> the author can set and get for requests
+  that are <a href="#cross-origin">cross-origin</a>.</p>
+
+  <p class="note">Reviewing the XMLHttpRequest Level 2 specification
+  provides a good start for the kind of limitations that are to be
+  imposed.</p>
+
+  <p>CORS API specifications also need to ensure not to reveal anything
+  until the <a href="#cross-origin-request-status">cross-origin request status</a> is set to
+  <i>preflight complete</i> or <i>success</i> to prevent e.g. port
+  scanning.</p>
+
+  <p class="note">In XMLHttpRequest Level 2 progress events are dispatched
+  only after the <a href="#cross-origin-request-status">cross-origin request status</a> is set to
+  <i>success</i>. Upload progress events are only dispatched once the
+  <a href="#cross-origin-request-status">cross-origin request status</a> is <i>preflight complete</i>.</p>
+
+
+
+  <h2 class="no-num" id="requirements">Requirements</h2>
+
+  <p><em>This appendix is non-normative.</em></p>
+
+  <p>This appendix outlines the various requirements that influenced the
+  design of the Cross-Origin Resource Sharing specification.</p>
+
+  <ol>
+   <li><p>Must not introduce attack vectors to servers that are only
+   protected only by a firewall.</li>
+
+   <li>
+    <p>The solution should not introduce additional attack vectors against
+    services that are protected only by way of firewalls. This requirement
+    addresses "intranet" style services authorize any requests that can be
+    sent to the service.</p>
+
+    <p>Note that this requirement does not preclude <code>HEAD</code>,
+    <code>OPTIONS</code>, or <code>GET</code> requests (even with ambient
+    authentication and session information).</p>
+   </li>
+
+   <li><p>It should not be possible to perform cross-origin non-safe
+   operations, i.e., HTTP operations except for <code>GET</code>,
+   <code>HEAD</code>, and <code>OPTIONS</code>, without an authorization
+   check being performed.</li>
+
+   <li><p>Should try to prevent dictionary-based, distributed, brute-force
+   attacks that try to get login accounts to 3<sup>rd</sup> party servers,
+   to the extent possible.</li>
+
+   <li><p>Should properly enforce security policy in the face of commonly
+   deployed proxy servers sitting between the user agent and any of servers
+   with whom the user agent is communicating.</li>
+
+   <li><p>Should not allow loading and exposing of resources from
+   3<sup>rd</sup> party servers without explicit consent of these servers as
+   such resources can contain sensitive information.</li>
+
+   <li><p>Must not require content authors or site maintainers to implement
+   new or additional security protections to preserve their existing level
+   of security protection.
+
+   <li><p>Must be deployable to IIS and Apache without requiring actions by
+   the server administrator in a configuration where the user can upload
+   static files, run serverside scripts (such as PHP, ASP, and CGI), control
+   headers, and control authorization, but only do this for URLs under a
+   given set of subdirectories on the server.
+
+   <li><p>Must be able to deploy support for cross-origin <code>GET</code>
+   requests without having to use server-side scripting (such as PHP, ASP,
+   or CGI) on IIS and Apache.
+
+   <li><p>The solution must be applicable to arbitrary media types. It must
+   be deployable without requiring special packaging of resources, or
+   changes to resources' content.
+
+   <li><p>It should be possible to configure distinct cross-origin
+   authorization policies for different target resources that reside within
+   the same origin.
+
+   <li><p>It should be possible to distribute content of any type. Likewise,
+   it should be possible to transmit content of any type to the server if
+   the API in use allows such functionality.</li>
+
+   <li><p>It should be possible to allow only specific servers, or sets of
+   servers to fetch the resource.</li>
+
+   <li><p>Must not require that the server filters the entity body of the
+   resource in order to deny cross-origin access to all resources on the
+   server.</li>
+
+   <li>
+    <p>Cross-origin requests should not require API changes other than
+    allowing cross-origin requests. This means that the following examples
+    should work for resources residing on <code>http://test.example</code>
+    (modulo changes to the respective specifications to allow cross-origin
+    requests):</p>
+
+    <ul>
+     <li><pre><code>&lt;?xml-stylesheet type="application/xslt+xml" href="http://example.org/annotate.xslt"?&gt;</code></pre>
+
+     <li><pre><code>&lt;?xbl href="http://example.org/globe.xml"?&gt;</code></pre>
+
+     <li><pre><code>xhr = new XMLHttpRequest();
+xhr.open("GET", "http://example.org/data.text");
+xhr.send();</code></pre>
+    </ul>
+   </li>
+
+   <li><p>It should be possible to issue methods other than <code>GET</code>
+   to the server, such as <code>POST</code> and
+   <code>DELETE</code>.</li>
+
+   <li><p>Should be compatible with commonly used HTTP authentication and
+   session management mechanisms. I.e. on an IIS server where authentication
+   and session management is generally done by the server before ASP pages
+   execute this should be doable also for requests coming from cross-origin
+   requests. Same thing applies to PHP on Apache.</li>
+
+   <li><p>Should reduce the risk of inadvertently allowing access when it is
+   not intended. This is, it should be clear to the content provider when
+   access is granted and when it is not.</li>
+  </ol>
+
+
+
+  <h2 class="no-num" id="use-cases">Use Cases</h2>
+
+  <p><em>This appendix is non-normative.</em></p>
+
+  <p>The main motivation behind Cross-Origin Resource Sharing (CORS) was to
+  remove the <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5">same origin</a> restriction
+  from various APIs so that resources can be shared among different
+  <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4" title="origin">origins</a> (i.e.
+  servers).</p>
+
+  <p>Here are some examples of how we envision APIs to be able to change
+  with CORS.</p>
+
+  <dl>
+   <dt><code>XMLHttpRequest</code> (<a class="informative" href="#refsXHR">[XHR]</a>)</dt>
+   <dd>
+    <p>Currently if you have an API on the server at
+    <code>https://calendar.example/add</code> that accepts requests using
+    the HTTP <code>PUT</code> method to add new appointments you can only
+    issue such requests from within the browser environment on resources
+    within the <code>https://calendar.example/</code>
+    <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4">origin</a>, as follows:</p>
+
+    <pre><code>new client = new XMLHttpRequest()
+client.open("PUT", "https://calendar.example/add")
+client.onload = requestSuccess
+client.onerror = requestError
+client.onabort = requestError
+client.send(apointment)</code></pre>
+
+    <p>If the <code>https://calendar.example/add</code> resource implements
+    CORS it can accept requests from other
+    <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4" title="origin">origins</a>. To do this the
+    server has to indicate it is willing to handle HTTP <code>PUT</code>
+    methods for non
+    <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5" title="same origin">same-origin</a>
+    requests in response to a <a href="#preflight-request">preflight request</a>. Further when
+    the <a href="#actual-request">actual request</a> is issued it has to indicate it is
+    willing to share any response data.</p>
+
+    <p>Code Web application developers use to talk with this resource can
+    however remain unmodified, even when put on another
+    <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4">origin</a>.</p>
+   </dd>
+   <dd>
+    <p>If there is an API on <code>http://foo.example.org/</code> that
+    allows authenticated users to edit resources, CORS could be used to
+    allow users to use <code>http://editor.example/</code> as editor without
+    the need of proxies when communicating changes to resources (e.g.
+    addition or removal).</p>
+   </dd>
+
+   <dt>Not tainting the <code>canvas</code> element (<a class="informative" href="#refsHTML">[HTML]</a>)</dt>
+   <dd>
+    <p>Currently if you have an image editor implemented using the
+    <code>canvas</code> element at
+    <code>http://unicornimages.example</code> and a clip art collection at
+    <code>http://narwhalart.example</code> drawing the clip art on the
+    <code>canvas</code> element will cause it to be tainted because the
+    images are from a different <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-4">origin</a>.
+    The effect of a tainted <code>canvas</code> element is that the
+    <code>toDataURL()</code> method call in the following snippet will
+    throw:</p>
+
+    <pre><code>var canvas, context, clipart = []
+function init() {
+  canvas = document.getElementsByTagName("canvas")[0]
+  context = canvas.getContext("2d")
+}
+function preload() {
+  // populates clipart with five images from
+  // http://narwhalart.example/archives/[0-9]
+  // all represented as HTML &lt;img&gt; elements
+  &hellip;
+}
+function draw(clipart) {
+  context.drawImage(clipart, &hellip;)
+}
+function save() {
+  // get data out of &lt;canvas&gt; and process it
+  var data = canvas.toDataURL()
+  &hellip;
+}</code></pre>
+
+    <p>Using CORS the
+    maintainer of <code>http://narwhalart.example</code> can very easily
+    indicate that all images can be used by
+    <code>http://unicornimages.example</code> (or in fact all
+    <span title="origin">origins</span>). To do so all that is required to
+    change is that the server has to add the following HTTP headers for the
+    clip art resources:</p>
+
+    <pre><code>access-control-allow-origin: https://unicornimages.example
+access-control-allow-credentials: true</code></pre>
+
+    <p>This would also make the <code>toDataURL()</code> method call no
+    longer throw.</p>
+   </dd>
+
+   <dt>Getting metadata out of media elements (<a class="informative" href="#refsHTML">[HTML]</a>)</dt>
+   <dd>
+    <p>At some point in the future the HTML <code>video</code> and
+    <code>audio</code> elements will give a programmatic API to access their
+    metadata. This could be as simple as the following snippet shows:</p>
+
+    <p class="note">The API itself is pure speculation and its specifics are
+    not relevant for explaining how CORS can be used.</p>
+
+    <pre><code>var vid = document.querySelector("video"),
+    vidAuthor = vid.meta.author</code></pre>
+
+    <p>To prevent data theft this API will only work if the media resource
+    is <a class="external" href="http://tools.ietf.org/html/draft-ietf-websec-origin#section-5">same origin</a> with where the
+    script is executed from. However, if the video were annotated with CORS,
+    similarly to the image resource in the previous use case, this could
+    work just fine.</p>
+   </dd>
+
+   <dt>Server-Sent Events (<a class="informative" href="#refsEVENTSOURCE">[EVENTSOURCE]</a>)</dt>
+   <dd>
+    <p>Currently if <code>http://example.org/news</code> exposes a stream of
+    news events only resources on <code>http://example.org</code> can make
+    use of it. With CORS it would be very easy to allow
+    <code>http://international.example.org</code> to access the stream of
+    news as well. If this news stream is personalized e.g. by the means of
+    cookies it only requires one additional response header for
+    <code>http://international.example.org</code> to be able to make use of
+    it:</p>
+
+    <pre><code>access-control-allow-origin: http://international.example.org
+access-control-allow-credentials: true</code></pre>
+
+    <p>The code used by Web authors would remain near identical (identical
+    if they use an absolute URL):</p>
+
+    <pre><code>stream = EventSource("http://example.org/news")
+stream.onmessage = function(e) { &hellip; }</code></pre>
+   </dd>
+
+   <dt><code>xml-stylesheet</code> processing instruction (<a class="informative" href="#refsXMLSS">[XMLSS]</a>)</dt>
+   <dd>
+    <p>Currently <a href="#cross-origin">cross-origin</a> loads of XSLT resources are
+    prohibited to prevent data theft (e.g. from an intranet). With CORS an
+    XSLT resource <code>http://static.example.org/generic</code> can easily
+    be used by <code>http://example.org</code> resources by adding an
+    additional HTTP header to the resource. Again, the code used by Web
+    authors remains the same:</p>
+
+    <pre><code>&lt;?xml-stylesheet href="http://static.example.org/generic"?&gt;</code></pre>
+   </dd>
+
+   <dt>XBL (<a class="informative" href="#refsXBL">[XBL]</a>)</dt>
+   <dd>
+    <p>An XBL binding allows the document to which it is bound to have full
+    access to the document in which it is defined. To prevent data theft
+    <a href="#cross-origin">cross-origin</a> XBL usage is therefore prohibited. The
+    resource sharing policy enables <a href="#cross-origin">cross-origin</a> XBL bindings.
+    If the user is authenticated with the server that hosts the XBL widget
+    it is possible to have a user-specific <a href="#cross-origin">cross-origin</a>
+    bindings. </p>
+   </dd>
+  </dl>
+
+
+
+  <h2 class="no-num" id="design-decision-faq">Design Decision FAQ</h2>
+
+  <p><em>This appendix is non-normative.</em></p>
+
+  <p>This appendix documents several frequently asked questions and their
+  corresponding response.</p>
+
+  <dl>
+   <dt>Why is there a <a href="#preflight-request">preflight request</a>?
+
+   <dd>
+    <p>For most type of requests two
+    <a href="#resource-sharing-check" title="resource sharing check">resource sharing checks</a> are
+    performed. Initially a "permission to make the request" check is done on
+    the response to the <a href="#preflight-request">preflight request</a>. And then a
+    "permission to read" check is done on the response to the
+    <a href="#actual-request">actual request</a>. Both of these checks need to succeed in
+    order for success to be relayed to the API
+    (e.g. <code>XMLHttpRequest</code>).</p>
+
+    <p>The "permission to make the request" check is performed because
+    deployed servers do not expect such cross-origin requests. E.g., a request
+    using the HTTP <code>DELETE</code> method. If they reply positively to
+    the <a href="#preflight-request">preflight request</a> the client knows it can go ahead and
+    perform the actual desired request.
+
+   <dt>Why is <code>POST</code> treated similarly to <code>GET</code>?
+
+   <dd><p>Cross-origin <code>POST</code> requests have long been possible
+   using the HTML <code>form</code> element. However, this is only the case
+   when <code>Content-Type</code> is set to one of the media types allowed
+   by HTML forms.</p>
+
+   <dt>Why are cookies and authentication information sent in the request?</dt>
+
+   <dd>
+    <p>Sending cookies and authentication information enables user-specific
+    cross-origin widgets (external XBL file). It also allows for a user
+    authenticated data storage API that services can use to store data in.
+
+    <p>Cookies and authentication information is already sent cross-origin
+    for various HTML elements, such as <code>img</code>,
+    <code>script</code>, and <code>form</code>.
+
+    <p>This specification does allow for APIs that use the resource sharing
+    policy to not send cookies or authentication information by means of the
+    <a href="#credentials-flag">credentials flag</a>.</p>
+
+   <dt>Why can cookies and authentication information <em>not</em> be
+   provided by the script author for the request?
+
+   <dd><p>This would allow dictionary based, distributed, cookies / user
+   credentials search.
+
+   <dt>Why is the client the policy enforcement point?
+
+   <dd>
+    <p>The client already is the policy enforcement point for these
+    requests. The mechanism allows the server to opt-in to let the client
+    expose the data. Something clients currently not do and which servers
+    rely upon.
+
+    <p>Note however that the server is in full control. Based on the value
+    of the <code title="http-origin"><a href="#http-origin">Origin</a></code> header in cross-origin
+    requests it can decide to return no data at all or not provide the
+    necessary handshake (the
+    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
+    header).</p>
+
+   <dt>What about the <code>JSONRequest</code> proposal?
+
+   <dd><p><code>JSONRequest</code> has been considered by the Web
+   Applications Working Group and the group has concluded
+   that it does not meet the documented
+   <a href="#requirements">requirements</a>. <code>JSONRequest</code> is a
+   specific API and cannot handle e.g. cross-origin XSLT through
+   <code>&lt;?xml-stylesheet?&gt;</code> or the same scenarios
+   same-origin <code>XMLHttpRequest</code> can handle today in
+   cross-origin fashion, e.g. manipulating resources making use of the REST
+   architectural style.</dd>
+  </dl>
+
+
+
+<h2 class="no-num" id="references">References</h2>
+<h3 class="no-num" id="normative-references">Normative references</h3>
+<div id="anolis-references-normative"><dl><dt id="refsCOOKIES">[COOKIES]
+<dd><cite><a href="http://tools.ietf.org/html/rfc6265">HTTP State Management Mechanism</a></cite>, A. Barth. IETF.
+
+<dt id="refsHTML">[HTML]
+<dd><cite><a href="http://www.whatwg.org/html">HTML</a></cite>, I. Hickson. WHATWG.
+
+<dt id="refsHTTP">[HTTP]
+<dd><cite><a href="http://tools.ietf.org/html/rfc2616">Hypertext Transfer Protocol -- HTTP/1.1</a></cite>, R. Fielding, J. Gettys, J. Mogul et al.. IETF.
+
+<dt id="refsORIGIN">[ORIGIN]
+<dd><cite><a href="http://tools.ietf.org/html/draft-ietf-websec-origin">The Web Origin Concept</a></cite>, A. Barth. IETF.
+
+<dt id="refsRFC2119">[RFC2119]
+<dd><cite><a href="http://www.ietf.org/rfc/rfc2119.txt">Key words for use in RFCs to Indicate Requirement Levels</a></cite>, S. Bradner. IETF.
+
+<dt id="refsURI">[URI]
+<dd><cite><a href="http://tools.ietf.org/html/rfc3986">Uniform Resource Identifier (URI): Generic Syntax</a></cite>, T. Berners-Lee, R. Fielding and L. Masinter. IETF.
+
+</dl></div>
+
+<h3 class="no-num" id="informative-references">Informative references</h3>
+<div id="anolis-references-informative"><dl><dt id="refsEVENTSOURCE">[EVENTSOURCE]
+<dd><cite><a href="http://dev.w3.org/html5/eventsource/">Server-Sent Events</a></cite>, I. Hickson. W3C.
+
+<dt id="refsXBL">[XBL]
+<dd><cite><a href="http://dev.w3.org/2006/xbl2/">XBL</a></cite>, I. Hickson. W3C.
+
+<dt id="refsXHR">[XHR]
+<dd><cite><a href="http://dev.w3.org/2006/webapi/XMLHttpRequest-2/">XMLHttpRequest Level 2</a></cite>, A. van Kesteren. W3C.
+
+<dt id="refsXMLSS">[XMLSS]
+<dd><cite><a href="http://www.w3.org/TR/xml-stylesheet/">Associating Style Sheets with XML documents 1.0 (Second Edition)</a></cite>, J. Clark, S. Pieters and H. S. Thompson. W3C.
+
+</dl></div>
+
+
+  <h2 class="no-num" id="acknowledgments">Acknowledgments</h2>
+
+  <p><em>This appendix is non-normative.</em></p>
+
+  <p>The editor would like to thank
+
+  Adam Barth,
+  Alexey Proskuryakov,
+  Arthur Barstow,
+  Benjamin Hawkes-Lewis,
+  Bert Bos,
+  Bj&ouml;rn H&ouml;hrmann,
+  Cameron McCormack,
+  Collin Jackson,
+  David H&aring;s&auml;ther,
+  David Orchard,
+  Dean Jackson,
+  Eric Lawrence,
+  Frank Ellerman,
+  Frederick Hirsch,
+  Graham Klyne,
+  Hal Lockhart,
+  Henri Sivonen,
+  Ian Hickson,
+  Jesse M. Heines,
+  Jonas Sicking,
+  Lachlan Hunt,
+  Maciej Stachowiak,
+  Marc Silbey,
+  Marcos Caceres,
+  Mark Nottingham,
+  Mark S. Miller,
+  Martin D&uuml;rst,
+  Matt Womer,
+  Mhano Harkness,
+  Michael Smith,
+  Mohamed Zergaoui,
+  Nikunj Mehta,
+  Sharath Udupa,
+  Sunava Dutta,
+  Surya Ismail,
+  Thomas Roessler,
+  Tyler Close,
+  Vladimir Dzhuvinov, and
+  Zhenbin Xu
+
+  for their contributions to this specification.</p>
+
+  <p>Special thanks to Brad Porter, Matt Oshry and R. Auburn, who all helped
+  editing earlier versions of this document.</p>
+ 
+
