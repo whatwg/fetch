@@ -543,7 +543,7 @@ requests must take care in the use of credentials, including the
   other than retrieval and which involve coordination between or data
   originating from more than two origins, (e.g. between resources enabling
   editing, printing and storage, each at distinct origins) requests ought to
-  set the <span>credentials flag</span> to false and servers ought to
+  set the <span>omit credentials flag</span> and servers ought to
   perform authorization using security tokens explicitly provided in the
   content of the request, especially if the origins are not all mutually and
   completely trusted.
@@ -622,9 +622,9 @@ requests must take care in the use of credentials, including the
   <p>The
   <dfn title=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>
   header indicates whether the response to request can be
-  exposed when the <var title>credentials flag</var> is true. When part
+  exposed when the <span>omit credentials flag</span> is unset. When part
   of the response to a <span>preflight request</span> it indicates that the
-  <span>actual request</span> can be made with <span>user credentials</span>.
+  <span>actual request</span> can include <span>user credentials</span>.
   ABNF:</p>
 
   <pre>Access-Control-Allow-Credentials: "Access-Control-Allow-Credentials" ":" true
@@ -1024,19 +1024,15 @@ requests must take care in the use of credentials, including the
     in a generic way and therefore it has to be provided as argument.</p>
    </dd>
 
-   <dt><dfn id="follow-redirects-flag">follow redirects flag</dfn></dt>
-   <dd><p>True when redirects are to be followed. False when they are
-   not. True, unless explicitly set.</p></dd>
+   <dt><dfn id="manual-redirect-flag">manual redirect flag</dfn></dt>
+   <dd><p>Set when redirects are <em>not</em> to be automatically followed.
 
-   <dt><dfn id="credentials-flag">credentials flag</dfn></dt>
-   <dd><p>True when <span>user credentials</span> are to be included in the
-   request. False when they are to be excluded in the request and when
-   cookies are to be ignored in its response. True, unless explicitly
-   set.</p></dd>
+   <dt><dfn id="omit-credentials-flag">omit credentials flag</dfn></dt>
+   <dd><p>Set when <span>user credentials</span> are to be excluded in the
+   request and when cookies are to be ignored in its response.
 
    <dt><dfn id="force-preflight-flag">force preflight flag</dfn></dt>
-   <dd><p>True when a <span>preflight request</span> is to be forced. False
-   otherwise. False, unless explicitly set.</p></dd>
+   <dd><p>Set when a <span>preflight request</span> is required.
   </dl>
 
   <p>The <span>cross-origin request</span> algorithm can be used by
@@ -1045,7 +1041,7 @@ requests must take care in the use of credentials, including the
 
   <p class=note>CORS API specifications are free to limit the abilities of
   a <span>cross-origin request</span>. E.g., the
-  <var title>credentials flag</var> could always be false.</p>
+  <span>omit credentials flag</span> could always be set.
 
   <p>When the <span>cross-origin request</span> algorithm is invoked,
   these steps must be followed:</p>
@@ -1061,7 +1057,7 @@ requests must take care in the use of credentials, including the
    </li>
 
    <li>
-    <p>If the <span>force preflight flag</span> is false and the following
+    <p>If the <span>force preflight flag</span> is unset and the following
     conditions are all true, follow the
     <span>simple cross-origin request</span> algorithm:
 
@@ -1152,7 +1148,7 @@ requests must take care in the use of credentials, including the
     <i>request rules</i> below while making the request.</p>
 
     <dl class=switch>
-     <dt>If the <span>follow redirects flag</span> is true and the response
+     <dt>If the <span>manual redirect flag</span> is unset and the response
      has an HTTP status code of 301, 302, 303, or 307</dt>
      <dd><p>Apply the <span>redirect steps</span>.</p></dd>
 
@@ -1360,7 +1356,8 @@ requests must take care in the use of credentials, including the
          <dd>The <var title>max-age</var>.</dd>
 
          <dt><span title="cache-credentials">credentials</span></dt>
-         <dd>The <span>credentials flag</span>.</dd>
+         <dd>False if the <span>omit credentials flag</span> is set, or true
+         otherwise.
 
          <dt><span title="cache-method">method</span></dt>
          <dd>The given method.</dd>
@@ -1392,7 +1389,8 @@ requests must take care in the use of credentials, including the
          <dd>The <var title>max-age</var>.</dd>
 
          <dt><span title="cache-credentials">credentials</span></dt>
-         <dd>The <span>credentials flag</span>.</dd>
+         <dd>False if the <span>omit credentials flag</span> is set, or true
+         otherwise.
 
          <dt><span title="cache-method">method</span></dt>
          <dd>Empty.</dd>
@@ -1497,7 +1495,8 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
    header value.</dd>
 
    <dt><dfn id="cache-credentials" title="cache-credentials">credentials</dfn></dt>
-   <dd>Holds the value of the <span>credentials flag</span>.</dd>
+   <dd>False if the <span>omit credentials flag</span> is set, or true
+   otherwise.
 
    <dt><dfn id="cache-method" title="cache-method">method</dfn></dt>
    <dd>Empty if <span title="cache-header">header</span> is not empty;
@@ -1546,10 +1545,11 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
   <i title>origin</i> <span>source origin</span> with the
   <i title>manual redirect flag</i> set, and the
   <i title>block cookies flag</i> set if the
-  <span>credentials flag</span> is false. Use method
+  <span>omit credentials flag</span> is set. Use method
   <span>request method</span>, entity body <span>request entity body</span>,
   including the <span>author request headers</span>, and include
-  <span>user credentials</span> if the <span>credentials flag</span> is true. Exclude the <code title="http-referer">Referer</code> header if
+  <span>user credentials</span> if the <span>omit credentials flag</span> is unset.
+  Exclude the <code title="http-referer">Referer</code> header if
   <span>source origin</span> is a globally unique identifier.</p>
 
   <p>Whenever the <dfn id="redirect-steps">redirect steps</dfn> are applied,
@@ -1637,7 +1637,8 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
    <span>request URL</span>.</p></li>
 
    <li><p>The <span title="cache-credentials">credentials</span> field value
-   is equal to the <span>credentials flag</span>.</p></li>
+   is true and the <span>omit credentials flag</span> is unset, or it is false and
+   the <span>omit credentials flag</span> is set.
   </ul>
 
   <p>There is a
@@ -1666,8 +1667,8 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
 
    <li><p>If the
    <code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>
-   header value is the literal "<code>*</code>" character and the
-   <span>credentials flag</span> is false return pass and terminate this
+   header value is the "<code>*</code>" character and the
+   <span>omit credentials flag</span> is set, return pass and terminate this
    algorithm.</p></li>
 
    <li><p>If the value of
@@ -1676,15 +1677,15 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
    <code title="http-origin">Origin</code> header as defined by its
    specification return fail and terminate this algorithm.</p></li>
 
-   <li><p>If the <span>credentials flag</span> is true and the response
+   <li><p>If the <span>omit credentials flag</span> is unset and the response
    includes zero or more than one
    <code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>
-   header values return fail and terminate this algorithm.</p></li>
+   header values, return fail and terminate this algorithm.</p></li>
 
-   <li><p>If the <span>credentials flag</span> is true and the
+   <li><p>If the <span>omit credentials flag</span> is unset and the
    <code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>
    header value is not a <span>case-sensitive</span> match for
-   "<code>true</code>" return fail and terminate this algorithm.</p></li>
+   "<code>true</code>", return fail and terminate this algorithm.
 
    <li><p>Return pass.</p></li>
   </ol>
@@ -1753,8 +1754,8 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
   variables appropriately: <span>request URL</span>,
   <span>request method</span>, <span>author request headers</span>,
   <span>request entity body</span>, <span>source origin</span>,
-  <span>credentials flag</span>, and the
-  <span>force preflight flag</span>.</p>
+  <span>manual redirect flag</span>, <span>omit credentials flag</span>,
+  and the <span>force preflight flag</span>.</p>
 
   <p>CORS API specifications are allowed to let these input variables be
   controlled by the API, but can also set fixed values.</p>
