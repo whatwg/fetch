@@ -1134,11 +1134,10 @@ requests must take care in the use of credentials, including the
 
   <h4>Source Origin</h4>
 
-  <p>The <span>source origin</span> is the initial origin that user agents
-  must use for the
-  <code title="http-origin">Origin</code> header. In case of redirects the
-  user agents must follow the requirements set forth in
-  the specification for that header.</p>
+  <p>The <span>source origin</span> is the initial
+  <span data-anolis-spec=origin>origin</span> that user agents must use for
+  the <code title="http-origin">Origin</code> header. It can be modified
+  during the <span>redirect steps</span>.</p>
 
 
   <h4>Simple Cross-Origin Request</h4>
@@ -1557,6 +1556,8 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
   follow this set of steps:</p>
 
   <ol>
+   <li><p>Let <var>original URL</var> be the <span>request URL</span>.
+
    <li><p>Let <span>request URL</span> be the
    <span data-anolis-spec=html>URL</span> conveyed by
    the <code>Location</code> header in the redirect response.</p></li>
@@ -1565,30 +1566,26 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
    <li><p>If the <span>request URL</span> &lt;scheme> is not supported,
    infinite loop precautions are violated, or the user agent does not wish
    to make the new request for some other reason, apply the
-   <span>network error steps</span> and terminate this set of
-   steps.</p></li>
+   <span>network error steps</span>.
 
    <li><p>If the <span>request URL</span> contains the
    <code data-anolis-spec=uri>userinfo</code> production apply the
    <span>network error steps</span>.</p></li>
 
-   <li><p>If the <span>resource sharing check</span> for the current resource
-   returns fail, apply the <span>network error steps</span>.</p></li>
+   <li><p>If the <span>resource sharing check</span> for the current
+   resource returns fail, apply the <span>network error steps</span>.
    <!--This prevents intranet data leakage.-->
+
+   <li><p>If the <span>request URL</span>
+   <span data-anolis-spec=origin>origin</span> is not
+   <span data-anolis-spec=origin>same origin</span> with the
+   <var>original URL</var> <span data-anolis-spec=origin>origin</span>, set
+   <span>source origin</span> to a globally unique identifier.
 
    <li><p>Otherwise, transparently follow the redirect while observing the
    set of <i>request rules</i>.</p></li>
    <!-- XXX or should this use the make a request steps? -->
   </ol>
-
-  <p class=note>A redirect to a URL that is
-  <span data-anolis-spec=origin>same origin</span> with the
-  <span>source origin</span> is handled identically to any other
-  URL.</p>
-
-  <p class=note>A redirect to a URL that is <span>cross-origin</span> has
-  consequences for the value of the <code title="http-origin">Origin</code>
-  header as detailed by its specification.</p>
 
   <hr>
 

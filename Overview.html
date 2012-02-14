@@ -1116,11 +1116,10 @@ requests must take care in the use of credentials, including the
 
   <h4 id="source-origin-0"><span class="secno">7.1.3 </span>Source Origin</h4>
 
-  <p>The <a href="#source-origin">source origin</a> is the initial origin that user agents
-  must use for the
-  <code title="http-origin"><a href="#http-origin">Origin</a></code> header. In case of redirects the
-  user agents must follow the requirements set forth in
-  the specification for that header.</p>
+  <p>The <a href="#source-origin">source origin</a> is the initial
+  <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> that user agents must use for
+  the <code title="http-origin"><a href="#http-origin">Origin</a></code> header. It can be modified
+  during the <a href="#redirect-steps">redirect steps</a>.</p>
 
 
   <h4 id="simple-cross-origin-request-0"><span class="secno">7.1.4 </span>Simple Cross-Origin Request</h4>
@@ -1539,6 +1538,8 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
   follow this set of steps:</p>
 
   <ol>
+   <li><p>Let <var>original URL</var> be the <a href="#request-url">request URL</a>.
+
    <li><p>Let <a href="#request-url">request URL</a> be the
    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a> conveyed by
    the <code>Location</code> header in the redirect response.</li>
@@ -1547,30 +1548,26 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
    <li><p>If the <a href="#request-url">request URL</a> &lt;scheme&gt; is not supported,
    infinite loop precautions are violated, or the user agent does not wish
    to make the new request for some other reason, apply the
-   <a href="#network-error-steps">network error steps</a> and terminate this set of
-   steps.</li>
+   <a href="#network-error-steps">network error steps</a>.
 
    <li><p>If the <a href="#request-url">request URL</a> contains the
    <code class="external"><a href="http://tools.ietf.org/html/rfc2616/#section-3.2.1">userinfo</a></code> production apply the
    <a href="#network-error-steps">network error steps</a>.</li>
 
-   <li><p>If the <a href="#resource-sharing-check">resource sharing check</a> for the current resource
-   returns fail, apply the <a href="#network-error-steps">network error steps</a>.</li>
+   <li><p>If the <a href="#resource-sharing-check">resource sharing check</a> for the current
+   resource returns fail, apply the <a href="#network-error-steps">network error steps</a>.
    <!--This prevents intranet data leakage.-->
+
+   <li><p>If the <a href="#request-url">request URL</a>
+   <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> is not
+   <a class="external" href="http://tools.ietf.org/html/rfc6454#section-5">same origin</a> with the
+   <var>original URL</var> <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a>, set
+   <a href="#source-origin">source origin</a> to a globally unique identifier.
 
    <li><p>Otherwise, transparently follow the redirect while observing the
    set of <i>request rules</i>.</li>
    <!-- XXX or should this use the make a request steps? -->
   </ol>
-
-  <p class="note">A redirect to a URL that is
-  <a class="external" href="http://tools.ietf.org/html/rfc6454#section-5">same origin</a> with the
-  <a href="#source-origin">source origin</a> is handled identically to any other
-  URL.</p>
-
-  <p class="note">A redirect to a URL that is <a href="#cross-origin">cross-origin</a> has
-  consequences for the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
-  header as detailed by its specification.</p>
 
   <hr>
 
