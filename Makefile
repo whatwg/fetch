@@ -14,4 +14,4 @@ publish: Overview.src.html data Makefile
 	$(ANOLIS) --output-encoding=ascii --omit-optional-tags --quote-attr-values \
 	--w3c-compat --enable=xspecxref --enable=refs --w3c-shortname="cors" \
 	--filter=".dontpublish" --pubdate="$(PUBDATE)" --w3c-status=WD \
-	$< Overview.html
+	$< publish.html
