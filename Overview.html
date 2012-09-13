@@ -9,7 +9,7 @@
 
    <h1 id="cors">Cross-Origin Resource Sharing</h1>
 
-   <h2 class="no-num no-toc" id="living-standard-&mdash;-last-updated-12-september-2012">Living Standard &mdash; Last Updated 12 September 2012</h2>
+   <h2 class="no-num no-toc" id="living-standard-&mdash;-last-updated-13-september-2012">Living Standard &mdash; Last Updated 13 September 2012</h2>
 
    <dl>
     <dt>This Version:</dt>
@@ -34,7 +34,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-12 September 2012, the editor has made this specification available
+13 September 2012, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -183,7 +183,7 @@ interested in making that happen please contact the editor.
 
 Hello World!</code></pre>
 
-   <p>Using <code class="external"><a href="http://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#xmlhttprequest">XMLHttpRequest</a></code> a client-side
+   <p>Using <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code> a client-side
    Web application on <code>http://hello-world.example</code> can access
    this resource as follows:
 
@@ -218,7 +218,7 @@ Access-Control-Allow-Methods: PUT, DELETE</code></pre>
 
    <p>The complexity of invoking the additional preflight request is
    the task of the user agent. Using
-   <code class="external"><a href="http://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#xmlhttprequest">XMLHttpRequest</a></code> again and assuming the
+   <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code> again and assuming the
    application were hosted at <code>http://calendar.example/app</code> the
    author could use the following ECMAScript snippet:
 
@@ -971,6 +971,12 @@ requests must take care in the use of credentials, including the
     in a generic way and therefore it has to be provided as argument.</p>
    </dd>
 
+   <dt><dfn id="referrer-source">referrer source</dfn>
+   <dd>
+    <p>Either a <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> or
+    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a>. Used to determine the
+    <code title="http-referer">Referer</code> header.
+
    <dt><dfn id="manual-redirect-flag">manual redirect flag</dfn></dt>
    <dd><p>Set when redirects are <em>not</em> to be automatically followed.
 
@@ -1042,8 +1048,8 @@ requests must take care in the use of credentials, including the
   CORS API specifications.</p>
 
   <p class="note">The
-  <code class="external" title="dom-XMLHttpRequest-getResponseHeader"><a href="http://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#dom-xmlhttprequest-getresponseheader">getResponseHeader()</a></code>
-  method of <code class="external"><a href="http://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#xmlhttprequest">XMLHttpRequest</a></code> will therefore
+  <code class="external" title="dom-XMLHttpRequest-getResponseHeader"><a href="http://xhr.spec.whatwg.org/#dom-xmlhttprequest-getresponseheader">getResponseHeader()</a></code>
+  method of <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code> will therefore
   not expose any header not indicated above.</p>
 
 
@@ -1161,8 +1167,9 @@ requests must take care in the use of credentials, including the
     <p>Otherwise, make a
     <dfn id="preflight-request">preflight request</dfn>.
     <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#fetch">Fetch</a> the <a href="#request-url">request URL</a>
-    from <i title="">origin</i> <a href="#source-origin">source origin</a> with the
-    <i title="">manual redirect flag</i> and the
+    from <i title="">origin</i> <a href="#source-origin">source origin</a> using
+    <a href="#referrer-source">referrer source</a> as <i title="">override referrer source</i>
+    with the <i title="">manual redirect flag</i> and the
     <i title="">block cookies flag</i> set, using the method
     <code>OPTIONS</code>, and with the following additional constraints:</p>
 
@@ -1182,9 +1189,6 @@ requests must take care in the use of credentials, including the
      <li><p>Exclude the <a href="#author-request-headers">author request headers</a>.</li>
 
      <li><p>Exclude <a href="#user-credentials">user credentials</a>.</li>
-
-     <li><p>Exclude the <code title="http-referer">Referer</code> header if
-     <a href="#source-origin">source origin</a> is a globally unique identifier.</li>
 
      <li><p>Exclude the <a href="#request-entity-body">request entity body</a>.</li>
     </ul>
@@ -1405,7 +1409,7 @@ requests must take care in the use of credentials, including the
 
    <ol>
     <li><p>The user agent gets the request from an API, such as
-    <code class="external"><a href="http://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#xmlhttprequest">XMLHttpRequest</a></code>, to perform a
+    <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>, to perform a
     cross-origin request using the custom <code>XMODIFY</code> method from
     <a href="#source-origin">source origin</a> <code>http://example.org</code> to
     <code>http://blog.example/entries/hello-world</code>.
@@ -1499,15 +1503,14 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
 
   <p>Whenever the <dfn id="make-a-request-steps">make a request steps</dfn> are applied,
   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#fetch">fetch</a> the <a href="#request-url">request URL</a> from
-  <i title="">origin</i> <a href="#source-origin">source origin</a> with the
-  <i title="">manual redirect flag</i> set, and the
+  <i title="">origin</i> <a href="#source-origin">source origin</a> using
+  <a href="#referrer-source">referrer source</a> as <i title="">override referrer source</i> with
+  the <i title="">manual redirect flag</i> set, and the
   <i title="">block cookies flag</i> set if the
   <a href="#omit-credentials-flag">omit credentials flag</a> is set. Use method
   <a href="#request-method">request method</a>, entity body <a href="#request-entity-body">request entity body</a>,
   including the <a href="#author-request-headers">author request headers</a>, and include
   <a href="#user-credentials">user credentials</a> if the <a href="#omit-credentials-flag">omit credentials flag</a> is unset.
-  Exclude the <code title="http-referer">Referer</code> header if
-  <a href="#source-origin">source origin</a> is a globally unique identifier.</p>
 
   <p>Whenever the <dfn id="redirect-steps">redirect steps</dfn> are applied,
   follow this set of steps:</p>
@@ -1760,7 +1763,7 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
     <a href="#preflight-request">preflight request</a> can now be enabled.</p>
 
     <p class="note">E.g. upload progress events for
-    <code class="external"><a href="http://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html#xmlhttprequest">XMLHttpRequest</a></code>.
+    <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>.
    </dd>
 
    <dt><i>success</i></dt>
@@ -1844,7 +1847,7 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
 <dd><cite><a href="http://tools.ietf.org/html/rfc3986">Uniform Resource Identifier (URI): Generic Syntax</a></cite>, Tim Berners-Lee, Roy Fielding and Larry Masinter. IETF.
 
 <dt id="refsXHR">[XHR]
-<dd>(Non-normative) <cite><a href="http://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html">XMLHttpRequest</a></cite>, Anne van Kesteren. W3C.
+<dd>(Non-normative) <cite><a href="http://xhr.spec.whatwg.org/">XMLHttpRequest</a></cite>, Anne van Kesteren. WHATWG.
 
 </dl></div>
 
