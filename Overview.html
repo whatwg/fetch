@@ -1,13 +1,13 @@
 <!DOCTYPE html><html lang="en-US"><meta charset="utf-8">
-<title>Cross-Origin Resource Sharing Standard</title>
+<title>Fetch Standard</title>
 <link href="//www.whatwg.org/style/specification" rel="stylesheet">
 <link href="//resources.whatwg.org/logo-fetch.svg" rel="icon">
 
 <div class="head">
 
-<p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a></p>
+<p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Cross-Origin Resource Sharing</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-november-2012">Living Standard — Last Updated 10 November 2012</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-15-march-2013">Living Standard — Last Updated 15 March 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -16,8 +16,8 @@
  <dt>Participate:
  <dd>Send feedback to <a href="mailto:public-webappsec@w3.org?subject=[cors]%20">public-webappsec@w3.org</a>
   (<a href="http://lists.w3.org/Archives/Public/public-webappsec/">archives</a>) or
-  <a href="https://www.w3.org/Bugs/Public/enter_bug.cgi?product=WebAppsSec&amp;component=CORS">file a bug</a>
-  (<a href="https://www.w3.org/Bugs/Public/buglist.cgi?product=WebAppsSec&amp;component=CORS&amp;resolution=---">open bugs</a>)
+  <a href="https://www.w3.org/Bugs/Public/enter_bug.cgi?product=WHATWG&amp;component=Fetch">file a bug</a>
+  (<a href="https://www.w3.org/Bugs/Public/buglist.cgi?product=WHATWG&amp;component=Fetch&amp;resolution=---">open bugs</a>)
  <dd><a href="//wiki.whatwg.org/wiki/IRC">IRC: #whatwg on Freenode</a>
 
  <dt>Version History:
@@ -25,6 +25,7 @@
 
  <dt>Editor:
  <dd><a href="http://annevankesteren.nl/">Anne van Kesteren</a>
+  (<a href="http://www.mozilla.org/">Mozilla</a>)
   &lt;<a href="mailto:annevk@annevk.nl">annevk@annevk.nl</a>&gt;
 </dl>
 
@@ -33,7 +34,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-10 November 2012, the editor has made this specification available
+15 March 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -43,1812 +44,847 @@ http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0.
 
 
 
-<p class="XXX">This specification ought to be merged with
-<a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#fetch" title="fetch">HTML fetch</a>. If you are
-interested in making that happen please contact the editor.
+<h2 id="abstract"><span class="secno">1 </span>Abstract</h2>
+
+<p>The Fetch standard defines the overall architecture for obtaining resources given a URL
+and a set of parameters. This concept is named fetching.
 
 
 
-<h2 class="no-num no-toc" id="abstract">Abstract</h2>
+<h2 class="no-num no-toc" id="table-of-contents">Table of Contents</h2>
 
-  <p>This document defines a mechanism to enable client-side cross-origin
-  requests. Specifications that enable an API to make cross-origin requests
-  to resources can use the algorithms defined by this specification. If
-  such an API is used on <code>http://example.org</code> resources, a
-  resource on <code>http://hello-world.example</code> can opt in using the
-  mechanism described by this specification (e.g., specifying
-  <code>Access-Control-Allow-Origin: http://example.org</code> as response
-  header), which would allow that resource to be fetched cross-origin from
-  <code>http://example.org</code>.</p>
-
-
-
-  <h2 class="no-num no-toc" id="toc">Table of Contents</h2>
-
-  
 <!--begin-toc-->
 <ol class="toc">
- <li><a href="#introduction"><span class="secno">1 </span>Introduction</a></li>
- <li><a href="#conformance"><span class="secno">2 </span>Conformance</a></li>
- <li><a href="#terminology"><span class="secno">3 </span>Terminology</a></li>
- <li><a href="#security"><span class="secno">4 </span>Security Considerations</a></li>
- <li><a href="#syntax"><span class="secno">5 </span>Syntax</a>
+ <li><a href="#abstract"><span class="secno">1 </span>Abstract</a></li>
+ <li><a href="#goals"><span class="secno">2 </span>Goals</a></li>
+ <li><a href="#legacy"><span class="secno">3 </span>Legacy</a></li>
+ <li><a href="#requests"><span class="secno">4 </span>Requests</a></li>
+ <li><a href="#responses"><span class="secno">5 </span>Responses</a></li>
+ <li><a href="#fetching"><span class="secno">6 </span>Fetching</a>
   <ol class="toc">
-   <li><a href="#access-control-allow-origin-response-header"><span class="secno">5.1 </span><code title="">Access-Control-Allow-Origin</code> Response Header</a></li>
-   <li><a href="#access-control-allow-credentials-response-header"><span class="secno">5.2 </span><code title="">Access-Control-Allow-Credentials</code> Response Header</a></li>
-   <li><a href="#access-control-expose-headers-response-header"><span class="secno">5.3 </span><code title="">Access-Control-Expose-Headers</code> Response Header</a></li>
-   <li><a href="#access-control-max-age-response-header"><span class="secno">5.4 </span><code title="">Access-Control-Max-Age</code> Response Header</a></li>
-   <li><a href="#access-control-allow-methods-response-header"><span class="secno">5.5 </span><code title="">Access-Control-Allow-Methods</code> Response Header</a></li>
-   <li><a href="#access-control-allow-headers-response-header"><span class="secno">5.6 </span><code title="">Access-Control-Allow-Headers</code> Response Header</a></li>
-   <li><a href="#origin-request-header"><span class="secno">5.7 </span><code title="">Origin</code> Request Header</a></li>
-   <li><a href="#access-control-request-method-request-header"><span class="secno">5.8 </span><code title="">Access-Control-Request-Method</code> Request Header</a></li>
-   <li><a href="#access-control-request-headers-request-header"><span class="secno">5.9 </span><code title="">Access-Control-Request-Headers</code> Request Header</a></ol></li>
- <li><a href="#resource-processing-model"><span class="secno">6 </span>Resource Processing Model</a>
-  <ol class="toc">
-   <li><a href="#resource-requests"><span class="secno">6.1 </span>Simple Cross-Origin Request, Actual Request, and
-  Redirects</a></li>
-   <li><a href="#resource-preflight-requests"><span class="secno">6.2 </span>Preflight Request</a></li>
-   <li><a href="#resource-security"><span class="secno">6.3 </span>Security</a></ol></li>
- <li><a href="#user-agent-processing-model"><span class="secno">7 </span>User Agent Processing Model</a>
-  <ol class="toc">
-   <li><a href="#cross-origin-request-0"><span class="secno">7.1 </span>Cross-Origin Request</a>
-    <ol class="toc">
-     <li><a href="#handling-a-response-to-a-cross-origin-request"><span class="secno">7.1.1 </span>Handling a Response to a Cross-Origin Request</a></li>
-     <li><a href="#cross-origin-request-status-0"><span class="secno">7.1.2 </span>Cross-Origin Request Status</a></li>
-     <li><a href="#source-origin-0"><span class="secno">7.1.3 </span>Source Origin</a></li>
-     <li><a href="#simple-cross-origin-request-0"><span class="secno">7.1.4 </span>Simple Cross-Origin Request</a></li>
-     <li><a href="#cross-origin-request-with-preflight-0"><span class="secno">7.1.5 </span>Cross-Origin Request with Preflight</a></li>
-     <li><a href="#preflight-result-cache-0"><span class="secno">7.1.6 </span>Preflight Result Cache</a></li>
-     <li><a href="#generic-cross-origin-request-algorithms"><span class="secno">7.1.7 </span>Generic Cross-Origin Request Algorithms</a></ol></li>
-   <li><a href="#resource-sharing-check-0"><span class="secno">7.2 </span>Resource Sharing Check</a></li>
-   <li><a href="#user-agent-security"><span class="secno">7.3 </span>Security</a></ol></li>
- <li><a href="#cors-api-specification-advice"><span class="secno">8 </span>CORS API Specification Advice</a>
-  <ol class="toc">
-   <li><a href="#cors-api-specifiation-request"><span class="secno">8.1 </span>Constructing a Cross-Origin Request</a></li>
-   <li><a href="#cors-api-specification-redirect"><span class="secno">8.2 </span>Dealing with Same Origin to Cross-Origin Redirects</a></li>
-   <li><a href="#cors-api-specification-response"><span class="secno">8.3 </span>Dealing with the
-  Cross-Origin Request Status</a></li>
-   <li><a href="#cors-api-specification-security"><span class="secno">8.4 </span>Security</a></ol></li>
+   <li><a href="#basic-fetch"><span class="secno">6.1 </span>Basic fetch</a></li>
+   <li><a href="#redirect-fetch"><span class="secno">6.2 </span>Redirect fetch</a></li>
+   <li><a href="#cors-fetch"><span class="secno">6.3 </span>CORS fetch</a></li>
+   <li><a href="#cors-fetch-with-preflight"><span class="secno">6.4 </span>CORS fetch with preflight</a></li>
+   <li><a href="#cors-preflight-fetch"><span class="secno">6.5 </span>CORS preflight fetch</a></li>
+   <li><a href="#cors-preflight-cache"><span class="secno">6.6 </span>CORS preflight cache</a></li>
+   <li><a href="#cors-check"><span class="secno">6.7 </span>CORS check</a></ol></li>
  <li><a class="no-num" href="#references">References</a></li>
  <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
 <!--end-toc-->
 
 
 
+<h2 id="goals"><span class="secno">2 </span>Goals</h2>
 
-  <h2 id="introduction"><span class="secno">1 </span>Introduction</h2>
+<p>To unify fetching across the web platform this specification supplants a number of algorithms and specifications:
 
-  <p><em>This section is non-normative.</em></p>
+<ul class="brief">
+ <li>HTML Standard's fetch and potentially CORS-enabled fetch algorithms
+ <li>CORS
+ <li>HTTP <code title="">Origin</code> header semantics
+</ul>
 
-  <p>User agents commonly apply same-origin restrictions to network
-  requests. These restrictions prevent a client-side Web application
-  running from one origin from obtaining data retrieved from another origin,
-  and also limit unsafe HTTP requests that can be automatically launched
-  toward destinations that differ from the running application's origin.</p>
+<p>Unifying fetching provides consistent handling of:
 
-  <p>In user agents that follow this pattern, network requests typically use
-  ambient authentication and session management information, including HTTP
-  authentication and cookie information.</p>
+<ul class="brief">
+ <li>Different URL schemes
+ <li>HTTP redirects
+ <li>Cross-origin requests
+</ul>
 
-  <p>This specification extends this model in several ways:
-
-  <ul>
-   <li>
-    <p>A response can include an
-    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-    header, with the origin of where the request originated from as the
-    value, to allow access to the resource's contents.</p>
-
-    <p>The user agent validates that the value and origin of where the
-    request originated match.</p>
-   </li>
-
-   <li>
-    <p>User agents can discover via a <a href="#preflight-request">preflight request</a> whether
-    a cross-origin resource is prepared to accept requests, using a
-    non-<a href="#simple-method">simple method</a>, from a given origin.</p>
-
-    <p>This is again validated by the user agent.</p>
-   </li>
-
-   <li>
-    <p>Server-side applications are enabled to discover that an HTTP request
-    was deemed a cross-origin request by the user agent, through the
-    <code title="http-origin"><a href="#http-origin">Origin</a></code> header.</p>
-
-    <p>This extension enables server-side applications to enforce
-    limitations (e.g. returning nothing) on the cross-origin requests that
-    they are willing to service.</p>
-   </li>
-  </ul>
-
-  <p>This specification is a building block for other specifications,
-  so-called CORS API specifications, which define how this specification is
-  used. Examples are Server-Sent Events and XMLHttpRequest.
-  <a class="informative" href="#refsEVENTSOURCE">[EVENTSOURCE]</a>
-  <a class="informative" href="#refsXHR">[XHR]</a>
-
-  <p>The <a href="http://www.w3.org/wiki/CORS">CORS wiki page</a> provides
-  more background information about this document.</p>
-
-  <div class="example">
-   <p>If a resource author has a simple text resource residing at
-   <code>http://example.com/hello</code> which contains the string
-   "Hello World!" and would like <code>http://hello-world.example</code> to
-   be able to access it, the response combined with a header
-   introduced by this specification could look as follows:</p>
-
-   <pre><code>Access-Control-Allow-Origin: http://hello-world.example
-
-Hello World!</code></pre>
-
-   <p>Using <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code> a client-side
-   Web application on <code>http://hello-world.example</code> can access
-   this resource as follows:
-
-   <pre><code>var client = new XMLHttpRequest()
-client.open("GET", "http://example.com/hello")
-client.onreadystatechange = function() { /* do something */ }
-client.send()</code></pre>
-
-   <p>It gets slightly more complicated if the resource author wants to be
-   able to handle cross-origin requests using methods other than
-   <a href="#simple-method" title="simple method">simple methods</a>. In that case
-   the author needs to reply to a preflight request that uses the
-   <code>OPTIONS</code> method and then needs to handle the actual request
-   that uses the desired method (<code>DELETE</code> in this example) and
-   give an appropriate response. The response to the preflight request could
-   have the following headers specified:</p>
-
-   <pre><code>Access-Control-Allow-Origin: http://hello-world.example
-Access-Control-Max-Age: 3628800
-Access-Control-Allow-Methods: PUT, DELETE</code></pre>
-
-   <p>The
-   <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
-   header indicates how long the response can be cached, so that for
-   subsequent requests, within the specified time, no preflight request has
-   to be made. The
-   <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
-   header indicates the methods that can be used in the actual request. The
-   response to the actual request can simply contain this header:</p>
-
-   <pre><code>Access-Control-Allow-Origin: http://hello-world.example</code></pre>
-
-   <p>The complexity of invoking the additional preflight request is
-   the task of the user agent. Using
-   <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code> again and assuming the
-   application were hosted at <code>http://calendar.example/app</code> the
-   author could use the following ECMAScript snippet:
-
-   <pre><code>function deleteItem(itemId, updateUI) {
-  var client = new XMLHttpRequest()
-  client.open("DELETE", "http://calendar.example/app")
-  client.onload = updateUI
-  client.onerror = updateUI
-  client.onabort = updateUI
-  client.send("id=" + itemId)
-}</code></pre>
-  </div>
+<p>In due course, it should also help clarify the semantics of CSP and make provide a model to hook offline networking into.
 
 
 
+<h2 id="legacy"><span class="secno">3 </span>Legacy</h2>
 
-  <h2 id="conformance"><span class="secno">2 </span>Conformance</h2>
+<p>HTML defines two algorithms. This maps these "legacy" algorithms to the new
+<a href="#fetch">fetch</a>.
 
-  <p>This specification is written for resource authors and user agents. It
-  includes advice for specifications that define APIs that use the
-  <a href="#cross-origin-request">cross-origin request</a> algorithm defined in this specification
-  — CORS API specifications — and the general
-  <a href="#security">security considerations</a> section includes some
-  advice for client-side Web application authors.</p>
+<p>When a user agent is to <dfn id="legacy-fetch" title="legacy-fetch">fetch</dfn> a resource or URL,
+optionally <strong>from</strong> an origin <i title="">origin</i>, optionally
+<strong>using</strong> a specific <span>referrer source</span> as an <i>override referrer source</i>,
+and optionally with any of a <i>synchronous flag</i>, a <i>manual redirect flag</i>, a
+<i>force same-origin flag</i>, and a <i>block cookies flag</i>, the following steps must be run:
 
-  <p>As well as sections and appendices marked as non-normative, all
-  diagrams, examples, and notes in this specification are non-normative.
-  Everything else in this specification is normative.</p>
+<p class="note">The <i>block cookies flag</i> is obsolete now.
 
-  <p>In this specification, The words must and
-  may are to be interpreted as described in RFC 2119.
-  <a href="#refsRFC2119">[RFC2119]</a></p>
+ <!-- if invoked with the synchronous flag, make sure to release the storage mutex first -->
 
-  <p>Requirements phrased in the imperative as part of algorithms (e.g.
-  "terminate the algorithm") are to be interpreted with the meaning of the
-  key word (e.g. must) used in introducing the
-  algorithm.</p>
+ <!-- synchronous flag is only to be used in algorithms that are themselves asynchronous! Only
+ sync-XHR is allowed to make the mistake of screwing that up. :-P -->
 
-  <p>A conformant resource is one that implements all the requirements
-  listed in this specification that are applicable to resources.</p>
-
-  <p>A conformant user agent is one that implements all the requirements
-  listed in this specification that are applicable to user agents.</p>
-
-  <p>User agents and resource authors may employ any
-  algorithm to implement this specification, so long as the end result is
-  indistinguishable from the result that would be obtained by the
-  specification's algorithms.</p>
-
-
-  <h2 id="terminology"><span class="secno">3 </span>Terminology</h2>
-
-  <p>Some terminology in this specification is from
-  <cite>The Web Origin Concept</cite>
-  <cite>HTML</cite>,<!--fetch-->
-  <cite>HTTP</cite>
-  and
-  <cite>URI</cite>.
-  <a href="#refsORIGIN">[ORIGIN]</a>
-  <a href="#refsHTML">[HTML]</a>
-  <a href="#refsHTTP">[HTTP]</a>
-  <a href="#refsURI">[URI]</a>
-
-  <p>Terminology is generally defined throughout the specification. However,
-  the few definitions that did not really fit anywhere else are defined here
-  instead.</p>
-
-  <!-- These definitions are copies of those in HTML and DOM Core.
-       XXX should they be in a separate document? -->
-
-  <p>Comparing two strings in a
-  <dfn id="case-sensitive">case-sensitive</dfn> manner means comparing them
-  exactly, codepoint for codepoint.</p>
-
-  <p>Comparing two strings in an
-  <dfn id="ascii-case-insensitive">ASCII case-insensitive</dfn> manner means
-  comparing them exactly, codepoint for codepoint, except that the
-  characters in the range U+0041 LATIN CAPITAL LETTER A to U+005A
-  LATIN CAPITAL LETTER Z and the corresponding characters in the range
-  U+0061 LATIN SMALL LETTER A to U+007A LATIN SMALL LETTER Z are
-  considered to also match.</p>
-
-  <p><dfn id="converted-to-ascii-lowercase" title="converted to ASCII lowercase">Converting a string to ASCII lowercase</dfn>
-  means replacing all characters in the range U+0041 LATIN CAPITAL LETTER A
-  to U+005A LATIN CAPITAL LETTER Z with the corresponding characters in the
-  range U+0061 LATIN SMALL LETTER A to U+007A LATIN SMALL LETTER Z).</p>
-
-  <p>The term <dfn id="user-credentials">user credentials</dfn> for the purposes of this
-  specification means cookies, HTTP authentication, and client-side SSL
-  certificates. Specifically it does not refer to proxy authentication or
-  the <code title="http-origin"><a href="#http-origin">Origin</a></code> header.
-  <a href="#refsCOOKIES">[COOKIES]</a><!-- XXX ref? --></p>
-
-  <p>The term <dfn id="cross-origin">cross-origin</dfn> is used to mean non
-  <a class="external" href="http://tools.ietf.org/html/rfc6454#section-5">same origin</a>.</p>
-
-  <p>A <var title="">method</var> is said to be a
-  <dfn id="simple-method">simple method</dfn> if it is a
-  <a href="#case-sensitive">case-sensitive</a> match for one of the following:</p>
-
-  <ul>
-   <li><code>GET</code></li>
-   <li><code>HEAD</code></li>
-   <li><code>POST</code></li>
-  </ul>
-
-  <p>A <var title="">header</var> is said to be a
-  <dfn id="simple-header">simple header</dfn> if the header field name is an
-  <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for <code>Accept</code>,
-  <code>Accept-Language</code>, or <code>Content-Language</code>, or if it
-  is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for
-  <code>Content-Type</code> and the header field value media type (excluding
-  parameters) is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for
-  <code>application/x-www-form-urlencoded</code>,
-  <code>multipart/form-data</code>, or <code>text/plain</code>.</p>
-
-  <!-- XXX there is an email complaining about the parameters -->
-
-  <p>A <var title="">header</var> is said to be a
-  <dfn id="simple-response-header">simple response header</dfn> if the
-  header field name is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for one
-  of the following:</p>
-
-  <ul>
-   <li><code>Cache-Control</code></li>
-   <li><code>Content-Language</code></li>
-   <li><code>Content-Type</code></li>
-   <li><code>Expires</code></li>
-   <li><code>Last-Modified</code></li>
-   <li><code>Pragma</code></li>
-  </ul>
-
-  <p>When
-  <dfn id="header-parsing" title="header parsing">parsing a header</dfn> the
-  header must be parsed per the corresponding ABNF
-  production in the <a href="#syntax">syntax</a> section. If the header does
-  not match the production it is said that
-  <dfn id="header-parsing-failed">header parsing failed</dfn>.</p>
-
-
-
-
-  <h2 id="security"><span class="secno">4 </span>Security Considerations</h2>
-
-  <p><em>This section is non-normative.</em></p>
-
-  <p>Security requirements and considerations are listed throughout this
-  specification. This section lists advice that did not fit anywhere
-  else.</p>
-
-  <hr>
-
-<p>A <a href="#simple-cross-origin-request">simple cross-origin request</a> has been defined as congruent
-with those which may be generated by currently deployed user agents that do
-not conform to this specification. Simple cross-origin requests generated
-outside this specification (such as cross-origin form submissions using
-<code>GET</code> or <code>POST</code> or cross-origin <code>GET</code>
-requests resulting from <code>script</code> elements) typically include
-<a href="#user-credentials">user credentials</a>, so resources conforming to this specification
-must always be prepared to expect simple cross-origin requests with
-credentials.
-
-<p>Because of this, resources for which simple requests have significance
-other than retrieval must protect themselves from Cross-Site Request Forgery
-(CSRF)
-by requiring the inclusion of an unguessable token in the explicitly
-provided content of the request.
-<a class="informative" href="#refsCSRF">[CSRF]</a>
-
-<p>This specification defines how to authorize an instance of an application
-from a foreign origin, executing in the user agent, to access the
-representation of the resource in an HTTP response. Certain types of
-resources should not attempt to specify particular authorized origins, but
-instead either deny or allow all origins.
+ <!-- the force same-origin flag is for use in places where we'll be moving to CORS one day; when
+ used, the algorithm must be invoked with a URL (not something else, like a POST request) whose
+ origin is the same as the /origin/, which must also be present, and the algorithm must not be
+ invoked with the manual redirect flag. -->
 
 <ol>
- <li><p>A resource that is not useful to applications from other origins, such as a login page, ought not to return an
- <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
- header. The resource still must protect itself against CSRF attacks, such
- as by requiring the inclusion of an unguessable token in the explicitly
- provided content of the request. The security properties of such resources
- are unaffected by user-agents conformant to this specification.
+ <li><p>If there is a specific <i>override referrer source</i>, and it is a URL, then
+  let <var title="">referrer</var> be the <i>override referrer source</i>.
 
  <li>
-  <p>A resource that is publicly accessible, with no access control checks,
-  can always safely return an
-  <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-  header whose value is "<code>*</code>".
+  <p>Otherwise, run these substeps:
 
- <li><p>A <code>GET</code> response whose entity body happens to parse as
- ECMAScript can return an
- <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
- header whose value is "<code>*</code>" provided there are no sensitive
- comments as it can be accessed cross-origin using an HTML
- <code>script</code> element. If needed, such resources can implement access
- control and CSRF protections as described above.
+  <ol>
+   <li>
+    <p>Let <var title="">document</var> be the appropriate <code>Document</code> as given by
+    the following list:
+
+    <dl class="switch">
+     <dt>If there is a specific <i>override referrer source</i>
+     <dd>The <i>override referrer source</i>.</dd>
+
+     <dt>When <span title="navigate">navigating</span>
+     <dd>The <span>active document</span> of the <span>source browsing context</span>.
+
+     <dt>When fetching resources for an element
+     <dd>The element's <span>node document</span>.
+    </dl>
+
+   <li><p>While <var title="">document</var> is
+   <span>an <code>iframe</code> <code>srcdoc</code> document</span>, set
+   <var title="">document</var> to
+   <var title="">document</var>'s <span>browsing context</span>'s
+   <span>browsing context container</span>'s <code>Document</code> instead.
+
+   <li><p>If <var title="">document</var>'s <span>origin</span> is not a scheme/host/port tuple,
+   then let <var title="">referrer</var> be null.
+
+   <li><p>Otherwise, let <var title="">referrer</var> be <span>the document's address</span> of <var title="">document</var>.
+
+   <li><p>If <var title="">referrer</var>'s <span title="concept-url-scheme">scheme</span> is
+   about/data/javascript, set <var title="">referrer</var> to null.
+  </ol>
+
+ </li>
+
+  <li><p>If the <code>Document</code> with which any <span title="concept-task">tasks</span>
+  <span title="queue a task">queued</span> by this algorithm would be associated doesn't
+  have an associated <span>browsing context</span>, then terminate these steps.
+
+<!--(redundant with 'at a time convenient...' below)
+  <li><p>Optionally, wait until the <code>Document</code> with which any <span
+  title="concept-task">tasks</span> <span title="queue a task">queued</span> by this algorithm
+  would be associated is <span title="active document">active</span>.</p></li>
+-->
+
+ <li><p>Let <var title="">req</var> be a new <a href="#request">request</a>.
+
+ <li><p>If this algorithm was invoked with "from an origin", set  <var title="">req</var>'s
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a> to <var title="">origin</var>.
+
+ <li><p>Set <var title="">req</var>'s <span title="concept-request-referrer">referrer</span> to
+ <var title="">referrer</var>.
+
+ <li><p>Set <var title="">req</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> to
+ same-origin if the <i>force same-origin flag</i> is set, and to tainted cross-origin
+ otherwise.
+
+ <li><p>Set <var title="">req</var>'s <span>manual redirect flag</span> if
+ <i>manual redirect flag</i> is set.
+
+ <li><p>Set <var title="">req</var>'s <span>synchronous flag</span> if
+ <i>synchronous flag</i> is set.
+
+ <li><p><a href="#fetch">Fetch</a> <var title="">req</var>.
 </ol>
 
-<p>Care must always be taken by applications when making cross-origin
-requests with <a href="#user-credentials">user credentials</a>, and servers processing such
-requests must take care in the use of credentials, including the
-<code title="http-origin"><a href="#http-origin">Origin</a></code> header.
+
+<p>When the user agent is required to perform a
+<dfn id="legacy-potentially-cors-enabled-fetch" title="legacy-potentially-cors-enabled-fetch">potentially CORS-enabled fetch</dfn> of an
+<var title="">URL</var> with a mode <var title="">mode</var> that is either
+"No CORS", "Anonymous", or "Use Credentials", optionally using a <span>referrer source</span> <var title="">referrer source</var>, with an <span>origin</span> <var title="">origin</var>, and with a default origin behaviour
+<var title="">default</var> which is either "<i>taint</i>" or "<i>fail</i>", it must run these steps:
+
+<ol>
+ <li><p>Let <var title="">req</var> be a new <a href="#request">request</a>.
+
+ <li><p>Set <var title="">req</var>'s
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a> to <var title="">origin</var>.
+
+ <li>
+  <p>Set <var title="">req</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> to the value
+  corresponding to the first matching statement:
+
+  <dl class="switch">
+   <dt><var title="">mode</var> is "No CORS" and <var title="">default</var> is "<i>fail</i>"
+   <dd>same-origin
+
+   <dt><var title="">mode</var> is "No CORS" and <var title="">default</var> is "<i>taint</i>"
+   <dd>tainted cross-origin
+
+   <dt>Otherwise
+   <dd>CORS
+  </dl>
+
+ <li>
+  <p>If <var title="">mode</var> is "Anonymous", set <var title="">req</var>'s
+  <a href="#omit-credentials-flag">omit credentials flag</a>.
+  <!-- XXX unset by default? -->
+  <!-- nullify Origin / Referer too? -->
+
+ <li class="XXX"><p>Determine <var title="">req</var>'s
+ <span title="concept-request-referrer">referrer</span> as per <a href="#fetch">fetch</a>.
+
+ <li><p><a href="#fetch">Fetch</a> <var title="">req</var>.
+</ol>
+
+
+
+<h2 id="requests"><span class="secno">4 </span>Requests</h2>
+
+<p>The input to <a href="#fetch">fetch</a> is a <dfn id="request">request</dfn>.
+
+<p>A <a href="#request">request</a> has an associated
+<dfn id="concept-request-method" title="concept-request-method">method</dfn>. Unless stated otherwise a
+<a href="#request">request</a>'s <a href="#concept-request-method" title="concept-request-method">method</a> is
+<code title="">GET</code>.
+
+<p>A <a href="#request">request</a> has an associated <dfn id="concept-request-url" title="concept-request-url">url</dfn> (a
+<a class="external" href="http://url.spec.whatwg.org/#concept-parsed-url" title="concept-parsed-url">parsed URL</a>).
+
+<p>A <a href="#request">request</a> has an associated
+<dfn id="concept-request-origin" title="concept-request-origin">origin</dfn>, and
+<dfn id="force-origin-header-flag">force <code title="">Origin</code> header flag</dfn>. Unless stated otherwise a
+<a href="#request">request</a>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> is null and its
+<a href="#force-origin-header-flag">force <code title="">Origin</code> header flag</a> is unset.
+
+<p class="XXX">referrer or referrer source? maybe easier to stick to the latter
+
+<p>A <a href="#request">request</a> has associated
+<dfn id="concept-request-author-headers" title="concept-request-author-headers">author headers</dfn> and
+<dfn id="concept-request-headers" title="concept-request-headers">headers</dfn>. Unless stated otherwise
+<a href="#request">request</a>'s <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>
+and <a href="#concept-request-headers" title="concept-request-headers">headers</a> are empty lists of
+<span title="concept-header">headers</span>.
+
+<p>A <a href="#request">request</a> has an associated <dfn id="concept-request-body" title="concept-request-body">body</dfn>.
+Unless stated otherwise a <a href="#request">request</a>'s
+<a href="#concept-request-body" title="concept-request-body">body</a> is null.
+
+<p>A <a href="#request">request</a> has an associated <dfn id="concept-request-mode" title="concept-request-mode">mode</dfn>,
+which is one of <i title="">same-origin</i>, <i title="">tainted cross-origin</i>, and
+<i title="">CORS</i>. Unless stated otherwise, <a href="#request">request</a>'s
+<a href="#concept-request-mode" title="concept-request-mode">mode</a> is <i title="">tainted cross-origin</i>.
+
+<p>A <a href="#request">request</a> has an associated <dfn id="force-preflight-flag">force preflight flag</dfn> and an
+<dfn id="omit-credentials-flag">omit credentials flag</dfn>. Unless stated otherwise, <a href="#request">request</a>'s
+<a href="#force-preflight-flag">force preflight flag</a> and <a href="#omit-credentials-flag">omit credentials flag</a> are unset.
+<a href="#request">Request</a>'s <a href="#force-preflight-flag">force preflight flag</a> and
+<a href="#omit-credentials-flag">omit credentials flag</a> are only relevant when <a href="#request">request</a>'s
+<a href="#concept-request-mode" title="concept-request-mode">mode</a> is <i title="">CORS</i>.
+
+<p>A <a href="#request">request</a> has an associated
+<dfn id="concept-request-redirect-count" title="concept-request-redirect-count">redirect count</dfn>.
+Unless stated otherwise a <a href="#request">request</a>'s
+<a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is zero.
+
+
+
+<h2 id="responses"><span class="secno">5 </span>Responses</h2>
+
+<p>The result of <a href="#fetch">fetch</a> is a <dfn id="response">response</dfn>.
+
+<p>A <a href="#response">response</a> has an associated
+<dfn id="concept-response-status" title="concept-response-status">status</dfn>,
+<dfn id="concept-response-status-message" title="concept-response-status-message">status message</dfn>,
+<dfn id="concept-response-headers" title="concept-response-headers">headers</dfn>, and a
+<dfn id="concept-response-body" title="concept-response-body">body</dfn>.
+
+<p>When a <a href="#response">response</a> becomes available, its
+<a href="#concept-response-body" title="concept-response-body">body</a> not necessarily is.
+
+<p>A <a href="#response">response</a> has three subtypes, namely <dfn id="redirect">redirect</dfn>,
+<dfn id="network-error">network error</dfn>, and <dfn id="end-user-abort">end-user abort</dfn>.
+
+<p>A <a href="#redirect">redirect</a> has an associated
+<dfn id="concept-redirect-location" title="concept-redirect-location">location</dfn> (a
+<a class="external" href="http://url.spec.whatwg.org/#concept-parsed-url" title="concept-parsed-url">parsed URL</a>).
+
+<p>A <a href="#response">response</a> is either <dfn id="cors-same-origin">CORS-same-origin</dfn> or
+<dfn id="cors-cross-origin">CORS-cross-origin</dfn>. Unless otherwise indicated a <a href="#response">response</a> is
+<a href="#cors-same-origin">CORS-same-origin</a>.
+
+
+
+<h2 id="fetching"><span class="secno">6 </span>Fetching</h2>
+
+<p>To perform a <dfn id="fetch">fetch</dfn> using <var title="">request</var>, run these steps:
+
+<ol>
+ <li><p>Let <var title="">url</var> be <var title="">request</var>'s
+ <a href="#concept-request-url" title="concept-request-url">url</a>.
+
+ <li><p>Let <var title="">origin</var> be <var title="">request</var>'s
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a>.
+
+ <li><p>If <var title="">request</var>'s <span>synchronous flag</span> is unset and
+ <a href="#fetch">fetch</a> is not invoked recursively, run the remaining steps asynchronously.
+
+ <li>
+  <p>Let <var title="">response</var> be the value corresponding to the first matching
+  statement:
+
+  <dl class="switch">
+   <dt><var title="">url</var>'s <span>origin</span> is <var title="">origin</var>
+   <dt><var title="">url</var>'s <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a>
+   is one of "<code title="">about</code>", "<code title="">blob</code>", and "<code title="">data</code>"
+
+   <dd><p>The result of performing a <a href="#redirect-fetch-0">redirect fetch</a> using <var title="">request</var>.
+
+   <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+   "same-origin"
+
+   <dd><p>A <a href="#network-error">network error</a>.
+
+   <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+   "tainted cross-origin"
+   <dd>
+    <p>The result of performing a <a href="#redirect-fetch-0">redirect fetch</a> using
+    <var title="">request</var>, marked <a href="#cors-cross-origin">CORS-cross-origin</a>.
+    <!-- file URLs end up here as they are not same-origin typically. -->
+
+   <dt><var title="">url</var>'s <span title="concept-url-scheme">scheme</span> is not one of
+   "<code title="">http</code>" and "<code title="">https</code>"
+
+   <dd><p>A <a href="#network-error">network error</a>.
+
+   <dt><var title="">request</var>'s <a href="#force-preflight-flag">force preflight flag</a> is set
+   <dt><var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is not
+   a <span>simple method</span>
+   <dt>A <span title="concept-header">header</span> in <var title="">request</var>'s
+   <span title="concept-author-headers">author headers</span> is not a <span>simple header</span>
+   <dd><p>The result of performing a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> using <var title="">request.
+
+   </var><dt>Otherwise
+   <dd><p>The result of performing a <a href="#cors-fetch-0">CORS fetch</a> using <var title="">request</var>.
+  </dl>
+
+ <li><p>If <a href="#fetch">fetch</a> is invoked recursively, return <var title="">response</var>.
+
+ <li><p>If <var title="">request</var>'s <span>synchronous flag</span> is set, wait for
+ <var title="">response</var> to have been fully transmitted and then return it.
+
+ <li><p>Keep <span>queueing</span> <span>tasks</span> on the
+ <span>networking task source</span> until the <var title="">response</var> has been fully
+ transmitted. If no transmission is taking place, <span>queue</span> at least one
+ <span>task</span>.
+</ol>
+
+
+<h3 id="basic-fetch"><span class="secno">6.1 </span>Basic fetch</h3>
+
+<p>To perform a <dfn id="basic-fetch-0">basic fetch</dfn> using <var title="">request</var>, switch on
+<var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+<a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> and run the associated
+steps:
+
+<dl class="switch">
+ <dt>"<code title="">about</code>"
+ <dd>
+  <p>If <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+  <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme-data" title="concept-url-scheme-data">scheme data</a> is
+  "<code title="">blank</code>", return a <a href="#response">response</a> whose
+  <a href="#concept-response-status" title="concept-response-status">status</a> is 200,
+  <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is
+  "<code title="">OK</code>",
+  <a href="#concept-response-headers" title="concept-response-headers">headers</a> consist of a single
+  <span title="concept-header">header</span> whose
+  <span title="concept-header-name">name</span> is <code title="">Content-Type</code> and
+  <span title="concept-header-value">value</span> is
+  "<code title="">text/html;charset=utf-8</code>", and
+  <a href="#concept-response-body" title="concept-response-body">body</a> is the empty string.
+
+  <!-- introduce about:unicorn -->
+
+  <p>Otherwise, return a <a href="#network-error">network error</a>.
+
+ <dt>"<code title="">blob</code>"
+ <dd>
+  <p class="XXX">It has been argued this should be handled outside of
+  <a href="#fetch" title="fetch">fetching</a>.
+
+ <dt>"<code title="">data</code>"
+ <dd>
+  <p>If <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is
+  <code title="">GET</code> and
+  <a href="http://simonsapin.github.com/data-urls/">obtaining a resource</a> from
+  <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> does not return
+  failure, return a <a href="#response">response</a> whose
+  <a href="#concept-response-status" title="concept-response-status">status</a> is 200,
+  <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is
+  "<code title="">OK</code>",
+  <a href="#concept-response-headers" title="concept-response-headers">headers</a> consist of a single
+  <span title="concept-header">header</span> whose
+  <span title="concept-header-name">name</span> is <code title="">Content-Type</code> and
+  <span title="concept-header-value">value</span> is the MIME type and parameters returned
+  from <a href="http://simonsapin.github.com/data-urls/">obtaining a resource</a>, and
+  <a href="#concept-response-body" title="concept-response-body">body</a> is the data returned from
+  <a href="http://simonsapin.github.com/data-urls/">obtaining a resource</a>.
+  <!-- XXX "obtaining a resource" needs a better reference -->
+
+  <p>Otherwise, return a <a href="#network-error">network error</a>.
+
+ <dt>"<code title="">file</code>"
+ <dd>
+  <p>For now, unfortunate as it is, <code>file</code>
+  <a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URLs</a> are left as an exercise for the
+  reader (and their platform).
+
+  <p>When in doubt, return a <a href="#network-error">network error</a>.
+
+ <dt>"<code title="">ftp</code>"
+ <dd>
+  <p>Follow the requirements from FTP to retrieve a resource.
+
+  <p class="XXX">Map the result to <a href="#response">response</a>.
+
+ <dt>"<code title="">http</code>"
+ <dt>"<code title="">https</code>"
+ <dd>
+  <p>Follow the requirements from HTTP to retrieve a resource. If the end user terminates
+  the connection, return a <a href="#end-user-abort">end-user abort</a>. If the connection terminates for
+  other reason, return a <a href="#network-error">network error</a>. Otherwise, when the headers from the
+  resource are obtained, let <var title="">response</var> be a new <a href="#response">response</a> and
+  set its fields appropriately.
+  <!-- should probably spell this out -->
+
+  <p class="XXX">Need to deal with setting Origin / Referer properly, and merging custom / ua headers.
+
+  <p class="XXX">cookies?!
+
+  <p>If <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
+  301, 302, 303, 307, or 308, run these steps:
+
+  <ol>
+   <li><p>If <var title="">response</var>'s
+   <a href="#concept-response-headers" title="concept-response-headers">headers</a> do not contain a
+   <span title="concept-header">header</span> whose
+   <span title="concept-header-name">name</span> is <code title="">Location</code>, return
+   <var title="">response</var>.
+
+   <li><p>If <var title="">response</var>'s
+   <a href="#concept-response-headers" title="concept-response-headers">headers</a> contain more than one
+   <span title="concept-header">header</span> whose
+   <span title="concept-header-name">name</span> is <code title="">Location</code>, change
+   <var title="">response</var> into a <a href="#network-error">network error</a> and return it.
+   <!-- only Gecko does this; if removed add "first" below -->
+
+   <li><p>Let <var title="">location</var> be the
+   <span title="concept-header-value">value</span> of the
+   <span title="concept-header">header</span> whose
+   <span title="concept-header-name">name</span> is <code title="">Location</code> within
+   <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+
+   <li><p>Let <var title="">parsed location</var> be the result of
+   <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
+   <var title="">location</var> with <var title="">request</var>'s
+   <a href="#concept-request-url" title="concept-request-url">url</a>.
+
+   <li><p>If <var title="">parsed location</var> is failure, change <var title="">response</var>
+   into a <a href="#network-error">network error</a> and return it.
+
+   <li><p>If <var title="">request</var>'s
+   <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is twenty, change
+   <var title="">response</var> into a <a href="#network-error">network error</a> and return it.
+
+   <li><p>Increase <var title="">request</var>'s
+   <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> by one.
+
+   <li><p>Change <var title="">response</var> into a <a href="#redirect">redirect</a>.
+
+   <li><p>Set <var title="">response</var>'s
+   <a href="#concept-redirect-location" title="concept-redirect-location">location</a> to
+   <var title="">parsed location</var>.
+  </ol>
+
+  <p>Return <var title="">response</var>.
+
+ <dt>Otherwise
+ <dd><p>Return a <a href="#network-error">network error</a>.
+</dl>
+
+
+<h3 id="redirect-fetch"><span class="secno">6.2 </span>Redirect fetch</h3>
+
+<p>To perform a <dfn id="redirect-fetch-0">redirect fetch</dfn> using <var title="">request</var>, run these steps:
+
+<ol>
+ <li><p>Let <var title="">response</var> be the result of performing a
+ <a href="#basic-fetch-0">basic fetch</a> using <var title="">request</var>.
+
+ <li>
+  <p>If <var title="">response</var> is a <a href="#redirect">redirect</a> and
+  <var title="">request</var>'s <span>manual redirect flag</span> is unset, run these substeps:
+  <!-- keep this aligned with CORS fetch -->
+
+  <ol>
+   <li><p>If <var title="">response</var>'s
+   <a href="#concept-redirect-location" title="concept-redirect-location">location</a>'s <span>origin</span> is not
+   <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+   <span>origin</span>, set <var title="">request</var>'s
+   <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
+
+   <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
+   <var title="">response</var>'s <a href="#concept-redirect-location" title="concept-redirect-location">location</a>.
+
+   <li><p>Return the result of performing a <a href="#fetch">fetch</a> using <var title="">request</var>.
+  </ol>
+
+ <li><p>Return <var title="">response</var>.
+</ol>
+
+
+<h3 id="cors-fetch"><span class="secno">6.3 </span>CORS fetch</h3>
+
+<p>To perform a <dfn id="cors-fetch-0">CORS fetch</dfn> using <var title="">request</var>, run these steps:
+
+<ol>
+ <li><p>Let <var title="">response</var> be the result of performing a
+ <a href="#basic-fetch-0">basic fetch</a> using <var title="">request</var>.
+
+ <li>
+  <p>If <var title="">response</var> is a <a href="#redirect">redirect</a> and
+  <var title="">request</var>'s <span>manual redirect flag</span> is unset, run these substeps:
+  <!-- keep this aligned with redirect fetch -->
+
+  <ol>
+   <li><p>If <var title="">response</var>'s
+   <a href="#concept-redirect-location" title="concept-redirect-location">location</a>'s <span>origin</span> is not
+   <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+   <span>origin</span>, set <var title="">request</var>'s
+   <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
+
+   <li><p>If <var title="">response</var>'s
+   <span title="concept-redirect-loation">location</span>'s
+   <span title="concept-url-username">username</span> or
+   <span title="concept-url-password">password</span> is non-null, or if a
+   <a href="#cors-check-0">CORS check</a> for <var title="">request</var> and <var title="">response</var>
+   returns failure, change <var title="">response</var> into a <a href="#network-error">network error</a> and
+   then return it.
+
+   <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
+   <var title="">response</var>'s <a href="#concept-redirect-location" title="concept-redirect-location">location</a>.
+
+   <li><p>Return the result of performing a <a href="#cors-fetch-0">CORS fetch</a> using <var title="">request</var>.
+  </ol>
+
+ <li>
+  <p>Otherwise, run these substeps:
+
+  <ol>
+   <li><p>If <var title="">response</var> is not an <a href="#end-user-abort">end-user abort</a> and
+   <a href="#cors-check-0">CORS check</a> for <var title="">request</var> and <var title="">response</var>
+   returns failure, change <var title="">response</var> into a <a href="#network-error">network error</a>.
+
+   <li><p>Return <var title="">response</var>.
+  </ol>
+</ol>
+
+
+<h3 id="cors-fetch-with-preflight"><span class="secno">6.4 </span>CORS fetch with preflight</h3>
+
+<p>To perform a <dfn id="cors-fetch-with-preflight-0">CORS fetch with preflight</dfn> using <var title="">request</var>, run
+these steps:
 
 <ol>
  <li>
-  <p>When requests have significance other than retrieval, and when relying on the <code title="http-origin"><a href="#http-origin">Origin</a></code> header as a credential, servers must be careful to distinguish between authorizing a request and authorizing access to the representation of that resource in the response.
+  <p>If
+
+  <ul>
+   <li>there is no <a href="#method-cache-match">method cache match</a> for
+   <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> using
+   <var title="">request</var>, and
+   <li>either <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
+   is a not <span>simple method</span> or <var title="">request</var>'s
+   <a href="#force-preflight-flag">force preflight flag</a> is set, and
+   <li>there is at least one <span title="concept-header">header</span>
+   <span title="concept-header-name">name</span> in <var title="">request</var>'s
+   <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> for which there is no
+   <a href="#header-name-cache-match">header name cache match</a> using <var title="">request</var> and for which the
+   <span title="concept-header">header</span> is not a <span>simple header</span>
+  </ul>
+
+  <p>then run these substeps:
 
   <ol>
-   <li><p>Authorization for a request should be performed using only the intersection of the authority of the user and the requesting origin(s).  In the case of redirects, more than one value for
-   <code title="http-origin"><a href="#http-origin">Origin</a></code> may be present and all must be authorized.
+   <li><p>Let <var title="">response</var> be a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> using
+   <var title="">request</var>.
 
-   <li><p>Servers using the <code title="http-origin"><a href="#http-origin">Origin</a></code> header to
-   authorize requests are encouraged to also verify that the
-   <code title="http-host">Host</code> header matches its expected value to
-   prevent forwarding attacks. Consider two sites, <code>corp.example</code>
-   and <code>corp.invalid</code>. A web application at
-   <code>corp.example</code> makes a cross-origin request to
-   <code>corp.invalid</code>, and the user agent sends the
-   <code title="http-origin"><a href="#http-origin">Origin</a></code> header <code>corp.example</code>.
-   If <code>corp.invalid</code> or the network is malicious, it may cause
-   the request to be delivered to <code>corp.example</code>, with the result
-   that <code>corp.example</code> would receive a request that appears to
-   originate from itself.  Verifying the <code title="http-host">Host</code>
-   header would reveal that the user agent intended the request for
-   <code>corp.invalid</code> and it can be discarded. Even better would be
-   to exclusively use secure connections for cross-origin requests to enable
-   user agents to detect such misdirections.
-
-   <li><p>It is often appropriate for servers to require an authorization ceremony asking a user to consent that cross-origin requests with credentials be honored from a given origin.  In such cases, passing security tokens explicitly as part of the cross-origin request can remove any ambiguity as to the scope of authorization. OAuth is an example of this pattern.
-   <a class="informative" href="#refsOAUTH">[OAUTH]</a>
+   <li><p>If <var title="">response</var> is either an <a href="#end-user-abort">end-user abort</a> or
+   <a href="#network-error">network error</a>, return it.
   </ol>
 
- <li>
-  <p>Use of <a href="#user-credentials">user credentials</a> in a cross-origin request is
-  appropriate when:
+ <li><p>Let <var title="">response</var> be a <a href="#basic-fetch-0">basic fetch</a> using
+ <var title="">request</var>.
 
-  <ol>
-   <li>
-    <p>A cross-origin request with credentials as defined in this
-    specification is used to substitute for alternate methods of
-    authenticated resource sharing, such as server-to-server back channels,
-    JSONP, or cross-document messaging.
-    <a class="informative" href="#refsJSONP">[JSONP]</a>
-    <a class="informative" href="#refsHTML">[HTML]</a>
+ <li><p>If <var title="">response</var> is a <a href="#redirect">redirect</a>, change
+ <var title="">response</var> into a <a href="#network-error">network error</a>.
 
-    <p>This substitution can expose additional attack surface in some cases,
-    as a cross-site scripting vulnerability in the requesting origin can
-    allow elevation of privileges against the requested resource when
-    compared to a server-to-server back channel.
+ <li><p>If <var title="">response</var> is <a href="#response">response</a> and a
+ <a href="#cors-check-0">CORS check</a> for <var title="">request</var> and <var title="">response</var>
+ returns failure, change <var title="">response</var> into a <a href="#network-error">network error</a>.
 
-    <p>As a substitute for JSONP-style cross-origin credentialed requests,
-    use of this specification significantly improves the security posture of
-    the requesting application, as it provides cross-origin data access
-    whereas JSONP operates via cross-origin code-injection. The requesting
-    application has to validate that data received from origins that are not
-    completely trusted conforms to expected formats and authorized values.
+ <li><p>If <var title="">response</var> is a <a href="#network-error">network error</a>,
+ <a href="#cache-clear" title="cache-clear">clear</a> using <var title="">request</var>.
 
-    <p>As a substitute for cross-origin communication techniques relying on loading a resource, with credentials, into an HTML <code>iframe</code> element, and subsequently employing cross-document messaging or other cross-origin side channels, this specification provides a roughly equivalent security posture. Again, data received from origins that are not completely trusted has to be validated to conform to expected formats and authorized values.
-
-   <li><p>For resources that are safe and idempotent per HTTP, and where the credentials are used only to provide user-specific customization for otherwise publicly accessible information. In this case, restricting access to certain origins may protect user privacy by preventing customizations from being used to identify a user, except at authorized origins.
-  </ol>
-
- <li>
-  <p>When this specification is used for requests which have significance
-  other than retrieval and which involve coordination between or data
-  originating from more than two origins, (e.g. between resources enabling
-  editing, printing and storage, each at distinct origins) requests ought to
-  set the <a href="#omit-credentials-flag">omit credentials flag</a> and servers ought to
-  perform authorization using security tokens explicitly provided in the
-  content of the request, especially if the origins are not all mutually and
-  completely trusted.
-
-  <p>In such multi-origin scenarios, a malicious resource at one of the
-  origins may be able to enlist the user-agent as a confused deputy and
-  elevate its privileges by abusing the user's ambient authority. Avoiding
-  such attacks requires that the coordinating applications have explicit
-  knowledge of the scope of privilege for each origin and that all
-  parameters and instructions received are carefully validated at each step
-  in the coordination to ensure that effects implied do not exceed the
-  authority of the originating principal.
-  <a class="informative" href="#refsCONFUSED">[CONFUSED]</a>
-
-  <p>Given the difficulty of avoiding such vulnerabilities in multi-origin
-  interactions it is recommended that, instead of using implicit
-  credentials, security tokens which specify the particular capabilities and
-  resources authorized be passed explicitly as part of each request.
-  OAuth again provides an example of such a pattern.
+ <li><p>Return <var title="">response</var>.
 </ol>
 
-  <hr>
 
-  <p>Authors of client-side Web applications are strongly encouraged to
-  validate content retrieved from a <a href="#cross-origin">cross-origin</a> resource as it
-  might be harmful.</p>
-
-  <p>Authors of client-side Web applications using a URL of the type
-  <code>people.example.org/~<var>author-name</var>/</code> are to be aware
-  that security is only provided <a href="#cross-origin">cross-origin</a> and that
-  therefore using a distinct <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a>
-  rather than distinct path is vital for secure client-side Web
-  applications.</p>
-
-
-
-
-  <h2 id="syntax"><span class="secno">5 </span>Syntax</h2>
-
-  <p>This section defines the syntax of the new headers this specification
-  introduces. It also provides a short description of the function of each
-  header.</p>
-
-  <p>The <a href="#resource-processing-model">resource processing model</a>
-  section details how resources are to use these headers in a response.
-  Likewise, the
-  <a href="#user-agent-processing-model">user agent processing model</a>
-  section details how user agents are to use these headers.</p>
-
-  <p>The ABNF syntax used in this section is from HTTP/1.1.
-  <a href="#refsHTTP">[HTTP]</a></p>
-
-  <p class="note">HTTP/1.1 is used as ABNF basis to ensure that the new
-  headers have equivalent parsing rules to those introduced in that
-  specification.</p>
-
-  <p class="XXX">HTTP/1.1 currently does not make leading OWS implied in
-  header value definitions so please assume it is for now.</p>
-
-  <h3 id="access-control-allow-origin-response-header"><span class="secno">5.1 </span><code title="">Access-Control-Allow-Origin</code> Response Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>
-  header indicates whether a resource can be shared based by returning the
-  value of the <code title="http-origin"><a href="#http-origin">Origin</a></code> request header in the
-  response. ABNF:</p>
-
-  <pre>Access-Control-Allow-Origin = "Access-Control-Allow-Origin" ":" <a class="external" href="http://tools.ietf.org/html/rfc6454#section-7.1">origin-list-or-null</a> | "*"</pre>
-
-  <p class="note">In practice the
-  <code class="external"><a href="http://tools.ietf.org/html/rfc6454#section-7.1">origin-list-or-null</a></code> production is
-  more constrained. Rather than allowing a space-separated list of
-  <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4" title="origin">origins</a>, it is either a
-  single <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> or the string
-  "<code title="">null</code>".
-  <!-- serialized-origin / %x6E %x75 %x6C %x6C / "*" -->
-
-
-  <h3 id="access-control-allow-credentials-response-header"><span class="secno">5.2 </span><code title="">Access-Control-Allow-Credentials</code> Response Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>
-  header indicates whether the response to request can be
-  exposed when the <a href="#omit-credentials-flag">omit credentials flag</a> is unset. When part
-  of the response to a <a href="#preflight-request">preflight request</a> it indicates that the
-  <a href="#actual-request">actual request</a> can include <a href="#user-credentials">user credentials</a>.
-  ABNF:</p>
-
-  <pre>Access-Control-Allow-Credentials: "Access-Control-Allow-Credentials" ":" true
-                            true: %x74.72.75.65 ; "true", case-sensitive</pre>
-
-
-  <h3 id="access-control-expose-headers-response-header"><span class="secno">5.3 </span><code title="">Access-Control-Expose-Headers</code> Response Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-expose-headers" title="http-access-control-expose-headers"><code>Access-Control-Expose-Headers</code></dfn>
-  header indicates which headers are safe to expose to the API of a
-  CORS API specification. ABNF:</p>
-
-  <pre>Access-Control-Expose-Headers = "Access-Control-Expose-Headers" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
-
-
-  <h3 id="access-control-max-age-response-header"><span class="secno">5.4 </span><code title="">Access-Control-Max-Age</code> Response Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-max-age" title="http-access-control-max-age"><code>Access-Control-Max-Age</code></dfn>
-  header indicates how long the results of a <a href="#preflight-request">preflight request</a>
-  can be cached in a <a href="#preflight-result-cache">preflight result cache</a>. ABNF:</p>
-
-  <pre>Access-Control-Max-Age = "Access-Control-Max-Age" ":" <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-3.3.2">delta-seconds</a></pre>
-
-
-  <h3 id="access-control-allow-methods-response-header"><span class="secno">5.5 </span><code title="">Access-Control-Allow-Methods</code> Response Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-allow-methods" title="http-access-control-allow-methods"><code>Access-Control-Allow-Methods</code></dfn>
-  header indicates, as part of the response to a
-  <a href="#preflight-request">preflight request</a>, which methods can be used during the
-  <a href="#actual-request">actual request</a>. ABNF:</p>
-
-  <pre>Access-Control-Allow-Methods: "Access-Control-Allow-Methods" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a></pre>
-
-
-
-  <h3 id="access-control-allow-headers-response-header"><span class="secno">5.6 </span><code title="">Access-Control-Allow-Headers</code> Response Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-allow-headers" title="http-access-control-allow-headers"><code>Access-Control-Allow-Headers</code></dfn>
-  header indicates, as part of the response to a
-  <a href="#preflight-request">preflight request</a>, which header field names can be used
-  during the <a href="#actual-request">actual request</a>. ABNF:</p>
-
-  <pre>Access-Control-Allow-Headers: "Access-Control-Allow-Headers" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
-
-
-  <h3 id="origin-request-header"><span class="secno">5.7 </span><code title="">Origin</code> Request Header</h3>
-
-  <p>The
-  <dfn id="http-origin" title="http-origin"><code>Origin</code></dfn>
-  header indicates where the <a href="#cross-origin-request">cross-origin request</a> or
-  <a href="#preflight-request">preflight request</a> originates from.
-  <a href="#refsORIGIN">[ORIGIN]</a></p>
-
-
-  <h3 id="access-control-request-method-request-header"><span class="secno">5.8 </span><code title="">Access-Control-Request-Method</code> Request Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-request-method" title="http-access-control-request-method"><code>Access-Control-Request-Method</code></dfn>
-  header indicates which method will be used in the
-  <a href="#actual-request">actual request</a> as part of the
-  <a href="#preflight-request">preflight request</a>. ABNF:</p>
-
-  <pre>Access-Control-Request-Method: "Access-Control-Request-Method" ":" <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a></pre>
-
-
-  <h3 id="access-control-request-headers-request-header"><span class="secno">5.9 </span><code title="">Access-Control-Request-Headers</code> Request Header</h3>
-
-  <p>The
-  <dfn id="http-access-control-request-headers" title="http-access-control-request-headers"><code>Access-Control-Request-Headers</code></dfn>
-  header indicates which headers will be used in the
-  <a href="#actual-request">actual request</a> as part of the
-  <a href="#preflight-request">preflight request</a>. ABNF:</p>
-
-  <pre>Access-Control-Request-Headers: "Access-Control-Request-Headers" ":" #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
-
-
-
-
-  <h2 id="resource-processing-model"><span class="secno">6 </span>Resource Processing Model</h2>
-
-  <!-- XXX
-  <p><em>This section only applies to servers.</em></p>
-  -->
-
-  <p>This section describes the processing models that resources have to
-  implement. Each type of request a resource might have to deal with is
-  described in its own subsection.</p>
-
-  <p>The resource sharing policy described by this specification is bound to
-  a particular resource. For the purposes of this section each resource is
-  bound to the following:</p>
-
-  <ul>
-   <li>
-    <p>A <dfn id="list-of-origins">list of origins</dfn> consisting of zero or more
-    <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4" title="origin">origins</a> that are
-    allowed access to the resource.</p>
-
-    <p class="note">This can include the
-    <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> of the resource itself
-    though be aware that requests to <a href="#cross-origin">cross-origin</a> resources can
-    be redirected back to the resource.</p>
-   </li>
-
-   <li><p>A <dfn id="list-of-methods">list of methods</dfn> consisting of zero or more methods
-   that are supported by the resource.</li>
-
-   <li><p>A <dfn id="list-of-headers">list of headers</dfn> consisting of zero or more header
-   field names that are supported by the resource.</li>
-
-   <li><p>A <dfn id="list-of-exposed-headers">list of exposed headers</dfn> consisting of zero or more
-   header field names of headers other than the
-   <a href="#simple-response-header" title="simple response header">simple response headers</a> that the resource might use and can be exposed.</li>
-
-   <li><p>A <dfn id="supports-credentials">supports credentials</dfn> flag that indicates whether the
-   resource supports <a href="#user-credentials">user credentials</a> in the request. It is
-   true when the resource does and false otherwise.</li>
-  </ul>
-
-
-  <h3 id="resource-requests"><span class="secno">6.1 </span>Simple Cross-Origin Request, Actual Request, and
-  Redirects</h3>
-
-  <p>In response to a <a href="#simple-cross-origin-request">simple cross-origin request</a> or
-  <a href="#actual-request">actual request</a> the resource indicates whether or not to share
-  the response.</p>
-
-  <p>If the resource has been relocated, it indicates whether to share
-  its new <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a>.</p>
-
-  <p>Resources must use the following set of steps to
-  determine which additional headers to use in the response:</p>
+<h3 id="cors-preflight-fetch"><span class="secno">6.5 </span>CORS preflight fetch</h3>
+
+<p>To perform a <dfn id="cors-preflight-fetch-0">CORS preflight fetch</dfn> using <var title="">request</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var title="">preflight</var> be a new <a href="#request">request</a>.
+
+ <li><p>Set <var title="">preflight</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
+ <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>.
+
+ <li><p>Set <var title="">preflight</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> to
+ <var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>.
+
+ <li><p>Set <var title="">preflight</var>'s <span title="concept-request-referrer">referrer</span> to
+ <var title="">request</var>'s <span title="concept-request-referrer">referrer</span>.
+
+ <li><p>Set <var title="">preflight</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> to
+ <code title="">OPTIONS</code>.
+
+ <li><p>Append a <span title="concept-header">header</span>
+ <span title="concept-header-name">named</span>
+ <code title="">Access-Control-Request-Method</code> with
+ <span title="concept-header-value">value</span> <var title="">request</var>'s
+ <a href="#concept-request-method" title="concept-request-method">method</a> to <var title="">preflight</var>'s
+ <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+
+ <li><p>Let <var title="">headers</var> be the <span title="concept-header-name">names</span>
+ of <var title="">request</var>'s
+ <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>, sorted
+ lexicographically and byte lowercased.
+ <!-- XXX -->
+
+ <li><p>Let <var title="">header value</var> be the items in <var title="">headers</var>
+ separated from each other by 0x2C 0x20.
+
+ <li><p>Append a <span title="concept-header">header</span>
+ <span title="concept-header-name">named</span>
+ <code title="">Access-Control-Request-Headers</code> with
+ <span title="concept-header-value">value</span> <var title="">header value</var> to
+ <var title="">preflight</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+
+ <li><p>Let <var title="">response</var> be the result of performing a
+ <a href="#basic-fetch-0">basic fetch</a> using <var title="">preflight</var>.
+
+ <li>
+  <p>If a <a href="#cors-check-0">CORS check</a> for
+  <var title="">preflight</var> and <var title="">response</var> does not return failure, and
+  <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is in the
+  range 200 to 299, run these substeps:
+  <!-- CORS said 200 here but nobody implemented that:
+       http://lists.w3.org/Archives/Public/public-webappsec/2013Feb/0078.html -->
 
   <ol>
-   <li><p>If the <code title="http-origin"><a href="#http-origin">Origin</a></code> header is not
-   present terminate this set of steps. The request is outside the scope of
-   this specification.</li>
+   <li><p>Let <var title="">methods</var> be the result of <span>parsing</span> all
+   <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>'
+   <span title="concept-header-name">named</span> <code>Access-Control-Allow-Methods</code>.
+   <!-- XXX parsing -->
+
+   <li><p>Let <var title="">header names</var> be the result of <span>parsing</span> all
+   <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>'
+   <span title="concept-header-name">named</span> <code>Access-Control-Allow-Headers</code>.
+   <!-- XXX parsing -->
+
+   <li><p>If either <var title="">methods</var> or <var title="">header names</var> is failure,
+   change <var title="">response</var> into a <a href="#network-error">network error</a> and return it.
 
    <li>
-    <p>If the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
-    header is not a <a href="#case-sensitive">case-sensitive</a> match for any of the values
-    in <a href="#list-of-origins">list of origins</a>, do not set any additional headers and
-    terminate this set of steps.</p>
+    <p>If <var title="">methods</var> is empty <var title="">request</var>'s
+    <a href="#force-preflight-flag">force preflight flag</a> is set, append <var title="">request</var>'s
+    <a href="#concept-request-method" title="concept-request-method">method</a> to <var title="">methods</var>.
 
-    <p class="note">Always matching is acceptable since the
-    <a href="#list-of-origins">list of origins</a> can be unbounded.</p>
-   </li>
+    <p class="note">This ensures that a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> that happened
+    solely because of <var title="">request</var>'s <a href="#force-preflight-flag">force preflight flag</a> is too.
 
-   <li>
-    <p>If the resource <a href="#supports-credentials">supports credentials</a> add a single
-    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-    header, with the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
-    header as value, and add a single
-    <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
-    header with the <a href="#case-sensitive">case-sensitive</a> string
-    "<code title="">true</code>" as value.</p>
+   <li><p>If <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
+   is not in <var title="">methods</var> and is not a <span>simple method</span>, return
+   failure.
 
-    <p>Otherwise, add a single
-    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-    header, with either the value of the
-    <code title="http-origin"><a href="#http-origin">Origin</a></code> header or the string
-    "<code title="">*</code>" as value.</p>
+   <li><p>If one of <var title="">request</var>'s
+   <span title="concept-request-header">headers</span>'
+   <span title="concept-header-name">names</span> is not in <var title="">header names</var> or
+   its corresponding <span title="concept-header">header</span> is not a
+   <span>simple header</span>, change <var title="">response</var> into a
+   <a href="#network-error">network error</a> and return it.
 
-    <p class="note">The string "<code title="">*</code>" cannot be used for a
-    resource that <a href="#supports-credentials">supports credentials</a>.</p>
-   </li>
+   <li><p>Let <var title="">max-age</var> be the result of <span>parsing</span> all
+   <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>'
+   <span title="concept-header-name">named</span> <code>Access-Control-Max-Age</code>.
+   <!-- XXX parsing -->
 
-   <li><p>If the <a href="#list-of-exposed-headers">list of exposed headers</a> is not empty add one
-   or more
-   <code title="http-access-control-expose-headers"><a href="#http-access-control-expose-headers">Access-Control-Expose-Headers</a></code>
-   headers, with as values the header field names given in the
-   <a href="#list-of-exposed-headers">list of exposed headers</a>.</li>
-  </ol>
+   <li><p>If <var title="">max-age</var> is failure, set <var title="">max-age</var> to zero.
 
-  <p class="note">By not adding the appropriate headers resource can also
-  clear the <a href="#preflight-result-cache">preflight result cache</a> of all entries where
-  <a href="#cache-origin" title="cache-origin">origin</a> is a <a href="#case-sensitive">case-sensitive</a>
-  match for the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
-  header and <a href="#cache-url" title="cache-url">url</a> is a
-  <a href="#case-sensitive">case-sensitive</a> match for the
-  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a> of the
-  resource.</p>
+   <li><p>If <var title="">max-age</var> is greater than an imposed limit on
+   <a href="#cache-max-age" title="cache-max-age">max-age</a>, set <var title="">max-age</var> to the imposed
+   limit.
 
+   <li><p>If the user agent does not provide for a cache, return
+   <var title="">response</var>.
 
-  <h3 id="resource-preflight-requests"><span class="secno">6.2 </span>Preflight Request</h3>
-
-  <p>In response to a <a href="#preflight-request">preflight request</a> the resource indicates
-  which methods and headers (other than
-  <a href="#simple-method" title="simple method">simple methods</a> and
-  <a href="#simple-header" title="simple header">simple headers</a>) it is willing to handle
-  and whether it <a href="#supports-credentials">supports credentials</a>.</p>
-
-  <p>Resources must use the following set of steps to
-  determine which additional headers to use in the response:</p>
-
-  <ol>
-   <li><p>If the <code title="http-origin"><a href="#http-origin">Origin</a></code> header is not
-   present terminate this set of steps. The request is outside the scope of
-   this specification.</li>
+   <li><p>For each method in <var title="">methods</var> for which there is a
+   <a href="#method-cache-match">method cache match</a> using <var title="">request</var>, set matching entry's
+   <a href="#cache-max-age" title="cache-max-age">max-age</a> to <var title="">max-age</var>.
 
    <li>
-    <p>If the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
-    header is not a <a href="#case-sensitive">case-sensitive</a> match for any of the
-    values in <a href="#list-of-origins">list of origins</a> do not set any additional headers
-    and terminate this set of steps.</p>
+    <p>For each <var title="">method</var> in <var title="">methods</var> for which there is
+    <em>no</em>  <a href="#method-cache-match">method cache match</a> using <var title="">request</var>, create a
+    new entry in the <a href="#cors-preflight-cache-0">CORS preflight cache</a> as follows:
 
-    <p class="note">Always matching is acceptable since the
-    <a href="#list-of-origins">list of origins</a> can be unbounded.</p>
+    <dl>
+     <dt><a href="#cache-origin" title="cache-origin">origin</a>
+     <dd><var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>
 
-    <p class="note">The <code title="http-origin"><a href="#http-origin">Origin</a></code> header can
-    only contain a single <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> as the
-    user agent will not follow redirects.</p>
-   </li>
+     <dt><a href="#cache-url" title="cache-url">url</a>
+     <dd><var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>
 
-   <li>
-    <p>Let <var title="">method</var> be the value as result of
-    <a href="#header-parsing" title="header parsing">parsing</a> the
-    <code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>
-    header.</p>
+     <dt><a href="#cache-max-age" title="cache-max-age">max-age</a>
+     <dd><var title="">max-age</var>
 
-    <p>If there is no
-    <code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>
-    header or if <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>,
-    do not set any additional headers and terminate this set of steps. The
-    request is outside the scope of this specification.</p>
-   </li>
+     <dt><a href="#cache-credentials" title="cache-credentials">credentials</a>
+     <dd>False if <var title="">request</var>'s <a href="#omit-credentials-flag">omit credentials flag</a> is set, or
+     true otherwise
 
-   <li>
-    <p>Let <var title="">header field-names</var> be the values as result of
-    <a href="#header-parsing" title="header parsing">parsing</a> the
-    <code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
-    headers.</p>
-
-    <p>If there are no
-    <code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
-    headers let <var title="">header field-names</var> be the empty list.
-
-    <p>If <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a> do not
-    set any additional headers and terminate this set of steps. The request
-    is outside the scope of this specification.</p>
-   </li>
-
-   <li>
-    <p>If <var title="">method</var> is not a <a href="#case-sensitive">case-sensitive</a>
-    match for any of the values in <a href="#list-of-methods">list of methods</a> do not set
-    any additional headers and terminate this set of steps.</p>
-
-    <p class="note">Always matching is acceptable since the
-    <a href="#list-of-methods">list of methods</a> can be unbounded.</p>
-   </li>
-
-   <li>
-    <p>If any of the <var title="">header field-names</var> is not a
-    <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for any of the values in
-    <a href="#list-of-headers">list of headers</a> do not set any additional headers and
-    terminate this set of steps.</p>
-
-    <p class="note">Always matching is acceptable since the
-    <a href="#list-of-headers">list of headers</a> can be unbounded.</p>
-   </li>
-
-   <li>
-    <p>If the resource <a href="#supports-credentials">supports credentials</a> add a single
-    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-    header, with the value of the <code title="http-origin"><a href="#http-origin">Origin</a></code>
-    header as value, and add a single
-    <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
-    header with the <a href="#case-sensitive">case-sensitive</a> string
-    "<code title="">true</code>" as value.</p>
-
-    <p>Otherwise, add a single
-    <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-    header, with either the value of the
-    <code title="http-origin"><a href="#http-origin">Origin</a></code> header or the string
-    "<code title="">*</code>" as value.</p>
-
-    <p class="note">The string "<code title="">*</code>" cannot be used for a
-    resource that <a href="#supports-credentials">supports credentials</a>.</p>
-   </li>
-
-   <li><p>Optionally add a single
-   <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
-   header with as value the amount of seconds the user agent is allowed to
-   cache the result of the request.</li>
-   <!-- there is no limit -->
-
-   <li>
-    <p>If <var title="">method</var> is a <a href="#simple-method">simple method</a>
-    this step may be skipped.</p>
-
-    <p>Add one or more
-    <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
-    headers consisting of (a subset of) the
-    <a href="#list-of-methods">list of methods</a>.</p>
-
-    <p class="note">If a method is a <a href="#simple-method">simple method</a> it does not
-    need to be listed, but this is not prohibited.</p>
-
-    <p class="note">Since the <a href="#list-of-methods">list of methods</a> can be unbounded
-    simply returning <var title="">method</var> can be enough.</p>
-   </li>
-
-   <li>
-    <p>If each of the <var title="">header field-names</var> is a
-    <a href="#simple-header">simple header</a> and none is <code>Content-Type</code>, than
-    this step may be skipped.</p>
-
-    <p>Add one or more
-    <code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>
-    headers consisting of (a subset of) the
-    <a href="#list-of-headers">list of headers</a>.</p>
-
-    <p class="note">If a header field name is a <a href="#simple-header">simple header</a> and
-    is not <code>Content-Type</code>, it is not required to be listed.
-    <code>Content-Type</code> is to be listed as only a subset of its values
-    makes it qualify as <a href="#simple-header">simple header</a>.</p>
-
-    <p class="note">Since the <a href="#list-of-headers">list of headers</a> can be unbounded
-    simply returning <var title="">headers</var> can be enough.</p>
-   </li>
-  </ol>
-
-
-  <h3 id="resource-security"><span class="secno">6.3 </span>Security</h3>
-
-  <p><em>This section is non-normative.</em></p>
-
-  <p>Resource authors are strongly encouraged to ensure that requests using
-  safe methods, e.g. <code>GET</code> or <code>OPTIONS</code>, have no side
-  effects so potential attackers cannot modify the user's data easily. If
-  resources are set up like this attackers would effectively have to be on
-  the <a href="#list-of-origins">list of origins</a> to do harm.</p>
-
-  <p>In addition to checking the <code title="http-origin"><a href="#http-origin">Origin</a></code>
-  header, resource authors are strongly encouraged to also check the
-  <code>Host</code> header. That is, make sure that the host name provided
-  by that header matches the host name of the server on which the resource
-  resides. This will provide protection against DNS rebinding attacks.</p>
-
-  <p>To provide integrity protection of resource sharing policy statements
-  usage of SSL/TLS is encouraged.</p>
-
-
-
-
-  <h2 id="user-agent-processing-model"><span class="secno">7 </span>User Agent Processing Model</h2>
-
-  <!-- XXX
-  <p><em>This section only applies to user agents.</em></p>
-  -->
-
-  <p>This section describes the processing models that user agents have to
-  implement.</p>
-
-  <p>The processing models in this sections need to be referenced by a
-  CORS API specification that defines when the algorithm is invoked and how
-  the return values are to be handled. The processing models are not
-  suitable for standalone use.</p>
-
-
-  <h3 id="cross-origin-request-0"><span class="secno">7.1 </span>Cross-Origin Request</h3>
-
-  <p>The <dfn id="cross-origin-request">cross-origin request</dfn>
-  algorithm takes the following parameters:
-
-  <dl>
-   <dt><dfn id="request-url">request URL</dfn></dt>
-   <dd>
-    <p>The <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a> to be
-    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#fetch" title="fetch">fetched</a>.</p>
-
-    <p class="note">The <a href="#request-url">request URL</a> is modified in face of
-    redirects.</p>
-   </dd>
-
-   <dt><dfn id="request-method">request method</dfn></dt>
-   <dd><p>The method for the request. <code>GET</code>, unless explicitly
-   set.</dd>
-
-   <dt><dfn id="author-request-headers">author request headers</dfn></dt>
-   <dd><p>A list of headers set by authors for the request. Empty, unless
-   explicitly set.</dd>
-
-   <dt><dfn id="request-entity-body">request entity body</dfn></dt>
-   <dd><p>The entity body for the request. Missing, unless explicitly
-   set.</dd>
-
-   <dt><dfn id="source-origin">source origin</dfn></dt>
-   <dd>
-    <p>The <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> of the request.</p>
-    <p class="note">Due to the specifics of some APIs this cannot be defined
-    in a generic way and therefore it has to be provided as argument.</p>
-   </dd>
-
-   <dt><dfn id="referrer-source">referrer source</dfn>
-   <dd>
-    <p>Either a <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> or
-    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a>. Used to determine the
-    <code title="http-referer">Referer</code> header.
-
-   <dt><dfn id="manual-redirect-flag">manual redirect flag</dfn></dt>
-   <dd><p>Set when redirects are <em>not</em> to be automatically followed.
-
-   <dt><dfn id="omit-credentials-flag">omit credentials flag</dfn></dt>
-   <dd><p>Set when <a href="#user-credentials">user credentials</a> are to be excluded in the
-   request and when cookies are to be ignored in its response.
-
-   <dt><dfn id="force-preflight-flag">force preflight flag</dfn></dt>
-   <dd><p>Set when a <a href="#preflight-request">preflight request</a> is required.
-  </dl>
-
-  <p>The <a href="#cross-origin-request">cross-origin request</a> algorithm can be used by
-  CORS API specifications who wish to allow cross-origin requests for the
-  network APIs they define.</p>
-
-  <p class="note">CORS API specifications are free to limit the abilities of
-  a <a href="#cross-origin-request">cross-origin request</a>. E.g., the
-  <a href="#omit-credentials-flag">omit credentials flag</a> could always be set.
-
-  <p>When the <a href="#cross-origin-request">cross-origin request</a> algorithm is invoked,
-  these steps must be followed:</p>
-
-  <ol>
-   <li>
-    <p>If for some reason the user agent does not want to make the request
-    terminate this algorithm and set the
-    <a href="#cross-origin-request-status">cross-origin request status</a> to <i>network error</i>.</p>
-
-    <p class="note">The <a href="#request-url">request URL</a> could have been blacklisted
-    by the user in some fashion.</p>
-   </li>
-
-   <li>
-    <p>If the following conditions are true, follow the
-    <a href="#simple-cross-origin-request">simple cross-origin request</a> algorithm:
-
-    <ul>
-     <li><p>The <a href="#request-method">request method</a> is a
-     <a href="#simple-method">simple method</a> and the <a href="#force-preflight-flag">force preflight flag</a> is
-     unset.
-
-     <li><p>Each of the <a href="#author-request-headers">author request headers</a> is a
-     <a href="#simple-header">simple header</a> or <a href="#author-request-headers">author request headers</a> is
-     empty.</li>
-    </ul>
-   </li>
-
-   <li><p>Otherwise, follow the
-   <a href="#cross-origin-request-with-preflight">cross-origin request with preflight</a> algorithm.</li>
-  </ol>
-
-  <p class="note">Cross-origin requests using a method that is
-  <a href="#simple-method" title="simple method">simple</a> with
-  <a href="#author-request-headers">author request headers</a> that are not
-  <a href="#simple-header" title="simple header">simple</a> will have a
-  <a href="#preflight-request">preflight request</a> to ensure that the resource can handle
-  those headers. (Similarly to requests using a method that is not a
-  <a href="#simple-method">simple method</a>.)</p>
-
-
-  <h4 id="handling-a-response-to-a-cross-origin-request"><span class="secno">7.1.1 </span>Handling a Response to a Cross-Origin Request</h4>
-
-  <p>User agents must filter out all response headers
-  other than those that are a <a href="#simple-response-header">simple response header</a> or of
-  which the field name is an <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for
-  one of the values of the
-  <code title="http-access-control-expose-headers"><a href="#http-access-control-expose-headers">Access-Control-Expose-Headers</a></code>
-  headers (if any), before exposing response headers to APIs defined in
-  CORS API specifications.</p>
-
-  <p class="note">The
-  <code class="external" title="dom-XMLHttpRequest-getResponseHeader"><a href="http://xhr.spec.whatwg.org/#dom-xmlhttprequest-getresponseheader">getResponseHeader()</a></code>
-  method of <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code> will therefore
-  not expose any header not indicated above.</p>
-
-
-  <h4 id="cross-origin-request-status-0"><span class="secno">7.1.2 </span>Cross-Origin Request Status</h4>
-
-  <p>Each <a href="#cross-origin-request">cross-origin request</a> has an associated
-  <dfn id="cross-origin-request-status">cross-origin request status</dfn>
-  that CORS API specifications that enable an API to make
-  <a href="#cross-origin-request" title="cross-origin request">cross-origin requests</a> can hook
-  into. It can take at most two distinct values over the course of a
-  <a href="#cross-origin-request">cross-origin request</a>. The values are:</p>
-
-  <dl>
-   <dt><i>preflight complete</i></dt>
-   <dd>The user agent is about to make the <a href="#actual-request">actual request</a>.</dd>
-
-   <dt><i>success</i>
-   <dd>The resource can be shared.</dd>
-
-   <dt><i>abort error</i>
-   <dd>The user aborted the request.</dd>
-
-   <dt><i>network error</i>
-   <dd>The resource cannot be shared. Also used when a DNS error, TLS
-   negotiation failure, or other type of network error occurs.
-   <span class="note">This does not include HTTP responses that indicate some
-   type of error, such as HTTP status code 410.</span>
-   <!-- shared with XMLHttpRequest -->
-  </dl>
-
-
-  <h4 id="source-origin-0"><span class="secno">7.1.3 </span>Source Origin</h4>
-
-  <p>The <a href="#source-origin">source origin</a> is the initial
-  <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> that user agents must use for
-  the <code title="http-origin"><a href="#http-origin">Origin</a></code> header. It can be modified
-  during the <a href="#redirect-steps">redirect steps</a>.</p>
-
-
-  <h4 id="simple-cross-origin-request-0"><span class="secno">7.1.4 </span>Simple Cross-Origin Request</h4>
-
-  <p>The steps below describe what user agents must do
-  for a
-  <dfn id="simple-cross-origin-request">simple cross-origin request</dfn>:</p>
-
-  <ol>
-   <li>
-    <p>Apply the <a href="#make-a-request-steps">make a request steps</a> and observe the
-    <i>request rules</i> below while making the request.</p>
-
-    <dl class="switch">
-     <dt>If the <a href="#manual-redirect-flag">manual redirect flag</a> is unset and the response
-     has an HTTP status code of 301, 302, 303, 307, or 308
-     <dd><p>Apply the <a href="#redirect-steps">redirect steps</a>.</dd>
-
-     <dt>If the end user cancels the request</dt>
-     <dd><p>Apply the <a href="#abort-steps">abort steps</a>.</dd>
-
-     <dt>If there is a network error</dt>
-     <dd>
-      <p>In case of DNS errors, TLS negotiation failure, or other type of
-      network errors, apply the <a href="#network-error-steps">network error steps</a>. Do not
-      request any kind of end user interaction.</p>
-
-      <p class="note">This does not include HTTP responses that indicate
-      some type of error, such as HTTP status code 410.</p>
-     </dd>
-
-     <dt>Otherwise</dt>
-     <dd><p>Perform a <a href="#resource-sharing-check">resource sharing check</a>. If it returns
-     fail, apply the <a href="#network-error-steps">network error steps</a>. Otherwise, if it
-     returns pass, terminate this algorithm and set the
-     <a href="#cross-origin-request-status">cross-origin request status</a> to <i>success</i>. Do not
-     actually terminate the request.</dd>
+     <dt><a href="#cache-method" title="cache-method">method</a></dt>
+     <dd><var title="">method</var>
     </dl>
-   </li>
-  </ol>
 
+   <li><p>For each header name in <var title="">header names</var> for which there is a
+   <a href="#header-name-cache-match">header name cache match</a> using <var title="">request</var>, set
+   matching entry's <a href="#cache-max-age" title="cache-max-age">max-age</a> to <var title="">max-age</var>.
 
-  <h4 id="cross-origin-request-with-preflight-0"><span class="secno">7.1.5 </span>Cross-Origin Request with Preflight</h4>
-
-  <p>To protect resources against cross-origin requests that could not
-  originate from certain user agents before this specification existed a
-  <a href="#preflight-request">preflight request</a> is made to ensure that the resource is
-  aware of this specification. The result of this request is stored in a
-  <a href="#preflight-result-cache">preflight result cache</a>.</p>
-
-  <p>The steps below describe what user agents must do
-  for a
-  <dfn id="cross-origin-request-with-preflight">cross-origin request with preflight</dfn>.
-  This is a request to a non same-origin URL that first needs to be
-  authorized using either a <a href="#preflight-result-cache">preflight result cache</a> entry or a
-  <a href="#preflight-request">preflight request</a>.</p>
-
-  <ol>
    <li>
-    <p>Go to the next step if the following conditions are true:
+    <p>For each <var title="">header name</var> in <var title="">header names</var> for which
+    there is <em>no</em> <a href="#header-name-cache-match">header name cache match</a> using
+    <var title="">request</var>, create a new entry in the <a href="#cors-preflight-cache-0">CORS preflight cache</a>
+    as follows:
 
-    <ul>
-     <li>
-      <p>For <a href="#request-method">request method</a> there either is a
-      <a href="#preflight-result-cache-method-match">method cache match</a> or it is a
-      <a href="#simple-method">simple method</a> and the <a href="#force-preflight-flag">force preflight flag</a>
-      is unset.
+    <dl>
+     <dt><a href="#cache-origin" title="cache-origin">origin</a>
+     <dd><var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>
 
-     <li>
-      <p>For every header of <a href="#author-request-headers">author request headers</a>
-      there either is a <a href="#preflight-result-cache-header-match">header cache match</a> for the field name
-      or it is a <a href="#simple-header">simple header</a>.</p>
-     </li>
-    </ul>
+     <dt><a href="#cache-url" title="cache-url">url</a>
+     <dd><var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>
 
+     <dt><a href="#cache-max-age" title="cache-max-age">max-age</a>
+     <dd><var title="">max-age</var>
 
-    <!-- the preflight request -->
-    <p>Otherwise, make a
-    <dfn id="preflight-request">preflight request</dfn>.
-    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#fetch">Fetch</a> the <a href="#request-url">request URL</a>
-    from <i title="">origin</i> <a href="#source-origin">source origin</a> using
-    <a href="#referrer-source">referrer source</a> as <i title="">override referrer source</i>
-    with the <i title="">manual redirect flag</i> and the
-    <i title="">block cookies flag</i> set, using the method
-    <code>OPTIONS</code>, and with the following additional constraints:</p>
+     <dt><a href="#cache-credentials" title="cache-credentials">credentials</a>
+     <dd>False if <var title="">request</var>'s <a href="#omit-credentials-flag">omit credentials flag</a> is set, or
+     true otherwise
 
-    <ul>
-     <li><p>Include an
-     <code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>
-     header with as header field value the <a href="#request-method">request method</a> (even
-     when that is a <a href="#simple-method">simple method</a>).</li>
-
-     <li><p>If <a href="#author-request-headers">author request headers</a> is not empty include an
-     <code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
-     header with as header field value a comma-separated list of the header
-     field names from <a href="#author-request-headers">author request headers</a> in lexicographical
-     order, each <a href="#converted-to-ascii-lowercase">converted to ASCII lowercase</a> (even when one or
-     more are a <a href="#simple-header">simple header</a>).</li>
-
-     <li><p>Exclude the <a href="#author-request-headers">author request headers</a>.</li>
-
-     <li><p>Exclude <a href="#user-credentials">user credentials</a>.</li>
-
-     <li><p>Exclude the <a href="#request-entity-body">request entity body</a>.</li>
-    </ul>
-
-    <p>The following <i>request rules</i> are to be observed while making
-    the <a href="#preflight-request">preflight request</a>:</p>
-
-    <dl class="switch">
-     <dt>If the end user cancels the request</dt>
-     <dd><p>Apply the <a href="#abort-steps">abort steps</a>.</dd>
-
-     <dt>If the response has an HTTP status code that is not 200</dt>
-     <dd>
-      <p>Apply the <a href="#network-error-steps">network error steps</a>.</p>
-
-      <p class="note">The <a href="#cache-and-network-error-steps">cache and network error steps</a> are not
-      used here as this is about an actual network error.</p>
-     </dd>
-
-     <dt>If there is a network error</dt>
-     <dd>
-      <p>In case of DNS errors, TLS negotiation failure, or other type of
-      network errors, apply the <a href="#network-error-steps">network error steps</a>. Do not
-      request any kind of end user interaction.</p>
-
-      <p class="note">This does not include HTTP responses that indicate
-      some type of error, such as HTTP status code 410.</p>
-
-      <p class="note">The <a href="#cache-and-network-error-steps">cache and network error steps</a> are not
-      used here as this is about an actual network error.</p>
-     </dd>
-
-     <dt>Otherwise (the HTTP status code is 200)</dt>
-     <dd>
-      <ol>
-       <li><p>If the <a href="#resource-sharing-check">resource sharing check</a> returns fail,
-       apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</li>
-
-       <li><p>Let <var title="">methods</var> be the empty list.</li>
-
-       <li>
-        <p>If there are one or more
-        <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
-        headers let <var title="">methods</var> be the values as result of
-        <a href="#header-parsing" title="header parsing">parsing</a> the headers.</p>
-
-        <p>If <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>
-        apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</p>
-       </li>
-
-       <li>
-        <p>If <var title="">methods</var> is still the empty list and the
-        <a href="#force-preflight-flag">force preflight flag</a> is set, append the
-        <a href="#request-method">request method</a> to <var title="">methods</var>.
-
-        <p class="note">This ensures that
-        <a href="#preflight-request" title="preflight request">preflight requests</a> that
-        happened solely because of the <a href="#force-preflight-flag">force preflight flag</a> are
-        cached too.
-
-       <li><p>Let <var title="">headers</var> be the empty list.</li>
-
-       <li>
-        <p>If there are one or more
-        <code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>
-        headers let <var title="">headers</var> be the values as result of
-        <a href="#header-parsing" title="header parsing">parsing</a> the headers.</p>
-
-        <p>If <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>
-        apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</p>
-       </li>
-
-       <li><p>If <a href="#request-method">request method</a> is not a
-       <a href="#case-sensitive">case-sensitive</a> match for any method in
-       <var title="">methods</var> and is not a <a href="#simple-method">simple method</a>,
-       apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</li>
-
-       <li><p>If the field name of each header in
-       <a href="#author-request-headers">author request headers</a> is not an
-       <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for one of the
-       header field names in <var title="">headers</var> and the header is
-       not a <a href="#simple-header">simple header</a>, apply the
-       <a href="#cache-and-network-error-steps">cache and network error steps</a>.</li>
-
-       <li><p>If for some reason the user agent is unable to provide a
-       <a href="#preflight-result-cache">preflight result cache</a> (e.g. because of limited disk
-       space) go to the next step in the overall set of steps (i.e. the
-       <a href="#actual-request">actual request</a>).</li>
-
-       <li>
-        <p>If there is a single
-        <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
-        header, <a href="#header-parsing" title="header parsing">parse</a> it and let
-        <var title="">max-age</var> be the resulting value.</p>
-
-        <p>If there is no such header, there is more than one such header,
-        or <a href="#header-parsing-failed" title="header parsing failed">parsing failed</a>, let
-        <var title="">max-age</var> be a value at the discretion of the user
-        agent (zero is allowed).</p>
-
-        <p>If the user agent imposes a limit on the
-        <a href="#cache-max-age" title="cache-max-age">max-age</a> field value and
-        <var title="">max-age</var> is greater than that limit let
-        <var title="">max-age</var> be the limit.</p>
-       </li>
-
-       <li>
-        <p>For each method in <var title="">methods</var> for which there is
-        a <a href="#preflight-result-cache-method-match">method cache match</a> set the
-        <a href="#cache-max-age" title="cache-max-age">max-age</a> field value of the
-        matching entry to <var title="">max-age</var>.</p>
-
-        <p>For each method in <var title="">methods</var> for which there is
-        <em>no</em> <a href="#preflight-result-cache-method-match">method cache match</a> create a new entry in
-        the <a href="#preflight-result-cache">preflight result cache</a> with the various fields set
-        as follows:</p>
-
-        <dl>
-         <dt><a href="#cache-origin" title="cache-origin">origin</a></dt>
-         <dd>The <a href="#source-origin">source origin</a>.</dd>
-
-         <dt><a href="#cache-url" title="cache-url">url</a></dt>
-         <dd>The <a href="#request-url">request URL</a>.</dd>
-
-         <dt><a href="#cache-max-age" title="cache-max-age">max-age</a></dt>
-         <dd>The <var title="">max-age</var>.</dd>
-
-         <dt><a href="#cache-credentials" title="cache-credentials">credentials</a></dt>
-         <dd>False if the <a href="#omit-credentials-flag">omit credentials flag</a> is set, or true
-         otherwise.
-
-         <dt><a href="#cache-method" title="cache-method">method</a></dt>
-         <dd>The given method.</dd>
-
-         <dt><a href="#cache-header" title="cache-header">header</a></dt>
-         <dd>Empty.</dd>
-        </dl>
-       </li>
-
-       <li>
-        <p>For each header in <var title="">headers</var> for which there is
-        a <a href="#preflight-result-cache-header-match">header cache match</a> set the
-        <a href="#cache-max-age" title="cache-max-age">max-age</a> field value of the
-        matching entry to <var title="">max-age</var>.</p>
-
-        <p>For each header in <var title="">headers</var> for which there is
-        <em>no</em> <a href="#preflight-result-cache-header-match">header cache match</a> create a new entry in
-        the <a href="#preflight-result-cache">preflight result cache</a> with the various fields set
-        as follows:</p>
-
-        <dl>
-         <dt><a href="#cache-origin" title="cache-origin">origin</a></dt>
-         <dd>The <a href="#source-origin">source origin</a>.</dd>
-
-         <dt><a href="#cache-url" title="cache-url">url</a></dt>
-         <dd>The <a href="#request-url">request URL</a>.</dd>
-
-         <dt><a href="#cache-max-age" title="cache-max-age">max-age</a></dt>
-         <dd>The <var title="">max-age</var>.</dd>
-
-         <dt><a href="#cache-credentials" title="cache-credentials">credentials</a></dt>
-         <dd>False if the <a href="#omit-credentials-flag">omit credentials flag</a> is set, or true
-         otherwise.
-
-         <dt><a href="#cache-method" title="cache-method">method</a></dt>
-         <dd>Empty.</dd>
-
-         <dt><a href="#cache-header" title="cache-header">header</a></dt>
-         <dd>The given header.</dd>
-        </dl>
-       </li>
-      </ol>
-     </dd>
+     <dt><a href="#cache-header-name" title="cache-header-name">header name</a></dt>
+     <dd><var title="">header name</var>
     </dl>
-   </li>
 
-   <li><p>Set the <a href="#cross-origin-request-status">cross-origin request status</a> to
-   <i>preflight complete</i>.</li>
-
-   <!-- the actual request -->
-   <li>
-    <p>This is the <dfn id="actual-request">actual request</dfn>. Apply the
-    <a href="#make-a-request-steps">make a request steps</a> and observe the <i>request rules</i>
-    below while making the request.</p>
-
-    <dl class="switch">
-     <dt>If the response has an HTTP status code of 301, 302, 303, 307, or 308
-
-     <dd><p>Apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>.</dd>
-
-     <dt>If the end user cancels the request</dt>
-
-     <dd><p>Apply the <a href="#abort-steps">abort steps</a>.</dd>
-
-     <dt>If there is a network error</dt>
-     <dd>
-      <p>In case of DNS errors, TLS negotiation failure, or other type of
-      network errors, apply the <a href="#network-error-steps">network error steps</a>. Do not
-      request any kind of end user interaction.</p>
-
-      <p class="note">This does not include HTTP responses that indicate
-      some type of error, such as HTTP status code 410.</p>
-     </dd>
-
-
-     <dt>Otherwise</dt>
-
-     <dd><p>Perform a <a href="#resource-sharing-check">resource sharing check</a>. If it returns
-     fail, apply the <a href="#cache-and-network-error-steps">cache and network error steps</a>. Otherwise,
-     if it returns pass, terminate this algorithm and set the
-     <a href="#cross-origin-request-status">cross-origin request status</a> to <i>success</i>. Do not
-     actually terminate the request.</dd>
-    </dl>
+   <li><p>Return <var title="">response</var>.
   </ol>
 
-  <div class="example">
-   <p>Consider the following scenario:</p>
-
-   <ol>
-    <li><p>The user agent gets the request from an API, such as
-    <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>, to perform a
-    cross-origin request using the custom <code>XMODIFY</code> method from
-    <a href="#source-origin">source origin</a> <code>http://example.org</code> to
-    <code>http://blog.example/entries/hello-world</code>.
-
-    <li><p>The user agent performs a <a href="#preflight-request">preflight request</a> using
-    the <code>OPTIONS</code> method to
-    <code>http://blog.example/entries/hello-world</code> and includes the
-    <code title="http-origin"><a href="#http-origin">Origin</a></code> and
-    <code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>
-    headers with the appropriate values.</li>
-
-    <li>
-     <p>The response to that request includes the following headers:</p>
-     <pre>Access-Control-Allow-Origin: http://example.org
-Access-Control-Max-Age: 2520
-Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
-
-    <li><p>The user agent then performs the desired request using the
-    <code>XMODIFY</code> method to
-    <code>http://blog.example/entries/hello-world</code> as this was allowed
-    by the resource. In addition, for the coming forty-two minutes, no
-    <a href="#preflight-request">preflight request</a> will be needed.
-   </ol>
-  </div>
-
-
-  <h4 id="preflight-result-cache-0"><span class="secno">7.1.6 </span>Preflight Result Cache</h4>
-
-  <p>As mentioned, a <a href="#cross-origin-request-with-preflight">cross-origin request with preflight</a>
-  uses a <dfn id="preflight-result-cache">preflight result cache</dfn>. This
-  cache consists of a set of entries. Each entry consists of the following
-  fields:</p>
-
-  <dl>
-   <dt><dfn id="cache-origin" title="cache-origin">origin</dfn></dt>
-   <dd>Holds the <a href="#source-origin">source origin</a>.</dd>
-
-   <dt><dfn id="cache-url" title="cache-url">url</dfn></dt>
-   <dd>Holds the <a href="#request-url">request URL</a>.</dd>
-
-   <dt><dfn id="cache-max-age" title="cache-max-age">max-age</dfn></dt>
-   <dd>Holds the
-   <code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>
-   header value.</dd>
-
-   <dt><dfn id="cache-credentials" title="cache-credentials">credentials</dfn></dt>
-   <dd>False if the <a href="#omit-credentials-flag">omit credentials flag</a> is set, or true
-   otherwise.
-
-   <dt><dfn id="cache-method" title="cache-method">method</dfn></dt>
-   <dd>Empty if <a href="#cache-header" title="cache-header">header</a> is not empty;
-   otherwise one of the values from the
-   <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>
-   headers.</dd>
-
-   <dt><dfn id="cache-header" title="cache-header">header</dfn></dt>
-   <dd>Empty if <a href="#cache-method" title="cache-method">method</a> is not empty;
-   otherwise one of the values from the
-   <code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>
-   headers.</dd>
-  </dl>
-
-  <p class="note">To be clear, the <a href="#cache-method" title="cache-method">method</a>
-  and <a href="#cache-header" title="cache-header">header</a> fields are mutually
-  exclusive. When one of them is empty the other is non-empty.</p>
-
-  <p class="note">The primary key of an entry consists of all fields
-  excluding the <a href="#cache-max-age" title="cache-max-age">max-age</a> field.</p>
-
-  <p>Entries must be removed when the time specified in
-  the <a href="#cache-max-age" title="cache-max-age">max-age</a> field has passed since
-  storing the entry. Entries can also be added and removed per the
-  algorithms below. They are added and removed in such a way that there can
-  never be duplicate items in the cache.</p>
-
-  <p>User agents may clear cache entries before the
-  time specified in the <a href="#cache-max-age" title="cache-max-age">max-age</a> field has
-  passed.</p>
-
-  <p class="note">Although this effectively makes the
-  <a href="#preflight-result-cache">preflight result cache</a> optional, user agents are strongly
-  encouraged to support it.</p>
-
-
-  <h4 id="generic-cross-origin-request-algorithms"><span class="secno">7.1.7 </span>Generic Cross-Origin Request Algorithms</h4>
-
-  <p>The variables used in the generic set of steps are part of the
-  algorithms that invoke these set of steps.</p>
-
-  <hr>
-
-  <p>Whenever the <dfn id="make-a-request-steps">make a request steps</dfn> are applied,
-  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#fetch">fetch</a> the <a href="#request-url">request URL</a> from
-  <i title="">origin</i> <a href="#source-origin">source origin</a> using
-  <a href="#referrer-source">referrer source</a> as <i title="">override referrer source</i> with
-  the <i title="">manual redirect flag</i> set, and the
-  <i title="">block cookies flag</i> set if the
-  <a href="#omit-credentials-flag">omit credentials flag</a> is set. Use method
-  <a href="#request-method">request method</a>, entity body <a href="#request-entity-body">request entity body</a>,
-  including the <a href="#author-request-headers">author request headers</a>, and include
-  <a href="#user-credentials">user credentials</a> if the <a href="#omit-credentials-flag">omit credentials flag</a> is unset.
-
-  <p>Whenever the <dfn id="redirect-steps">redirect steps</dfn> are applied,
-  follow this set of steps:</p>
-
-  <ol>
-   <li><p>Let <var>original URL</var> be the <a href="#request-url">request URL</a>.
-
-   <li><p>Let <a href="#request-url">request URL</a> be the
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url">URL</a> conveyed by
-   the <code>Location</code> header in the redirect response.</li>
-   <!-- XXX should be resolved URL per HTML5 algorithms ... -->
-
-   <li><p>If the <a href="#request-url">request URL</a> &lt;scheme&gt; is not supported,
-   infinite loop precautions are violated, or the user agent does not wish
-   to make the new request for some other reason, apply the
-   <a href="#network-error-steps">network error steps</a>.
-
-   <li><p>If the <a href="#request-url">request URL</a> contains the
-   <code class="external"><a href="http://tools.ietf.org/html/rfc2616/#section-3.2.1">userinfo</a></code> production apply the
-   <a href="#network-error-steps">network error steps</a>.</li>
-
-   <li><p>If the <a href="#resource-sharing-check">resource sharing check</a> for the current
-   resource returns fail, apply the <a href="#network-error-steps">network error steps</a>.
-   <!--This prevents intranet data leakage.-->
-
-   <li><p>If the <a href="#request-url">request URL</a>
-   <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a> is not
-   <a class="external" href="http://tools.ietf.org/html/rfc6454#section-5">same origin</a> with the
-   <var>original URL</var> <a class="external" href="http://tools.ietf.org/html/rfc6454#section-4">origin</a>, set
-   <a href="#source-origin">source origin</a> to a globally unique identifier (becomes
-   "<code title="">null</code>" when transmitted).
-
-   <li><p>Transparently follow the redirect while observing the set of
-   <i>request rules</i>.
-   <!-- XXX or should this use the make a request steps? -->
-  </ol>
-
-  <hr>
-
-  <p>Whenever the <dfn id="abort-steps">abort steps</dfn> are applied,
-  terminate the algorithm that invoked this set of steps and set the
-  <a href="#cross-origin-request-status">cross-origin request status</a> to <i>abort error</i>.</p>
-
-  <hr>
-
-  <p>Whenever the <dfn id="network-error-steps">network error steps</dfn>
-  are applied, terminate the algorithm that invoked this set of steps and
-  set the <a href="#cross-origin-request-status">cross-origin request status</a> to
-  <i>network error</i>.</p>
-
-  <p class="note">This has no effect on setting of
-  <a href="#user-credentials">user credentials</a>. I.e. if the <i title="">block cookies flag</i>
-  is unset, cookies will be set by the response.
-
-  <p>Whenever the
-  <dfn id="cache-and-network-error-steps">cache and network error steps</dfn>
-  are applied, follow these steps:</p>
-
-  <ol>
-   <li><p>Remove the entries in the <a href="#preflight-result-cache">preflight result cache</a>
-   where <a href="#cache-origin" title="cache-origin">origin</a> field value is a
-   <a href="#case-sensitive">case-sensitive</a> match for <a href="#source-origin">source origin</a>
-   and <a href="#cache-url" title="cache-url">url</a> field value is a
-   <a href="#case-sensitive">case-sensitive</a> match for <a href="#request-url">request URL</a>.</li>
-
-   <li><p>Apply the <a href="#network-error-steps">network error steps</a> acting as if the
-   algorithm that invoked the <a href="#cache-and-network-error-steps">cache and network error steps</a>
-   invoked the <a href="#network-error-steps">network error steps</a> instead.</p>
-  </ol>
-
-  <hr>
-
-  <p>There is a
-  <dfn id="preflight-result-cache-match">cache match</dfn>
-  when there is a cache entry in the <a href="#preflight-result-cache">preflight result cache</a>
-  for which the following is true:</p>
-
-  <ul>
-   <li><p>The <a href="#cache-origin" title="cache-origin">origin</a> field value is a
-   <a href="#case-sensitive">case-sensitive</a> match for
-   <a href="#source-origin">source origin</a>.</li>
-
-   <li><p>The <a href="#cache-url" title="cache-url">url</a> field value is a
-   <a href="#case-sensitive">case-sensitive</a> match for
-   <a href="#request-url">request URL</a>.</li>
-
-   <li><p>The <a href="#cache-credentials" title="cache-credentials">credentials</a> field value
-   is true and the <a href="#omit-credentials-flag">omit credentials flag</a> is unset, or it is false and
-   the <a href="#omit-credentials-flag">omit credentials flag</a> is set.
-  </ul>
-
-  <p>There is a
-  <dfn id="preflight-result-cache-method-match">method cache match</dfn>
-  when there is a cache entry for which there is a <a href="#preflight-result-cache-match">cache match</a>
-  and the <a href="#cache-method" title="cache-method">method</a> field value is a
-  <a href="#case-sensitive">case-sensitive</a> match for the given method.</p>
-
-  <p>There is a
-  <dfn id="preflight-result-cache-header-match">header cache match</dfn>
-  when there is a cache entry for which there is a <a href="#preflight-result-cache-match">cache match</a>
-  and the <a href="#cache-header" title="cache-header">header</a> field value is an
-  <a href="#ascii-case-insensitive">ASCII case-insensitive</a> match for the given header field
-  name.</p>
-
-
-  <h3 id="resource-sharing-check-0"><span class="secno">7.2 </span>Resource Sharing Check</h3>
-
-  <p>The <dfn id="resource-sharing-check">resource sharing check</dfn>
-  algorithm for a given resource is as follows:</p>
-
-  <ol>
-   <li><p>If the response includes zero or more than one
-   <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-   header values, return fail and terminate this algorithm.</li>
-
-   <li><p>If the
-   <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-   header value is the "<code>*</code>" character and the
-   <a href="#omit-credentials-flag">omit credentials flag</a> is set, return pass and terminate this
-   algorithm.</li>
-
-   <li><p>If the value of
-   <code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>
-   is not a <a href="#case-sensitive">case-sensitive</a> match for the value of the
-   <code title="http-origin"><a href="#http-origin">Origin</a></code> header as defined by its
-   specification, return fail and terminate this algorithm.</li>
-
-   <li><p>If the <a href="#omit-credentials-flag">omit credentials flag</a> is unset and the response
-   includes zero or more than one
-   <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
-   header values, return fail and terminate this algorithm.</li>
-
-   <li><p>If the <a href="#omit-credentials-flag">omit credentials flag</a> is unset and the
-   <code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>
-   header value is not a <a href="#case-sensitive">case-sensitive</a> match for
-   "<code>true</code>", return fail and terminate this algorithm.
-
-   <li><p>Return pass.
-  </ol>
-
-  <p class="note">The above algorithm also functions when the
-  <a class="external" href="http://tools.ietf.org/html/rfc6454#section-6.2">ASCII serialization</a> of an origin is
-  the string "<code>null</code>".</p>
-
-
-  <h3 id="user-agent-security"><span class="secno">7.3 </span>Security</h3>
-
-  <p><em>This section is non-normative.</em></p>
-
-  <p>At various places user agents are allowed to take additional
-  precautions. E.g. user agents are allowed to not store cache items, remove
-  cache items before they reached their
-  <a href="#cache-max-age" title="cache-max-age">max-age</a>, and not connect to certain
-  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/urls.html#url" title="URL">URLs</a>.</p>
-
-  <p>User agents are encouraged to impose a limit on
-  <a href="#cache-max-age" title="cache-max-age">max-age</a> so items cannot stay in the
-  <a href="#preflight-result-cache">preflight result cache</a> for unreasonable amounts of time.</p>
-
-  <p>As indicated as the first step of the <a href="#cross-origin-request">cross-origin request</a>
-  algorithm and in the <a href="#redirect-steps">redirect steps</a> algorithm user agents
-  are allowed to terminate the algorithm and not make a request. This could
-  be done because e.g.:</p>
-
-  <ul>
-   <li>The server on which the resource resides is blacklisted.</li>
-   <li>The server on which the resource resides is known to be part of an
-   intranet.</li>
-   <li>The URL &lt;scheme&gt; is not supported.</li>
-   <li><code>https</code> to <code>http</code> is not allowed.</li>
-   <li><code>https</code> to <code>https</code> is not allowed because e.g.
-   the certificates differ.</li>
-  </ul>
-
-  <p>User agents are encouraged to apply security decisions on a generic
-  level and not just to the resource sharing policy. E.g. if a user agent
-  disallows requests from the <code>https</code> to the <code>http</code>
-  scheme for a <a href="#cross-origin-request">cross-origin request</a> it is encouraged to do the
-  same for the HTML <code>img</code> element.</p>
-
-
-
-
-  <h2 id="cors-api-specification-advice"><span class="secno">8 </span>CORS API Specification Advice</h2>
-
-  <p><em>This section is non-normative.</em></p>
-
-  <p>This specification defines a resource sharing policy that cannot be
-  implemented without an API that utilizes it. The specification that
-  defines the API that uses the policy is a CORS API specification.</p>
-
-  <p>In case a CORS API specification defines multiple APIs that utilize the
-  policy the advice is to be considered separately for each API.</p>
-
-
-  <h3 id="cors-api-specifiation-request"><span class="secno">8.1 </span>Constructing a Cross-Origin Request</h3>
-
-  <p>For all <a href="#cross-origin">cross-origin</a> requests that APIs can make for
-  which the resource sharing policy in this specification is supposed to
-  apply, the CORS API specification needs to reference the
-  <a href="#cross-origin-request">cross-origin request</a> algorithm and set the following input
-  variables appropriately: <a href="#request-url">request URL</a>,
-  <a href="#request-method">request method</a>, <a href="#author-request-headers">author request headers</a>,
-  <a href="#request-entity-body">request entity body</a>, <a href="#source-origin">source origin</a>,
-  <a href="#manual-redirect-flag">manual redirect flag</a>, <a href="#omit-credentials-flag">omit credentials flag</a>,
-  and the <a href="#force-preflight-flag">force preflight flag</a>.</p>
-
-  <p>CORS API specifications are allowed to let these input variables be
-  controlled by the API, but can also set fixed values.</p>
-
-  <p class="example">A CORS API specification for an API that only allows
-  requests using the <code>GET</code> method might set
-  <a href="#request-method">request method</a> to <code>GET</code>,
-  <a href="#request-entity-body">request entity body</a> to empty, and <a href="#source-origin">source origin</a>
-  to some appropriate value and let the other variables be controlled by the
-  API.</p>
-
-
-  <h3 id="cors-api-specification-redirect"><span class="secno">8.2 </span>Dealing with Same Origin to Cross-Origin Redirects</h3>
-
-  <p>Since browsers are based on a
-  <a class="external" href="http://tools.ietf.org/html/rfc6454#section-5">same origin</a> security model and the
-  policy outlined in this specification is intended for APIs used in
-  browsers, it is expected that APIs that will utilize this policy will have
-  to handle a <a class="external" href="http://tools.ietf.org/html/rfc6454#section-5">same origin</a> request that
-  results in a redirect that is <a href="#cross-origin">cross-origin</a> in a special
-  way.</p>
-
-  <p>For APIs that transparently handle redirects CORS API specifications
-  are encouraged to handle this scenario transparently as well by "catching"
-  the redirect and invoking the <a href="#cross-origin-request">cross-origin request</a> algorithm
-  on the (<a href="#cross-origin">cross-origin</a>) redirect URL.</p>
-
-  <p class="note">The XMLHttpRequest specification does this.
-  <a class="informative" href="#refsXHR">[XHR]</a>
-
-
-  <h3 id="cors-api-specification-response"><span class="secno">8.3 </span>Dealing with the
-  Cross-Origin Request Status</h3>
-
-  <p>While a <a href="#cross-origin-request">cross-origin request</a> is progressing its
-  associated <a href="#cross-origin-request-status">cross-origin request status</a> is updated.
-  Depending on the value of the <a href="#cross-origin-request-status">cross-origin request status</a> the
-  API is to react in a different way:</p>
-
-  <dl>
-   <dt><i>preflight complete</i></dt>
-   <dd>
-    <p>Features that can only be safely exposed after a
-    <a href="#preflight-request">preflight request</a> can now be enabled.</p>
-
-    <p class="note">E.g. upload progress events for
-    <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>.
-   </dd>
-
-   <dt><i>success</i></dt>
-   <dd>
-    <p>The contents of the response can be shared with the API, including
-    headers that have not been filtered out.</p>
-
-    <p class="note">The request itself can still be progressing. I.e. the
-    <a href="#cross-origin-request-status">cross-origin request status</a> value does not indicate that
-    the request has completed.</p>
-   </dd>
-
-   <dt><i>abort error</i></dt>
-   <dd><p>Handle analogous to requests where the user aborted the request.
-   This can be handled equivalently to how <i>network error</i> is
-   handled. Ensure not to reveal any further information about the
-   request.</dd>
-
-   <dt><i>network error</i></dt>
-   <dd><p>Handle analogous to requests where some kind of error
-   occurred. Ensure not the reveal any further information about the
-   request.</dd>
-  </dl>
-
-
-  <h3 id="cors-api-specification-security"><span class="secno">8.4 </span>Security</h3>
-
-  <p>Similarly to <a class="external" href="http://tools.ietf.org/html/rfc6454#section-5">same origin</a> requests,
-  CORS API specifications are encouraged to properly limit headers, methods,
-  and <a href="#user-credentials">user credentials</a> the author can set and get for requests
-  that are <a href="#cross-origin">cross-origin</a>.</p>
-
-  <p class="note">Reviewing the XMLHttpRequest specification provides a good
-  start for the kind of limitations that are to be imposed.
-  <a class="informative" href="#refsXHR">[XHR]</a>
-
-  <p>CORS API specifications also need to ensure not to reveal anything
-  until the <a href="#cross-origin-request-status">cross-origin request status</a> is set to
-  <i>preflight complete</i> or <i>success</i> to prevent e.g. port
-  scanning.</p>
-
-  <p class="note">In XMLHttpRequest progress events are dispatched
-  only after the <a href="#cross-origin-request-status">cross-origin request status</a> is set to
-  <i>success</i>. Upload progress events are only dispatched once the
-  <a href="#cross-origin-request-status">cross-origin request status</a> is <i>preflight complete</i>.</p>
+ <li><p>Otherwise, if <var title="">response</var> is not an <a href="#end-user-abort">end-user abort</a>,
+ change <var title="">response</var> into a <a href="#network-error">network error</a>.
+
+ <li><p>Return <var title="">response</var>.
+</ol>
+
+
+<h3 id="cors-preflight-cache"><span class="secno">6.6 </span>CORS preflight cache</h3>
+
+<p>A <dfn id="cors-preflight-cache-0">CORS preflight cache</dfn> consists of a collection of entries where each
+entry has these fields:
+  <dfn id="cache-origin" title="cache-origin">origin</dfn>,
+  <dfn id="cache-url" title="cache-url">url</dfn>,
+  <dfn id="cache-max-age" title="cache-max-age">max-age</dfn>,
+  <dfn id="cache-credentials" title="cache-credentials">credentials</dfn>,
+  <dfn id="cache-method" title="cache-method">method</dfn>, and
+  <dfn id="cache-header-name" title="cache-header-name">header name</dfn>.
+
+<p>Entries must be removed after the seconds specified in the
+<a href="#cache-max-age" title="cache-max-age">max-age</a> field have passed since storing the entry.
+Entries may be removed before that moment arrives.
+
+<p>To <dfn id="cache-clear" title="cache-clear">clear</dfn> entries using a <var title="">request</var>,
+remove any entries in the <a href="#cors-preflight-cache-0">CORS preflight cache</a> whose
+<a href="#cache-origin" title="cache-origin">origin</a> is <var title="">request</var>'s
+<a href="#concept-request-origin" title="concept-request-origin">origin</a> and whose
+<a href="#cache-url" title="cache-url">url</a> is <var title="">request</var>'s
+<a href="#concept-request-url" title="concept-request-url">url</a>.
+
+<p>There is a <dfn id="cache-match">cache match</dfn> for a <var title="">request</var> if
+<a href="#cache-origin" title="cache-origin">origin</a> is <var title="">request</var>'s
+<a href="#concept-request-origin" title="concept-request-origin">origin</a>, <a href="#cache-url" title="cache-url">url</a> is
+<var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>, and either
+<a href="#cache-credentials" title="cache-credentials">credentials</a> is false and <var title="">request</var>'s
+<a href="#omit-credentials-flag">omit credentials flag</a> is set or
+<a href="#cache-credentials" title="cache-credentials">credentials</a> is true and <var title="">request</var>'s
+<a href="#omit-credentials-flag">omit credentials flag</a> is unset.
+
+<p>There is a <dfn id="method-cache-match">method cache match</dfn> for a given method using <var title="">request</var>
+when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache</a> for which there is a
+<a href="#cache-match">cache match</a> for <var title="">request</var> and its
+<a href="#cache-method" title="cache-method">method</a> is the given method.
+
+<p>There is a <dfn id="header-name-cache-match">header name cache match</dfn> for a given header name using <var title="">request</var>
+when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache</a> for which there is a
+<a href="#cache-match">cache match</a> for <var title="">request</var> and its
+<a href="#cache-header-name" title="cache-header-name">header name</a> is the given header name.
+
+
+<h3 id="cors-check"><span class="secno">6.7 </span>CORS check</h3>
+
+<p>To perform a <dfn id="cors-check-0">CORS check</dfn> for a <var title="">request</var> and
+<var title="">response</var>, run these steps:
+
+<ol>
+ <li><p>If <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>
+ contains zero or more than one <span title="concept-header">header</span> whose
+ <span title="concept-header-name">name</span> is <code>Access-Control-Allow-Origin</code>,
+ return failure.
+
+ <li><p>Let <var title="">result</var> be the <span title="concept-header-value">value</span>
+ of the <span title="concept-header">header</span> whose
+ <span title="concept-header-name">name</span> is <code>Access-Control-Allow-Origin</code>
+ within <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+
+ <li><p>If <var title="">request</var>'s <a href="#omit-credentials-flag">omit credentials flag</a> is set and
+ <var title="">result</var> is <code title="">*</code>, return success.
+
+ <li><p>If <var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>
+ serialized to bytes is not <var title="">result</var>, return failure.
+ <!-- XXX serialized to bytes -->
+
+ <li><p>If <var title="">request</var>'s <a href="#omit-credentials-flag">omit credentials flag</a> is set, return
+ success.
+
+ <li><p>If <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>
+ contains zero or more than one <span title="concept-header">header</span> whose
+ <span title="concept-header-name">name</span> is <code>Access-Control-Allow-Credentials</code>,
+ return failure.
+
+ <li><p>If the <span title="concept-header-value">value</span>
+ of the <span title="concept-header">header</span> whose
+ <span title="concept-header-name">name</span> is <code>Access-Control-Allow-Origin</code>
+ within <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a> is
+ <code title="">true</code>, return success.
+
+ <li><p>Return failure.
+</ol>
 
 
 
 <h2 class="no-num" id="references">References</h2>
-<div id="anolis-references"><dl><dt id="refsCONFUSED">[CONFUSED]
-<dd>(Non-normative) <cite><a href="http://www.cis.upenn.edu/~KeyKOS/ConfusedDeputy.html">The Confused Deputy</a></cite>, Norm Hardy.
-
-<dt id="refsCOOKIES">[COOKIES]
-<dd><cite><a href="http://tools.ietf.org/html/rfc6265">HTTP State Management Mechanism</a></cite>, Adam Barth. IETF.
-
-<dt id="refsCSRF">[CSRF]
-<dd>(Non-normative) <cite><a href="http://marc.info/?l=bugtraq&amp;m=99263135911884&amp;w=2">Cross-Site Request Forgeries</a></cite>, Peter Watkins.
-
-<dt id="refsEVENTSOURCE">[EVENTSOURCE]
-<dd>(Non-normative) <cite><a href="http://dev.w3.org/html5/eventsource/">Server-Sent Events</a></cite>, Ian Hickson. W3C.
-
-<dt id="refsHTML">[HTML]
-<dd><cite><a href="http://www.whatwg.org/specs/web-apps/current-work/multipage/">HTML</a></cite>, Ian Hickson. WHATWG.
-
-<dt id="refsHTTP">[HTTP]
-<dd><cite><a href="http://tools.ietf.org/html/rfc2616">Hypertext Transfer Protocol -- HTTP/1.1</a></cite>, Roy Fielding, James Gettys, Jeffrey Mogul et al.. IETF.
-
-<dt id="refsJSONP">[JSONP]
-<dd>(Non-normative) <cite><a href="http://bob.pythonmac.org/archives/2005/12/05/remote-json-jsonp/">JSONP</a></cite>, Bob Ippolito.
-
-<dt id="refsOAUTH">[OAUTH]
-<dd>(Non-normative) <cite><a href="http://tools.ietf.org/html/rfc5849">The OAuth 1.0 Protocol</a></cite>, Eran Hammer-Lahav. IETF.
-
-<dt id="refsORIGIN">[ORIGIN]
-<dd><cite><a href="http://tools.ietf.org/html/rfc6454">The Web Origin Concept</a></cite>, Adam Barth. IETF.
-
-<dt id="refsRFC2119">[RFC2119]
-<dd><cite><a href="http://tools.ietf.org/html/rfc2119">Key words for use in RFCs to Indicate Requirement Levels</a></cite>, Scott Bradner. IETF.
-
-<dt id="refsURI">[URI]
-<dd><cite><a href="http://tools.ietf.org/html/rfc3986">Uniform Resource Identifier (URI): Generic Syntax</a></cite>, Tim Berners-Lee, Roy Fielding and Larry Masinter. IETF.
-
-<dt id="refsXHR">[XHR]
-<dd>(Non-normative) <cite><a href="http://xhr.spec.whatwg.org/">XMLHttpRequest</a></cite>, Anne van Kesteren. WHATWG.
-
-</dl></div>
+<div id="anolis-references"><dl></dl></div>
 
 
 
@@ -1856,58 +892,58 @@ Access-Control-Allow-Methods: PUT, DELETE, XMODIFY</pre>
 
 <p>The editor would like to thank
 
-  Adam Barth,
-  Alexey Proskuryakov,
-  Arne Johannessen,
-  Arthur Barstow,
-  Benjamin Hawkes-Lewis,
-  Bert Bos,
-  Björn Höhrmann,
-  Boris Zbarsky,
-  Brad Hill,
-  Cameron McCormack,
-  Collin Jackson,
-  David Håsäther,
-  David Orchard,
-  Dean Jackson,
-  Eric Lawrence,
-  Frank Ellerman,
-  Frederick Hirsch,
-  Graham Klyne,
-  Hal Lockhart,
-  Henri Sivonen,
-  Ian Hickson,
-  Jesse M. Heines,
-  Jonas Sicking,
-  Julian Reschke,
-  Lachlan Hunt,
-  呂康豪 (Kang-Hao Lu),
-  Maciej Stachowiak,
-  Marc Silbey,
-  Marcos Caceres,
-  Mark Nottingham,
-  Mark S. Miller,
-  Martin Dürst,
-  Matt Womer,
-  Mhano Harkness,
-  Michael Smith,
-  Mohamed Zergaoui,
-  Nikunj Mehta,
-  Odin Hørthe Omdal,
-  Philip Jägenstedt,
-  Sharath Udupa,
-  Simon Pieters,
-  Sunava Dutta,
-  Surya Ismail,
-  Thomas Roessler,
-  Tyler Close,
-  Vladimir Dzhuvinov,
-  Wayne Carr, and
-  Zhenbin Xu
+Adam Barth,
+Alexey Proskuryakov,
+Arne Johannessen,
+Arthur Barstow,
+Benjamin Hawkes-Lewis,
+Bert Bos,
+Björn Höhrmann,
+Boris Zbarsky,
+Brad Hill,
+Brad Porter,
+Cameron McCormack,
+Collin Jackson,
+David Håsäther,
+David Orchard,
+Dean Jackson,
+Eric Lawrence,
+Frank Ellerman,
+Frederick Hirsch,
+Graham Klyne,
+Hal Lockhart,
+Henri Sivonen,
+Ian Hickson,
+Jesse M. Heines,
+Jonas Sicking,
+Julian Reschke,
+Lachlan Hunt,
+呂康豪 (Kang-Hao Lu),
+Maciej Stachowiak,
+Marc Silbey,
+Marcos Caceres,
+Mark Nottingham,
+Mark S. Miller,
+Martin Dürst,
+Matt Oshry,
+Matt Womer,
+Mhano Harkness,
+Michael Smith,
+Mohamed Zergaoui,
+Nikunj Mehta,
+Odin Hørthe Omdal,
+Philip Jägenstedt,
+R. Auburn,
+Sharath Udupa,
+Simon Pieters,
+Sunava Dutta,
+Surya Ismail,
+Thomas Roessler,
+Tyler Close,
+Vladimir Dzhuvinov,
+Wayne Carr, and
+Zhenbin Xu
 
-  for their contributions to this specification.</p>
-
-<p>Special thanks to Brad Porter, Matt Oshry and R. Auburn, who all helped
-editing earlier versions of this document.
+for being awesome.
 
 <script id="head" src="http://www.whatwg.org/specs/web-apps/current-work/dfn.js"></script>
