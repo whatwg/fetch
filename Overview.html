@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-15-march-2013">Living Standard — Last Updated 15 March 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-16-march-2013">Living Standard — Last Updated 16 March 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-15 March 2013, the editor has made this specification available
+16 March 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -468,16 +468,53 @@ steps:
  <dt>"<code title="">http</code>"
  <dt>"<code title="">https</code>"
  <dd>
-  <p>Follow the requirements from HTTP to retrieve a resource. If the end user terminates
-  the connection, return a <a href="#end-user-abort">end-user abort</a>. If the connection terminates for
-  other reason, return a <a href="#network-error">network error</a>. Otherwise, when the headers from the
-  resource are obtained, let <var title="">response</var> be a new <a href="#response">response</a> and
-  set its fields appropriately.
-  <!-- should probably spell this out -->
+  <p>Set up an HTTP request following the requirements from HTTP and TLS as appropriate,
+  with these additional constraints:
 
-  <p class="XXX">Need to deal with setting Origin / Referer properly, and merging custom / ua headers.
+  <ol>
+   <li>
+    <p>If <var title="">request</var>'s
+    <span title="concept-request-referrer">referrer</span> is not null, include a
+    <code title="">Referer</code> <a href="#concept-header" title="concept-header">header</a>
+    whose <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">request</var>'s
+    <span title="concept-request-referrer">referrer</span>.
 
-  <p class="XXX">cookies?!
+    <p class="note">User agents are encouraged to provide the end user with options to
+    always exclude <code title="">Referer</code> <a href="#concept-header" title="concept-header">headers </a>
+    or have it expose less sensitive information.
+
+   <li>
+    <p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a> is
+    set, include an <code title="">Origin</code> <a href="#concept-header" title="concept-header">header</a>
+    whose <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">request</var>'s
+    <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
+    <span class="XXX">serialized to bytes</span>.
+
+   <li>
+    <p>Include all of <var title="">request</var>'s
+    <a href="#concept-request-headers" title="concept-request-headers">headers</a> and let them replace any
+    <a href="#concept-header" title="concept-header">headers</a> with the same
+    <a href="#concept-header-name" title="concept-header-name">name</a> already present in the HTTP request.
+
+   <li>
+    <p>Include all of <var title="">request</var>'s
+    <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> as long as their
+    <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> present in the
+    HTTP request.
+
+   <li>
+    <p class="XXX">cookies
+  </ol>
+
+  <p>If the HTTP request terminated for some reason, return a <a href="#network-error">network error</a>.
+
+  <p class="XXX">Deal with <a href="#end-user-abort">end-user abort</a> somehow.
+
+  <p>Otherwise, when the headers from the resource are obtained, let
+  <var title="">response</var> be a new <a href="#response">response</a> and set its fields
+  appropriately.
+  <!-- XXX spell this out -->
+
 
   <p>If <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
   301, 302, 303, 307, or 308, run these steps:

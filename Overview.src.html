@@ -451,16 +451,53 @@ steps:
  <dt>"<code title>http</code>"
  <dt>"<code title>https</code>"
  <dd>
-  <p>Follow the requirements from HTTP to retrieve a resource. If the end user terminates
-  the connection, return a <span>end-user abort</span>. If the connection terminates for
-  other reason, return a <span>network error</span>. Otherwise, when the headers from the
-  resource are obtained, let <var title>response</var> be a new <span>response</span> and
-  set its fields appropriately.
-  <!-- should probably spell this out -->
+  <p>Set up an HTTP request following the requirements from HTTP and TLS as appropriate,
+  with these additional constraints:
 
-  <p class=XXX>Need to deal with setting Origin / Referer properly, and merging custom / ua headers.
+  <ol>
+   <li>
+    <p>If <var title>request</var>'s
+    <span title=concept-request-referrer>referrer</span> is not null, include a
+    <code title>Referer</code> <span title=concept-header>header</span>
+    whose <span title=concept-header-value>value</span> is <var title>request</var>'s
+    <span title=concept-request-referrer>referrer</span>.
 
-  <p class=XXX>cookies?!
+    <p class=note>User agents are encouraged to provide the end user with options to
+    always exclude <code title>Referer</code> <span title=concept-header>headers </span>
+    or have it expose less sensitive information.
+
+   <li>
+    <p>If <var title>request</var>'s <span>force <code>Origin</code> header flag</span> is
+    set, include an <code title>Origin</code> <span title=concept-header>header</span>
+    whose <span title=concept-header-value>value</span> is <var title>request</var>'s
+    <span title=concept-request-origin>origin</span>,
+    <span class=XXX>serialized to bytes</span>.
+
+   <li>
+    <p>Include all of <var title>request</var>'s
+    <span title=concept-request-headers>headers</span> and let them replace any
+    <span title=concept-header>headers</span> with the same
+    <span title=concept-header-name>name</span> already present in the HTTP request.
+
+   <li>
+    <p>Include all of <var title>request</var>'s
+    <span title=concept-request-author-headers>author headers</span> as long as their
+    <span title=concept-header-name>name</span> is <em>not</em> present in the
+    HTTP request.
+
+   <li>
+    <p class=XXX>cookies
+  </ol>
+
+  <p>If the HTTP request terminated for some reason, return a <span>network error</span>.
+
+  <p class=XXX>Deal with <span>end-user abort</span> somehow.
+
+  <p>Otherwise, when the headers from the resource are obtained, let
+  <var title>response</var> be a new <span>response</span> and set its fields
+  appropriately.
+  <!-- XXX spell this out -->
+
 
   <p>If <var title>response</var>'s <span title=concept-response-status>status</span> is
   301, 302, 303, 307, or 308, run these steps:
