@@ -732,15 +732,15 @@ steps:
        http://lists.w3.org/Archives/Public/public-webappsec/2013Feb/0078.html -->
 
   <ol>
-   <li><p>Let <var title>methods</var> be the result of <span>parsing</span> all
-   <var title>response</var>'s <span title=concept-response-headers>headers</span>'
+   <li><p>Let <var title>methods</var> be the result of
+   <span title=concept-header-parse>parsing</span> all <var title>response</var>'s
+   <span title=concept-response-headers>headers</span>'
    <span title=concept-header-name>named</span> <code>Access-Control-Allow-Methods</code>.
-   <!-- XXX parsing -->
 
-   <li><p>Let <var title>header names</var> be the result of <span>parsing</span> all
-   <var title>response</var>'s <span title=concept-response-headers>headers</span>'
+   <li><p>Let <var title>header names</var> be the result of
+   <span title=concept-header-parse>parsing</span> all <var title>response</var>'s
+   <span title=concept-response-headers>headers</span>'
    <span title=concept-header-name>named</span> <code>Access-Control-Allow-Headers</code>.
-   <!-- XXX parsing -->
 
    <li><p>If either <var title>methods</var> or <var title>header names</var> is failure,
    change <var title>response</var> into a <span>network error</span> and return it.
@@ -764,10 +764,10 @@ steps:
    <span>simple header</span>, change <var title>response</var> into a
    <span>network error</span> and return it.
 
-   <li><p>Let <var title>max-age</var> be the result of <span>parsing</span> all
-   <var title>response</var>'s <span title=concept-response-headers>headers</span>'
+   <li><p>Let <var title>max-age</var> be the result of
+   <span title=concept-header-parse>parsing</span> all <var title>response</var>'s
+   <span title=concept-response-headers>headers</span>'
    <span title=concept-header-name>named</span> <code>Access-Control-Max-Age</code>.
-   <!-- XXX parsing -->
 
    <li><p>If <var title>max-age</var> is failure, set <var title>max-age</var> to zero.
 
@@ -924,6 +924,94 @@ when there is an entry in <span>CORS preflight cache</span> for which there is a
 
  <li><p>Return failure.
 </ol>
+
+
+
+<h2>HTTP headers</h2>
+
+<p>To <dfn title=concept-header-parse>parse a header value</dfn> parse it per the ABNF
+given below and return the <span title=concept-header-value>values</span> obtained for the
+given <span title=concept-header-name>name</span>, and return failure if the
+<span title=concept-header-value>value</span> did not match the ABNF.
+
+<p>The <dfn title=http-origin><code>Origin</code></dfn> request
+<span title=concept-header>header</span> indicates where a
+<span title=concept-fetch>fetch</span> originates from.
+
+<p class=note>The <code title=http-origin>Origin</code> header is a stripped-down version
+of the <code title=http-referer>Referer</code> [sic] header as to not reveal confidential
+<span data-anolis-spec=url title=concept-url-path>path</span> information. Due to
+compatibility constraints it is not included in all fetches.
+<!-- Ian Hickson told me Adam Barth researched that -->
+
+<p>The remaining <span title=concept-header>headers</span> are used as part of
+<span title=concept-request>requests</span> whose
+<span title=concept-request-mode>mode</span> is <i title>CORS</i>.
+
+<p>The
+<dfn title=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>
+header indicates which method will be used during the later part of a
+<span>CORS request with preflight</span> as part of the
+<span>CORS preflight request</span>.
+
+<p>The
+<dfn title=http-access-control-request-headers><code>Access-Control-Request-Headers</code></dfn>
+header indicates which headers will be used during the later part of a
+<span>CORS request with preflight</span> as part of the
+<span>CORS preflight request</span>.
+
+<p>The
+<dfn title=http-access-control-allow-origin><code>Access-Control-Allow-Origin</code></dfn>
+header indicates whether a resource can be shared based by returning the value of the
+<code title="http-origin"><a href="#http-origin">Origin</a></code> request header,
+<code title>*</code>, or <code title>null</code> in a response.
+
+<p>The
+<dfn title=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>
+header indicates whether the response to a request can be exposed when the
+<span>omit credentials flag</span> is unset. When part of the response to a
+<span>CORS preflight request</span> it indicates that the later part of
+<span>CORS request with preflight</span> can include <span>user credentials</span>.
+
+<p>The
+<dfn title=http-access-control-expose-headers><code>Access-Control-Expose-Headers</code></dfn>
+header indicates which headers are safe to expose in a response.
+
+<p>The
+<dfn title=http-access-control-max-age><code>Access-Control-Max-Age</code></dfn> header
+indicates how long the results of a <span>CORS preflight request</span> can be cached in a
+<span>CORS preflight result cache</span>.
+
+<p>The
+<dfn title=http-access-control-allow-methods><code>Access-Control-Allow-Methods</code></dfn>
+header indicates, as part of the response to a <span>CORS preflight request</span>, which
+methods can be used during the later part of a <span>CORS request with preflight</span>.
+
+<p>The
+<dfn title=http-access-control-allow-headers><code>Access-Control-Allow-Headers</code></dfn>
+header indicates, as part of the response to a <span>CORS preflight request</span>, which
+header field names can be used during the later part of a
+<span>CORS request with preflight</span>.
+
+<pre>Origin                           = origin-or-null
+
+Access-Control-Request-Method    = <span data-anolis-spec=http>Method</span>
+Access-Control-Request-Headers   = #<span data-anolis-spec=http>field-name</span>
+
+Access-Control-Allow-Origin      = origin-or-null / "*"
+Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
+Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span>
+Access-Control-Max-Age           = <span data-anolis-spec=http>delta-seconds</span>
+Access-Control-Allow-Methods     = #<span data-anolis-spec=http>Method</span>
+Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span>
+
+origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensitive
+origin                           = <span data-anolis-spec=url title=concept-url-scheme>scheme</span> "://" <span data-anolis-spec=url title=concept-url-host>host</span> [ ":" <span data-anolis-spec=url title=concept-url-port>port</span> ]</pre>
+
+<p class=note>The syntax for the <code title>Origin</code> header here is an intentional
+subset of what is defined in The Web Origin Concept. Unfortunately that document cannot be
+updated to match reality without involving layers and layers of bureaucracy.
+<span data-anolis-ref>ORIGIN</span>
 
 
 
