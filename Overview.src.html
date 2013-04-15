@@ -438,7 +438,7 @@ these steps:
    <dd><p>The result of performing a <span>CORS fetch with preflight</span> using <var title>request</span>.
 
    <dt>Otherwise
-   <dd><p>The result of performing a <span>CORS fetch</span> using <var title>request</var>.
+   <dd><p>The result of performing a <span>redirect fetch</span> using <var title>request</var>.
   </dl>
 
  <li><p>If <span title=concept-fetch>fetch</span> is invoked recursively, return <var title>response</var>.
@@ -636,7 +636,6 @@ steps:
   <var title>request</var>'s
   <span title=concept-request-manual-redirect-flag>manual redirect flag</span> is unset,
   run these substeps:
-  <!-- keep this aligned with CORS fetch -->
 
   <ol>
    <li><p>If <var title>response</var>'s
@@ -645,39 +644,8 @@ steps:
    <span>origin</span>, set <var title>request</var>'s
    <span title=concept-request-origin>origin</span> to a globally unique identifier.
 
-   <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
-   <var title>response</var>'s <span title=concept-redirect-location>location</span>.
-
-   <li><p>Return the result of performing a <span title=concept-fetch>fetch</span> using <var title>request</var>.
-  </ol>
-
- <li><p>Return <var title>response</var>.
-</ol>
-
-
-<h3>CORS fetch</h3>
-
-<p>To perform a <dfn>CORS fetch</dfn> using <var title>request</var>, run these steps:
-
-<ol>
- <li><p>Let <var title>response</var> be the result of performing a
- <span>basic fetch</span> using <var title>request</var>.
-
- <li>
-  <p>If <var title>response</var> is a <span>redirect</span> and
-  <var title>request</var>'s
-  <span title=concept-request-manual-redirect-flag>manual redirect flag</span> is unset,
-  run these substeps:
-  <!-- keep this aligned with redirect fetch -->
-
-  <ol>
-   <li><p>If <var title>response</var>'s
-   <span title=concept-redirect-location>location</span>'s <span>origin</span> is not
-   <var title>request</var>'s <span title=concept-request-url>url</span>'s
-   <span>origin</span>, set <var title>request</var>'s
-   <span title=concept-request-origin>origin</span> to a globally unique identifier.
-
-   <li><p>If <var title>response</var>'s
+   <li><p>If <var title>request</var>'s <span title=concept-request-mode>mode</span> is
+   <i title>CORS</i> and either <var title>response</var>'s
    <span title=concept-redirect-loation>location</span>'s
    <span title=concept-url-username>username</span> or
    <span title=concept-url-password>password</span> is non-null, or if a
@@ -688,14 +656,15 @@ steps:
    <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
    <var title>response</var>'s <span title=concept-redirect-location>location</span>.
 
-   <li><p>Return the result of performing a <span>CORS fetch</span> using <var title>request</var>.
+   <li><p>Return the result of performing a <span title=concept-fetch>fetch</span> using <var title>request</var>.
   </ol>
 
  <li>
   <p>Otherwise, run these substeps:
 
   <ol>
-   <li><p>If <var title>response</var> is not an <span>end-user abort</span> and
+   <li><p>If <var title>request</var>'s <span title=concept-request-mode>mode</span> is
+   <i title>CORS</i>, <var title>response</var> is not an <span>end-user abort</span>, and
    <span>CORS check</span> for <var title>request</var> and <var title>response</var>
    returns failure, change <var title>response</var> into a <span>network error</span>.
 
@@ -834,7 +803,7 @@ steps:
    failure.
 
    <li><p>If one of <var title>request</var>'s
-   <span title=concept-request-header>headers</span>'
+   <span title=concept-request-headers>headers</span>'
    <span title=concept-header-name>names</span> is not in <var title>header names</var> or
    its corresponding <span title=concept-header>header</span> is not a
    <span>simple header</span>, change <var title>response</var> into a
