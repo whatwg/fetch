@@ -204,7 +204,8 @@ and optionally with any of a <i>synchronous flag</i>, a <i>manual redirect flag<
 
  <li>
   <p>If <var title>mode</var> is "Anonymous", set <var title>req</var>'s
-  <span>omit credentials flag</span>.
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> to
+  <i title>always</i>.
   <!-- XXX unset by default? -->
   <!-- nullify Origin / Referer too? -->
 
@@ -251,13 +252,13 @@ compared considers bytes in the range 0x41 to 0x5A to be a match for their corre
 byte in the range 0x61 to 0x7A.
 
 <p class=example>The
-<span title=case-insensitive byte string>case-insensitive byte strings</span>
+<span title="case-insensitive byte string">case-insensitive byte strings</span>
 <code title>Content-Type</code> and <code title>content-TYPE</code> are equal.
 
 
 <h3>HTTP</h3>
 
-<p>While <span title=concept-fetching>fetching</span> encompasses more than just HTTP, it
+<p>While <span title=concept-fetch>fetching</span> encompasses more than just HTTP, it
 borrows a number of concepts from HTTP and applies these to resources obtained via other
 means (e.g. via <code title>data</code> URL).
 
@@ -310,6 +311,10 @@ solve this.
 <span title=concept-request-origin>origin</span> is null and its
 <span>force <code title>Origin</code> header flag</span> is unset.
 
+<p>A <span title=concept-request>request</span> has an associated
+<dfn>synchronous flag</dfn>. Unless stated otherwise a
+<span title=concept-request>request</span>'s <span>synchronous flag</span> is unset.
+
 <p class=XXX>referrer or referrer source? maybe easier to stick to the latter
 
 <p>A <span title=concept-request>request</span> has associated
@@ -332,13 +337,15 @@ is null.
 is <i title>tainted cross-origin</i>.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn>force preflight flag</dfn> and an <dfn>omit credentials flag</dfn>. Unless stated
-otherwise, <span title=concept-request>request</span>'s <span>force preflight flag</span>
-and <span>omit credentials flag</span> are unset.
-<span title=concept-request>request</span>'s <span>force preflight flag</span> and
-<span>omit credentials flag</span> are only relevant when
-<span title=concept-request>request</span>'s <span title=concept-request-mode>mode</span>
-is <i title>CORS</i>.
+<dfn>force preflight flag</dfn>. Unless stated otherwise, a
+<span title=concept-request>request</span>'s <span>force preflight flag</span> is unset.
+A <span title=concept-request>request</span>'s <span>force preflight flag</span> is only
+relevant when <span title=concept-request>request</span>'s
+<span title=concept-request-mode>mode</span> is <i title>CORS</i>.
+
+<p>A <span title=concept-request>request</span> has an associated
+<span title=concept-request-omit-credentials-mode>omit credentials mode</span>, which is
+one of <i title>never</i>, <i title>always</i>, and <i title>CORS</i>.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-redirect-count>redirect count</dfn>.
@@ -857,8 +864,9 @@ steps:
      <dd><var title>max-age</var>
 
      <dt><span title="cache-credentials">credentials</span>
-     <dd>False if <var title>request</var>'s <span>omit credentials flag</span> is set, or
-     true otherwise
+     <dd>False if <var title>request</var>'s
+     <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
+     <i title>never</i>, and true otherwise
 
      <dt><span title="cache-method">method</span></dt>
      <dd><var title>method</var>
@@ -885,8 +893,9 @@ steps:
      <dd><var title>max-age</var>
 
      <dt><span title=cache-credentials>credentials</span>
-     <dd>False if <var title>request</var>'s <span>omit credentials flag</span> is set, or
-     true otherwise
+     <dd>False if <var title>request</var>'s
+     <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
+     <i title>never</i>, and true otherwise
 
      <dt><span title=cache-header-name>header name</span></dt>
      <dd><var title>header name</var>
@@ -929,9 +938,11 @@ remove any entries in the <span>CORS preflight cache</span> whose
 <span title=concept-request-origin>origin</span>, <span title=cache-url>url</span> is
 <var title>request</var>'s <span title=concept-request-url>url</span>, and either
 <span title="cache-credentials">credentials</span> is false and <var title>request</var>'s
-<span>omit credentials flag</span> is set or
+<span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
+<i title>never</i> or
 <span title="cache-credentials">credentials</span> is true and <var title>request</var>'s
-<span>omit credentials flag</span> is unset.
+<span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+<i title>never</i>.
 
 <p>There is a <dfn>method cache match</dfn> for a given method using <var title>request</var>
 when there is an entry in <span>CORS preflight cache</span> for which there is a
@@ -960,15 +971,17 @@ when there is an entry in <span>CORS preflight cache</span> for which there is a
  <span title=concept-header-name>name</span> is <code>Access-Control-Allow-Origin</code>
  within <var title>response</var>'s <span title=concept-response-headers>headers</span>.
 
- <li><p>If <var title>request</var>'s <span>omit credentials flag</span> is set and
- <var title>result</var> is <code title>*</code>, return success.
+ <li><p>If <var title>request</var>'s
+ <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
+ <i title>never</i> and <var title>result</var> is <code title>*</code>, return success.
 
  <li><p>If <var title>request</var>'s <span title=concept-request-origin>origin</span>
  serialized to bytes is not <var title>result</var>, return failure.
  <!-- XXX serialized to bytes -->
 
- <li><p>If <var title>request</var>'s <span>omit credentials flag</span> is set, return
- success.
+ <li><p>If <var title>request</var>'s
+ <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
+ <i title>never</i>, return success.
 
  <li><p>If <var title>response</var>'s <span title=concept-response-headers>headers</span>
  contains zero or more than one <span title=concept-header>header</span> whose
@@ -1028,7 +1041,8 @@ header indicates whether a resource can be shared based by returning the value o
 <p>The
 <dfn title=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>
 header indicates whether the response to a request can be exposed when the
-<span>omit credentials flag</span> is unset. When part of the response to a
+<span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+<i title>never</i>. When part of the response to a
 <span>CORS preflight fetch</span> it indicates that the later part of
 <span>CORS fetch with preflight</span> can include <span>user credentials</span>.
 
