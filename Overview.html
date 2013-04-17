@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-16-april-2013">Living Standard — Last Updated 16 April 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-17-april-2013">Living Standard — Last Updated 17 April 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-16 April 2013, the editor has made this specification available
+17 April 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -65,12 +65,10 @@ and a set of parameters. This concept is named fetching.
  <li><a href="#fetching"><span class="secno">5 </span>Fetching</a>
   <ol class="toc">
    <li><a href="#basic-fetch"><span class="secno">5.1 </span>Basic fetch</a></li>
-   <li><a href="#redirect-fetch"><span class="secno">5.2 </span>Redirect fetch</a></li>
-   <li><a href="#cors-fetch"><span class="secno">5.3 </span>CORS fetch</a></li>
-   <li><a href="#cors-fetch-with-preflight"><span class="secno">5.4 </span>CORS fetch with preflight</a></li>
-   <li><a href="#cors-preflight-fetch"><span class="secno">5.5 </span>CORS preflight fetch</a></li>
-   <li><a href="#cors-preflight-cache"><span class="secno">5.6 </span>CORS preflight cache</a></li>
-   <li><a href="#cors-check"><span class="secno">5.7 </span>CORS check</a></ol></li>
+   <li><a href="#cors-fetch-with-preflight"><span class="secno">5.2 </span>CORS fetch with preflight</a></li>
+   <li><a href="#cors-preflight-fetch"><span class="secno">5.3 </span>CORS preflight fetch</a></li>
+   <li><a href="#cors-preflight-cache"><span class="secno">5.4 </span>CORS preflight cache</a></li>
+   <li><a href="#cors-check"><span class="secno">5.5 </span>CORS check</a></ol></li>
  <li><a href="#http-headers"><span class="secno">6 </span>HTTP headers</a></li>
  <li><a class="no-num" href="#references">References</a></li>
  <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
@@ -432,7 +430,7 @@ these steps:
    is one of "<code title="">about</code>", "<code title="">blob</code>", and "<code title="">data</code>",
    and <var title="">request</var>'s <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is zero
 
-   <dd><p>The result of performing a <a href="#redirect-fetch-0">redirect fetch</a> using <var title="">request</var>.
+   <dd><p>The result of performing a <a href="#basic-fetch-0">basic fetch</a> using <var title="">request</var>.
 
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "same-origin"
@@ -442,7 +440,7 @@ these steps:
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "tainted cross-origin"
    <dd>
-    <p>The result of performing a <a href="#redirect-fetch-0">redirect fetch</a> using
+    <p>The result of performing a <a href="#basic-fetch-0">basic fetch</a> using
     <var title="">request</var>, marked <a href="#cors-cross-origin">CORS-cross-origin</a>.
     <!-- file URLs end up here as they are not same-origin typically. -->
 
@@ -459,7 +457,8 @@ these steps:
    <dd><p>The result of performing a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> using <var title="">request.
 
    </var><dt>Otherwise
-   <dd><p>The result of performing a <a href="#cors-fetch-0">CORS fetch</a> using <var title="">request</var>.
+   <dd><p>The result of performing a <a href="#basic-fetch-0">basic fetch</a> using
+   <var title="">request</var> with the <i title="">CORS flag</i> set.
   </dl>
 
  <li><p>If <a href="#concept-fetch" title="concept-fetch">fetch</a> is invoked recursively, return <var title="">response</var>.
@@ -476,8 +475,9 @@ these steps:
 
 <h3 id="basic-fetch"><span class="secno">5.1 </span>Basic fetch</h3>
 
-<p>To perform a <dfn id="basic-fetch-0">basic fetch</dfn> using <var title="">request</var>, switch on
-<var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+<p>To perform a <dfn id="basic-fetch-0">basic fetch</dfn> using <var title="">request</var>, with an optional
+<i title="">CORS flag</i>, switch on <var title="">request</var>'s
+<a href="#concept-request-url" title="concept-request-url">url</a>'s
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> and run the associated
 steps:
 
@@ -589,8 +589,11 @@ steps:
   <p>Otherwise, when the headers from the resource are obtained, let
   <var title="">response</var> be a new <a href="#concept-response" title="concept-response">response</a> and set its fields
   appropriately.
-  <!-- XXX spell this out -->
+  <!-- XXX spell this out? -->
 
+  <p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
+  <var title="">request</var> and <var title="">response</var> returns failure, change
+  <var title="">response</var> into a <a href="#network-error">network error</a> and return it.
 
   <p>If <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
   301, 302, 303, 307, or 308, run these steps:
@@ -635,7 +638,49 @@ steps:
    <li><p>Set <var title="">response</var>'s
    <a href="#concept-redirect-location" title="concept-redirect-location">location</a> to
    <var title="">parsed location</var>.
+
+   <li>
+    <p>If <var title="">request</var>'s
+    <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> is unset,
+    run these substeps:
+
+    <ol>
+     <li><p>If <var title="">response</var>'s
+     <a href="#concept-redirect-location" title="concept-redirect-location">location</a>'s <span>origin</span> is not
+     <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+     <span>origin</span>, set <var title="">request</var>'s
+     <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
+
+     <li><p>If <var title="">response</var>'s
+     <a href="#concept-redirect-location" title="concept-redirect-location">location</a>'s
+     <a class="external" href="http://url.spec.whatwg.org/#concept-url-username" title="concept-url-username">username</a> or
+     <a class="external" href="http://url.spec.whatwg.org/#concept-url-password" title="concept-url-password">password</a> is non-null,
+     change <var title="">response</var> into a <a href="#network-error">network error</a> and then return
+     it.
+
+     <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
+     <var title="">response</var>'s <a href="#concept-redirect-location" title="concept-redirect-location">location</a>.
+
+     <li><p>Return the result of performing a <a href="#basic-fetch-0">basic fetch</a> using
+     <var title="">request</var>, with the <i title="">CORS flag</i> set if set.
+    </ol>
   </ol>
+
+  <p>Otherwise, if
+  <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is 401,
+  run these steps:
+
+  <ol>
+   <li><p>If the <i title="">CORS flag</i> is set, return <var title="">response</var>.
+
+   <li class="XXX"></li>
+  </ol>
+
+  <p>Otherwise, if
+  <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is 407,
+  run these steps:
+
+  <ol class="XXX"></ol>
 
   <p>Return <var title="">response</var>.
 
@@ -644,88 +689,7 @@ steps:
 </dl>
 
 
-<h3 id="redirect-fetch"><span class="secno">5.2 </span>Redirect fetch</h3>
-
-<p>To perform a <dfn id="redirect-fetch-0">redirect fetch</dfn> using <var title="">request</var>, run these steps:
-
-<ol>
- <li><p>Let <var title="">response</var> be the result of performing a
- <a href="#basic-fetch-0">basic fetch</a> using <var title="">request</var>.
-
- <li>
-  <p>If <var title="">response</var> is a <a href="#redirect">redirect</a> and
-  <var title="">request</var>'s
-  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> is unset,
-  run these substeps:
-  <!-- keep this aligned with CORS fetch -->
-
-  <ol>
-   <li><p>If <var title="">response</var>'s
-   <a href="#concept-redirect-location" title="concept-redirect-location">location</a>'s <span>origin</span> is not
-   <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
-   <span>origin</span>, set <var title="">request</var>'s
-   <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
-
-   <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
-   <var title="">response</var>'s <a href="#concept-redirect-location" title="concept-redirect-location">location</a>.
-
-   <li><p>Return the result of performing a <a href="#concept-fetch" title="concept-fetch">fetch</a> using <var title="">request</var>.
-  </ol>
-
- <li><p>Return <var title="">response</var>.
-</ol>
-
-
-<h3 id="cors-fetch"><span class="secno">5.3 </span>CORS fetch</h3>
-
-<p>To perform a <dfn id="cors-fetch-0">CORS fetch</dfn> using <var title="">request</var>, run these steps:
-
-<ol>
- <li><p>Let <var title="">response</var> be the result of performing a
- <a href="#basic-fetch-0">basic fetch</a> using <var title="">request</var>.
-
- <li>
-  <p>If <var title="">response</var> is a <a href="#redirect">redirect</a> and
-  <var title="">request</var>'s
-  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> is unset,
-  run these substeps:
-  <!-- keep this aligned with redirect fetch -->
-
-  <ol>
-   <li><p>If <var title="">response</var>'s
-   <a href="#concept-redirect-location" title="concept-redirect-location">location</a>'s <span>origin</span> is not
-   <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
-   <span>origin</span>, set <var title="">request</var>'s
-   <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
-
-   <li><p>If <var title="">response</var>'s
-   <span title="concept-redirect-loation">location</span>'s
-   <span title="concept-url-username">username</span> or
-   <span title="concept-url-password">password</span> is non-null, or if a
-   <a href="#cors-check-0">CORS check</a> for <var title="">request</var> and <var title="">response</var>
-   returns failure, change <var title="">response</var> into a <a href="#network-error">network error</a> and
-   then return it.
-
-   <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
-   <var title="">response</var>'s <a href="#concept-redirect-location" title="concept-redirect-location">location</a>.
-
-   <li><p>Return the result of performing a <a href="#cors-fetch-0">CORS fetch</a> using <var title="">request</var>.
-  </ol>
-
- <li>
-  <p>Otherwise, run these substeps:
-
-  <ol>
-   <li><p>If <var title="">response</var> is not an <a href="#end-user-abort">end-user abort</a> and
-   <a href="#cors-check-0">CORS check</a> for <var title="">request</var> and <var title="">response</var>
-   returns failure, change <var title="">response</var> into a <a href="#network-error">network error</a>.
-
-   <li><p>Return <var title="">response</var>.
-  </ol>
-</ol>
-
-
-<h3 id="cors-fetch-with-preflight"><span class="secno">5.4 </span>CORS fetch with preflight</h3>
+<h3 id="cors-fetch-with-preflight"><span class="secno">5.2 </span>CORS fetch with preflight</h3>
 
 <p>To perform a <dfn id="cors-fetch-with-preflight-0">CORS fetch with preflight</dfn> using <var title="">request</var>, run
 these steps:
@@ -758,15 +722,14 @@ these steps:
    <a href="#network-error">network error</a>, return it.
   </ol>
 
+ <li><p>Set <var title="">request</var>'s
+ <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
+
  <li><p>Let <var title="">response</var> be a <a href="#basic-fetch-0">basic fetch</a> using
- <var title="">request</var>.
+ <var title="">request</var> with the <i title="">CORS flag</i> set.
 
  <li><p>If <var title="">response</var> is a <a href="#redirect">redirect</a>, change
  <var title="">response</var> into a <a href="#network-error">network error</a>.
-
- <li><p>If <var title="">response</var> is <a href="#concept-response" title="concept-response">response</a> and a
- <a href="#cors-check-0">CORS check</a> for <var title="">request</var> and <var title="">response</var>
- returns failure, change <var title="">response</var> into a <a href="#network-error">network error</a>.
 
  <li><p>If <var title="">response</var> is a <a href="#network-error">network error</a>,
  <a href="#cache-clear" title="cache-clear">clear</a> using <var title="">request</var>.
@@ -775,7 +738,7 @@ these steps:
 </ol>
 
 
-<h3 id="cors-preflight-fetch"><span class="secno">5.5 </span>CORS preflight fetch</h3>
+<h3 id="cors-preflight-fetch"><span class="secno">5.3 </span>CORS preflight fetch</h3>
 
 <p>To perform a <dfn id="cors-preflight-fetch-0">CORS preflight fetch</dfn> using <var title="">request</var>, run these
 steps:
@@ -805,8 +768,7 @@ steps:
  <li><p>Let <var title="">headers</var> be the <a href="#concept-header-name" title="concept-header-name">names</a>
  of <var title="">request</var>'s
  <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>, sorted
- lexicographically and byte lowercased.
- <!-- XXX -->
+ lexicographically and <span class="XXX">byte lowercased</span>.
 
  <li><p>Let <var title="">header value</var> be the items in <var title="">headers</var>
  separated from each other by 0x2C 0x20.
@@ -817,14 +779,16 @@ steps:
  <a href="#concept-header-value" title="concept-header-value">value</a> <var title="">header value</var> to
  <var title="">preflight</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
 
+ <li><p>Set <var title="">preflight</var>'s
+ <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
+
  <li><p>Let <var title="">response</var> be the result of performing a
- <a href="#basic-fetch-0">basic fetch</a> using <var title="">preflight</var>.
+ <a href="#basic-fetch-0">basic fetch</a> using <var title="">preflight</var> with the <i title="">CORS flag</i>
+ set.
 
  <li>
-  <p>If a <a href="#cors-check-0">CORS check</a> for
-  <var title="">preflight</var> and <var title="">response</var> does not return failure, and
-  <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is in the
-  range 200 to 299, run these substeps:
+  <p>If <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
+  in the range 200 to 299, run these substeps:
   <!-- CORS said 200 here but nobody implemented that:
        http://lists.w3.org/Archives/Public/public-webappsec/2013Feb/0078.html -->
 
@@ -855,7 +819,7 @@ steps:
    failure.
 
    <li><p>If one of <var title="">request</var>'s
-   <span title="concept-request-header">headers</span>'
+   <a href="#concept-request-headers" title="concept-request-headers">headers</a>'
    <a href="#concept-header-name" title="concept-header-name">names</a> is not in <var title="">header names</var> or
    its corresponding <a href="#concept-header" title="concept-header">header</a> is not a
    <a href="#simple-header">simple header</a>, change <var title="">response</var> into a
@@ -942,7 +906,7 @@ steps:
 </ol>
 
 
-<h3 id="cors-preflight-cache"><span class="secno">5.6 </span>CORS preflight cache</h3>
+<h3 id="cors-preflight-cache"><span class="secno">5.4 </span>CORS preflight cache</h3>
 
 <p>A <dfn id="cors-preflight-cache-0">CORS preflight cache</dfn> consists of a collection of entries where each
 entry has these fields:
@@ -986,7 +950,7 @@ when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache
 <a href="#cache-header-name" title="cache-header-name">header name</a> is the given header name.
 
 
-<h3 id="cors-check"><span class="secno">5.7 </span>CORS check</h3>
+<h3 id="cors-check"><span class="secno">5.5 </span>CORS check</h3>
 
 <p>To perform a <dfn id="cors-check-0">CORS check</dfn> for a <var title="">request</var> and
 <var title="">response</var>, run these steps:
