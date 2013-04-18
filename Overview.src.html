@@ -363,27 +363,49 @@ Unless stated otherwise a <span title=concept-request>request</span>'s
 <h2>Responses</h2>
 
 <p>The result of <span title=concept-fetch>fetch</span> is a
-<dfn title=concept-response>response</dfn>.
+<dfn title=concept-response>response</dfn>. A <span title=concept-response>response</span>
+is build incrementally over time. All its fields are not necessarily available straight
+away.
+
+<p>A <span title=concept-response>response</span> has an associated
+<dfn title=concept-response-type>type</dfn> which is one of <i title>default</i>,
+<i title>redirect</i>, and <i title>error</i>. Unless stated otherwise, it is
+<i title>default</i>.
 
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-status>status</dfn>,
 <dfn title=concept-response-status-message>status message</dfn>,
+<dfn title=concept-redirect-location>location</dfn>,
 <dfn title=concept-response-headers>headers</dfn>, and a
 <dfn title=concept-response-body>body</dfn>.
 
-<p>When a <span title=concept-response>response</span> becomes available, its
-<span title=concept-response-body>body</span> not necessarily is.
-
-<p>A <span title=concept-response>response</span> has three subtypes, namely <dfn>redirect</dfn>,
-<dfn>network error</dfn>, and <dfn>end-user abort</dfn>.
-
-<p>A <span>redirect</span> has an associated
-<dfn title=concept-redirect-location>location</dfn> (a
-<span data-anolis-spec=url title=concept-parsed-url>parsed URL</span>).
-
 <p>A <span title=concept-response>response</span> is either <dfn>CORS-same-origin</dfn> or
-<dfn>CORS-cross-origin</dfn>. Unless otherwise indicated a <span title=concept-response>response</span> is
-<span>CORS-same-origin</span>.
+<dfn>CORS-cross-origin</dfn>. Unless otherwise indicated a
+<span title=concept-response>response</span> is <span>CORS-same-origin</span>.
+
+<hr>
+
+<p>Unless stated otherwise, a <span title=concept-response>response</span>'s
+<span title=concept-response-status>status</span> is <code title>200</code>,
+<span title=concept-response-status-message>status message</span> is <code title>OK</code>,
+<span title=concept-response-location>location</span> is null,
+<span title=concept-response-headers>headers</span> is an empty list, and
+<span title=concept-response-body>body</span> is null,
+
+<p>A <span title=concept-response>response</span> whose
+<span title=concept-response-type>type</span> is <i title>error</i> is known as a
+<dfn title=concept-network-error>network error</dfn>.
+
+<p>A <span title=concept-network-error>network error</span>'s
+<span title=concept-response-status>status</span> is <code title>0</code>,
+<span title=concept-response-status-message>status message</span> is the empty <span>byte string</span>,
+<span title=concept-response-location>location</span> is null,
+<span title=concept-response-headers>headers</span> is an empty list, and
+<span title=concept-response-body>body</span> is null,
+
+<p>A <span title=concept-response>response</span> whose
+<span title=concept-response-type>type</span> is <i title>redirect</i> is known as a
+<dfn title=concept-redirect>redirect</dfn>.
 
 
 
@@ -392,8 +414,8 @@ Unless stated otherwise a <span title=concept-request>request</span>'s
 <p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>,
 optionally with a <i title>CORS flag</i>, run these steps:
 
-<p class=note>The <i title>CORS flag</i> is used for handling
-<span title=concept-redirect>redirects</span>. When using
+<p class=note>The <i title>CORS flag</i> within the <span title=concept-fetch>fetch</span>
+algorithm is used for handling <span title=concept-redirect>redirects</span>. When using
 <span title=concept-fetch>fetch</span> externally only the <var title>request</var>
 parameter should be passed.
 
@@ -422,7 +444,7 @@ parameter should be passed.
    <dt><var title>request</var>'s <span title=concept-request-mode>mode</span> is
    "same-origin"
 
-   <dd><p>A <span>network error</span>.
+   <dd><p>A <span title=concept-network-error>network error</span>.
 
    <dt><var title>request</var>'s <span title=concept-request-mode>mode</span> is
    "tainted cross-origin"
@@ -434,7 +456,7 @@ parameter should be passed.
    <dt><var title>url</var>'s <span title=concept-url-scheme>scheme</span> is not one of
    "<code title>http</code>" and "<code title>https</code>"
 
-   <dd><p>A <span>network error</span>.
+   <dd><p>A <span title=concept-network-error>network error</span>.
 
    <dt><var title>request</var>'s <span>force preflight flag</span> is set
    <dt><var title>request</var>'s <span title=concept-request-method>method</span> is not
@@ -474,9 +496,6 @@ steps:
   <p>If <var title>request</var>'s <span title=concept-request-url>url</span>'s
   <span data-anolis-spec=url title=concept-url-scheme-data>scheme data</span> is
   "<code title>blank</code>", return a <span title=concept-response>response</span> whose
-  <span title=concept-response-status>status</span> is 200,
-  <span title=concept-response-status-message>status message</span> is
-  "<code title>OK</code>",
   <span title=concept-response-headers>headers</span> consist of a single
   <span title=concept-header>header</span> whose
   <span title=concept-header-name>name</span> is <code title>Content-Type</code> and
@@ -486,7 +505,7 @@ steps:
 
   <!-- introduce about:unicorn -->
 
-  <p>Otherwise, return a <span>network error</span>.
+  <p>Otherwise, return a <span title=concept-network-error>network error</span>.
 
  <dt>"<code title>blob</code>"
  <dd>
@@ -500,9 +519,6 @@ steps:
   <a href="http://simonsapin.github.com/data-urls/">obtaining a resource</a> from
   <var title>request</var>'s <span title=concept-request-url>url</span> does not return
   failure, return a <span title=concept-response>response</span> whose
-  <span title=concept-response-status>status</span> is 200,
-  <span title=concept-response-status-message>status message</span> is
-  "<code title>OK</code>",
   <span title=concept-response-headers>headers</span> consist of a single
   <span title=concept-header>header</span> whose
   <span title=concept-header-name>name</span> is <code title>Content-Type</code> and
@@ -512,7 +528,7 @@ steps:
   <a href="http://simonsapin.github.com/data-urls/">obtaining a resource</a>.
   <!-- XXX "obtaining a resource" needs a better reference -->
 
-  <p>Otherwise, return a <span>network error</span>.
+  <p>Otherwise, return a <span title=concept-network-error>network error</span>.
 
  <dt>"<code title>file</code>"
  <dd>
@@ -520,7 +536,7 @@ steps:
   <span data-anolis-spec=url title=concept-url>URLs</span> are left as an exercise for the
   reader.
 
-  <p>When in doubt, return a <span>network error</span>.
+  <p>When in doubt, return a <span title=concept-network-error>network error</span>.
 
  <dt>"<code title>ftp</code>"
  <dd>
@@ -569,18 +585,17 @@ steps:
     <p class=XXX>cookies
   </ol>
 
-  <p>If the HTTP request terminated for some reason, return a <span>network error</span>.
-
-  <p class=XXX>Deal with <span>end-user abort</span> somehow.
+  <p>If the HTTP request is terminated before all headers from the resource are obtained,
+  return a <span title=concept-network-error>network error</span>.
 
   <p>Otherwise, when the headers from the resource are obtained, let
-  <var title>response</var> be a new <span title=concept-response>response</span> and set its fields
-  appropriately.
+  <var title>response</var> be a new <span title=concept-response>response</span> and set
+  its fields appropriately.
   <!-- XXX spell this out? -->
 
   <p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
-  <var title>request</var> and <var title>response</var> returns failure, change
-  <var title>response</var> into a <span>network error</span> and return it.
+  <var title>request</var> and <var title>response</var> returns failure, return a
+  <span title=concept-network-error>network error</span>.
 
   <p>If <var title>response</var>'s <span title=concept-response-status>status</span> is
   301, 302, 303, 307, or 308, run these steps:
@@ -595,8 +610,8 @@ steps:
    <li><p>If <var title>response</var>'s
    <span title=concept-response-headers>headers</span> contain more than one
    <span title=concept-header>header</span> whose
-   <span title=concept-header-name>name</span> is <code title>Location</code>, change
-   <var title>response</var> into a <span>network error</span> and return it.
+   <span title=concept-header-name>name</span> is <code title>Location</code>, return a
+   <span title=concept-network-error>network error</span>.
    <!-- only Gecko does this; if removed add "first" below -->
 
    <li><p>Let <var title>location</var> be the
@@ -610,17 +625,18 @@ steps:
    <var title>location</var> with <var title>request</var>'s
    <span title=concept-request-url>url</span>.
 
-   <li><p>If <var title>parsed location</var> is failure, change <var title>response</var>
-   into a <span>network error</span> and return it.
+   <li><p>If <var title>parsed location</var> is failure, return a
+   <span title=concept-network-error>network error</span>.
 
    <li><p>If <var title>request</var>'s
-   <span title=concept-request-redirect-count>redirect count</span> is twenty, change
-   <var title>response</var> into a <span>network error</span> and return it.
+   <span title=concept-request-redirect-count>redirect count</span> is twenty, return a
+   <span title=concept-network-error>network error</span>.
 
    <li><p>Increase <var title>request</var>'s
    <span title=concept-request-redirect-count>redirect count</span> by one.
 
-   <li><p>Change <var title>response</var> into a <span>redirect</span>.
+   <li><p>Set <var title>response</var>'s <span title=concept-response-type>type</span> to
+   <i title>redirect</i>.
 
    <li><p>Set <var title>response</var>'s
    <span title=concept-redirect-location>location</span> to
@@ -642,8 +658,7 @@ steps:
      <span title=concept-redirect-location>location</span>'s
      <span data-anolis-spec=url title=concept-url-username>username</span> or
      <span data-anolis-spec=url title=concept-url-password>password</span> is non-null,
-     change <var title>response</var> into a <span>network error</span> and then return
-     it.
+     return a <span title=concept-network-error>network error</span>.
 
      <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
      <var title>response</var>'s <span title=concept-redirect-location>location</span>.
@@ -672,7 +687,7 @@ steps:
   <p>Return <var title>response</var>.
 
  <dt>Otherwise
- <dd><p>Return a <span>network error</span>.
+ <dd><p>Return a <span title=concept-network-error>network error</span>.
 </dl>
 
 
@@ -705,8 +720,8 @@ these steps:
    <li><p>Let <var title>response</var> be a <span>CORS preflight fetch</span> using
    <var title>request</var>.
 
-   <li><p>If <var title>response</var> is either an <span>end-user abort</span> or
-   <span>network error</span>, return it.
+   <li><p>If <var title>response</var> is a <span title=concept-network-error>network error</span>, return
+   <var title>response</var>.
   </ol>
 
  <li><p>Set <var title>request</var>'s
@@ -715,10 +730,10 @@ these steps:
  <li><p>Let <var title>response</var> be a <span>basic fetch</span> using
  <var title>request</var> with the <i title>CORS flag</i> set.
 
- <li><p>If <var title>response</var> is a <span>redirect</span>, change
- <var title>response</var> into a <span>network error</span>.
+ <li><p>If <var title>response</var> is a <span title=concept-redirect>redirect</span>, set its
+ <span title=concept-response-type>type</span> to <i title>error</i>.
 
- <li><p>If <var title>response</var> is a <span>network error</span>,
+ <li><p>If <var title>response</var> is a <span title=concept-network-error>network error</span>,
  <span title=cache-clear>clear</span> using <var title>request</var>.
 
  <li><p>Return <var title>response</var>.
@@ -791,7 +806,7 @@ steps:
    <span title=concept-header-name>named</span> <code>Access-Control-Allow-Headers</code>.
 
    <li><p>If either <var title>methods</var> or <var title>header names</var> is failure,
-   change <var title>response</var> into a <span>network error</span> and return it.
+   return a <span title=concept-network-error>network error</span>.
 
    <li>
     <p>If <var title>methods</var> is empty <var title>request</var>'s
@@ -809,8 +824,7 @@ steps:
    <span title=concept-request-headers>headers</span>'
    <span title=concept-header-name>names</span> is not in <var title>header names</var> or
    its corresponding <span title=concept-header>header</span> is not a
-   <span>simple header</span>, change <var title>response</var> into a
-   <span>network error</span> and return it.
+   <span>simple header</span>, return a <span title=concept-network-error>network error</span>.
 
    <li><p>Let <var title>max-age</var> be the result of
    <span title=concept-header-parse>parsing</span> all <var title>response</var>'s
@@ -886,10 +900,7 @@ steps:
    <li><p>Return <var title>response</var>.
   </ol>
 
- <li><p>Otherwise, if <var title>response</var> is not an <span>end-user abort</span>,
- change <var title>response</var> into a <span>network error</span>.
-
- <li><p>Return <var title>response</var>.
+ <li><p>Otherwise, return a <span title=concept-network-error>network error</span>.
 </ol>
 
 
@@ -1097,6 +1108,8 @@ Dean Jackson,
 Eric Lawrence,
 Frank Ellerman,
 Frederick Hirsch,
+Gavin Carothers,
+Glenn Maynard,
 Graham Klyne,
 Hal Lockhart,
 Henri Sivonen,
