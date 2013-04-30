@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-18-april-2013">Living Standard — Last Updated 18 April 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-30-april-2013">Living Standard — Last Updated 30 April 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-18 April 2013, the editor has made this specification available
+30 April 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -59,17 +59,18 @@ and a set of parameters. This concept is named fetching.
  <li><a href="#conformance"><span class="secno">1 </span>Conformance</a></li>
  <li><a href="#terminology"><span class="secno">2 </span>Terminology</a>
   <ol class="toc">
-   <li><a href="#http"><span class="secno">2.1 </span>HTTP</a></ol></li>
- <li><a href="#requests"><span class="secno">3 </span>Requests</a></li>
- <li><a href="#responses"><span class="secno">4 </span>Responses</a></li>
- <li><a href="#fetching"><span class="secno">5 </span>Fetching</a>
+   <li><a href="#http"><span class="secno">2.1 </span>HTTP</a></li>
+   <li><a href="#requests"><span class="secno">2.2 </span>Requests</a></li>
+   <li><a href="#responses"><span class="secno">2.3 </span>Responses</a></ol></li>
+ <li><a href="#cors-protocol"><span class="secno">3 </span>CORS protocol</a></li>
+ <li><a href="#fetching"><span class="secno">4 </span>Fetching</a>
   <ol class="toc">
-   <li><a href="#basic-fetch"><span class="secno">5.1 </span>Basic fetch</a></li>
-   <li><a href="#cors-fetch-with-preflight"><span class="secno">5.2 </span>CORS fetch with preflight</a></li>
-   <li><a href="#cors-preflight-fetch"><span class="secno">5.3 </span>CORS preflight fetch</a></li>
-   <li><a href="#cors-preflight-cache"><span class="secno">5.4 </span>CORS preflight cache</a></li>
-   <li><a href="#cors-check"><span class="secno">5.5 </span>CORS check</a></ol></li>
- <li><a href="#http-headers"><span class="secno">6 </span>HTTP headers</a></li>
+   <li><a href="#basic-fetch"><span class="secno">4.1 </span>Basic fetch</a></li>
+   <li><a href="#cors-fetch-with-preflight"><span class="secno">4.2 </span>CORS fetch with preflight</a></li>
+   <li><a href="#cors-preflight-fetch"><span class="secno">4.3 </span>CORS preflight fetch</a></li>
+   <li><a href="#cors-preflight-cache"><span class="secno">4.4 </span>CORS preflight cache</a></li>
+   <li><a href="#cors-check"><span class="secno">4.5 </span>CORS check</a></ol></li>
+ <li><a href="#http-headers"><span class="secno">5 </span>HTTP headers</a></li>
  <li><a class="no-num" href="#references">References</a></li>
  <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
 <!--end-toc-->
@@ -308,8 +309,7 @@ solve this.
 <!-- example if people ask: "Content-Type: text/plain;" -->
 
 
-
-<h2 id="requests"><span class="secno">3 </span>Requests</h2>
+<h3 id="requests"><span class="secno">2.2 </span>Requests</h3>
 
 <p>The input to <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-request" title="concept-request">request</dfn>.
@@ -367,6 +367,10 @@ one of <i title="">always</i>, <i title="">CORS</i>, and <i title="">never</i>.
 <p class="XXX">I think we want the default to become <i title="">always</i>, but currently it
 is <i title="">never</i>.
 
+<p>A a<a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-force-url-credentials-flag" title="concept-request-force-url-credentials-flag">force URL credentials flag</dfn>.
+Unless stated otherwise, it is unset.
+
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</dfn>. Unless stated
 otherwise, it is unset.
@@ -377,8 +381,7 @@ Unless stated otherwise a <a href="#concept-request" title="concept-request">req
 <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is zero.
 
 
-
-<h2 id="responses"><span class="secno">4 </span>Responses</h2>
+<h3 id="responses"><span class="secno">2.3 </span>Responses</h3>
 
 <p>The result of <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-response" title="concept-response">response</dfn>. A <a href="#concept-response" title="concept-response">response</a>
@@ -437,7 +440,21 @@ not have their <a href="#concept-response-body" title="concept-response-body">bo
 
 
 
-<h2 id="fetching"><span class="secno">5 </span>Fetching</h2>
+<h2 id="cors-protocol"><span class="secno">3 </span><dfn>CORS protocol</dfn></h2>
+
+<p>To prevent leaking data from resources behind a firewall (intranets), the platform has
+a <a href="#cors-protocol">CORS protocol</a> layered on top of HTTP. It allows resources to declare they
+can be shared with resources residing on a different <span>origin</span>.
+
+<p>This section explains the <a href="#cors-protocol">CORS protocol</a> as it pertains to servers.
+Requirements for user agents are integrated in the <a href="#concept-fetch" title="concept-fetch">fetch</a>
+algorithm.
+
+<p class="XXX">
+
+
+
+<h2 id="fetching"><span class="secno">4 </span>Fetching</h2>
 
 <p>To perform a <dfn id="concept-fetch" title="concept-fetch">fetch</dfn> using <var title="">request</var>,
 optionally with a <i title="">CORS flag</i>, run these steps:
@@ -510,10 +527,10 @@ parameter should be passed.
 </ol>
 
 
-<h3 id="basic-fetch"><span class="secno">5.1 </span>Basic fetch</h3>
+<h3 id="basic-fetch"><span class="secno">4.1 </span>Basic fetch</h3>
 
 <p>To perform a <dfn id="basic-fetch-0">basic fetch</dfn> using <var title="">request</var>, with an optional
-<i title="">CORS flag</i>, switch on <var title="">request</var>'s
+<i title="">CORS flag</i> and <i title="">HTTP authentication flag</i>, switch on <var title="">request</var>'s
 <a href="#concept-request-url" title="concept-request-url">url</a>'s
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> and run the associated
 steps:
@@ -610,7 +627,32 @@ steps:
     HTTP request.
 
    <li>
-    <p class="XXX">cookies
+    <p>If <var title="">request</var>'s
+    <span title="concept-omit-credentials-mode">omit credentials mode</span> is
+    <i title="">always</i> or <var title="">request</var>'s
+    <span title="concept-omit-credentials-mode">omit credentials mode</span> is
+    <i title="">CORS</i> and the <i title="">CORS flag</i> is unset, run these substeps:
+
+    <ol>
+     <li><p>Include <code title="">Cookie</code> headers associated with
+     <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>.
+     <a href="#refsCOOKIES">[COOKIES]</a>
+
+     <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
+     <li><p>If there's an <b title="">authentication entry</b> for <var title="">request</var>'s
+     <a href="#concept-request-url" title="concept-request-url">url</a> and either
+     <var title="">request</var>'s <span title="concept-request-use-url-credentials-flag">use URL credentials flag</span> is unset or
+     <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>
+     does not include credentials, include the <code>Authorization</code> header from the
+     <b title="">authentication entry</b>.
+     <!-- XXX need to define "includes credentials" in URL as username != "" and password != null??
+              need to define the cache concept -->
+
+     <li><p>Otherwise, if <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>
+     includes credentials, and the <i title="">HTTP authentication flag</i> is set, include an
+     <code>Authorization</code> header using those credentials.
+     <!-- XXX ... -->
+    </ol>
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
@@ -618,8 +660,9 @@ steps:
 
   <p>Otherwise, when the headers from the resource are obtained, let
   <var title="">response</var> be a new <a href="#concept-response" title="concept-response">response</a> and set
-  its fields appropriately.
-  <!-- XXX spell this out? -->
+  its fields appropriately. <span class="XXX">Need to spell this out. Whenever we do not
+  include <code>Cookie</code> headers we also need to ignore <code>Set-Cookie</code>
+  headers in the response.</span>
 
   <p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
   <var title="">request</var> and <var title="">response</var> returns failure, return a
@@ -703,7 +746,23 @@ steps:
   <ol>
    <li><p>If the <i title="">CORS flag</i> is set, return <var title="">response</var>.
 
-   <li class="XXX"></li>
+   <li>
+    <p>If <var title="">request</var>'s
+    <span title="concept-request-use-url-credentials-flag">use URL credentials flag</span>
+    is unset, or the <i title="">HTTP authentication flag</i> is set, run these substeps:
+
+    <ol>
+     <li><p>Prompt the end user for a username and password.
+
+     <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+     <a class="external" href="http://url.spec.whatwg.org/#concept-url-username" title="concept-url-username">username</a> and
+     <a class="external" href="http://url.spec.whatwg.org/#concept-url-password" title="concept-url-password">password</a> to the given
+     values.
+     <!-- XXX sanitization? -->
+    </ol>
+
+   <li class="XXX"><p>Return the result of performing a <a href="#basic-fetch-0">basic fetch</a> using
+   <var title="">request</var>, with the <i title="">HTTP authentication flag</i> set.
   </ol>
 
   <p>Otherwise, if
@@ -712,6 +771,10 @@ steps:
 
   <ol class="XXX"></ol>
 
+  <p>If the <i title="">HTTP authentication flag</i> is set, create an <b title="">authentication entry</b> for
+  <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> and the given
+  realm. <a href="#refsHTTPAUTH">[HTTPAUTH]</a>
+
   <p>Return <var title="">response</var>.
 
  <dt>Otherwise
@@ -719,7 +782,7 @@ steps:
 </dl>
 
 
-<h3 id="cors-fetch-with-preflight"><span class="secno">5.2 </span>CORS fetch with preflight</h3>
+<h3 id="cors-fetch-with-preflight"><span class="secno">4.2 </span>CORS fetch with preflight</h3>
 
 <p>To perform a <dfn id="cors-fetch-with-preflight-0">CORS fetch with preflight</dfn> using <var title="">request</var>, run
 these steps:
@@ -768,7 +831,7 @@ these steps:
 </ol>
 
 
-<h3 id="cors-preflight-fetch"><span class="secno">5.3 </span>CORS preflight fetch</h3>
+<h3 id="cors-preflight-fetch"><span class="secno">4.3 </span>CORS preflight fetch</h3>
 
 <p>To perform a <dfn id="cors-preflight-fetch-0">CORS preflight fetch</dfn> using <var title="">request</var>, run these
 steps:
@@ -932,7 +995,7 @@ steps:
 </ol>
 
 
-<h3 id="cors-preflight-cache"><span class="secno">5.4 </span>CORS preflight cache</h3>
+<h3 id="cors-preflight-cache"><span class="secno">4.4 </span>CORS preflight cache</h3>
 
 <p>A <dfn id="cors-preflight-cache-0">CORS preflight cache</dfn> consists of a collection of entries where each
 entry has these fields:
@@ -976,7 +1039,7 @@ when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache
 <a href="#cache-header-name" title="cache-header-name">header name</a> is the given header name.
 
 
-<h3 id="cors-check"><span class="secno">5.5 </span>CORS check</h3>
+<h3 id="cors-check"><span class="secno">4.5 </span>CORS check</h3>
 
 <p>To perform a <dfn id="cors-check-0">CORS check</dfn> for a <var title="">request</var> and
 <var title="">response</var>, run these steps:
@@ -1020,7 +1083,7 @@ when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache
 
 
 
-<h2 id="http-headers"><span class="secno">6 </span>HTTP headers</h2>
+<h2 id="http-headers"><span class="secno">5 </span>HTTP headers</h2>
 
 <p>To <dfn id="concept-header-parse" title="concept-header-parse">parse a header value</dfn> parse it per the ABNF
 given below and return the <a href="#concept-header-value" title="concept-header-value">values</a> obtained for the
@@ -1110,8 +1173,14 @@ updated to match reality without involving layers and layers of bureaucracy.
 
 
 <h2 class="no-num" id="references">References</h2>
-<div id="anolis-references"><dl><dt id="refsENCODING">[ENCODING]
+<div id="anolis-references"><dl><dt id="refsCOOKIES">[COOKIES]
+<dd><cite><a href="http://tools.ietf.org/html/rfc6265">HTTP State Management Mechanism</a></cite>, Adam Barth. IETF.
+
+<dt id="refsENCODING">[ENCODING]
 <dd><cite><a href="http://encoding.spec.whatwg.org/">Encoding Standard</a></cite>, Anne van Kesteren. WHATWG.
+
+<dt id="refsHTTPAUTH">[HTTPAUTH]
+<dd><cite><a href="http://tools.ietf.org/html/rfc2617">HTTP Authentication: Basic and Digest Access Authentication</a></cite>, J. Franks, Phillip Hallam-Baker, J. Hostetler et al.. IETF.
 
 <dt id="refsORIGIN">[ORIGIN]
 <dd><cite><a href="http://tools.ietf.org/html/rfc6454">The Web Origin Concept</a></cite>, Adam Barth. IETF.

@@ -290,8 +290,7 @@ solve this.
 <!-- example if people ask: "Content-Type: text/plain;" -->
 
 
-
-<h2>Requests</h2>
+<h3>Requests</h3>
 
 <p>The input to <span title=concept-fetch>fetch</span> is a
 <dfn title=concept-request>request</dfn>.
@@ -349,6 +348,10 @@ one of <i title>always</i>, <i title>CORS</i>, and <i title>never</i>.
 <p class=XXX>I think we want the default to become <i title>always</i>, but currently it
 is <i title>never</i>.
 
+<p>A a<span title=concept-request>request</span> has an associated
+<dfn title=concept-request-force-url-credentials-flag>force URL credentials flag</dfn>.
+Unless stated otherwise, it is unset.
+
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-manual-redirect-flag>manual redirect flag</dfn>. Unless stated
 otherwise, it is unset.
@@ -359,8 +362,7 @@ Unless stated otherwise a <span title=concept-request>request</span>'s
 <span title=concept-request-redirect-count>redirect count</span> is zero.
 
 
-
-<h2>Responses</h2>
+<h3>Responses</h3>
 
 <p>The result of <span title=concept-fetch>fetch</span> is a
 <dfn title=concept-response>response</dfn>. A <span title=concept-response>response</span>
@@ -416,6 +418,20 @@ not have their <span title=concept-response-body>body</span> extracted using the
 <p>A <span title=concept-response>response</span> whose
 <span title=concept-response-type>type</span> is <i title>redirect</i> is known as a
 <dfn title=concept-redirect>redirect</dfn>.
+
+
+
+<h2><dfn>CORS protocol</dfn></h2>
+
+<p>To prevent leaking data from resources behind a firewall (intranets), the platform has
+a <span>CORS protocol</span> layered on top of HTTP. It allows resources to declare they
+can be shared with resources residing on a different <span>origin</span>.
+
+<p>This section explains the <span>CORS protocol</span> as it pertains to servers.
+Requirements for user agents are integrated in the <span title=concept-fetch>fetch</span>
+algorithm.
+
+<p class=XXX>
 
 
 
@@ -495,7 +511,7 @@ parameter should be passed.
 <h3>Basic fetch</h3>
 
 <p>To perform a <dfn>basic fetch</dfn> using <var title>request</var>, with an optional
-<i title>CORS flag</i>, switch on <var title>request</var>'s
+<i title>CORS flag</i> and <i title>HTTP authentication flag</i>, switch on <var title>request</var>'s
 <span title=concept-request-url>url</span>'s
 <span data-anolis-spec=url title=concept-url-scheme>scheme</span> and run the associated
 steps:
@@ -592,7 +608,32 @@ steps:
     HTTP request.
 
    <li>
-    <p class=XXX>cookies
+    <p>If <var title>request</var>'s
+    <span title=concept-omit-credentials-mode>omit credentials mode</span> is
+    <i title>always</i> or <var title>request</var>'s
+    <span title=concept-omit-credentials-mode>omit credentials mode</span> is
+    <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these substeps:
+
+    <ol>
+     <li><p>Include <code title>Cookie</code> headers associated with
+     <var title>request</var>'s <span title=concept-request-url>url</span>.
+     <span data-anolis-ref>COOKIES</span>
+
+     <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
+     <li><p>If there's an <b title>authentication entry</b> for <var title>request</var>'s
+     <span title=concept-request-url>url</span> and either
+     <var title>request</var>'s <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is unset or
+     <var title>request</var>'s <span title=concept-request-url>url</span>
+     does not include credentials, include the <code>Authorization</code> header from the
+     <b title>authentication entry</b>.
+     <!-- XXX need to define "includes credentials" in URL as username != "" and password != null??
+              need to define the cache concept -->
+
+     <li><p>Otherwise, if <var title>request</var>'s <span title=concept-request-url>url</span>
+     includes credentials, and the <i title>HTTP authentication flag</i> is set, include an
+     <code>Authorization</code> header using those credentials.
+     <!-- XXX ... -->
+    </ol>
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
@@ -600,8 +641,9 @@ steps:
 
   <p>Otherwise, when the headers from the resource are obtained, let
   <var title>response</var> be a new <span title=concept-response>response</span> and set
-  its fields appropriately.
-  <!-- XXX spell this out? -->
+  its fields appropriately. <span class=XXX>Need to spell this out. Whenever we do not
+  include <code>Cookie</code> headers we also need to ignore <code>Set-Cookie</code>
+  headers in the response.</span>
 
   <p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
   <var title>request</var> and <var title>response</var> returns failure, return a
@@ -685,7 +727,23 @@ steps:
   <ol>
    <li><p>If the <i title>CORS flag</i> is set, return <var title>response</var>.
 
-   <li class=XXX></li>
+   <li>
+    <p>If <var title>request</var>'s
+    <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span>
+    is unset, or the <i title>HTTP authentication flag</i> is set, run these substeps:
+
+    <ol>
+     <li><p>Prompt the end user for a username and password.
+
+     <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span>'s
+     <span data-anolis-spec=url title=concept-url-username>username</span> and
+     <span data-anolis-spec=url title=concept-url-password>password</span> to the given
+     values.
+     <!-- XXX sanitization? -->
+    </ol>
+
+   <li class=XXX><p>Return the result of performing a <span>basic fetch</span> using
+   <var title>request</var>, with the <i title>HTTP authentication flag</i> set.
   </ol>
 
   <p>Otherwise, if
@@ -693,6 +751,10 @@ steps:
   run these steps:
 
   <ol class=XXX></ol>
+
+  <p>If the <i title>HTTP authentication flag</i> is set, create an <b title>authentication entry</b> for
+  <var title>request</var>'s <span title=concept-request-url>url</span> and the given
+  realm. <span data-anolis-ref>HTTPAUTH</span>
 
   <p>Return <var title>response</var>.
 
