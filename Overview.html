@@ -485,7 +485,7 @@ parameter should be passed.
    is one of "<code title="">about</code>", "<code title="">blob</code>", and "<code title="">data</code>",
    and <var title="">request</var>'s <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is zero
 
-   <dd><p>The result of performing a <a href="#basic-fetch-0">basic fetch</a> using <var title="">request</var>.
+   <dd><p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var title="">request</var>.
 
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "same-origin"
@@ -495,7 +495,7 @@ parameter should be passed.
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "tainted cross-origin"
    <dd>
-    <p>The result of performing a <a href="#basic-fetch-0">basic fetch</a> using
+    <p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
     <var title="">request</var>, marked <a href="#cors-cross-origin">CORS-cross-origin</a>.
     <!-- file URLs end up here as they are not same-origin typically. -->
 
@@ -512,7 +512,7 @@ parameter should be passed.
    <dd><p>The result of performing a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> using <var title="">request.
 
    </var><dt>Otherwise
-   <dd><p>The result of performing a <a href="#basic-fetch-0">basic fetch</a> using
+   <dd><p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
    <var title="">request</var> with the <i title="">CORS flag</i> set.
   </dl>
 
@@ -530,7 +530,7 @@ parameter should be passed.
 
 <h3 id="basic-fetch"><span class="secno">4.1 </span>Basic fetch</h3>
 
-<p>To perform a <dfn id="basic-fetch-0">basic fetch</dfn> using <var title="">request</var>, with an optional
+<p>To perform a <dfn id="concept-basic-fetch" title="concept-basic-fetch">basic fetch</dfn> using <var title="">request</var>, with an optional
 <i title="">CORS flag</i> and <i title="">HTTP authentication flag</i>, switch on <var title="">request</var>'s
 <a href="#concept-request-url" title="concept-request-url">url</a>'s
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> and run the associated
@@ -654,6 +654,13 @@ steps:
      <code>Authorization</code> header using those credentials.
      <!-- XXX ... -->
     </ol>
+
+   <li>
+    <p>If there's a <b title="">proxy authentication entry</b>, use it as appropriate.
+    <a href="#refsHTTP">[HTTP]</a>
+
+    <p class="note">This intentionally does not depend on <var title="">request</var>'s
+    <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a>.
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
@@ -747,6 +754,9 @@ steps:
   <ol>
    <li><p>If the <i title="">CORS flag</i> is set, return <var title="">response</var>.
 
+   <li class="XXX"><p>Needs testing: multiple <code>WWW-Authenticate</code> headers,
+   missing, parsing issues.
+
    <li>
     <p>If <var title="">request</var>'s
     <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a>
@@ -762,7 +772,7 @@ steps:
      <!-- XXX sanitization? -->
     </ol>
 
-   <li class="XXX"><p>Return the result of performing a <a href="#basic-fetch-0">basic fetch</a> using
+   <li><p>Return the result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
    <var title="">request</var>, with the <i title="">HTTP authentication flag</i> set.
   </ol>
 
@@ -770,7 +780,20 @@ steps:
   <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is 407,
   run these steps:
 
-  <ol class="XXX"></ol>
+  <ol>
+   <li class="XXX"><p>Needs testing: multiple <code>Proxy-Authenticate</code> headers,
+   missing, parsing issues.
+
+   <li>
+    <p>Prompt the end user as appropriate and store the result as appropriate as a
+    <b title="">proxy authentication entry</b>.
+    <a href="#refsHTTP">[HTTP]</a>
+
+    <p class="note">Remaining details surrounding proxy authentication are defined by HTTP.
+
+   <li><p>Return the result of performing <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
+   <var title="">request</var>.
+  </ol>
 
   <p>If the <i title="">HTTP authentication flag</i> is set, create an <b title="">authentication entry</b> for
   <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> and the given
@@ -819,7 +842,7 @@ these steps:
  <li><p>Set <var title="">request</var>'s
  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
 
- <li><p>Let <var title="">response</var> be a <a href="#basic-fetch-0">basic fetch</a> using
+ <li><p>Let <var title="">response</var> be a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
  <var title="">request</var> with the <i title="">CORS flag</i> set.
 
  <li><p>If <var title="">response</var> is a <a href="#concept-redirect" title="concept-redirect">redirect</a>, set its
@@ -877,7 +900,7 @@ steps:
  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
 
  <li><p>Let <var title="">response</var> be the result of performing a
- <a href="#basic-fetch-0">basic fetch</a> using <var title="">preflight</var> with the <i title="">CORS flag</i>
+ <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var title="">preflight</var> with the <i title="">CORS flag</i>
  set.
 
  <li>
@@ -1179,6 +1202,9 @@ updated to match reality without involving layers and layers of bureaucracy.
 
 <dt id="refsENCODING">[ENCODING]
 <dd><cite><a href="http://encoding.spec.whatwg.org/">Encoding Standard</a></cite>, Anne van Kesteren. WHATWG.
+
+<dt id="refsHTTP">[HTTP]
+<dd><cite><a href="http://tools.ietf.org/html/rfc2616">Hypertext Transfer Protocol -- HTTP/1.1</a></cite>, Roy Fielding, James Gettys, Jeffrey Mogul et al.. IETF.
 
 <dt id="refsHTTPAUTH">[HTTPAUTH]
 <dd><cite><a href="http://tools.ietf.org/html/rfc2617">HTTP Authentication: Basic and Digest Access Authentication</a></cite>, J. Franks, Phillip Hallam-Baker, J. Hostetler et al.. IETF.
