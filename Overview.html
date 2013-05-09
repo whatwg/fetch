@@ -472,6 +472,8 @@ set as well as <a href="#concept-fetch" title="concept-fetch">fetches</a> where
 compatibility constraints it is not included in all fetches.
 <!-- Ian Hickson told me Adam Barth researched that -->
 
+<p>Its <a href="#concept-header-value" title="concept-header-value">value</a> ABNF:
+
 <pre>Origin                           = origin-or-null
 
 origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensitive
@@ -515,66 +517,82 @@ performed, to ensure the resource understands the <a href="#cors-protocol">CORS 
 includes an <code title="http-origin"><a href="#http-origin">Origin</a></code> header.
 
 <p>A HTTP request can be identified as being a CORS preflight (a check to see if the
-<a href="#cors-protocol">CORS protocol</a> is understood) if it uses <code title="">OPTIONS</code> as method
-and includes <code title="http-origin"><a href="#http-origin">Origin</a></code>,
-<code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>, and
-<code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
-headers.
+<a href="#cors-protocol">CORS protocol</a> is understood) if it pertains in the <a href="#cors-protocol">CORS protocol</a>
+(includes an <code title="http-origin"><a href="#http-origin">Origin</a></code> header), uses
+<code title="">OPTIONS</code> as <a href="#concept-method" title="concept-method">method</a>, and includes these
+<a href="#concept-header" title="concept-header">headers</a>:
+
+<dl>
+ <dt><dfn id="http-access-control-request-method" title="http-access-control-request-method"><code>Access-Control-Request-Method</code></dfn>
+ <dd><p>Indicates which <a href="#concept-method" title="concept-method">method</a> a future HTTP request to
+ the same resource might use.
+
+ <dt><dfn id="http-access-control-request-headers" title="http-access-control-request-headers"><code>Access-Control-Request-Headers</code></dfn>
+ <dd><p>Indicates which <a href="#concept-header" title="concept-header">headers</a> a future HTTP request to
+ the same resource might use.
+</dl>
 
 
 <h4 id="http-responses"><span class="secno">3.2.3 </span>HTTP responses</h4>
 
-<p class="XXX">
+<p>A HTTP response to a HTTP request pertaining in the <a href="#cors-protocol">CORS protocol</a> can
+include the following <a href="#concept-header" title="concept-header">headers</a>:
+
+<dl>
+ <dt><dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>
+ <dd><p>Indicates whether a resource can be shared, via returning the
+ <a href="#concept-header-value" title="concept-header-value">value</a> (literally) of the
+ <code title="http-origin"><a href="#http-origin">Origin</a></code> request
+ <a href="#concept-header" title="concept-header">header</a>, <code title="">*</code>, or
+ <code title="">null</code> in a response.
+
+ <dt><dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>
+ <dd>
+  <p>Indicates whether a resource can be shared when
+  <a href="#concept-request" title="concept-request">request</a>'s
+  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
+  <i title="">never</i>.
+
+  <p class="note">For a CORS preflight <a href="#concept-request" title="concept-request">request</a>'s
+  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is always
+  <i title="">never</i>, but for any subsequent HTTP requests it might not be. Support
+  therefore needs to be indicated for the CORS preflight as well.
+</dl>
+
+<p>A HTTP response to a CORS preflight can include the following
+<a href="#concept-header" title="concept-header">headers</a>:
+
+<dl>
+ <dt><dfn id="http-access-control-allow-methods" title="http-access-control-allow-methods"><code>Access-Control-Allow-Methods</code></dfn>
+ <dd><p>Indicates which <a href="#concept-method" title="concept-method">methods</a> are supported by the
+ resource for the purposes of the <a href="#cors-protocol">CORS protocol</a>.
+
+ <dt><dfn id="http-access-control-allow-headers" title="http-access-control-allow-headers"><code>Access-Control-Allow-Headers</code></dfn>
+ <dd><p>Indicates which <a href="#concept-header" title="concept-header">headers</a> are supported by the
+ resource for the purposes of the <a href="#cors-protocol">CORS protocol</a>.
+
+ <dt><dfn id="http-access-control-max-age" title="http-access-control-max-age"><code>Access-Control-Max-Age</code></dfn>
+ <dd><p>Indicates how long the information provided by the
+ <code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code> and
+ <code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>
+ <a href="#concept-header" title="concept-header">headers</a> can be cached.
+</dl>
+
+<p>A HTTP response to a HTTP request pertaining in the <a href="#cors-protocol">CORS protocol</a> that is
+not a CORS preflight can also include the following
+<a href="#concept-header" title="concept-header">header</a>:
+
+<dl>
+ <dt><dfn id="http-access-control-expose-headers" title="http-access-control-expose-headers"><code>Access-Control-Expose-Headers</code></dfn>
+ <dd><p>Indicates which <a href="#concept-header" title="concept-header">headers</a> can be exposed as part
+ of the HTTP response, via listing their <a href="#concept-header-name" title="concept-header-name">names</a>.
+</dl>
 
 
 <h4 id="http-new-header-syntax"><span class="secno">3.2.4 </span>HTTP new header syntax</h4>
 
-<p>The
-<dfn id="http-access-control-request-method" title="http-access-control-request-method"><code>Access-Control-Request-Method</code></dfn>
-header indicates which method will be used during the later part of a
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> as part of the
-<a href="#cors-preflight-fetch-0">CORS preflight fetch</a>.
-
-<p>The
-<dfn id="http-access-control-request-headers" title="http-access-control-request-headers"><code>Access-Control-Request-Headers</code></dfn>
-header indicates which headers will be used during the later part of a
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> as part of the
-<a href="#cors-preflight-fetch-0">CORS preflight fetch</a>.
-
-<p>The
-<dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>
-header indicates whether a resource can be shared based by returning the value of the
-<code title="http-origin"><a href="#http-origin">Origin</a></code> request header,
-<code title="">*</code>, or <code title="">null</code> in a response.
-
-<p>The
-<dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>
-header indicates whether the response to a request can be exposed when the
-<a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
-<i title="">never</i>. When part of the response to a
-<a href="#cors-preflight-fetch-0">CORS preflight fetch</a> it indicates that the later part of
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> can include <span>user credentials</span>.
-
-<p>The
-<dfn id="http-access-control-expose-headers" title="http-access-control-expose-headers"><code>Access-Control-Expose-Headers</code></dfn>
-header indicates which headers are safe to expose in a response.
-
-<p>The
-<dfn id="http-access-control-max-age" title="http-access-control-max-age"><code>Access-Control-Max-Age</code></dfn> header
-indicates how long the results of a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> can be cached in a
-<a href="#cors-preflight-cache-0">CORS preflight cache</a>.
-
-<p>The
-<dfn id="http-access-control-allow-methods" title="http-access-control-allow-methods"><code>Access-Control-Allow-Methods</code></dfn>
-header indicates, as part of the response to a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a>, which
-methods can be used during the later part of a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a>.
-
-<p>The
-<dfn id="http-access-control-allow-headers" title="http-access-control-allow-headers"><code>Access-Control-Allow-Headers</code></dfn>
-header indicates, as part of the response to a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a>, which
-header field names can be used during the later part of a
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a>.
-
+<p>ABNF for the <span title="concept-headers">headers</span> used by the
+<a href="#cors-protocol">CORS protocol</a>:
 
 <pre>Access-Control-Request-Method    = <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a>
 Access-Control-Request-Headers   = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
