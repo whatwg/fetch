@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-7-may-2013">Living Standard — Last Updated 7 May 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-may-2013">Living Standard — Last Updated 9 May 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-7 May 2013, the editor has made this specification available
+9 May 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -62,7 +62,15 @@ and a set of parameters. This concept is named fetching.
    <li><a href="#http"><span class="secno">2.1 </span>HTTP</a></li>
    <li><a href="#requests"><span class="secno">2.2 </span>Requests</a></li>
    <li><a href="#responses"><span class="secno">2.3 </span>Responses</a></ol></li>
- <li><a href="#cors-protocol"><span class="secno">3 </span>CORS protocol</a></li>
+ <li><a href="#http-extensions"><span class="secno">3 </span>HTTP extensions</a>
+  <ol class="toc">
+   <li><a href="#http-origin-header"><span class="secno">3.1 </span>HTTP <code title="">Origin</code> header</a></li>
+   <li><a href="#http-cors-protocol"><span class="secno">3.2 </span>HTTP CORS protocol</a>
+    <ol class="toc">
+     <li><a href="#general"><span class="secno">3.2.1 </span>General</a></li>
+     <li><a href="#http-requests"><span class="secno">3.2.2 </span>HTTP requests</a></li>
+     <li><a href="#http-responses"><span class="secno">3.2.3 </span>HTTP responses</a></li>
+     <li><a href="#http-new-header-syntax"><span class="secno">3.2.4 </span>HTTP new header syntax</a></ol></ol></li>
  <li><a href="#fetching"><span class="secno">4 </span>Fetching</a>
   <ol class="toc">
    <li><a href="#basic-fetch"><span class="secno">4.1 </span>Basic fetch</a></li>
@@ -70,7 +78,6 @@ and a set of parameters. This concept is named fetching.
    <li><a href="#cors-preflight-fetch"><span class="secno">4.3 </span>CORS preflight fetch</a></li>
    <li><a href="#cors-preflight-cache"><span class="secno">4.4 </span>CORS preflight cache</a></li>
    <li><a href="#cors-check"><span class="secno">4.5 </span>CORS check</a></ol></li>
- <li><a href="#http-headers"><span class="secno">5 </span>HTTP headers</a></li>
  <li><a class="no-num" href="#references">References</a></li>
  <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
 <!--end-toc-->
@@ -308,6 +315,12 @@ parameters should be allowed and how exactly the MIME type parsing would work. H
 solve this.
 <!-- example if people ask: "Content-Type: text/plain;" -->
 
+<p>To <dfn id="concept-header-parse" title="concept-header-parse">parse a header value</dfn> parse it per the ABNF and
+return the <a href="#concept-header-value" title="concept-header-value">values</a> obtained for the given
+<a href="#concept-header-name" title="concept-header-name">name</a>, and return failure if the
+<a href="#concept-header-value" title="concept-header-value">value</a> did not match the ABNF.
+
+
 
 <h3 id="requests"><span class="secno">2.2 </span>Requests</h3>
 
@@ -441,17 +454,137 @@ not have their <a href="#concept-response-body" title="concept-response-body">bo
 
 
 
-<h2 id="cors-protocol"><span class="secno">3 </span><dfn>CORS protocol</dfn></h2>
+<h2 id="http-extensions"><span class="secno">3 </span>HTTP extensions</h2>
 
-<p>To prevent leaking data from resources behind a firewall (intranets), the platform has
-a <a href="#cors-protocol">CORS protocol</a> layered on top of HTTP. It allows resources to declare they
+<h3 id="http-origin-header"><span class="secno">3.1 </span>HTTP <code title="">Origin</code> header</h3>
+
+<p>The <dfn id="http-origin" title="http-origin"><code>Origin</code></dfn> request
+<a href="#concept-header" title="concept-header">header</a> indicates where a
+<a href="#concept-fetch" title="concept-fetch">fetch</a> originates from.
+
+<p class="note">The <code title="http-origin"><a href="#http-origin">Origin</a></code> header is a stripped-down version
+of the <code title="http-referer">Referer</code> [sic] header as to not reveal confidential
+<a class="external" href="http://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> information. It is used for
+all <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetches</a> whose <i title="">CORS flag</i> is
+set as well as <a href="#concept-fetch" title="concept-fetch">fetches</a> where
+<a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-method" title="concept-request-method">method</a> is <code title="">POST</code>. Due to
+compatibility constraints it is not included in all fetches.
+<!-- Ian Hickson told me Adam Barth researched that -->
+
+<pre>Origin                           = origin-or-null
+
+origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensitive
+origin                           = <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> "://" <a class="external" href="http://url.spec.whatwg.org/#concept-url-host" title="concept-url-host">host</a> [ ":" <a class="external" href="http://url.spec.whatwg.org/#concept-url-port" title="concept-url-port">port</a> ]</pre>
+
+<p class="note">This replaces the syntax defined for the <code title="">Origin</code> header by
+The Web Origin Concept. Unfortunately that document cannot be updated to match reality
+without involving layers and layers of bureaucracy.
+<a href="#refsORIGIN">[ORIGIN]</a>
+
+
+<h3 id="http-cors-protocol"><span class="secno">3.2 </span>HTTP CORS protocol</h3>
+
+<p>To allow sharing resources cross-origin and allow for more versetile HTTP requests than
+possible with HTML's <code class="external"><a href="http://www.whatwg.org/specs/web-apps/current-work/multipage/forms.html#the-form-element">form</a></code> element, the platform has
+a <dfn id="cors-protocol">CORS protocol</dfn> layered on top of HTTP. It allows resources to declare they
 can be shared with resources residing on a different <span>origin</span>.
 
+<p class="note">It needs to be an opt-in mechanism to prevent leaking data from resources
+behind a firewall (intranets). Additionally, for credentialed HTTP requests it needs to be
+opt-in to prevent leaking potentially-sensitive data.
+
 <p>This section explains the <a href="#cors-protocol">CORS protocol</a> as it pertains to servers.
-Requirements for user agents are integrated in the <a href="#concept-fetch" title="concept-fetch">fetch</a>
+Requirements for user agents are part of the <a href="#concept-fetch" title="concept-fetch">fetch</a>
 algorithm.
 
+<h4 id="general"><span class="secno">3.2.1 </span>General</h4>
+
+<p>The <a href="#cors-protocol">CORS protocol</a> consists of a set of headers that indicates whether a
+particular resource can be shared cross-origin.
+
+<p>For HTTP requests that are more involved than what is possible with HTML's
+<code class="external"><a href="http://www.whatwg.org/specs/web-apps/current-work/multipage/forms.html#the-form-element">form</a></code> element, a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> is
+performed, to ensure the resource understands the <a href="#cors-protocol">CORS protocol</a>.
+<!-- XXX not an integrity check -->
+
+
+<h4 id="http-requests"><span class="secno">3.2.2 </span>HTTP requests</h4>
+
+<p>A HTTP request can be identified as pertaining in the <a href="#cors-protocol">CORS protocol</a> if it
+includes an <code title="http-origin"><a href="#http-origin">Origin</a></code> header.
+
+<p>A HTTP request can be identified as being a CORS preflight (a check to see if the
+<a href="#cors-protocol">CORS protocol</a> is understood) if it uses <code title="">OPTIONS</code> as method
+and includes <code title="http-origin"><a href="#http-origin">Origin</a></code>,
+<code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>, and
+<code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>
+headers.
+
+
+<h4 id="http-responses"><span class="secno">3.2.3 </span>HTTP responses</h4>
+
 <p class="XXX">
+
+
+<h4 id="http-new-header-syntax"><span class="secno">3.2.4 </span>HTTP new header syntax</h4>
+
+<p>The
+<dfn id="http-access-control-request-method" title="http-access-control-request-method"><code>Access-Control-Request-Method</code></dfn>
+header indicates which method will be used during the later part of a
+<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> as part of the
+<a href="#cors-preflight-fetch-0">CORS preflight fetch</a>.
+
+<p>The
+<dfn id="http-access-control-request-headers" title="http-access-control-request-headers"><code>Access-Control-Request-Headers</code></dfn>
+header indicates which headers will be used during the later part of a
+<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> as part of the
+<a href="#cors-preflight-fetch-0">CORS preflight fetch</a>.
+
+<p>The
+<dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>
+header indicates whether a resource can be shared based by returning the value of the
+<code title="http-origin"><a href="#http-origin">Origin</a></code> request header,
+<code title="">*</code>, or <code title="">null</code> in a response.
+
+<p>The
+<dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>
+header indicates whether the response to a request can be exposed when the
+<a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
+<i title="">never</i>. When part of the response to a
+<a href="#cors-preflight-fetch-0">CORS preflight fetch</a> it indicates that the later part of
+<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> can include <span>user credentials</span>.
+
+<p>The
+<dfn id="http-access-control-expose-headers" title="http-access-control-expose-headers"><code>Access-Control-Expose-Headers</code></dfn>
+header indicates which headers are safe to expose in a response.
+
+<p>The
+<dfn id="http-access-control-max-age" title="http-access-control-max-age"><code>Access-Control-Max-Age</code></dfn> header
+indicates how long the results of a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> can be cached in a
+<a href="#cors-preflight-cache-0">CORS preflight cache</a>.
+
+<p>The
+<dfn id="http-access-control-allow-methods" title="http-access-control-allow-methods"><code>Access-Control-Allow-Methods</code></dfn>
+header indicates, as part of the response to a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a>, which
+methods can be used during the later part of a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a>.
+
+<p>The
+<dfn id="http-access-control-allow-headers" title="http-access-control-allow-headers"><code>Access-Control-Allow-Headers</code></dfn>
+header indicates, as part of the response to a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a>, which
+header field names can be used during the later part of a
+<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a>.
+
+
+<pre>Access-Control-Request-Method    = <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a>
+Access-Control-Request-Headers   = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
+
+Access-Control-Allow-Origin      = origin-or-null / "*"
+Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
+Access-Control-Expose-Headers    = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
+Access-Control-Max-Age           = <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-3.3.2">delta-seconds</a>
+Access-Control-Allow-Methods     = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a>
+Access-Control-Allow-Headers     = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
 
 
 
@@ -1125,95 +1258,6 @@ when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache
 
  <li><p>Return failure.
 </ol>
-
-
-
-<h2 id="http-headers"><span class="secno">5 </span>HTTP headers</h2>
-
-<p>To <dfn id="concept-header-parse" title="concept-header-parse">parse a header value</dfn> parse it per the ABNF
-given below and return the <a href="#concept-header-value" title="concept-header-value">values</a> obtained for the
-given <a href="#concept-header-name" title="concept-header-name">name</a>, and return failure if the
-<a href="#concept-header-value" title="concept-header-value">value</a> did not match the ABNF.
-
-<p>The <dfn id="http-origin" title="http-origin"><code>Origin</code></dfn> request
-<a href="#concept-header" title="concept-header">header</a> indicates where a
-<a href="#concept-fetch" title="concept-fetch">fetch</a> originates from.
-
-<p class="note">The <code title="http-origin"><a href="#http-origin">Origin</a></code> header is a stripped-down version
-of the <code title="http-referer">Referer</code> [sic] header as to not reveal confidential
-<a class="external" href="http://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> information. Due to
-compatibility constraints it is not included in all fetches.
-<!-- Ian Hickson told me Adam Barth researched that -->
-
-<p>The remaining <a href="#concept-header" title="concept-header">headers</a> are used as part of
-<a href="#concept-request" title="concept-request">requests</a> whose
-<a href="#concept-request-mode" title="concept-request-mode">mode</a> is <i title="">CORS</i>.
-
-<p>The
-<dfn id="http-access-control-request-method" title="http-access-control-request-method"><code>Access-Control-Request-Method</code></dfn>
-header indicates which method will be used during the later part of a
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> as part of the
-<a href="#cors-preflight-fetch-0">CORS preflight fetch</a>.
-
-<p>The
-<dfn id="http-access-control-request-headers" title="http-access-control-request-headers"><code>Access-Control-Request-Headers</code></dfn>
-header indicates which headers will be used during the later part of a
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> as part of the
-<a href="#cors-preflight-fetch-0">CORS preflight fetch</a>.
-
-<p>The
-<dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>
-header indicates whether a resource can be shared based by returning the value of the
-<code title="http-origin"><a href="#http-origin">Origin</a></code> request header,
-<code title="">*</code>, or <code title="">null</code> in a response.
-
-<p>The
-<dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>
-header indicates whether the response to a request can be exposed when the
-<a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
-<i title="">never</i>. When part of the response to a
-<a href="#cors-preflight-fetch-0">CORS preflight fetch</a> it indicates that the later part of
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> can include <span>user credentials</span>.
-
-<p>The
-<dfn id="http-access-control-expose-headers" title="http-access-control-expose-headers"><code>Access-Control-Expose-Headers</code></dfn>
-header indicates which headers are safe to expose in a response.
-
-<p>The
-<dfn id="http-access-control-max-age" title="http-access-control-max-age"><code>Access-Control-Max-Age</code></dfn> header
-indicates how long the results of a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> can be cached in a
-<a href="#cors-preflight-cache-0">CORS preflight cache</a>.
-
-<p>The
-<dfn id="http-access-control-allow-methods" title="http-access-control-allow-methods"><code>Access-Control-Allow-Methods</code></dfn>
-header indicates, as part of the response to a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a>, which
-methods can be used during the later part of a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a>.
-
-<p>The
-<dfn id="http-access-control-allow-headers" title="http-access-control-allow-headers"><code>Access-Control-Allow-Headers</code></dfn>
-header indicates, as part of the response to a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a>, which
-header field names can be used during the later part of a
-<a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a>.
-
-<pre>Origin                           = origin-or-null
-
-Access-Control-Request-Method    = <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a>
-Access-Control-Request-Headers   = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
-
-Access-Control-Allow-Origin      = origin-or-null / "*"
-Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
-Access-Control-Expose-Headers    = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
-Access-Control-Max-Age           = <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-3.3.2">delta-seconds</a>
-Access-Control-Allow-Methods     = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a>
-Access-Control-Allow-Headers     = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
-
-origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensitive
-origin                           = <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> "://" <a class="external" href="http://url.spec.whatwg.org/#concept-url-host" title="concept-url-host">host</a> [ ":" <a class="external" href="http://url.spec.whatwg.org/#concept-url-port" title="concept-url-port">port</a> ]</pre>
-
-<p class="note">The syntax for the <code title="">Origin</code> header here is an intentional
-subset of what is defined in The Web Origin Concept. Unfortunately that document cannot be
-updated to match reality without involving layers and layers of bureaucracy.
-<a href="#refsORIGIN">[ORIGIN]</a>
 
 
 

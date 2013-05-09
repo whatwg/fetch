@@ -289,6 +289,12 @@ parameters should be allowed and how exactly the MIME type parsing would work. H
 solve this.
 <!-- example if people ask: "Content-Type: text/plain;" -->
 
+<p>To <dfn title=concept-header-parse>parse a header value</dfn> parse it per the ABNF and
+return the <span title=concept-header-value>values</span> obtained for the given
+<span title=concept-header-name>name</span>, and return failure if the
+<span title=concept-header-value>value</span> did not match the ABNF.
+
+
 
 <h3>Requests</h3>
 
@@ -422,17 +428,137 @@ not have their <span title=concept-response-body>body</span> extracted using the
 
 
 
-<h2><dfn>CORS protocol</dfn></h2>
+<h2>HTTP extensions</h2>
 
-<p>To prevent leaking data from resources behind a firewall (intranets), the platform has
-a <span>CORS protocol</span> layered on top of HTTP. It allows resources to declare they
+<h3>HTTP <code title>Origin</code> header</h3>
+
+<p>The <dfn title=http-origin><code>Origin</code></dfn> request
+<span title=concept-header>header</span> indicates where a
+<span title=concept-fetch>fetch</span> originates from.
+
+<p class=note>The <code title=http-origin>Origin</code> header is a stripped-down version
+of the <code title=http-referer>Referer</code> [sic] header as to not reveal confidential
+<span data-anolis-spec=url title=concept-url-path>path</span> information. It is used for
+all <span title=concept-basic-fetch>basic fetches</span> whose <i title>CORS flag</i> is
+set as well as <span title=concept-fetch>fetches</span> where
+<span title=concept-request>request</span>'s
+<span title=concept-request-method>method</span> is <code title>POST</code>. Due to
+compatibility constraints it is not included in all fetches.
+<!-- Ian Hickson told me Adam Barth researched that -->
+
+<pre>Origin                           = origin-or-null
+
+origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensitive
+origin                           = <span data-anolis-spec=url title=concept-url-scheme>scheme</span> "://" <span data-anolis-spec=url title=concept-url-host>host</span> [ ":" <span data-anolis-spec=url title=concept-url-port>port</span> ]</pre>
+
+<p class=note>This replaces the syntax defined for the <code title>Origin</code> header by
+The Web Origin Concept. Unfortunately that document cannot be updated to match reality
+without involving layers and layers of bureaucracy.
+<span data-anolis-ref>ORIGIN</span>
+
+
+<h3>HTTP CORS protocol</h3>
+
+<p>To allow sharing resources cross-origin and allow for more versetile HTTP requests than
+possible with HTML's <code data-anolis-spec=html>form</code> element, the platform has
+a <dfn>CORS protocol</dfn> layered on top of HTTP. It allows resources to declare they
 can be shared with resources residing on a different <span>origin</span>.
 
+<p class=note>It needs to be an opt-in mechanism to prevent leaking data from resources
+behind a firewall (intranets). Additionally, for credentialed HTTP requests it needs to be
+opt-in to prevent leaking potentially-sensitive data.
+
 <p>This section explains the <span>CORS protocol</span> as it pertains to servers.
-Requirements for user agents are integrated in the <span title=concept-fetch>fetch</span>
+Requirements for user agents are part of the <span title=concept-fetch>fetch</span>
 algorithm.
 
+<h4>General</h4>
+
+<p>The <span>CORS protocol</span> consists of a set of headers that indicates whether a
+particular resource can be shared cross-origin.
+
+<p>For HTTP requests that are more involved than what is possible with HTML's
+<code data-anolis-spec=html>form</code> element, a <span>CORS preflight fetch</span> is
+performed, to ensure the resource understands the <span>CORS protocol</span>.
+<!-- XXX not an integrity check -->
+
+
+<h4>HTTP requests</h4>
+
+<p>A HTTP request can be identified as pertaining in the <span>CORS protocol</span> if it
+includes an <code title=http-origin>Origin</code> header.
+
+<p>A HTTP request can be identified as being a CORS preflight (a check to see if the
+<span>CORS protocol</span> is understood) if it uses <code title>OPTIONS</code> as method
+and includes <code title=http-origin>Origin</code>,
+<code title=http-access-control-request-method>Access-Control-Request-Method</code>, and
+<code title=http-access-control-request-headers>Access-Control-Request-Headers</code>
+headers.
+
+
+<h4>HTTP responses</h4>
+
 <p class=XXX>
+
+
+<h4>HTTP new header syntax</h4>
+
+<p>The
+<dfn title=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>
+header indicates which method will be used during the later part of a
+<span>CORS fetch with preflight</span> as part of the
+<span>CORS preflight fetch</span>.
+
+<p>The
+<dfn title=http-access-control-request-headers><code>Access-Control-Request-Headers</code></dfn>
+header indicates which headers will be used during the later part of a
+<span>CORS fetch with preflight</span> as part of the
+<span>CORS preflight fetch</span>.
+
+<p>The
+<dfn title=http-access-control-allow-origin><code>Access-Control-Allow-Origin</code></dfn>
+header indicates whether a resource can be shared based by returning the value of the
+<code title="http-origin"><a href="#http-origin">Origin</a></code> request header,
+<code title>*</code>, or <code title>null</code> in a response.
+
+<p>The
+<dfn title=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>
+header indicates whether the response to a request can be exposed when the
+<span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+<i title>never</i>. When part of the response to a
+<span>CORS preflight fetch</span> it indicates that the later part of
+<span>CORS fetch with preflight</span> can include <span>user credentials</span>.
+
+<p>The
+<dfn title=http-access-control-expose-headers><code>Access-Control-Expose-Headers</code></dfn>
+header indicates which headers are safe to expose in a response.
+
+<p>The
+<dfn title=http-access-control-max-age><code>Access-Control-Max-Age</code></dfn> header
+indicates how long the results of a <span>CORS preflight fetch</span> can be cached in a
+<span>CORS preflight cache</span>.
+
+<p>The
+<dfn title=http-access-control-allow-methods><code>Access-Control-Allow-Methods</code></dfn>
+header indicates, as part of the response to a <span>CORS preflight fetch</span>, which
+methods can be used during the later part of a <span>CORS fetch with preflight</span>.
+
+<p>The
+<dfn title=http-access-control-allow-headers><code>Access-Control-Allow-Headers</code></dfn>
+header indicates, as part of the response to a <span>CORS preflight fetch</span>, which
+header field names can be used during the later part of a
+<span>CORS fetch with preflight</span>.
+
+
+<pre>Access-Control-Request-Method    = <span data-anolis-spec=http>Method</span>
+Access-Control-Request-Headers   = #<span data-anolis-spec=http>field-name</span>
+
+Access-Control-Allow-Origin      = origin-or-null / "*"
+Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
+Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span>
+Access-Control-Max-Age           = <span data-anolis-spec=http>delta-seconds</span>
+Access-Control-Allow-Methods     = #<span data-anolis-spec=http>Method</span>
+Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span></pre>
 
 
 
@@ -1106,95 +1232,6 @@ when there is an entry in <span>CORS preflight cache</span> for which there is a
 
  <li><p>Return failure.
 </ol>
-
-
-
-<h2>HTTP headers</h2>
-
-<p>To <dfn title=concept-header-parse>parse a header value</dfn> parse it per the ABNF
-given below and return the <span title=concept-header-value>values</span> obtained for the
-given <span title=concept-header-name>name</span>, and return failure if the
-<span title=concept-header-value>value</span> did not match the ABNF.
-
-<p>The <dfn title=http-origin><code>Origin</code></dfn> request
-<span title=concept-header>header</span> indicates where a
-<span title=concept-fetch>fetch</span> originates from.
-
-<p class=note>The <code title=http-origin>Origin</code> header is a stripped-down version
-of the <code title=http-referer>Referer</code> [sic] header as to not reveal confidential
-<span data-anolis-spec=url title=concept-url-path>path</span> information. Due to
-compatibility constraints it is not included in all fetches.
-<!-- Ian Hickson told me Adam Barth researched that -->
-
-<p>The remaining <span title=concept-header>headers</span> are used as part of
-<span title=concept-request>requests</span> whose
-<span title=concept-request-mode>mode</span> is <i title>CORS</i>.
-
-<p>The
-<dfn title=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>
-header indicates which method will be used during the later part of a
-<span>CORS fetch with preflight</span> as part of the
-<span>CORS preflight fetch</span>.
-
-<p>The
-<dfn title=http-access-control-request-headers><code>Access-Control-Request-Headers</code></dfn>
-header indicates which headers will be used during the later part of a
-<span>CORS fetch with preflight</span> as part of the
-<span>CORS preflight fetch</span>.
-
-<p>The
-<dfn title=http-access-control-allow-origin><code>Access-Control-Allow-Origin</code></dfn>
-header indicates whether a resource can be shared based by returning the value of the
-<code title="http-origin"><a href="#http-origin">Origin</a></code> request header,
-<code title>*</code>, or <code title>null</code> in a response.
-
-<p>The
-<dfn title=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>
-header indicates whether the response to a request can be exposed when the
-<span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-<i title>never</i>. When part of the response to a
-<span>CORS preflight fetch</span> it indicates that the later part of
-<span>CORS fetch with preflight</span> can include <span>user credentials</span>.
-
-<p>The
-<dfn title=http-access-control-expose-headers><code>Access-Control-Expose-Headers</code></dfn>
-header indicates which headers are safe to expose in a response.
-
-<p>The
-<dfn title=http-access-control-max-age><code>Access-Control-Max-Age</code></dfn> header
-indicates how long the results of a <span>CORS preflight fetch</span> can be cached in a
-<span>CORS preflight cache</span>.
-
-<p>The
-<dfn title=http-access-control-allow-methods><code>Access-Control-Allow-Methods</code></dfn>
-header indicates, as part of the response to a <span>CORS preflight fetch</span>, which
-methods can be used during the later part of a <span>CORS fetch with preflight</span>.
-
-<p>The
-<dfn title=http-access-control-allow-headers><code>Access-Control-Allow-Headers</code></dfn>
-header indicates, as part of the response to a <span>CORS preflight fetch</span>, which
-header field names can be used during the later part of a
-<span>CORS fetch with preflight</span>.
-
-<pre>Origin                           = origin-or-null
-
-Access-Control-Request-Method    = <span data-anolis-spec=http>Method</span>
-Access-Control-Request-Headers   = #<span data-anolis-spec=http>field-name</span>
-
-Access-Control-Allow-Origin      = origin-or-null / "*"
-Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
-Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span>
-Access-Control-Max-Age           = <span data-anolis-spec=http>delta-seconds</span>
-Access-Control-Allow-Methods     = #<span data-anolis-spec=http>Method</span>
-Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span>
-
-origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensitive
-origin                           = <span data-anolis-spec=url title=concept-url-scheme>scheme</span> "://" <span data-anolis-spec=url title=concept-url-host>host</span> [ ":" <span data-anolis-spec=url title=concept-url-port>port</span> ]</pre>
-
-<p class=note>The syntax for the <code title>Origin</code> header here is an intentional
-subset of what is defined in The Web Origin Concept. Unfortunately that document cannot be
-updated to match reality without involving layers and layers of bureaucracy.
-<span data-anolis-ref>ORIGIN</span>
 
 
 
