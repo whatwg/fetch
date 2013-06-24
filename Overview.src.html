@@ -80,159 +80,6 @@ and a set of parameters. This concept is named fetching.
 
 
 
-<h2 class=no-num>Legacy</h2>
-
-<p>HTML defines two algorithms. This maps these "legacy" algorithms to the new
-<span title=concept-fetch>fetch</span>.
-
-<p>When a user agent is to <dfn title=legacy-fetch>fetch</dfn> a resource or
-URL, optionally <strong>from</strong> an origin <i title>origin</i>, optionally
-<strong>using</strong> a specific
-<span data-anolis-spec=html>referrer source</span> as an
-<i>override referrer source</i>, and optionally with any of a
-<i title>synchronous flag</i>, a <i>manual redirect flag</i>, a
-<i>force same-origin flag</i>, and a <i>block cookies flag</i>, the following
-steps must be run:
-
-<p class=note>The <i>block cookies flag</i> is obsolete now.
-
- <!-- if invoked with the synchronous flag, make sure to release the storage mutex first -->
-
- <!-- synchronous flag is only to be used in algorithms that are themselves asynchronous! Only
- sync-XHR is allowed to make the mistake of screwing that up. :-P -->
-
- <!-- the force same-origin flag is for use in places where we'll be moving to CORS one day; when
- used, the algorithm must be invoked with a URL (not something else, like a POST request) whose
- origin is the same as the /origin/, which must also be present, and the algorithm must not be
- invoked with the manual redirect flag. -->
-
-<ol>
- <li><p>If there is a specific <i>override referrer source</i>, and it is a URL, then
-  let <var title>referrer</var> be the <i>override referrer source</i>.
-
- <li>
-  <p>Otherwise, run these substeps:
-
-  <ol>
-   <li>
-    <p>Let <var title>document</var> be the appropriate
-    <code data-anolis-spec=dom>Document</code> as given by the following list:
-
-    <dl class="switch">
-     <dt>If there is a specific <i>override referrer source</i>
-     <dd>The <i>override referrer source</i>.</dd>
-
-     <dt>When <span title=navigate>navigating</span>
-     <dd>The <span>active document</span> of the <span>source browsing context</span>.
-
-     <dt>When fetching resources for an element
-     <dd>The element's <span data-anolis-spec=dom title=concept-node-document>node document</span>.
-    </dl>
-
-   <li><p>While <var title>document</var> is
-   <span data-anolis-spec=html>an <code>iframe</code> <code>srcdoc</code> document</span>,
-   set <var title>document</var> to <var title>document</var>'s
-   <span data-anolis-spec=html>browsing context</span>'s
-   <span data-anolis-spec=html>browsing context container</span>'s
-   <code data-anolis-spec=dom>Document</code> instead.
-
-   <li><p>If <var title>document</var>'s
-   <span data-anolis-spec=html>origin</span> is not a scheme/host/port tuple,
-   then let <var title>referrer</var> be null.
-
-   <li><p>Otherwise, let <var title>referrer</var> be
-   <span data-anolis-spec=html>the document's address</span> of
-   <var title>document</var>.
-
-   <li><p>If <var title>referrer</var>'s
-   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
-   about/data/javascript, set <var title>referrer</var> to null.
-  </ol>
-
- </li>
-
-  <li><p>If the <code data-anolis-spec=dom>Document</code> with which any
-  <span data-anolis-spec=html title=concept-task>tasks</span>
-  <span data-anolis-spec=html title="queue a task">queued</span> by this
-  algorithm would be associated doesn't have an associated
-  <span data-anolis-spec=html>browsing context</span>, then terminate these
-  steps.
-
-<!--(redundant with 'at a time convenient...' below)
-  <li><p>Optionally, wait until the <code>Document</code> with which any <span
-  title="concept-task">tasks</span> <span title="queue a task">queued</span> by this algorithm
-  would be associated is <span title="active document">active</span>.</p></li>
--->
-
- <li><p>Let <var title>req</var> be a new <span title=concept-request>request</span>.
-
- <li><p>If this algorithm was invoked with "from an origin", set  <var title>req</var>'s
- <span title=concept-request-origin>origin</span> to <var title>origin</var>.
-
- <li><p>Set <var title>req</var>'s <span title=concept-request-referrer>referrer</span> to
- <var title>referrer</var>.
-
- <li><p>Set <var title>req</var>'s <span title=concept-request-mode>mode</span> to
- same-origin if the <i>force same-origin flag</i> is set, and to tainted cross-origin
- otherwise.
-
- <li><p>Set <var title>req</var>'s
- <span title=concept-request-manual-redirect-flag>manual redirect flag</span> if
- <i>manual redirect flag</i> is set.
-
- <li><p>Set <var title>req</var>'s <span>synchronous flag</span> if
- <i title>synchronous flag</i> is set.
-
- <li><p><span title=concept-fetch>fetch</span> <var title>req</var>.
-</ol>
-
-
-<p>When the user agent is required to perform a
-<dfn title=legacy-potentially-cors-enabled-fetch>potentially CORS-enabled fetch</dfn>
-of an <var title>URL</var> with a mode <var title>mode</var> that is either
-"No CORS", "Anonymous", or "Use Credentials", optionally using a
-<span data-anolis-spec=html>referrer source</span>
-<var title>referrer source</var>, with an
-<span data-anolis-spec=html>origin</span> <var title>origin</var>, and with a
-default origin behaviour <var title>default</var> which is either "<i>taint</i>"
-or "<i>fail</i>", it must run these steps:
-
-<ol>
- <li><p>Let <var title>req</var> be a new <span title=concept-request>request</span>.
-
- <li><p>Set <var title>req</var>'s
- <span title=concept-request-origin>origin</span> to <var title>origin</var>.
-
- <li>
-  <p>Set <var title>req</var>'s <span title=concept-request-mode>mode</span> to the value
-  corresponding to the first matching statement:
-
-  <dl class=switch>
-   <dt><var title>mode</var> is "No CORS" and <var title>default</var> is "<i>fail</i>"
-   <dd>same-origin
-
-   <dt><var title>mode</var> is "No CORS" and <var title>default</var> is "<i>taint</i>"
-   <dd>tainted cross-origin
-
-   <dt>Otherwise
-   <dd>CORS
-  </dl>
-
- <li>
-  <p>If <var title>mode</var> is "Anonymous", set <var title>req</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> to
-  <i title>always</i>.
-  <!-- XXX unset by default? -->
-  <!-- nullify Origin / Referer too? -->
-
- <li class=XXX><p>Determine <var title>req</var>'s
- <span title=concept-request-referrer>referrer</span> as per <span title=concept-fetch>fetch</span>.
-
- <li><p><span title=concept-fetch>fetch</span> <var title>req</var>.
-</ol>
-
-
-
 <h2>Conformance</h2>
 
 <p>All diagrams, examples, and notes in this specification are
@@ -1291,6 +1138,159 @@ when there is an entry in <span>CORS preflight cache</span> for which there is a
  `<code title>true</code>`, return success.
 
  <li><p>Return failure.
+</ol>
+
+
+
+<h2 class=no-num>HTML fetch</h2>
+
+<p>HTML defines two algorithms for obtaining resources. To ease transitioning towards this
+specification, a mapping is defined between these "legacy" algorithms and
+<span title=concept-fetch>fetch</span>.
+
+<p>When a user agent is to <dfn title=concept-legacy-fetch>fetch</dfn> a resource or
+URL, optionally <strong>from</strong> an origin <i title>origin</i>, optionally
+<strong>using</strong> a specific <span data-anolis-spec=html>referrer source</span> as an
+<i>override referrer source</i>, and optionally with any of a
+<i title>synchronous flag</i>, a <i>manual redirect flag</i>, a
+<i>force same-origin flag</i>, and a <i>block cookies flag</i>, the following
+steps must be run:
+
+<p class=note>The <i>block cookies flag</i> is obsolete now.
+
+ <!-- if invoked with the synchronous flag, make sure to release the storage mutex first -->
+
+ <!-- synchronous flag is only to be used in algorithms that are themselves asynchronous! Only
+ sync-XHR is allowed to make the mistake of screwing that up. :-P -->
+
+ <!-- the force same-origin flag is for use in places where we'll be moving to CORS one day; when
+ used, the algorithm must be invoked with a URL (not something else, like a POST request) whose
+ origin is the same as the /origin/, which must also be present, and the algorithm must not be
+ invoked with the manual redirect flag. -->
+
+<ol>
+ <li><p>If there is a specific <i>override referrer source</i>, and it is a URL, then
+  let <var title>referrer</var> be the <i>override referrer source</i>.
+
+ <li>
+  <p>Otherwise, run these substeps:
+
+  <ol>
+   <li>
+    <p>Let <var title>document</var> be the appropriate
+    <code data-anolis-spec=dom>Document</code> as given by the following list:
+
+    <dl class="switch">
+     <dt>If there is a specific <i>override referrer source</i>
+     <dd>The <i>override referrer source</i>.</dd>
+
+     <dt>When <span title=navigate>navigating</span>
+     <dd>The <span>active document</span> of the <span>source browsing context</span>.
+
+     <dt>When fetching resources for an element
+     <dd>The element's <span data-anolis-spec=dom title=concept-node-document>node document</span>.
+    </dl>
+
+   <li><p>While <var title>document</var> is
+   <span data-anolis-spec=html>an <code>iframe</code> <code>srcdoc</code> document</span>,
+   set <var title>document</var> to <var title>document</var>'s
+   <span data-anolis-spec=html>browsing context</span>'s
+   <span data-anolis-spec=html>browsing context container</span>'s
+   <code data-anolis-spec=dom>Document</code> instead.
+
+   <li><p>If <var title>document</var>'s
+   <span data-anolis-spec=html>origin</span> is not a scheme/host/port tuple,
+   then let <var title>referrer</var> be null.
+
+   <li><p>Otherwise, let <var title>referrer</var> be
+   <span data-anolis-spec=html>the document's address</span> of
+   <var title>document</var>.
+
+   <li><p>If <var title>referrer</var>'s
+   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
+   about/data/javascript, set <var title>referrer</var> to null.
+  </ol>
+
+ </li>
+
+  <li><p>If the <code data-anolis-spec=dom>Document</code> with which any
+  <span data-anolis-spec=html title=concept-task>tasks</span>
+  <span data-anolis-spec=html title="queue a task">queued</span> by this
+  algorithm would be associated doesn't have an associated
+  <span data-anolis-spec=html>browsing context</span>, then terminate these
+  steps.
+
+<!--(redundant with 'at a time convenient...' below)
+  <li><p>Optionally, wait until the <code>Document</code> with which any <span
+  title="concept-task">tasks</span> <span title="queue a task">queued</span> by this algorithm
+  would be associated is <span title="active document">active</span>.</p></li>
+-->
+
+ <li><p>Let <var title>req</var> be a new <span title=concept-request>request</span>.
+
+ <li><p>If this algorithm was invoked with "from an origin", set  <var title>req</var>'s
+ <span title=concept-request-origin>origin</span> to <var title>origin</var>.
+
+ <li><p>Set <var title>req</var>'s <span title=concept-request-referrer>referrer</span> to
+ <var title>referrer</var>.
+
+ <li><p>Set <var title>req</var>'s <span title=concept-request-mode>mode</span> to
+ same-origin if the <i>force same-origin flag</i> is set, and to tainted cross-origin
+ otherwise.
+
+ <li><p>Set <var title>req</var>'s
+ <span title=concept-request-manual-redirect-flag>manual redirect flag</span> if
+ <i>manual redirect flag</i> is set.
+
+ <li><p>Set <var title>req</var>'s <span>synchronous flag</span> if
+ <i title>synchronous flag</i> is set.
+
+ <li><p><span title=concept-fetch>fetch</span> <var title>req</var>.
+</ol>
+
+
+<p>When the user agent is required to perform a
+<dfn title=concept-legacy-potentially-cors-enabled-fetch>potentially CORS-enabled fetch</dfn>
+of an <var title>URL</var> with a mode <var title>mode</var> that is either
+"No CORS", "Anonymous", or "Use Credentials", optionally using a
+<span data-anolis-spec=html>referrer source</span>
+<var title>referrer source</var>, with an
+<span data-anolis-spec=html>origin</span> <var title>origin</var>, and with a
+default origin behaviour <var title>default</var> which is either "<i>taint</i>"
+or "<i>fail</i>", it must run these steps:
+
+<ol>
+ <li><p>Let <var title>req</var> be a new <span title=concept-request>request</span>.
+
+ <li><p>Set <var title>req</var>'s
+ <span title=concept-request-origin>origin</span> to <var title>origin</var>.
+
+ <li>
+  <p>Set <var title>req</var>'s <span title=concept-request-mode>mode</span> to the value
+  corresponding to the first matching statement:
+
+  <dl class=switch>
+   <dt><var title>mode</var> is "No CORS" and <var title>default</var> is "<i>fail</i>"
+   <dd>same-origin
+
+   <dt><var title>mode</var> is "No CORS" and <var title>default</var> is "<i>taint</i>"
+   <dd>tainted cross-origin
+
+   <dt>Otherwise
+   <dd>CORS
+  </dl>
+
+ <li>
+  <p>If <var title>mode</var> is "Anonymous", set <var title>req</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> to
+  <i title>always</i>.
+  <!-- XXX unset by default? -->
+  <!-- nullify Origin / Referer too? -->
+
+ <li class=XXX><p>Determine <var title>req</var>'s
+ <span title=concept-request-referrer>referrer</span> as per <span title=concept-fetch>fetch</span>.
+
+ <li><p><span title=concept-fetch>fetch</span> <var title>req</var>.
 </ol>
 
 
