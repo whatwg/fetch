@@ -1180,8 +1180,8 @@ specification, a mapping is defined between these "legacy" algorithms and
 
 <p>When a user agent is to <dfn id="concept-legacy-fetch" title="concept-legacy-fetch">fetch</dfn> a resource or
 URL, optionally <strong>from</strong> an origin <i title="">origin</i>, optionally
-<strong>using</strong> a specific <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#referrer-source">referrer source</a> as an
-<i>override referrer source</i>, and optionally with any of a
+<strong>using</strong> a specific <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#referrer-source">referrer source</a>
+<var title="">referrer source</var>, and optionally with any of a
 <i title="">synchronous flag</i>, a <i>manual redirect flag</i>, a
 <i>force same-origin flag</i>, and a <i>block cookies flag</i>, the following
 steps must be run:
@@ -1199,50 +1199,6 @@ steps must be run:
  invoked with the manual redirect flag. -->
 
 <ol>
- <li><p>If there is a specific <i>override referrer source</i>, and it is a URL, then
-  let <var title="">referrer</var> be the <i>override referrer source</i>.
-
- <li>
-  <p>Otherwise, run these substeps:
-
-  <ol>
-   <li>
-    <p>Let <var title="">document</var> be the appropriate
-    <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> as given by the following list:
-
-    <dl class="switch">
-     <dt>If there is a specific <i>override referrer source</i>
-     <dd>The <i>override referrer source</i>.</dd>
-
-     <dt>When <span title="navigate">navigating</span>
-     <dd>The <span>active document</span> of the <span>source browsing context</span>.
-
-     <dt>When fetching resources for an element
-     <dd>The element's <a class="external" href="http://dom.spec.whatwg.org/#concept-node-document" title="concept-node-document">node document</a>.
-    </dl>
-
-   <li><p>While <var title="">document</var> is
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-iframe-element.html#an-iframe-srcdoc-document">an <code>iframe</code> <code>srcdoc</code> document</a>,
-   set <var title="">document</var> to <var title="">document</var>'s
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#browsing-context">browsing context</a>'s
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#browsing-context-container">browsing context container</a>'s
-   <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> instead.
-
-   <li><p>If <var title="">document</var>'s
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a> is not a scheme/host/port tuple,
-   then let <var title="">referrer</var> be null.
-
-   <li><p>Otherwise, let <var title="">referrer</var> be
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#the-document's-address">the document's address</a> of
-   <var title="">document</var>.
-
-   <li><p>If <var title="">referrer</var>'s
-   <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
-   about/data/javascript, set <var title="">referrer</var> to null.
-  </ol>
-
- </li>
-
   <li><p>If the <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> with which any
   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a>
   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queued</a> by this
@@ -1262,7 +1218,8 @@ steps must be run:
  <a href="#concept-request-origin" title="concept-request-origin">origin</a> to <var title="">origin</var>.
 
  <li><p>Set <var title="">req</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to
- <var title="">referrer</var>.
+ the result of <a href="#determine-referrer" title="determine referrer">determining referrer</a> using
+ <var title="">referrer source</var> (if given).
 
  <li><p>Set <var title="">req</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> to
  same-origin if the <i>force same-origin flag</i> is set, and to tainted cross-origin
@@ -1317,12 +1274,62 @@ or "<i>fail</i>", it must run these steps:
   <!-- XXX unset by default? -->
   <!-- nullify Origin / Referer too? -->
 
- <li class="XXX"><p>Determine <var title="">req</var>'s
- <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> as per <a href="#concept-fetch" title="concept-fetch">fetch</a>.
+ <li><p>Set <var title="">req</var>'s
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to the result of
+ <a href="#determine-referrer" title="determine referrer">determining referrer</a> using
+ <var title="">referrer source</var> (if given).
 
  <li><p><a href="#concept-fetch" title="concept-fetch">fetch</a> <var title="">req</var>.
 </ol>
 
+<p>To <dfn id="determine-referrer">determine referrer</dfn> optionally using a
+<a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#referrer-source">referrer source</a> <var title="">referrer source</var>,
+within the context of either <a href="#concept-legacy-fetch" title="concept-legacy-fetch">fetch</a> or
+<a href="#concept-legacy-potentially-cors-enabled-fetch" title="concept-legacy-potentially-cors-enabled-fetch">potentially CORS-enabled fetch</a>,
+run these steps:
+
+<ol>
+ <li><p>If there is a specific <var title="">referrer source</var>, and it is a
+ <a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>, return
+ <var title="">referrer source</var>.
+
+ <li>
+  <p>Let <var title="">document</var> be the appropriate
+  <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> as given by the following list:
+
+  <dl class="switch">
+   <dt>If there is a <var title="">referrer source</var>
+   <dd><var title="">referrer source</var>.
+
+   <dt>When <span title="navigate">navigating</span>
+   <dd>The <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#active-document">active document</a> of the
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/history.html#source-browsing-context">source browsing context</a>.
+
+   <dt>When fetching resources for an element
+   <dd>The element's <a class="external" href="http://dom.spec.whatwg.org/#concept-node-document" title="concept-node-document">node document</a>.
+  </dl>
+
+ <li><p>While <var title="">document</var> is
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-iframe-element.html#an-iframe-srcdoc-document">an <code>iframe</code> <code>srcdoc</code> document</a>,
+ set <var title="">document</var> to <var title="">document</var>'s
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#browsing-context">browsing context</a>'s
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#browsing-context-container">browsing context container</a>'s
+ <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> instead.
+
+ <li><p>If <var title="">document</var>'s
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a> is not a scheme/host/port tuple, let
+ <var title="">referrer</var> be null.
+
+ <li><p>Otherwise, let <var title="">referrer</var> be
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#the-document's-address">the document's address</a> of
+ <var title="">document</var>.
+
+ <li><p>If <var title="">referrer</var>'s
+ <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
+ about/data/javascript, set <var title="">referrer</var> to null.
+
+ <li><p>Return <var title="">referrer</var>.
+</ol>
 
 
 <h2 class="no-num" id="references">References</h2>
