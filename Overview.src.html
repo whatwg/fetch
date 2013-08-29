@@ -1145,6 +1145,252 @@ when there is an entry in <span>CORS preflight cache</span> for which there is a
 
 
 
+<h2>Zip archives</h2>
+
+<p>A <dfn title=concept-zip-archive>zip archive</dfn> is an ordered map of zero or more <dfn title=concept-zip-path>zip path</dfn>/<dfn title=concept-zip-resource>zip resource</dfn> pairs. A <span title=concept-zip-path>zip path</span> and
+<span title=concept-zip-resource>zip resource</span> are both byte sequences.
+
+<p class=note>Although the zip format is essentially unordered, the conceptual model
+exposes a zip archive as if byte-ordered on <span title=concept-zip-path>zip path</span>.
+This is to be enforced by the parser.
+<!-- XXX remove this once parser is defined -->
+
+<p class=note>This model also assumes directories are flattened.
+
+
+<h3>Zip resource names</h3>
+
+<p>The <dfn title=concept-zip-resource-name>zip resource name</dfn> of a
+<span title=concept-zip-resource>zip resource</span> is the byte sequence following the
+last 0x2F byte<!--/--> or 0x5C byte<!--\--> in the corresponding
+<span title=concept-zip-path>zip path</span>.
+
+<p class=XXX>The <dfn title=concept-zip-resource-string-name>zip resource string name</dfn> ...
+
+
+<h3>Zip resource types</h3>
+
+<p>The <dfn title=concept-zip-resource-type>zip resource type</dfn> of a
+<span title=concept-zip-resource>zip resource</span> is the cell in the second column of
+following table on the row of which the cell in the first column matches the end of the
+<span title=concept-zip-resource-name>zip resource name</span> of
+<span title=concept-zip-resource>zip resource</span> while treating bytes in the range
+0x41 to 0x5A to be a match for their corresponding byte in the range 0x61 to 0x7A:
+
+<table>
+ <tr>
+  <th><span title=concept-zip-path>zip path</span> extension
+  <th><span title=concept-zip-resource-type>zip resource type</span>
+ <tr>
+  <td>`<code title>.html</code>`
+  <td rowspan=2>text/html</td>
+ <tr>
+  <td>`<code title>.htm</code>`
+ <tr>
+  <td>`<code title>.css</code>`
+  <td>text/css
+ <tr>
+  <td>`<code title>.js</code>`
+  <td>text/javascript
+ <tr>
+  <td>`<code title>.xml</code>`
+  <td rowspan=3>application/xml
+ <tr>
+  <td>`<code title>.xhtml</code>`
+ <tr>
+  <td>`<code title>.xht</code>`
+ <tr>
+  <td>`<code title>.svg</code>`
+  <td>image/svg+xml
+ <tr>
+  <td>`<code title>.txt</code>`
+  <td>text/plain
+ <tr>
+  <td>`<code title>.wav</code>`
+  <td>audio/x-wav
+ <tr>
+  <td>`<code title>.gif</code>`
+  <td>image/gif</td>
+ <tr>
+  <td>`<code title>.png</code>`
+  <td>image/png
+ <tr>
+  <td>`<code title>.ico</code>`
+  <td>image/vnd.microsoft.icon
+ <tr>
+  <td>`<code title>.jpeg</code>`
+  <td rowspan=2>image/jpeg
+ <tr>
+  <td>`<code title>.jpg</code>`
+ <tr>
+  <td>`<code title>.mp3</code>`
+  <td>audio/mpeg
+</table>
+
+<p>If there is no match, the
+<span title=concept-zip-resource-type>zip resource type</span> is
+application/octet-stream.
+
+
+<h3>Format</h3>
+
+<p class=XXX>The <dfn title=concept-zip-parser>Zip parser</dfn> ... Need to define the
+details, either via reference or inline. Put restrictions on compression formats,
+require zip64, ...
+
+
+<h3>API</h3>
+
+<pre class=idl>typedef (ArrayBuffer or [EnsureUTF16] DOMString) <dfn>ZipPath</dfn>;
+
+[<span title=dom-ZipArchive>Constructor</span>(<span>Blob</span> <var title>zip</var>)]
+interface <dfn>ZipArchive</dfn> {
+  Promise&gt;Array[DOMString]> <span title=dom-ZipArchive-getPaths>getPaths</span>();
+  Promise&gt;Array[ArrayBuffer]> <span title=dom-ZipArchive-getRawPaths>getRawPaths</span>();
+  Promise&gt;File> <span title=dom-ZipArchive-get>get</span>(<span>ZipPath</span> <var title>path</var>);
+  Promise&gt;boolean> <span title=dom-ZipArchive-has>has</span>(<span>ZipPath</span> <var title>path</var>);
+};</pre>
+<!-- XXX xref -->
+
+<p>A <code>ZipArchive</code> object can be associated with a
+<span title=concept-zip-archive>zip  archive</span>.
+
+<p>A <code>ZipArchive</code> object has an associated
+<dfn title=concept-ZipArchive-done-flag>done flag</dfn>. Unless stated otherwise its
+<span title=concept-ZipArchive-done-flag>done flag</span> is unset.
+
+<p class=note><span title=concept-zip-archive>Zip archives</span> are readonly for now.
+Baby steps.
+
+<p>The <dfn title=dom-ZipArchive><code>ZipArchive(<var title>zip</var>)</code></dfn>
+constructor must run these steps:
+
+<ol>
+ <li><p>Let <var title>archive</var> be a new <code>ZipArchive</code> object.
+
+ <li><p>Return <code>ZipArchive</code>, but continue running these steps asynchronously.
+
+ <li><p>Let <var title>result</var> be the return value of
+ <span title=concept-zip-parser>parsing</span> <var title>zip</var>.
+
+ <li><p>If <var title>result</var> is a
+ <span title=concept-zip-archive>zip archive</span>, associate <var title>archive</var>
+ with <var title>result</var>.
+
+ <li><p>Set the <span title=concept-ZipArchive-done-flag>done flag</span>.
+</ol>
+
+<p>The <dfn title=dom-ZipArchive-getPaths><code>getPaths()</code></dfn> method must run
+these steps:
+
+<ol>
+ <li><p>Let <var title>promise</var> be a new <code>Promise</code>.
+ <!-- XXX xref -->
+
+ <li><p>Return <var title>promise</var>, but continue running these steps asynchronously.
+
+ <li><p>Wait until the <span title=concept-ZipArchive-done-flag>done flag</span> is set.
+
+ <li><p>If there is no associated <span title=concept-zip-archive>zip archive</span>,
+ <span>reject</span> <var title>promise</var> with a JavaScript <code>TypeError</code>
+ exception.
+ <!-- XXX xref -->
+
+ <li><p>Otherwise, <span>resolve</span> <var title>promise</var> with a JavaScript
+ <code>Array</code> of the associated <span title=concept-zip-archive>zip archive</span>'s
+ <span title=concept-zip-path>zip paths</span>, with each run through
+ <span data-anolis-spec=encoding>utf-8</span>'s
+ <span data-anolis-spec=encoding>decoder</span>.
+</ol>
+
+<p>The <dfn title=dom-ZipArchive-getRawPaths><code>getRawPaths()</code></dfn>
+method must run these steps:
+
+<ol>
+ <li><p>Let <var title>promise</var> be a new <code>Promise</code>.
+ <!-- XXX xref -->
+
+ <li><p>Return <var title>promise</var>, but continue running these steps asynchronously.
+
+ <li><p>Wait until the <span title=concept-ZipArchive-done-flag>done flag</span> is set.
+
+ <li><p>If there is no associated <span title=concept-zip-archive>zip archive</span>,
+ <span>reject</span> <var title>promise</var> with a JavaScript <code>TypeError</code>
+ exception.
+ <!-- XXX xref -->
+
+ <li><p>Otherwise, <span>resolve</span> <var title>promise</var> with a JavaScript
+ <code>Array</code> of the associated <span title=concept-zip-archive>zip archive</span>'s
+ <span title=concept-zip-path>zip paths</span>.
+</ol>
+
+<p>The <dfn title=dom-ZipArchive-get><code>get(<var title>path</var>)</code></dfn> method
+must run these steps:
+
+<ol>
+ <li><p>Let <var title>promise</var> be a new <code>Promise</code>.
+ <!-- XXX xref -->
+
+ <li><p>Return <var title>promise</var>, but continue running these steps asynchronously.
+
+ <li><p>Wait until the <span title=concept-ZipArchive-done-flag>done flag</span> is set.
+
+ <li><p>If there is no associated <span title=concept-zip-archive>zip archive</span>,
+ <span>reject</span> <var title>promise</var> with a JavaScript <code>TypeError</code>
+ exception and terminate these steps.
+ <!-- XXX xref -->
+
+ <li><p>If <var title>path</var> is a string, set <var title>path</var> to the result of
+ running <span data-anolis-spec=encoding>utf-8 encode</span> on <var title>path</var>.
+
+ <li><p>If <var title>path</var> is not in the associated
+ <span title=concept-zip-archive>zip archive</span>, <span>reject</span>
+ <var title>promise</var> with a JavaScript <code>TypeError</code> exception and
+ terminate these steps.
+ <!-- XXX xref -->
+
+ <li><p>Let <var title>resource</var> be the
+ <span title=concept-zip-resource>zip resource</span> corresponding to
+ <var title>path</var> in the associated
+ <span title=concept-zip-archive>zip archive</span>.
+
+ <li><p><span>Resolve</span> <var title>promise</var> with a <code>File</code>
+ representing <var title>resource</var>, whose name is the <var title>resource</var>'s
+ <span title=concept-zip-resource-string-name>zip resource string name</span>, and type
+ is the <var title>resource</var>'s
+ <span title=concept-zip-resource-type>zip resource type</span>.
+</ol>
+
+<p>The <dfn title=dom-ZipArchive-has><code>has(<var title>path</var>)</code></dfn> method
+must run these steps:
+
+<ol>
+ <li><p>Let <var title>promise</var> be a new <code>Promise</code>.
+ <!-- XXX xref -->
+
+ <li><p>Return <var title>promise</var>, but continue running these steps asynchronously.
+
+ <li><p>Wait until the <span title=concept-ZipArchive-done-flag>done flag</span> is set.
+
+ <li><p>If there is no associated <span title=concept-zip-archive>zip archive</span>,
+ <span>reject</span> <var title>promise</var> with a JavaScript <code>TypeError</code>
+ exception and terminate these steps.
+ <!-- XXX xref -->
+
+ <li><p>If <var title>path</var> is a string, set <var title>path</var> to the result of
+ running <span data-anolis-spec=encoding>utf-8 encode</span> on <var title>path</var>.
+
+ <li><p>If <var title>path</var> is not in the associated
+ <span title=concept-zip-archive>zip archive</span>, <span>resolve</span>
+ <var title>promise</var> with a JavaScript <code title>false</code> value.
+ <!-- XXX xref -->
+
+ <li><p>Otherwise, <span>resolve</span> <var title>promise</var> with a JavaScript
+ <code title>true</code> value.
+</ol>
+
+
+
 <h2 class=no-num>HTML fetch</h2>
 
 <p>HTML defines two algorithms for obtaining resources. To ease transitioning towards this
