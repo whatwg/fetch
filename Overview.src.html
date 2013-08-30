@@ -1163,7 +1163,7 @@ This is to be enforced by the parser.
 <p>The <dfn title=concept-zip-resource-name>zip resource name</dfn> of a
 <span title=concept-zip-resource>zip resource</span> is the byte sequence following the
 last 0x2F<!--/--> or 0x5C byte<!--\--> in the corresponding
-<span title=concept-zip-path>zip path</span> or the
+<span title=concept-zip-path>zip path</span>, or the
 <span title=concept-zip-path>zip path</span> itself if it contains no 0x2F<!--/--> or
 0x5C byte.<!--\-->
 
@@ -1179,28 +1179,38 @@ following table on the row of which the cell in the first column matches the end
 <span title=concept-zip-resource>zip resource</span> while treating bytes in the range
 0x41 to 0x5A to be a match for their corresponding byte in the range 0x61 to 0x7A:
 
-<table>
+<table> <!-- byte-ordered -->
  <tr>
-  <th><span title=concept-zip-path>zip path</span> extension
+  <th><span title=concept-zip-resource-name>zip resource name</span> extension
   <th><span title=concept-zip-resource-type>zip resource type</span>
- <tr>
-  <td>`<code title>.html</code>`
-  <td rowspan=2>text/html</td>
- <tr>
-  <td>`<code title>.htm</code>`
  <tr>
   <td>`<code title>.css</code>`
   <td>text/css
  <tr>
+  <td>`<code title>.gif</code>`
+  <td>image/gif</td>
+ <tr>
+  <td>`<code title>.htm</code>`
+  <td rowspan=2>text/html</td>
+ <tr>
+  <td>`<code title>.html</code>`
+ <tr>
+  <td>`<code title>.ico</code>`
+  <td>image/x-icon
+ <tr>
+  <td>`<code title>.jpeg</code>`
+  <td rowspan=2>image/jpeg
+ <tr>
+  <td>`<code title>.jpg</code>`
+ <tr>
   <td>`<code title>.js</code>`
   <td>text/javascript
  <tr>
-  <td>`<code title>.xml</code>`
-  <td rowspan=3>application/xml
+  <td>`<code title>.mp3</code>`
+  <td>audio/mpeg
  <tr>
-  <td>`<code title>.xhtml</code>`
- <tr>
-  <td>`<code title>.xht</code>`
+  <td>`<code title>.png</code>`
+  <td>image/png
  <tr>
   <td>`<code title>.svg</code>`
   <td>image/svg+xml
@@ -1208,25 +1218,21 @@ following table on the row of which the cell in the first column matches the end
   <td>`<code title>.txt</code>`
   <td>text/plain
  <tr>
+  <td>`<code title>.vtt</code>`
+  <td>text/vtt
+ <tr>
   <td>`<code title>.wav</code>`
   <td>audio/x-wav
  <tr>
-  <td>`<code title>.gif</code>`
-  <td>image/gif</td>
+  <td>`<code title>.xht</code>`
+  <td rowspan=3>application/xml
  <tr>
-  <td>`<code title>.png</code>`
-  <td>image/png
+  <td>`<code title>.xhtml</code>`
  <tr>
-  <td>`<code title>.ico</code>`
-  <td>image/vnd.microsoft.icon
+  <td>`<code title>.xml</code>`
  <tr>
-  <td>`<code title>.jpeg</code>`
-  <td rowspan=2>image/jpeg
- <tr>
-  <td>`<code title>.jpg</code>`
- <tr>
-  <td>`<code title>.mp3</code>`
-  <td>audio/mpeg
+  <td>`<code title>.zip</code>`
+  <td>application/zip
 </table>
 
 <p>If there is no match, the
@@ -1247,8 +1253,8 @@ require zip64, ...
 
 [<span title=dom-ZipArchive>Constructor</span>(<span>Blob</span> <var title>zip</var>)]
 interface <dfn>ZipArchive</dfn> {
-  Promise&lt;Array[DOMString]> <span title=dom-ZipArchive-getPaths>getPaths</span>();
-  Promise&lt;Array[ArrayBuffer]> <span title=dom-ZipArchive-getRawPaths>getRawPaths</span>();
+  Promise&lt;sequence&lt;DOMString>> <span title=dom-ZipArchive-getPaths>getPaths</span>();
+  Promise&lt;sequence&lt;ArrayBuffer>> <span title=dom-ZipArchive-getRawPaths>getRawPaths</span>();
   Promise&lt;File> <span title=dom-ZipArchive-get>get</span>(<span>ZipPath</span> <var title>path</var>);
   Promise&lt;boolean> <span title=dom-ZipArchive-has>has</span>(<span>ZipPath</span> <var title>path</var>);
 };</pre>
@@ -1300,9 +1306,8 @@ these steps:
 
  <li><p>Otherwise, <span>resolve</span> <var title>promise</var> with a JavaScript
  <code>Array</code> of the associated <span title=concept-zip-archive>zip archive</span>'s
- <span title=concept-zip-path>zip paths</span>, with each run through
- <span data-anolis-spec=encoding>utf-8</span>'s
- <span data-anolis-spec=encoding>decoder</span>.
+ <span title=concept-zip-path>zip paths</span>, with each run through the
+ <span data-anolis-spec=encoding>utf-8 decoder</span>.
 </ol>
 
 <p>The <dfn title=dom-ZipArchive-getRawPaths><code>getRawPaths()</code></dfn>
