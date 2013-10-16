@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-30-august-2013">Living Standard — Last Updated 30 August 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-16-october-2013">Living Standard — Last Updated 16 October 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-30 August 2013, the editor has made this specification available
+16 October 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -488,6 +488,28 @@ Access-Control-Allow-Headers     = #<a class="external" href="http://tools.ietf.
 
 <h2 id="fetching"><span class="secno">4 </span>Fetching</h2>
 
+<div class="note">
+ <p>The algorithm below defines <a href="#concept-fetch" title="concept-fetch">fetching</a>. In broad
+ strokes, it takes a <a href="#concept-request" title="concept-request">request</a> and outputs a
+ <a href="#concept-response" title="concept-response">response</a>.
+
+ <p>That is, it either returns a <a href="#concept-response" title="concept-response">response</a> if
+ <a href="#concept-request" title="concept-request">request</a>'s <a href="#synchronous-flag">synchronous flag</a> is set, or it
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queues</a>
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a> annotated
+ <a href="#process-response">process response</a>, <a href="#process-response-body">process response body</a>, and
+ <a href="#process-response-end-of-file">process response end-of-file</a> for the
+ <a href="#concept-response" title="concept-response">response</a> on the
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
+
+ <p>In addition, if <a href="#concept-request" title="concept-request">request</a>'s
+ <a href="#synchronous-flag">synchronous flag</a> is unset,
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a> annotated
+ <a href="#process-request-body">process request body</a> for the <a href="#concept-request" title="concept-request">request</a> can
+ be <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queued</a> on the
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
+</div>
+
 <p>To perform a <dfn id="concept-fetch" title="concept-fetch">fetch</dfn> using <var title="">request</var>,
 optionally with a <i title="">CORS flag</i>, run these steps:
 
@@ -552,17 +574,44 @@ parameter should be passed.
  <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set, wait for
  <var title="">response</var> to have been fully transmitted and then return it.
 
- <li><p>Keep <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queueing</a>
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a> on the
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a> until the
- <var title="">response</var> has been fully transmitted. If no transmission is taking place,
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> at least one
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a>.
-</ol>
+ <li>
+  <p>Otherwise, run these substeps:
 
-<p class="note">This specification does not define what "fully transmitted" means. Ideally
-FTP/HTTP define this in detail, including when e.g. `<code title="">Content-Length</code>` is
-not supplied or is deemed faulty.
+  <ol>
+   <li><p><a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">Queue</a> a
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+   <dfn id="process-response">process response</dfn> for <var title="">response</var>.
+
+   <li><p>If <var title="">response</var> is a <span>network error</span>,
+   terminate this algorithm. <span class="note">No point in continuing.</span>
+
+   <li><p>Then, either once <var title="">response</var>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a> is at least one byte long or there is no
+   <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>,
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+   <dfn id="process-response-body">process response body</dfn> for <var title="">response</var>. Keep
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queuing</a>
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a> to
+   <a href="#process-response-body">process response body</a> for <var title="">response</var> as long as
+   <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> keeps
+   growing.
+
+   <li>
+    <p>Then, once <var title="">response</var>'s
+    <a href="#concept-response-body" title="concept-response-body">body</a> is fully transmitted,
+    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
+    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+    <dfn id="process-response-end-of-file">process response end-of-file</dfn> for <var title="">response</var>
+
+    <p class="note">This specification does not define what "fully transmitted" means.
+    Ideally FTP/HTTP define this in detail, including when e.g.
+    `<code title="">Content-Length</code>` is not supplied or is deemed faulty.
+  </ol>
+
+  <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a> for these
+  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a>.
+</ol>
 
 
 <h3 id="basic-fetch"><span class="secno">4.1 </span>Basic fetch</h3>
@@ -704,6 +753,12 @@ steps:
 
     <p class="note">This intentionally does not depend on <var title="">request</var>'s
     <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a>.
+
+   <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+   non-null, include it, and <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
+   one or more <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+   <dfn id="process-request-body">process request body</dfn> for <var title="">request</var> on the
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a> while transmitting it.
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,

@@ -456,6 +456,28 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
 
 <h2>Fetching</h2>
 
+<div class=note>
+ <p>The algorithm below defines <span title=concept-fetch>fetching</span>. In broad
+ strokes, it takes a <span title=concept-request>request</span> and outputs a
+ <span title=concept-response>response</span>.
+
+ <p>That is, it either returns a <span title=concept-response>response</span> if
+ <span title=concept-request>request</span>'s <span>synchronous flag</span> is set, or it
+ <span data-anolis-spec=html title="queue a task">queues</span>
+ <span data-anolis-spec=html title=concept-task>tasks</span> annotated
+ <span>process response</span>, <span>process response body</span>, and
+ <span>process response end-of-file</span> for the
+ <span title=concept-response>response</span> on the
+ <span data-anolis-spec=html>networking task source</span>.
+
+ <p>In addition, if <span title=concept-request>request</span>'s
+ <span>synchronous flag</span> is unset,
+ <span data-anolis-spec=html title=concept-task>tasks</span> annotated
+ <span>process request body</span> for the <span title=concept-request>request</span> can
+ be <span data-anolis-spec=html title="queue a task">queued</span> on the
+ <span data-anolis-spec=html>networking task source</span>.
+</div>
+
 <p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>,
 optionally with a <i title>CORS flag</i>, run these steps:
 
@@ -520,17 +542,44 @@ parameter should be passed.
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
  <var title>response</var> to have been fully transmitted and then return it.
 
- <li><p>Keep <span data-anolis-spec=html title="queue a task">queueing</span>
- <span data-anolis-spec=html title=concept-task>tasks</span> on the
- <span data-anolis-spec=html>networking task source</span> until the
- <var title>response</var> has been fully transmitted. If no transmission is taking place,
- <span data-anolis-spec=html title="queue a task">queue</span> at least one
- <span data-anolis-spec=html title=concept-task>task</span>.
-</ol>
+ <li>
+  <p>Otherwise, run these substeps:
 
-<p class=note>This specification does not define what "fully transmitted" means. Ideally
-FTP/HTTP define this in detail, including when e.g. `<code title>Content-Length</code>` is
-not supplied or is deemed faulty.
+  <ol>
+   <li><p><span data-anolis-spec=html title="queue a task">Queue</span> a
+   <span data-anolis-spec=html title=concept-task>task</span> to
+   <dfn>process response</dfn> for <var title>response</var>.
+
+   <li><p>If <var title>response</var> is a <span>network error</span>,
+   terminate this algorithm. <span class=note>No point in continuing.</span>
+
+   <li><p>Then, either once <var title>response</var>'s
+   <span title=concept-response-body>body</span> is at least one byte long or there is no
+   <var title>response</var>'s <span title=concept-response-body>body</span>,
+   <span data-anolis-spec=html title="queue a task">queue</span> a
+   <span data-anolis-spec=html title=concept-task>task</span> to
+   <dfn>process response body</dfn> for <var title>response</var>. Keep
+   <span data-anolis-spec=html title="queue a task">queuing</span>
+   <span data-anolis-spec=html title=concept-task>tasks</span> to
+   <span>process response body</span> for <var title>response</var> as long as
+   <var title>response</var>'s <span title=concept-response-body>body</span> keeps
+   growing.
+
+   <li>
+    <p>Then, once <var title>response</var>'s
+    <span title=concept-response-body>body</span> is fully transmitted,
+    <span data-anolis-spec=html title="queue a task">queue</span> a
+    <span data-anolis-spec=html title=concept-task>task</span> to
+    <dfn>process response end-of-file</dfn> for <var title>response</var>
+
+    <p class=note>This specification does not define what "fully transmitted" means.
+    Ideally FTP/HTTP define this in detail, including when e.g.
+    `<code title>Content-Length</code>` is not supplied or is deemed faulty.
+  </ol>
+
+  <p>Use the <span data-anolis-spec=html>networking task source</span> for these
+  <span data-anolis-spec=html title=concept-task>tasks</span>.
+</ol>
 
 
 <h3>Basic fetch</h3>
@@ -672,6 +721,12 @@ steps:
 
     <p class=note>This intentionally does not depend on <var title>request</var>'s
     <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
+
+   <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+   non-null, include it, and <span data-anolis-spec=html title="queue a task">queue</span>
+   one or more <span data-anolis-spec=html title=concept-task>task</span> to
+   <dfn>process request body</dfn> for <var title>request</var> on the
+   <span data-anolis-spec=html>networking task source</span> while transmitting it.
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
