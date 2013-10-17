@@ -246,6 +246,10 @@ evolves over time. That is, not all its fields are available straight away.
 <i title>redirect</i>, and <i title>error</i>. Unless stated otherwise, it is
 <i title>default</i>.
 
+<p>A <span title=concept-response>response</span> can have an associated
+<dfn title=concept-response-termination-reason>termination reason</dfn> which is one of
+<i title>end-user abort</i> and <i title>timeout</i>.
+
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-status>status</dfn>,
 <dfn title=concept-response-status-message>status message</dfn>,
@@ -470,7 +474,7 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
  <span title=concept-response>response</span> on the
  <span data-anolis-spec=html>networking task source</span>.
 
- <p>In addition, if <span title=concept-request>request</span>'s
+ <p>To capture uploads, if <span title=concept-request>request</span>'s
  <span>synchronous flag</span> is unset,
  <span data-anolis-spec=html title=concept-task>tasks</span> annotated
  <span>process request body</span> for the <span title=concept-request>request</span> can
@@ -479,12 +483,15 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
 </div>
 
 <p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>,
-optionally with a <i title>CORS flag</i>, run these steps:
+optionally with a <i title>CORS flag</i>, run the steps below. An ongoing
+<span title=concept-fetch>fetch</span> can be
+<dfn title=concept-fetch-terminate>terminated</dfn> with a <var title>reason</var>, which
+must be one of <i title>end-user abort</i> or <i title>timeout</i>.
+<!-- XXX others? -->
 
-<p class=note>The <i title>CORS flag</i> within the <span title=concept-fetch>fetch</span>
-algorithm is used for handling <span title=concept-redirect>redirects</span>. When using
-<span title=concept-fetch>fetch</span> externally only the <var title>request</var>
-parameter should be passed.
+<p class=note>The <i title>CORS flag</i> is an internal manner for handling
+<span title=concept-redirect>redirects</span>. Only use the <var title>request</var>
+parameter in other standards.
 
 <ol>
  <li><p>Let <var title>url</var> be <var title>request</var>'s
@@ -540,7 +547,10 @@ parameter should be passed.
  <li><p>If <span title=concept-fetch>fetch</span> is invoked recursively, return <var title>response</var>.
 
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
- <var title>response</var> to have been fully transmitted and then return it.
+ either <var title>response</var> to have been fully transmitted or
+ <var title>response</var> to have a
+ <span title=concept-response-termination-reason>termination reason</span>, and then
+ return it.
 
  <li>
   <p>Otherwise, run these substeps:
@@ -550,8 +560,9 @@ parameter should be passed.
    <span data-anolis-spec=html title=concept-task>task</span> to
    <dfn>process response</dfn> for <var title>response</var>.
 
-   <li><p>If <var title>response</var> is a <span>network error</span>,
-   terminate this algorithm. <span class=note>No point in continuing.</span>
+   <li><p>If <var title>response</var> is a
+   <span title=concept-network-error>network error</span>, terminate this algorithm.
+   <span class=note>No point in continuing.</span>
 
    <li><p>Then, either once <var title>response</var>'s
    <span title=concept-response-body>body</span> is at least one byte long or there is no
@@ -567,7 +578,8 @@ parameter should be passed.
 
    <li>
     <p>Then, once <var title>response</var>'s
-    <span title=concept-response-body>body</span> is fully transmitted,
+    <span title=concept-response-body>body</span> is fully transmitted or has a
+    <span title=concept-response-termination-reason>termination reason</span>,
     <span data-anolis-spec=html title="queue a task">queue</span> a
     <span data-anolis-spec=html title=concept-task>task</span> to
     <dfn>process response end-of-file</dfn> for <var title>response</var>
@@ -653,7 +665,7 @@ steps:
  <dt>"<code title>http</code>"
  <dt>"<code title>https</code>"
  <dd>
-  <p>Set up an HTTP request following the requirements from HTTP and TLS as appropriate,
+  <p>Make an HTTP request following the requirements from HTTP and TLS as appropriate,
   with these additional constraints:
 
   <ol>
@@ -730,7 +742,12 @@ steps:
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
-  return a <span title=concept-network-error>network error</span>.
+  return a <span title=concept-network-error>network error</span>. If this is due to
+  <span title=concept-fetch>fetch</span> being
+  <span title=concept-fetch-terminate>terminated</span> with <var title>reason</var>, set
+  the return value's
+  <span title=concept-response-termination-reason>termination reason</span> to
+  <var title>reason</var>.
 
   <p>Otherwise, when the headers from the resource are obtained, let
   <var title>response</var> be a new <span title=concept-response>response</span> and set
@@ -885,7 +902,15 @@ steps:
   <var title>request</var>'s <span title=concept-request-url>url</span> and the given
   realm. <span data-anolis-ref>HTTPAUTH</span>
 
-  <p>Return <var title>response</var>.
+  <p>Return <var title>response</var>, but continue with the request and growing
+  <var title>response</var>'s <span title=concept-response-body>body</span>. If at any
+  point <span title=concept-fetch>fetch</span> is
+  <span title=concept-fetch-terminate>terminated</span> with <var title>reason</var>, set
+  <var title>response</var>'s
+  <span title=concept-response-termination-reason>termination reason</span> to
+  <var title>reason</var>. <span class=note>This modifies <var title>response</var> after
+  it has been returned. Logic in <span title=concept-fetch>fetch</span> takes care of the
+  rest.</span>
 
  <dt>Otherwise
  <dd><p>Return a <span title=concept-network-error>network error</span>.
