@@ -248,7 +248,7 @@ evolves over time. That is, not all its fields are available straight away.
 
 <p>A <span title=concept-response>response</span> can have an associated
 <dfn title=concept-response-termination-reason>termination reason</dfn> which is one of
-<i title>end-user abort</i> and <i title>timeout</i>.
+<i title>end-user abort</i>, <i title>fatal</i>, and <i title>timeout</i>.
 
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-status>status</dfn>,
@@ -460,7 +460,7 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
 
 <h2>Fetching</h2>
 
-<div class=note>
+<div class="note no-backref">
  <p>The algorithm below defines <span title=concept-fetch>fetching</span>. In broad
  strokes, it takes a <span title=concept-request>request</span> and outputs a
  <span title=concept-response>response</span>.
@@ -477,19 +477,20 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
  <p>To capture uploads, if <span title=concept-request>request</span>'s
  <span>synchronous flag</span> is unset,
  <span data-anolis-spec=html title=concept-task>tasks</span> annotated
- <span>process request body</span> for the <span title=concept-request>request</span> can
- be <span data-anolis-spec=html title="queue a task">queued</span> on the
+ <span>process request body</span> and <span>process request end-of-file</span> for the
+ <span title=concept-request>request</span> can be
+ <span data-anolis-spec=html title="queue a task">queued</span> on the
  <span data-anolis-spec=html>networking task source</span>.
 </div>
 
 <p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>,
 optionally with a <i title>CORS flag</i>, run the steps below. An ongoing
 <span title=concept-fetch>fetch</span> can be
-<dfn title=concept-fetch-terminate>terminated</dfn> with a <var title>reason</var>, which
-must be one of <i title>end-user abort</i> or <i title>timeout</i>.
-<!-- XXX others? -->
+<dfn title=concept-fetch-terminate>terminated</dfn> with reason <var title>reason</var>,
+which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
+<i title>timeout</i>.
 
-<p class=note>The <i title>CORS flag</i> is an internal manner for handling
+<p class="note no-backref">The <i title>CORS flag</i> is an internal manner for handling
 <span title=concept-redirect>redirects</span>. Only use the <var title>request</var>
 parameter in other standards.
 
@@ -572,9 +573,10 @@ parameter in other standards.
    <dfn>process response body</dfn> for <var title>response</var>. Keep
    <span data-anolis-spec=html title="queue a task">queuing</span>
    <span data-anolis-spec=html title=concept-task>tasks</span> to
-   <span>process response body</span> for <var title>response</var> as long as
-   <var title>response</var>'s <span title=concept-response-body>body</span> keeps
-   growing.
+   <span>process response body</span> for <var title>response</var> every 50ms or for each
+   byte of <var title>response</var>'s <span title=concept-response-body>body</span>
+   transmitted, whichever is <em>least</em> frequent, while <var title>response</var> has
+   no <span title=concept-response-termination-reason>termination reason</span>.
 
    <li>
     <p>Then, once <var title>response</var>'s
@@ -619,8 +621,8 @@ steps:
 
   <p>Otherwise, return a <span title=concept-network-error>network error</span>.
 
-  <p class=note><span data-anolis-spec=url title=concept-url>URLs</span> such as
-  "<code title>about:config</code>" are handled during
+  <p class="note no-backref"><span data-anolis-spec=url title=concept-url>URLs</span> such
+  as "<code title>about:config</code>" are handled during
   <span data-anolis-spec=html title=navigate>navigation</span> and result in a
   <span title=concept-network-error>network error</span> in the context of
   <span title=concept-fetch>fetching</span>.
@@ -676,9 +678,10 @@ steps:
     whose <span title=concept-header-value>value</span> is <var title>request</var>'s
     <span title=concept-request-referrer>referrer</span>.
 
-    <p class=note>User agents are encouraged to provide the end user with options to
-    always exclude `<code title>Referer</code>` <span title=concept-header>headers</span>
-    or have it expose less sensitive information.
+    <p class="note no-backref">User agents are encouraged to provide the end user with
+    options to always exclude `<code title>Referer</code>`
+    <span title=concept-header>headers</span> or have it expose less sensitive
+    information.
 
    <li>
     <p>If <var title>request</var>'s <span>force <code>Origin</code> header flag</span> is
@@ -734,18 +737,29 @@ steps:
     <p class=note>This intentionally does not depend on <var title>request</var>'s
     <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
 
-   <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
-   non-null, include it, and <span data-anolis-spec=html title="queue a task">queue</span>
-   one or more <span data-anolis-spec=html title=concept-task>task</span> to
-   <dfn>process request body</dfn> for <var title>request</var> on the
-   <span data-anolis-spec=html>networking task source</span> while transmitting it.
+   <li>
+    <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+    non-null, include it, and <span data-anolis-spec=html title="queue a task">queue</span>
+    a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
+    byte of <var title>request</var>'s <span title=concept-request-body>body</span>
+    transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
+    for <var title>request</var>.
+
+    <p>If included, when <var title>request</var>'s
+    <span title=concept-request-body>body</span> is fully transmitted (and the HTTP
+    request has not been observably terminated yet),
+    <span data-anolis-spec=html title="queue a task">queue</span>
+    a <span data-anolis-spec=html title=concept-task>task</span> to
+    <dfn>process request end-of-file</dfn> for <var title>request</var>.
+
+    <p>Use the <span data-anolis-spec=html>networking task source</span>.
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
   return a <span title=concept-network-error>network error</span>. If this is due to
   <span title=concept-fetch>fetch</span> being
-  <span title=concept-fetch-terminate>terminated</span> with <var title>reason</var>, set
-  the return value's
+  <span title=concept-fetch-terminate>terminated</span> with reason
+  <var title>reason</var>, set the return value's
   <span title=concept-response-termination-reason>termination reason</span> to
   <var title>reason</var>.
 
@@ -918,8 +932,8 @@ steps:
   <p>Return <var title>response</var>, but continue with the request and growing
   <var title>response</var>'s <span title=concept-response-body>body</span>. If at any
   point <span title=concept-fetch>fetch</span> is
-  <span title=concept-fetch-terminate>terminated</span> with <var title>reason</var>, set
-  <var title>response</var>'s
+  <span title=concept-fetch-terminate>terminated</span> with reason
+  <var title>reason</var>, set <var title>response</var>'s
   <span title=concept-response-termination-reason>termination reason</span> to
   <var title>reason</var>. <span class=note>This modifies <var title>response</var> after
   it has been returned. Logic in <span title=concept-fetch>fetch</span> takes care of the

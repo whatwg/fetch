@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-17-october-2013">Living Standard — Last Updated 17 October 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-22-october-2013">Living Standard — Last Updated 22 October 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-17 October 2013, the editor has made this specification available
+22 October 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -280,7 +280,7 @@ evolves over time. That is, not all its fields are available straight away.
 
 <p>A <a href="#concept-response" title="concept-response">response</a> can have an associated
 <dfn id="concept-response-termination-reason" title="concept-response-termination-reason">termination reason</dfn> which is one of
-<i title="">end-user abort</i> and <i title="">timeout</i>.
+<i title="">end-user abort</i>, <i title="">fatal</i>, and <i title="">timeout</i>.
 
 <p>A <a href="#concept-response" title="concept-response">response</a> has an associated
 <dfn id="concept-response-status" title="concept-response-status">status</dfn>,
@@ -492,7 +492,7 @@ Access-Control-Allow-Headers     = #<a class="external" href="http://tools.ietf.
 
 <h2 id="fetching"><span class="secno">4 </span>Fetching</h2>
 
-<div class="note">
+<div class="note no-backref">
  <p>The algorithm below defines <a href="#concept-fetch" title="concept-fetch">fetching</a>. In broad
  strokes, it takes a <a href="#concept-request" title="concept-request">request</a> and outputs a
  <a href="#concept-response" title="concept-response">response</a>.
@@ -509,19 +509,20 @@ Access-Control-Allow-Headers     = #<a class="external" href="http://tools.ietf.
  <p>To capture uploads, if <a href="#concept-request" title="concept-request">request</a>'s
  <a href="#synchronous-flag">synchronous flag</a> is unset,
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a> annotated
- <a href="#process-request-body">process request body</a> for the <a href="#concept-request" title="concept-request">request</a> can
- be <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queued</a> on the
+ <a href="#process-request-body">process request body</a> and <a href="#process-request-end-of-file">process request end-of-file</a> for the
+ <a href="#concept-request" title="concept-request">request</a> can be
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queued</a> on the
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
 </div>
 
 <p>To perform a <dfn id="concept-fetch" title="concept-fetch">fetch</dfn> using <var title="">request</var>,
 optionally with a <i title="">CORS flag</i>, run the steps below. An ongoing
 <a href="#concept-fetch" title="concept-fetch">fetch</a> can be
-<dfn id="concept-fetch-terminate" title="concept-fetch-terminate">terminated</dfn> with a <var title="">reason</var>, which
-must be one of <i title="">end-user abort</i> or <i title="">timeout</i>.
-<!-- XXX others? -->
+<dfn id="concept-fetch-terminate" title="concept-fetch-terminate">terminated</dfn> with reason <var title="">reason</var>,
+which must be one of <i title="">end-user abort</i>, <i title="">fatal</i>, or
+<i title="">timeout</i>.
 
-<p class="note">The <i title="">CORS flag</i> is an internal manner for handling
+<p class="note no-backref">The <i title="">CORS flag</i> is an internal manner for handling
 <a href="#concept-redirect" title="concept-redirect">redirects</a>. Only use the <var title="">request</var>
 parameter in other standards.
 
@@ -604,9 +605,10 @@ parameter in other standards.
    <dfn id="process-response-body">process response body</dfn> for <var title="">response</var>. Keep
    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queuing</a>
    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a> to
-   <a href="#process-response-body">process response body</a> for <var title="">response</var> as long as
-   <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> keeps
-   growing.
+   <a href="#process-response-body">process response body</a> for <var title="">response</var> every 50ms or for each
+   byte of <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>
+   transmitted, whichever is <em>least</em> frequent, while <var title="">response</var> has
+   no <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>.
 
    <li>
     <p>Then, once <var title="">response</var>'s
@@ -651,8 +653,8 @@ steps:
 
   <p>Otherwise, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
-  <p class="note"><a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URLs</a> such as
-  "<code title="">about:config</code>" are handled during
+  <p class="note no-backref"><a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URLs</a> such
+  as "<code title="">about:config</code>" are handled during
   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/history.html#navigate" title="navigate">navigation</a> and result in a
   <a href="#concept-network-error" title="concept-network-error">network error</a> in the context of
   <a href="#concept-fetch" title="concept-fetch">fetching</a>.
@@ -708,9 +710,10 @@ steps:
     whose <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">request</var>'s
     <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>.
 
-    <p class="note">User agents are encouraged to provide the end user with options to
-    always exclude `<code title="">Referer</code>` <a href="#concept-header" title="concept-header">headers</a>
-    or have it expose less sensitive information.
+    <p class="note no-backref">User agents are encouraged to provide the end user with
+    options to always exclude `<code title="">Referer</code>`
+    <a href="#concept-header" title="concept-header">headers</a> or have it expose less sensitive
+    information.
 
    <li>
     <p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a> is
@@ -766,18 +769,29 @@ steps:
     <p class="note">This intentionally does not depend on <var title="">request</var>'s
     <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a>.
 
-   <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
-   non-null, include it, and <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
-   one or more <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
-   <dfn id="process-request-body">process request body</dfn> for <var title="">request</var> on the
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a> while transmitting it.
+   <li>
+    <p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+    non-null, include it, and <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
+    a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> every 50ms or for each
+    byte of <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
+    transmitted, whichever is <em>least</em> request, to <dfn id="process-request-body">process request body</dfn>
+    for <var title="">request</var>.
+
+    <p>If included, when <var title="">request</var>'s
+    <a href="#concept-request-body" title="concept-request-body">body</a> is fully transmitted (and the HTTP
+    request has not been observably terminated yet),
+    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
+    a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+    <dfn id="process-request-end-of-file">process request end-of-file</dfn> for <var title="">request</var>.
+
+    <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
   </ol>
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
   return a <a href="#concept-network-error" title="concept-network-error">network error</a>. If this is due to
   <a href="#concept-fetch" title="concept-fetch">fetch</a> being
-  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with <var title="">reason</var>, set
-  the return value's
+  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
+  <var title="">reason</var>, set the return value's
   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
   <var title="">reason</var>.
 
@@ -950,8 +964,8 @@ steps:
   <p>Return <var title="">response</var>, but continue with the request and growing
   <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>. If at any
   point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
-  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with <var title="">reason</var>, set
-  <var title="">response</var>'s
+  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
+  <var title="">reason</var>, set <var title="">response</var>'s
   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
   <var title="">reason</var>. <span class="note">This modifies <var title="">response</var> after
   it has been returned. Logic in <a href="#concept-fetch" title="concept-fetch">fetch</a> takes care of the
