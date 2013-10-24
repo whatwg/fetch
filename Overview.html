@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-22-october-2013">Living Standard — Last Updated 22 October 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-24-october-2013">Living Standard — Last Updated 24 October 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-22 October 2013, the editor has made this specification available
+24 October 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -77,12 +77,6 @@ and a set of parameters. This concept is named fetching.
    <li><a href="#cors-preflight-fetch"><span class="secno">4.3 </span>CORS preflight fetch</a></li>
    <li><a href="#cors-preflight-cache"><span class="secno">4.4 </span>CORS preflight cache</a></li>
    <li><a href="#cors-check"><span class="secno">4.5 </span>CORS check</a></ol></li>
- <li><a href="#zip-archives"><span class="secno">5 </span>Zip archives</a>
-  <ol class="toc">
-   <li><a href="#zip-resource-names"><span class="secno">5.1 </span>Zip resource names</a></li>
-   <li><a href="#zip-resource-types"><span class="secno">5.2 </span>Zip resource types</a></li>
-   <li><a href="#format"><span class="secno">5.3 </span>Format</a></li>
-   <li><a href="#api"><span class="secno">5.4 </span>API</a></ol></li>
  <li><a class="no-num" href="#html-fetch">HTML fetch</a></li>
  <li><a class="no-num" href="#references">References</a></li>
  <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
@@ -1284,259 +1278,6 @@ when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache
 
 
 
-<h2 id="zip-archives"><span class="secno">5 </span>Zip archives</h2>
-
-<p>A <dfn id="concept-zip-archive" title="concept-zip-archive">zip archive</dfn> is an ordered map of zero or more <dfn id="concept-zip-path" title="concept-zip-path">zip path</dfn>/<dfn id="concept-zip-resource" title="concept-zip-resource">zip resource</dfn> pairs. A <a href="#concept-zip-path" title="concept-zip-path">zip path</a> and
-<a href="#concept-zip-resource" title="concept-zip-resource">zip resource</a> are both byte sequences.
-
-<p class="note">Although the zip format is essentially unordered, the conceptual model
-exposes a zip archive as if byte-ordered on <a href="#concept-zip-path" title="concept-zip-path">zip path</a>.
-This is to be enforced by the parser.
-<!-- XXX remove this once parser is defined -->
-
-<p class="note">This model also assumes directories are flattened.
-
-
-<h3 id="zip-resource-names"><span class="secno">5.1 </span>Zip resource names</h3>
-
-<p>The <dfn id="concept-zip-resource-name" title="concept-zip-resource-name">zip resource name</dfn> of a
-<a href="#concept-zip-resource" title="concept-zip-resource">zip resource</a> is the byte sequence following the
-last 0x2F<!--/--> or 0x5C byte<!--\--> in the corresponding
-<a href="#concept-zip-path" title="concept-zip-path">zip path</a>, or the
-<a href="#concept-zip-path" title="concept-zip-path">zip path</a> itself if it contains no 0x2F<!--/--> or
-0x5C byte.<!--\-->
-
-<p class="XXX">The <dfn id="concept-zip-resource-string-name" title="concept-zip-resource-string-name">zip resource string name</dfn> ...
-
-
-<h3 id="zip-resource-types"><span class="secno">5.2 </span>Zip resource types</h3>
-
-<p>The <dfn id="concept-zip-resource-type" title="concept-zip-resource-type">zip resource type</dfn> of a
-<a href="#concept-zip-resource" title="concept-zip-resource">zip resource</a> is the cell in the second column of
-following table on the row of which the cell in the first column matches the end of the
-<a href="#concept-zip-resource-name" title="concept-zip-resource-name">zip resource name</a> of
-<a href="#concept-zip-resource" title="concept-zip-resource">zip resource</a> while treating bytes in the range
-0x41 to 0x5A to be a match for their corresponding byte in the range 0x61 to 0x7A:
-
-<table> <!-- byte-ordered -->
- <tr>
-  <th><a href="#concept-zip-resource-name" title="concept-zip-resource-name">zip resource name</a> extension
-  <th><a href="#concept-zip-resource-type" title="concept-zip-resource-type">zip resource type</a>
- <tr>
-  <td>`<code title="">.css</code>`
-  <td>text/css
- <tr>
-  <td>`<code title="">.gif</code>`
-  <td>image/gif</td>
- <tr>
-  <td>`<code title="">.htm</code>`
-  <td rowspan="2">text/html</td>
- <tr>
-  <td>`<code title="">.html</code>`
- <tr>
-  <td>`<code title="">.ico</code>`
-  <td>image/x-icon
- <tr>
-  <td>`<code title="">.jpeg</code>`
-  <td rowspan="2">image/jpeg
- <tr>
-  <td>`<code title="">.jpg</code>`
- <tr>
-  <td>`<code title="">.js</code>`
-  <td>text/javascript
- <tr>
-  <td>`<code title="">.mp3</code>`
-  <td>audio/mpeg
- <tr>
-  <td>`<code title="">.png</code>`
-  <td>image/png
- <tr>
-  <td>`<code title="">.svg</code>`
-  <td>image/svg+xml
- <tr>
-  <td>`<code title="">.txt</code>`
-  <td>text/plain
- <tr>
-  <td>`<code title="">.vtt</code>`
-  <td>text/vtt
- <tr>
-  <td>`<code title="">.wav</code>`
-  <td>audio/x-wav
- <tr>
-  <td>`<code title="">.xht</code>`
-  <td rowspan="3">application/xml
- <tr>
-  <td>`<code title="">.xhtml</code>`
- <tr>
-  <td>`<code title="">.xml</code>`
- <tr>
-  <td>`<code title="">.zip</code>`
-  <td>application/zip
-</table>
-
-<p>If there is no match, the
-<a href="#concept-zip-resource-type" title="concept-zip-resource-type">zip resource type</a> is
-application/octet-stream.
-
-
-<h3 id="format"><span class="secno">5.3 </span>Format</h3>
-
-<p class="XXX">The <dfn id="concept-zip-parser" title="concept-zip-parser">Zip parser</dfn> ... Need to define the
-details, either via reference or inline. Put restrictions on compression formats,
-require zip64, ...
-
-
-<h3 id="api"><span class="secno">5.4 </span>API</h3>
-
-<pre class="idl">typedef (ArrayBuffer or [EnsureUTF16] DOMString) <dfn id="zippath">ZipPath</dfn>;
-
-[<a href="#dom-ziparchive" title="dom-ZipArchive">Constructor</a>(<span>Blob</span> <var title="">zip</var>)]
-interface <dfn id="ziparchive">ZipArchive</dfn> {
-  Promise&lt;sequence&lt;DOMString&gt;&gt; <a href="#dom-ziparchive-getpaths" title="dom-ZipArchive-getPaths">getPaths</a>();
-  Promise&lt;sequence&lt;ArrayBuffer&gt;&gt; <a href="#dom-ziparchive-getrawpaths" title="dom-ZipArchive-getRawPaths">getRawPaths</a>();
-  Promise&lt;File&gt; <a href="#dom-ziparchive-get" title="dom-ZipArchive-get">get</a>(<a href="#zippath">ZipPath</a> <var title="">path</var>);
-  Promise&lt;boolean&gt; <a href="#dom-ziparchive-has" title="dom-ZipArchive-has">has</a>(<a href="#zippath">ZipPath</a> <var title="">path</var>);
-};</pre>
-<!-- XXX xref -->
-
-<p>A <code><a href="#ziparchive">ZipArchive</a></code> object can be associated with a
-<a href="#concept-zip-archive" title="concept-zip-archive">zip  archive</a>.
-
-<p>A <code><a href="#ziparchive">ZipArchive</a></code> object has an associated
-<dfn id="concept-ziparchive-done-flag" title="concept-ZipArchive-done-flag">done flag</dfn>. Unless stated otherwise its
-<a href="#concept-ziparchive-done-flag" title="concept-ZipArchive-done-flag">done flag</a> is unset.
-
-<p class="note"><a href="#concept-zip-archive" title="concept-zip-archive">Zip archives</a> are readonly for now.
-Baby steps.
-
-<p>The <dfn id="dom-ziparchive" title="dom-ZipArchive"><code>ZipArchive(<var title="">zip</var>)</code></dfn>
-constructor must run these steps:
-
-<ol>
- <li><p>Let <var title="">archive</var> be a new <code><a href="#ziparchive">ZipArchive</a></code> object.
-
- <li><p>Return <code><a href="#ziparchive">ZipArchive</a></code>, but continue running these steps asynchronously.
-
- <li><p>Let <var title="">result</var> be the return value of
- <a href="#concept-zip-parser" title="concept-zip-parser">parsing</a> <var title="">zip</var>.
-
- <li><p>If <var title="">result</var> is a
- <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>, associate <var title="">archive</var>
- with <var title="">result</var>.
-
- <li><p>Set the <a href="#concept-ziparchive-done-flag" title="concept-ZipArchive-done-flag">done flag</a>.
-</ol>
-
-<p>The <dfn id="dom-ziparchive-getpaths" title="dom-ZipArchive-getPaths"><code>getPaths()</code></dfn> method must run
-these steps:
-
-<ol>
- <li><p>Let <var title="">promise</var> be a new <code>Promise</code>.
- <!-- XXX xref -->
-
- <li><p>Return <var title="">promise</var>, but continue running these steps asynchronously.
-
- <li><p>Wait until the <a href="#concept-ziparchive-done-flag" title="concept-ZipArchive-done-flag">done flag</a> is set.
-
- <li><p>If there is no associated <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>,
- <span>reject</span> <var title="">promise</var> with a JavaScript <code>TypeError</code>
- exception.
- <!-- XXX xref -->
-
- <li><p>Otherwise, <span>resolve</span> <var title="">promise</var> with a JavaScript
- <code>Array</code> of the associated <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>'s
- <a href="#concept-zip-path" title="concept-zip-path">zip paths</a>, with each run through the
- <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-decoder">utf-8 decoder</a>.
-</ol>
-
-<p>The <dfn id="dom-ziparchive-getrawpaths" title="dom-ZipArchive-getRawPaths"><code>getRawPaths()</code></dfn>
-method must run these steps:
-
-<ol>
- <li><p>Let <var title="">promise</var> be a new <code>Promise</code>.
- <!-- XXX xref -->
-
- <li><p>Return <var title="">promise</var>, but continue running these steps asynchronously.
-
- <li><p>Wait until the <a href="#concept-ziparchive-done-flag" title="concept-ZipArchive-done-flag">done flag</a> is set.
-
- <li><p>If there is no associated <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>,
- <span>reject</span> <var title="">promise</var> with a JavaScript <code>TypeError</code>
- exception.
- <!-- XXX xref -->
-
- <li><p>Otherwise, <span>resolve</span> <var title="">promise</var> with a JavaScript
- <code>Array</code> of the associated <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>'s
- <a href="#concept-zip-path" title="concept-zip-path">zip paths</a>.
-</ol>
-
-<p>The <dfn id="dom-ziparchive-get" title="dom-ZipArchive-get"><code>get(<var title="">path</var>)</code></dfn> method
-must run these steps:
-
-<ol>
- <li><p>Let <var title="">promise</var> be a new <code>Promise</code>.
- <!-- XXX xref -->
-
- <li><p>Return <var title="">promise</var>, but continue running these steps asynchronously.
-
- <li><p>Wait until the <a href="#concept-ziparchive-done-flag" title="concept-ZipArchive-done-flag">done flag</a> is set.
-
- <li><p>If there is no associated <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>,
- <span>reject</span> <var title="">promise</var> with a JavaScript <code>TypeError</code>
- exception and terminate these steps.
- <!-- XXX xref -->
-
- <li><p>If <var title="">path</var> is a string, set <var title="">path</var> to the result of
- running <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-encode">utf-8 encode</a> on <var title="">path</var>.
-
- <li><p>If <var title="">path</var> is not in the associated
- <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>, <span>reject</span>
- <var title="">promise</var> with a JavaScript <code>TypeError</code> exception and
- terminate these steps.
- <!-- XXX xref -->
-
- <li><p>Let <var title="">resource</var> be the
- <a href="#concept-zip-resource" title="concept-zip-resource">zip resource</a> corresponding to
- <var title="">path</var> in the associated
- <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>.
-
- <li><p><span>Resolve</span> <var title="">promise</var> with a <code>File</code>
- representing <var title="">resource</var>, whose name is the <var title="">resource</var>'s
- <a href="#concept-zip-resource-string-name" title="concept-zip-resource-string-name">zip resource string name</a>, and type
- is the <var title="">resource</var>'s
- <a href="#concept-zip-resource-type" title="concept-zip-resource-type">zip resource type</a>.
-</ol>
-
-<p>The <dfn id="dom-ziparchive-has" title="dom-ZipArchive-has"><code>has(<var title="">path</var>)</code></dfn> method
-must run these steps:
-
-<ol>
- <li><p>Let <var title="">promise</var> be a new <code>Promise</code>.
- <!-- XXX xref -->
-
- <li><p>Return <var title="">promise</var>, but continue running these steps asynchronously.
-
- <li><p>Wait until the <a href="#concept-ziparchive-done-flag" title="concept-ZipArchive-done-flag">done flag</a> is set.
-
- <li><p>If there is no associated <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>,
- <span>reject</span> <var title="">promise</var> with a JavaScript <code>TypeError</code>
- exception and terminate these steps.
- <!-- XXX xref -->
-
- <li><p>If <var title="">path</var> is a string, set <var title="">path</var> to the result of
- running <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-encode">utf-8 encode</a> on <var title="">path</var>.
-
- <li><p>If <var title="">path</var> is not in the associated
- <a href="#concept-zip-archive" title="concept-zip-archive">zip archive</a>, <span>resolve</span>
- <var title="">promise</var> with a JavaScript <code title="">false</code> value.
- <!-- XXX xref -->
-
- <li><p>Otherwise, <span>resolve</span> <var title="">promise</var> with a JavaScript
- <code title="">true</code> value.
-</ol>
-
-
-
 <h2 class="no-num" id="html-fetch">HTML fetch</h2>
 
 <p>HTML defines two algorithms for obtaining resources. To ease transitioning towards this
@@ -1695,6 +1436,7 @@ run these steps:
 
  <li><p>Return <var title="">referrer</var>.
 </ol>
+
 
 
 <h2 class="no-num" id="references">References</h2>
