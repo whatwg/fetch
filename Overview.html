@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-24-october-2013">Living Standard — Last Updated 24 October 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-25-october-2013">Living Standard — Last Updated 25 October 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-24 October 2013, the editor has made this specification available
+25 October 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -255,10 +255,22 @@ Unless stated otherwise, it is unset.
 <dfn id="concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</dfn>. Unless stated
 otherwise, it is unset.
 
+<hr>
+
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-redirect-count" title="concept-request-redirect-count">redirect count</dfn>.
-Unless stated otherwise a <a href="#concept-request" title="concept-request">request</a>'s
-<a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is zero.
+<dfn id="concept-request-redirect-count" title="concept-request-redirect-count">redirect count</dfn>. Unless stated otherwise,
+it is zero.
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-response-tainting" title="concept-request-response-tainting">response tainting</dfn>, which is one of
+<i title="">basic</i>, <i title="">CORS</i>, and <i title="">opaque</i>. Unless stated otherwise,
+it is <i title="">basic</i>.
+
+<p class="note no-backref">A <a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> and
+<a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> are used as
+bookkeeping details by the <a href="#concept-fetch" title="concept-fetch">fetch</a> algorithm.
+
 
 
 <h3 id="responses"><span class="secno">2.3 </span>Responses</h3>
@@ -283,20 +295,6 @@ evolves over time. That is, not all its fields are available straight away.
 <dfn id="concept-response-headers" title="concept-response-headers">headers</dfn>, and a
 <dfn id="concept-response-body" title="concept-response-body">body</dfn>.
 
-<p>A <a href="#concept-response" title="concept-response">response</a> is either <dfn id="cors-same-origin">CORS-same-origin</dfn> or
-<dfn id="cors-cross-origin">CORS-cross-origin</dfn>. Unless otherwise indicated a
-<a href="#concept-response" title="concept-response">response</a> is <a href="#cors-same-origin">CORS-same-origin</a>.
-
-<p class="note">When introducing new APIs, unless there is a very good reason, only use
-<a href="#concept-response" title="concept-response">responses</a> that are <a href="#cors-same-origin">CORS-same-origin</a> and
-treat others as <a href="#concept-network-error" title="concept-network-error">network errors</a>. This distinction
-is used today e.g. to allow <a href="#concept-response" title="concept-response">responses</a> from a different
-<span>origin</span> not <a href="#concept-fetch" title="concept-fetch">fetched</a> using
-<a href="#concept-request" title="concept-request">request</a>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a>
-<i title="">CORS</i> to still be displayed using the HTML <code title="">img</code> element, but
-not have their <a href="#concept-response-body" title="concept-response-body">body</a> extracted using the HTML
-<code title="">canvas</code> element.
-
 <hr>
 
 <p>Unless stated otherwise, a <a href="#concept-response" title="concept-response">response</a>'s
@@ -315,11 +313,67 @@ not have their <a href="#concept-response-body" title="concept-response-body">bo
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
 <a href="#concept-response-location" title="concept-response-location">location</a> is null,
 <a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty list, and
-<a href="#concept-response-body" title="concept-response-body">body</a> is null,
+<a href="#concept-response-body" title="concept-response-body">body</a> is null.
 
 <p>A <a href="#concept-response" title="concept-response">response</a> whose
 <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">redirect</i> is known as a
 <dfn id="concept-redirect" title="concept-redirect">redirect</dfn>.
+
+<hr>
+
+<p>A <dfn id="concept-filtered-response" title="concept-filtered-response">filtered response</dfn> is a limited view on a
+<a href="#concept-response" title="concept-response">response</a>, referred to as the
+<a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>'s associated
+<dfn id="concept-internal-response" title="concept-internal-response">internal response</dfn>.
+
+<p class="note no-backref">The <a href="#concept-fetch" title="concept-fetch">fetch</a> algorithm returns
+such a view to ensure APIs do not accidentally leak information. If the information is
+required, e.g. to feed image data to a decoder, the associated
+<a href="#concept-internal-response" title="concept-internal-response">internal response</a> can be used.
+
+<p>A <dfn id="concept-filtered-response-basic" title="concept-filtered-response-basic">basic filtered response</dfn> is a
+<a href="#concept-filtered-response" title="concept-filtered-response">filtered responses</a> whose
+<a href="#concept-response-headers" title="concept-response-headers">response headers</a> exclude any
+<a href="#concept-header" title="concept-header">headers</a> in
+<a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
+<a href="#concept-response-headers" title="concept-response-headers">response headers</a> whose
+<a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Set-Cookie</code>` or
+`<code title="">Set-Cookie2</code>`.
+
+<p>A <dfn id="concept-filtered-response-cors" title="concept-filtered-response-cors">CORS filtered responses</dfn> is a
+<a href="#concept-filtered-response" title="concept-filtered-response">filtered responses</a> whose
+<a href="#concept-response-headers" title="concept-response-headers">response headers</a> exclude all
+<a href="#concept-header" title="concept-header">headers</a> in
+<a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
+<a href="#concept-response-headers" title="concept-response-headers">response headers</a>, except those whose
+<a href="#concept-header-name" title="concept-header-name">name</a> is either one of
+`<code title="">Cache-Control</code>`, `<code title="">Content-Language</code>`,
+`<code title="">Content-Type</code>`, `<code title="">Expires</code>`,
+`<code title="">Last-Modified</code>`, and `<code title="">Pragma</code>`, and except those
+whose <a href="#concept-header-name" title="concept-header-name">name</a> is one of the values of the
+<a href="#concept-header-parse" title="concept-header-parse">parsed</a>
+<a href="#concept-header-value" title="concept-header-value">value</a> of the
+<a href="#concept-header" title="concept-header">header</a> in
+<a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
+<a href="#concept-response-headers" title="concept-response-headers">response headers</a> whose
+<a href="#concept-header-name" title="concept-header-name">name</a> is
+`<code title="http-access-control-expose-headers"><a href="#http-access-control-expose-headers">Access-Control-Expose-Headers</a></code>`.
+
+<p>An <dfn id="concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered responses</dfn> is a
+<a href="#concept-filtered-response" title="concept-filtered-response">filtered responses</a> whose
+<a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">error</i>,
+<a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">0</code>,
+<a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
+<a href="#concept-response-location" title="concept-response-location">location</a> is null,
+<a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty list, and
+<a href="#concept-response-body" title="concept-response-body">body</a> is null.
+
+<p class="note no-backref">In other words, an
+<a href="#concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered response</a> is
+indistinguishable from a <a href="#concept-network-error" title="concept-network-error">network error</a>. When
+introducing new APIs, do not use the
+<a href="#concept-internal-response" title="concept-internal-response">internal response</a> as you will leak
+information.
 
 
 
@@ -550,8 +604,11 @@ parameter in other standards.
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "tainted cross-origin"
    <dd>
+    <p>Set <var title="">request</var>'s
+    <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
+    <i title="">opaque</i>.
     <p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
-    <var title="">request</var>, marked <a href="#cors-cross-origin">CORS-cross-origin</a>.
+    <var title="">request</var>.
     <!-- file URLs end up here as they are not same-origin typically. -->
 
    <dt><var title="">url</var>'s <span title="concept-url-scheme">scheme</span> is not one of
@@ -564,14 +621,39 @@ parameter in other standards.
    a <a href="#simple-method">simple method</a>
    <dt>A <a href="#concept-header" title="concept-header">header</a> in <var title="">request</var>'s
    <span title="concept-author-headers">author headers</span> is not a <a href="#simple-header">simple header</a>
-   <dd><p>The result of performing a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> using <var title="">request.
+   <dd>
+    <p>Set <var title="">request</var>'s
+    <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
+    <i title="">CORS</i>.
+    <p>The result of performing a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> using <var title="">request.
 
    </var><dt>Otherwise
-   <dd><p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
-   <var title="">request</var> with the <i title="">CORS flag</i> set.
+   <dd>
+    <p>Set <var title="">request</var>'s
+    <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
+    <i title="">CORS</i>.
+    <p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
+    <var title="">request</var> with the <i title="">CORS flag</i> set.
   </dl>
 
  <li><p>If <a href="#concept-fetch" title="concept-fetch">fetch</a> is invoked recursively, return <var title="">response</var>.
+
+ <li>
+  <p>Set <var title="">response</var> to the following
+  <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> with
+  <var title="">response</var> as its
+  <a href="#concept-internal-response" title="concept-internal-response">internal response</a>, depending on
+  <var title="">request</var>'s
+  <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a>:
+
+  <dl class="switch compact">
+   <dt><i title="">basic</i>
+   <dd><a href="#concept-filtered-response-basic" title="concept-filtered-response-basic">basic filtered response</a>
+   <dt><i title="">CORS</i>
+   <dd><a href="#concept-filtered-response-cors" title="concept-filtered-response-cors">CORS filtered response</a>
+   <dt><i title="">opaque</i>
+   <dd><a href="#concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered response</a>
+  </dl>
 
  <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set, wait for
  either <var title="">response</var> to have been fully transmitted or

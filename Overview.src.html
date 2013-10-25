@@ -229,10 +229,22 @@ Unless stated otherwise, it is unset.
 <dfn title=concept-request-manual-redirect-flag>manual redirect flag</dfn>. Unless stated
 otherwise, it is unset.
 
+<hr>
+
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-redirect-count>redirect count</dfn>.
-Unless stated otherwise a <span title=concept-request>request</span>'s
-<span title=concept-request-redirect-count>redirect count</span> is zero.
+<dfn title=concept-request-redirect-count>redirect count</dfn>. Unless stated otherwise,
+it is zero.
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-response-tainting>response tainting</dfn>, which is one of
+<i title>basic</i>, <i title>CORS</i>, and <i title>opaque</i>. Unless stated otherwise,
+it is <i title>basic</i>.
+
+<p class="note no-backref">A <span title=concept-request>request</span>'s
+<span title=concept-request-redirect-count>redirect count</span> and
+<span title=concept-request-response-tainting>response tainting</span> are used as
+bookkeeping details by the <span title=concept-fetch>fetch</span> algorithm.
+
 
 
 <h3>Responses</h3>
@@ -257,20 +269,6 @@ evolves over time. That is, not all its fields are available straight away.
 <dfn title=concept-response-headers>headers</dfn>, and a
 <dfn title=concept-response-body>body</dfn>.
 
-<p>A <span title=concept-response>response</span> is either <dfn>CORS-same-origin</dfn> or
-<dfn>CORS-cross-origin</dfn>. Unless otherwise indicated a
-<span title=concept-response>response</span> is <span>CORS-same-origin</span>.
-
-<p class=note>When introducing new APIs, unless there is a very good reason, only use
-<span title=concept-response>responses</span> that are <span>CORS-same-origin</span> and
-treat others as <span title=concept-network-error>network errors</span>. This distinction
-is used today e.g. to allow <span title=concept-response>responses</span> from a different
-<span>origin</span> not <span title=concept-fetch>fetched</span> using
-<span title=concept-request>request</span>'s <span title=concept-request-mode>mode</span>
-<i title>CORS</i> to still be displayed using the HTML <code title>img</code> element, but
-not have their <span title=concept-response-body>body</span> extracted using the HTML
-<code title>canvas</code> element.
-
 <hr>
 
 <p>Unless stated otherwise, a <span title=concept-response>response</span>'s
@@ -289,11 +287,67 @@ not have their <span title=concept-response-body>body</span> extracted using the
 <span title=concept-response-status-message>status message</span> is the empty byte sequence,
 <span title=concept-response-location>location</span> is null,
 <span title=concept-response-headers>headers</span> is an empty list, and
-<span title=concept-response-body>body</span> is null,
+<span title=concept-response-body>body</span> is null.
 
 <p>A <span title=concept-response>response</span> whose
 <span title=concept-response-type>type</span> is <i title>redirect</i> is known as a
 <dfn title=concept-redirect>redirect</dfn>.
+
+<hr>
+
+<p>A <dfn title=concept-filtered-response>filtered response</dfn> is a limited view on a
+<span title=concept-response>response</span>, referred to as the
+<span title=concept-filtered-response>filtered response</span>'s associated
+<dfn title=concept-internal-response>internal response</dfn>.
+
+<p class="note no-backref">The <span title=concept-fetch>fetch</span> algorithm returns
+such a view to ensure APIs do not accidentally leak information. If the information is
+required, e.g. to feed image data to a decoder, the associated
+<span title=concept-internal-response>internal response</span> can be used.
+
+<p>A <dfn title=concept-filtered-response-basic>basic filtered response</dfn> is a
+<span title=concept-filtered-response>filtered responses</span> whose
+<span title=concept-response-headers>response headers</span> exclude any
+<span title=concept-header>headers</span> in
+<span title=concept-internal-response>internal response</span>'s
+<span title=concept-response-headers>response headers</span> whose
+<span title=concept-header-name>name</span> is `<code title>Set-Cookie</code>` or
+`<code title>Set-Cookie2</code>`.
+
+<p>A <dfn title=concept-filtered-response-cors>CORS filtered responses</dfn> is a
+<span title=concept-filtered-response>filtered responses</span> whose
+<span title=concept-response-headers>response headers</span> exclude all
+<span title=concept-header>headers</span> in
+<span title=concept-internal-response>internal response</span>'s
+<span title=concept-response-headers>response headers</span>, except those whose
+<span title=concept-header-name>name</span> is either one of
+`<code title>Cache-Control</code>`, `<code title>Content-Language</code>`,
+`<code title>Content-Type</code>`, `<code title>Expires</code>`,
+`<code title>Last-Modified</code>`, and `<code title>Pragma</code>`, and except those
+whose <span title=concept-header-name>name</span> is one of the values of the
+<span title=concept-header-parse>parsed</span>
+<span title=concept-header-value>value</span> of the
+<span title=concept-header>header</span> in
+<span title=concept-internal-response>internal response</span>'s
+<span title=concept-response-headers>response headers</span> whose
+<span title=concept-header-name>name</span> is
+`<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>`.
+
+<p>An <dfn title=concept-filtered-response-opaque>opaque filtered responses</dfn> is a
+<span title=concept-filtered-response>filtered responses</span> whose
+<span title=concept-response-type>type</span> is <i title>error</i>,
+<span title=concept-response-status>status</span> is <code title>0</code>,
+<span title=concept-response-status-message>status message</span> is the empty byte sequence,
+<span title=concept-response-location>location</span> is null,
+<span title=concept-response-headers>headers</span> is an empty list, and
+<span title=concept-response-body>body</span> is null.
+
+<p class="note no-backref">In other words, an
+<span title=concept-filtered-response-opaque>opaque filtered response</span> is
+indistinguishable from a <span title=concept-network-error>network error</span>. When
+introducing new APIs, do not use the
+<span title=concept-internal-response>internal response</span> as you will leak
+information.
 
 
 
@@ -512,7 +566,7 @@ parameter in other standards.
    <dt><var title>url</var>'s <span>origin</span> is <var title>origin</var> and the <i title>CORS flag</i> is unset
    <dt><var title>url</var>'s <span data-anolis-spec=url title=concept-url-scheme>scheme</span>
    is one of "<code title>about</code>", "<code title>blob</code>", and "<code title>data</code>",
-   and <Var title>request</var>'s <span title=concept-request-redirect-count>redirect count</span> is zero
+   and <var title>request</var>'s <span title=concept-request-redirect-count>redirect count</span> is zero
 
    <dd><p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using <var title>request</var>.
 
@@ -524,8 +578,11 @@ parameter in other standards.
    <dt><var title>request</var>'s <span title=concept-request-mode>mode</span> is
    "tainted cross-origin"
    <dd>
+    <p>Set <var title>request</var>'s
+    <span title=concept-request-response-tainting>response tainting</span> to
+    <i title>opaque</i>.
     <p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using
-    <var title>request</var>, marked <span>CORS-cross-origin</span>.
+    <var title>request</var>.
     <!-- file URLs end up here as they are not same-origin typically. -->
 
    <dt><var title>url</var>'s <span title=concept-url-scheme>scheme</span> is not one of
@@ -538,14 +595,39 @@ parameter in other standards.
    a <span>simple method</span>
    <dt>A <span title=concept-header>header</span> in <var title>request</var>'s
    <span title=concept-author-headers>author headers</span> is not a <span>simple header</span>
-   <dd><p>The result of performing a <span>CORS fetch with preflight</span> using <var title>request</span>.
+   <dd>
+    <p>Set <var title>request</var>'s
+    <span title=concept-request-response-tainting>response tainting</span> to
+    <i title>CORS</i>.
+    <p>The result of performing a <span>CORS fetch with preflight</span> using <var title>request</span>.
 
    <dt>Otherwise
-   <dd><p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using
-   <var title>request</var> with the <i title>CORS flag</i> set.
+   <dd>
+    <p>Set <var title>request</var>'s
+    <span title=concept-request-response-tainting>response tainting</span> to
+    <i title>CORS</i>.
+    <p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using
+    <var title>request</var> with the <i title>CORS flag</i> set.
   </dl>
 
  <li><p>If <span title=concept-fetch>fetch</span> is invoked recursively, return <var title>response</var>.
+
+ <li>
+  <p>Set <var title>response</var> to the following
+  <span title=concept-filtered-response>filtered response</span> with
+  <var title>response</var> as its
+  <span title=concept-internal-response>internal response</span>, depending on
+  <var title>request</var>'s
+  <span title=concept-request-response-tainting>response tainting</span>:
+
+  <dl class="switch compact">
+   <dt><i title>basic</i>
+   <dd><span title=concept-filtered-response-basic>basic filtered response</span>
+   <dt><i title>CORS</i>
+   <dd><span title=concept-filtered-response-cors>CORS filtered response</span>
+   <dt><i title>opaque</i>
+   <dd><span title=concept-filtered-response-opaque>opaque filtered response</span>
+  </dl>
 
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
  either <var title>response</var> to have been fully transmitted or
