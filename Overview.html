@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-25-october-2013">Living Standard — Last Updated 25 October 2013</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-november-2013">Living Standard — Last Updated 5 November 2013</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-25 October 2013, the editor has made this specification available
+5 November 2013, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -140,9 +140,12 @@ U+007F. To avoid confusion with an actual string backticks are used.
 <a class="external" href="http://encoding.spec.whatwg.org/#string">string</a>, while `<code title="">true</code>` is a
 byte sequence.
 
-<p>A <dfn id="case-insensitive-byte-sequence">case-insensitive byte sequence</dfn> is a byte sequence that when
-compared considers bytes in the range 0x41 to 0x5A to be a match for their corresponding
-byte in the range 0x61 to 0x7A.
+<p>Comparing two byte sequences in a <dfn id="byte-case-insensitive">byte case-insensitive</dfn> manner means
+comparing them exactly, byte for byte, except that the bytes in the range 0x41 to 0x5A are
+considered to also match their corresponding byte in the range 0x61 to 0x7A.
+
+<p>A <dfn id="case-insensitive-byte-sequence">case-insensitive byte sequence</dfn> is a byte sequence that when compared to
+another byte sequence does so in a <a href="#byte-case-insensitive">byte case-insensitive</a> manner.
 
 <p class="example">The
 <a href="#case-insensitive-byte-sequence" title="case-insensitive byte sequence">case-insensitive byte sequences</a>
@@ -271,6 +274,51 @@ it is <i title="">basic</i>.
 <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> are used as
 bookkeeping details by the <a href="#concept-fetch" title="concept-fetch">fetch</a> algorithm.
 
+<hr>
+
+<p><a href="#concept-fetch" title="concept-fetch">Fetch</a> end points must enforce restrictions on a
+<a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-method" title="concept-request-method">method</a> and
+<a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>.
+
+<p>The <dfn id="concept-forbidden-methods" title="concept-forbidden-methods">forbidden methods</dfn> are
+<a href="#concept-method" title="concept-method">methods</a> that are a <a href="#byte-case-insensitive">byte case-insensitive</a>
+match for `<code title="">CONNECT</code>`, `<code title="">TRACE</code>`, and
+`<code title="">TRACK</code>`. <a href="#refsHTTPVERBSEC">[HTTPVERBSEC]</a>
+
+<p>The
+<dfn id="concept-forbidden-author-header-names" title="concept-forbidden-author-header-names">forbidden author header names</dfn> are
+all these <a href="#concept-header" title="concept-header">header</a>
+<a href="#concept-header-name" title="concept-header-name">names</a>:
+
+<ul class="brief">
+ <li>`<code title="">Accept-Charset</code>`
+ <li>`<code title="">Accept-Encoding</code>`
+ <li>`<code title="">Access-Control-Request-Headers</code>`
+ <li>`<code title="">Access-Control-Request-Method</code>`
+ <li>`<code title="">Connection</code>`
+ <li>`<code title="">Content-Length</code>`
+ <li>`<code title="">Cookie</code>`
+ <li>`<code title="">Cookie2</code>`
+ <li>`<code title="">Date</code>`
+ <li>`<code title="">DNT</code>`
+ <li>`<code title="">Expect</code>`
+ <li>`<code title="">Host</code>`
+ <li>`<code title="">Keep-Alive</code>`
+ <li>`<code title="http-origin"><a href="#http-origin">Origin</a></code>`
+ <li>`<code title="">Referer</code>`
+ <li>`<code title="">TE</code>`
+ <li>`<code title="">Trailer</code>`
+ <li>`<code title="">Transfer-Encoding</code>`
+ <li>`<code title="">Upgrade</code>`
+ <li>`<code title="">User-Agent</code>`
+ <li>`<code title="">Via</code>`
+</ul>
+
+<p>… and <a href="#concept-header" title="concept-header">header</a>
+<a href="#concept-header-name" title="concept-header-name">names</a> that start with `<code title="">Proxy-</code>`
+or `<code title="">Sec-</code>` (including when it is just `<code title="">Proxy-</code>` or
+`<code title="">Sec-</code>`).
 
 
 <h3 id="responses"><span class="secno">2.3 </span>Responses</h3>
@@ -725,7 +773,8 @@ steps:
   `<code title="">text/html;charset=utf-8</code>`, and
   <a href="#concept-response-body" title="concept-response-body">body</a> is the empty byte sequence.
 
-  <!-- introduce about:unicorn -->
+  <!-- introduce about:unicorn
+       http://html5.org/temp/unicorn.svg -->
 
   <p>Otherwise, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
@@ -780,6 +829,13 @@ steps:
 
   <ol>
    <li>
+    <p>Set the HTTP request method to <var title="">request</var>'s
+    <span ttile="concept-request-method">method</span>.
+
+    <p class="note no-backref"><a href="#concept-forbidden-methods" title="concept-forbidden-methods">Forbidden methods</a>
+    are not supposed to reach this point.
+
+   <li>
     <p>If <var title="">request</var>'s
     <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is not null, include a
     `<code title="">Referer</code>` <a href="#concept-header" title="concept-header">header</a>
@@ -807,8 +863,11 @@ steps:
    <li>
     <p>Include all of <var title="">request</var>'s
     <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> as long as their
-    <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> present in the
+    <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> already present in the
     HTTP request.
+
+    <p class="note no-backref"><a href="#concept-forbidden-author-header-names" title="concept-forbidden-author-header-names">Forbidden author header names</a>
+    are not supposed to reach this point.
 
    <li>
     <p>If <var title="">request</var>'s
@@ -1539,6 +1598,13 @@ run these steps:
 
 <dt id="refsHTTPAUTH">[HTTPAUTH]
 <dd><cite><a href="http://tools.ietf.org/html/rfc2617">HTTP Authentication: Basic and Digest Access Authentication</a></cite>, J. Franks, Phillip Hallam-Baker, J. Hostetler et al.. IETF.
+
+<dt id="refsHTTPVERBSEC">[HTTPVERBSEC]
+<dd><cite><a href="http://www.kb.cert.org/vuls/id/867593">Multiple vendors' web servers enable HTTP TRACE method by default</a></cite>. US-CERT.
+
+<dd><cite><a href="http://www.kb.cert.org/vuls/id/288308">Microsoft Internet Information Server (IIS) vulnerable to cross-site scripting via HTTP TRACK method</a></cite>. US-CERT.
+
+<dd><cite><a href="http://www.kb.cert.org/vuls/id/150227">HTTP proxy default configurations allow arbitrary TCP connections</a></cite>. US-CERT.
 
 <dt id="refsORIGIN">[ORIGIN]
 <dd><cite><a href="http://tools.ietf.org/html/rfc6454">The Web Origin Concept</a></cite>, Adam Barth. IETF.
