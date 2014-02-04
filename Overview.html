@@ -521,9 +521,8 @@ these <a href="#concept-header" title="concept-header">headers</a>:
  <dt>`<dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>`
  <dd><p>Indicates whether a resource can be shared, via returning the literal
  <a href="#concept-header-value" title="concept-header-value">value</a> of the
- <code title="http-origin"><a href="#http-origin">Origin</a></code> request
- <a href="#concept-header" title="concept-header">header</a> (which can be `<code title="">null</code>`) or
- `<code title="">*</code>` in a response.
+ <code title="http-origin"><a href="#http-origin">Origin</a></code> request <a href="#concept-header" title="concept-header">header</a>
+ (which can be `<code title="">null</code>`) or `<code title="">*</code>` in a response.
 
  <dt>`<dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>`
  <dd>
@@ -1121,7 +1120,7 @@ these steps:
   <p>If
 
   <ul>
-   <li>there is no <a href="#method-cache-match">method cache match</a> for
+   <li>there is no <a href="#concept-cache-match-method" title="concept-cache-match-method">method cache match</a> for
    <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> using
    <var title="">request</var>, and
    <li>either <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
@@ -1130,8 +1129,9 @@ these steps:
    <li>there is at least one <a href="#concept-header" title="concept-header">header</a>
    <a href="#concept-header-name" title="concept-header-name">name</a> in <var title="">request</var>'s
    <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> for which there is no
-   <a href="#header-name-cache-match">header name cache match</a> using <var title="">request</var> and for which the
-   <a href="#concept-header" title="concept-header">header</a> is not a <a href="#simple-header">simple header</a>
+   <a href="#concept-cache-match-header" title="concept-cache-match-header">header name cache match</a> using
+   <var title="">request</var> and for which the <a href="#concept-header" title="concept-header">header</a> is
+   not a <a href="#simple-header">simple header</a>
   </ul>
 
   <p>then run these substeps:
@@ -1147,14 +1147,17 @@ these steps:
  <li><p>Set <var title="">request</var>'s
  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
 
- <li><p>Let <var title="">response</var> be a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
- <var title="">request</var> with the <i title="">CORS flag</i> set.
+ <li><p>Let <var title="">response</var> be a
+ <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var title="">request</var> with
+ the <i title="">CORS flag</i> set.
 
- <li><p>If <var title="">response</var> is a <a href="#concept-redirect" title="concept-redirect">redirect</a>, set its
- <a href="#concept-response-type" title="concept-response-type">type</a> to <i title="">error</i>.
+ <li><p>If <var title="">response</var> is a <a href="#concept-redirect" title="concept-redirect">redirect</a>,
+ set its <a href="#concept-response-type" title="concept-response-type">type</a> to <i title="">error</i>.
 
- <li><p>If <var title="">response</var> is a <a href="#concept-network-error" title="concept-network-error">network error</a>,
- <a href="#cache-clear" title="cache-clear">clear</a> using <var title="">request</var>.
+ <li><p>If <var title="">response</var> is a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>,
+ <a href="#concept-cache-clear" title="concept-cache-clear">clear cache entries</a> using
+ <var title="">request</var>.
 
  <li><p>Return <var title="">response</var>.
 </ol>
@@ -1257,66 +1260,70 @@ steps:
    <li><p>If <var title="">max-age</var> is failure, set <var title="">max-age</var> to zero.
 
    <li><p>If <var title="">max-age</var> is greater than an imposed limit on
-   <a href="#cache-max-age" title="cache-max-age">max-age</a>, set <var title="">max-age</var> to the imposed
+   <a href="#concept-cache-max-age" title="concept-cache-max-age">max-age</a>, set <var title="">max-age</var> to the imposed
    limit.
 
    <li><p>If the user agent does not provide for a cache, return
    <var title="">response</var>.
 
    <li><p>For each method in <var title="">methods</var> for which there is a
-   <a href="#method-cache-match">method cache match</a> using <var title="">request</var>, set matching entry's
-   <a href="#cache-max-age" title="cache-max-age">max-age</a> to <var title="">max-age</var>.
+   <a href="#concept-cache-match-method" title="concept-cache-match-method">method cache match</a> using
+   <var title="">request</var>, set matching entry's
+   <a href="#concept-cache-max-age" title="concept-cache-max-age">max-age</a> to <var title="">max-age</var>.
 
    <li>
     <p>For each <var title="">method</var> in <var title="">methods</var> for which there is
-    <em>no</em>  <a href="#method-cache-match">method cache match</a> using <var title="">request</var>, create a
-    new entry in the <a href="#cors-preflight-cache-0">CORS preflight cache</a> as follows:
+    <em>no</em>  <a href="#concept-cache-match-method" title="concept-cache-match-method">method cache match</a> using
+    <var title="">request</var>, create a new entry in
+    <a href="#concept-cache" title="concept-cache">CORS preflight cache</a> as follows:
 
     <dl>
-     <dt><a href="#cache-origin" title="cache-origin">origin</a>
+     <dt><a href="#concept-cache-origin" title="concept-cache-origin">origin</a>
      <dd><var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>
 
-     <dt><a href="#cache-url" title="cache-url">url</a>
+     <dt><a href="#concept-cache-url" title="concept-cache-url">url</a>
      <dd><var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>
 
-     <dt><a href="#cache-max-age" title="cache-max-age">max-age</a>
+     <dt><a href="#concept-cache-max-age" title="concept-cache-max-age">max-age</a>
      <dd><var title="">max-age</var>
 
-     <dt><a href="#cache-credentials" title="cache-credentials">credentials</a>
+     <dt><a href="#concept-cache-credentials" title="concept-cache-credentials">credentials</a>
      <dd>False if <var title="">request</var>'s
      <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is not
      <i title="">never</i>, and true otherwise
 
-     <dt><a href="#cache-method" title="cache-method">method</a></dt>
+     <dt><a href="#concept-cache-method" title="concept-cache-method">method</a></dt>
      <dd><var title="">method</var>
     </dl>
 
    <li><p>For each header name in <var title="">header names</var> for which there is a
-   <a href="#header-name-cache-match">header name cache match</a> using <var title="">request</var>, set
-   matching entry's <a href="#cache-max-age" title="cache-max-age">max-age</a> to <var title="">max-age</var>.
+   <a href="#concept-cache-match-header" title="concept-cache-match-header">header name cache match</a> using
+   <var title="">request</var>, set matching entry's
+   <a href="#concept-cache-max-age" title="concept-cache-max-age">max-age</a> to <var title="">max-age</var>.
 
    <li>
     <p>For each <var title="">header name</var> in <var title="">header names</var> for which
-    there is <em>no</em> <a href="#header-name-cache-match">header name cache match</a> using
-    <var title="">request</var>, create a new entry in the <a href="#cors-preflight-cache-0">CORS preflight cache</a>
-    as follows:
+    there is <em>no</em>
+    <a href="#concept-cache-match-header" title="concept-cache-match-header">header name cache match</a> using
+    <var title="">request</var>, create a new entry in
+    <a href="#concept-cache" title="concept-cache">CORS preflight cache</a> as follows:
 
     <dl>
-     <dt><a href="#cache-origin" title="cache-origin">origin</a>
+     <dt><a href="#concept-cache-origin" title="concept-cache-origin">origin</a>
      <dd><var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>
 
-     <dt><a href="#cache-url" title="cache-url">url</a>
+     <dt><a href="#concept-cache-url" title="concept-cache-url">url</a>
      <dd><var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>
 
-     <dt><a href="#cache-max-age" title="cache-max-age">max-age</a>
+     <dt><a href="#concept-cache-max-age" title="concept-cache-max-age">max-age</a>
      <dd><var title="">max-age</var>
 
-     <dt><a href="#cache-credentials" title="cache-credentials">credentials</a>
+     <dt><a href="#concept-cache-credentials" title="concept-cache-credentials">credentials</a>
      <dd>False if <var title="">request</var>'s
      <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is not
      <i title="">never</i>, and true otherwise
 
-     <dt><a href="#cache-header-name" title="cache-header-name">header name</a></dt>
+     <dt><a href="#concept-cache-header-name" title="concept-cache-header-name">header name</a></dt>
      <dd><var title="">header name</var>
     </dl>
 
@@ -1329,46 +1336,51 @@ steps:
 
 <h3 id="cors-preflight-cache"><span class="secno">4.4 </span>CORS preflight cache</h3>
 
-<p>A <dfn id="cors-preflight-cache-0">CORS preflight cache</dfn> consists of a collection of entries where each
-entry has these fields:
-  <dfn id="cache-origin" title="cache-origin">origin</dfn>,
-  <dfn id="cache-url" title="cache-url">url</dfn>,
-  <dfn id="cache-max-age" title="cache-max-age">max-age</dfn>,
-  <dfn id="cache-credentials" title="cache-credentials">credentials</dfn>,
-  <dfn id="cache-method" title="cache-method">method</dfn>, and
-  <dfn id="cache-header-name" title="cache-header-name">header name</dfn>.
+<p>A <dfn id="concept-cache" title="concept-cache">CORS preflight cache</dfn> consists of a collection of
+entries where each entry has these fields:
+<dfn id="concept-cache-origin" title="concept-cache-origin">origin</dfn>,
+<dfn id="concept-cache-url" title="concept-cache-url">url</dfn>,
+<dfn id="concept-cache-max-age" title="concept-cache-max-age">max-age</dfn>,
+<dfn id="concept-cache-credentials" title="concept-cache-credentials">credentials</dfn>,
+<dfn id="concept-cache-method" title="concept-cache-method">method</dfn>, and
+<dfn id="concept-cache-header-name" title="concept-cache-header-name">header name</dfn>.
 
 <p>Entries must be removed after the seconds specified in the
-<a href="#cache-max-age" title="cache-max-age">max-age</a> field have passed since storing the entry.
+<a href="#concept-cache-max-age" title="concept-cache-max-age">max-age</a> field have passed since storing the entry.
 Entries may be removed before that moment arrives.
 
-<p>To <dfn id="cache-clear" title="cache-clear">clear</dfn> entries using a <var title="">request</var>,
-remove any entries in the <a href="#cors-preflight-cache-0">CORS preflight cache</a> whose
-<a href="#cache-origin" title="cache-origin">origin</a> is <var title="">request</var>'s
+<p>To <dfn id="concept-cache-clear" title="concept-cache-clear">clear cache entries</dfn> given a
+<var title="">request</var>, remove any entries in the
+<a href="#concept-cache" title="concept-cache">CORS preflight cache</a> whose
+<a href="#concept-cache-origin" title="concept-cache-origin">origin</a> is <var title="">request</var>'s
 <a href="#concept-request-origin" title="concept-request-origin">origin</a> and whose
-<a href="#cache-url" title="cache-url">url</a> is <var title="">request</var>'s
+<a href="#concept-cache-url" title="concept-cache-url">url</a> is <var title="">request</var>'s
 <a href="#concept-request-url" title="concept-request-url">url</a>.
 
-<p>There is a <dfn id="cache-match">cache match</dfn> for a <var title="">request</var> if
-<a href="#cache-origin" title="cache-origin">origin</a> is <var title="">request</var>'s
-<a href="#concept-request-origin" title="concept-request-origin">origin</a>, <a href="#cache-url" title="cache-url">url</a> is
-<var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>, and either
-<a href="#cache-credentials" title="cache-credentials">credentials</a> is false and <var title="">request</var>'s
+<p>There is a <dfn id="concept-cache-match" title="concept-cache-match">cache match</dfn> for
+<var title="">request</var> if <a href="#concept-cache-origin" title="concept-cache-origin">origin</a> is
+<var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
+<a href="#concept-cache-url" title="concept-cache-url">url</a> is <var title="">request</var>'s
+<a href="#concept-request-url" title="concept-request-url">url</a>, and either
+<a href="#concept-cache-credentials" title="concept-cache-credentials">credentials</a> is false and
+<var title="">request</var>'s
 <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is not
-<i title="">never</i> or
-<a href="#cache-credentials" title="cache-credentials">credentials</a> is true and <var title="">request</var>'s
+<i title="">never</i> or <a href="#concept-cache-credentials" title="concept-cache-credentials">credentials</a> is true
+and <var title="">request</var>'s
 <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
 <i title="">never</i>.
 
-<p>There is a <dfn id="method-cache-match">method cache match</dfn> for a given method using <var title="">request</var>
-when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache</a> for which there is a
-<a href="#cache-match">cache match</a> for <var title="">request</var> and its
-<a href="#cache-method" title="cache-method">method</a> is the given method.
+<p>There is a <dfn id="concept-cache-match-method" title="concept-cache-match-method">method cache match</dfn> for
+<var title="">method</var> using <var title="">request</var> when there is an entry in
+<a href="#concept-cache" title="concept-cache">CORS preflight cache</a> for which there is a
+<a href="#concept-cache-match" title="concept-cache-match">cache match</a> for <var title="">request</var> and its
+<a href="#concept-cache-method" title="concept-cache-method">method</a> is <var title="">method</var>.
 
-<p>There is a <dfn id="header-name-cache-match">header name cache match</dfn> for a given header name using <var title="">request</var>
-when there is an entry in <a href="#cors-preflight-cache-0">CORS preflight cache</a> for which there is a
-<a href="#cache-match">cache match</a> for <var title="">request</var> and its
-<a href="#cache-header-name" title="cache-header-name">header name</a> is the given header name.
+<p>There is a <dfn id="concept-cache-match-header" title="concept-cache-match-header">header name cache match</dfn> for
+<var title="">headerName</var> using <var title="">request</var> when there is an entry in
+<a href="#concept-cache" title="concept-cache">CORS preflight cache</a> for which there is a
+<a href="#concept-cache-match" title="concept-cache-match">cache match</a> for <var title="">request</var> and its
+<a href="#concept-cache-header-name" title="concept-cache-header-name">header name</a> is <var title="">headerName</var>.
 
 
 <h3 id="cors-check"><span class="secno">4.5 </span>CORS check</h3>
