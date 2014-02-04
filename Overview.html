@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-22-january-2014">Living Standard — Last Updated 22 January 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-4-february-2014">Living Standard — Last Updated 4 February 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-22 January 2014, the editor has made this specification available
+4 February 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -203,7 +203,7 @@ return the <a href="#concept-header-value" title="concept-header-value">values</
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-url" title="concept-request-url">url</dfn> (a
-<a class="external" href="http://url.spec.whatwg.org/#concept-parsed-url" title="concept-parsed-url">parsed URL</a>).
+<a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>).
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has associated
 <dfn id="concept-request-author-headers" title="concept-request-author-headers">author headers</dfn> and
@@ -348,7 +348,6 @@ evolves over time. That is, not all its fields are available straight away.
 <p>A <a href="#concept-response" title="concept-response">response</a> has an associated
 <dfn id="concept-response-status" title="concept-response-status">status</dfn>,
 <dfn id="concept-response-status-message" title="concept-response-status-message">status message</dfn>,
-<dfn id="concept-response-location" title="concept-response-location">location</dfn>,
 <dfn id="concept-response-headers" title="concept-response-headers">headers</dfn>, and a
 <dfn id="concept-response-body" title="concept-response-body">body</dfn>.
 
@@ -357,7 +356,6 @@ evolves over time. That is, not all its fields are available straight away.
 <p>Unless stated otherwise, a <a href="#concept-response" title="concept-response">response</a>'s
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">200</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is `<code title="">OK</code>`,
-<a href="#concept-response-location" title="concept-response-location">location</a> is null,
 <a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty list, and
 <a href="#concept-response-body" title="concept-response-body">body</a> is null,
 
@@ -368,7 +366,6 @@ evolves over time. That is, not all its fields are available straight away.
 <p>A <a href="#concept-network-error" title="concept-network-error">network error</a>'s
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">0</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
-<a href="#concept-response-location" title="concept-response-location">location</a> is null,
 <a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty list, and
 <a href="#concept-response-body" title="concept-response-body">body</a> is null.
 
@@ -422,7 +419,6 @@ whose <a href="#concept-header-name" title="concept-header-name">name</a> is one
 <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">error</i>,
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">0</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
-<a href="#concept-response-location" title="concept-response-location">location</a> is null,
 <a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty list, and
 <a href="#concept-response-body" title="concept-response-body">body</a> is null.
 
@@ -1009,12 +1005,12 @@ steps:
    <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>` within
    <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
 
-   <li><p>Let <var title="">parsed location</var> be the result of
+   <li><p>Let <var title="">locationURL</var> be the result of
    <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
    <var title="">location</var> with <var title="">request</var>'s
    <a href="#concept-request-url" title="concept-request-url">url</a>.
 
-   <li><p>If <var title="">parsed location</var> is failure, return a
+   <li><p>If <var title="">locationURL</var> is failure, return a
    <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
    <li><p>If <var title="">request</var>'s
@@ -1027,30 +1023,25 @@ steps:
    <li><p>Set <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> to
    <i title="">redirect</i>.
 
-   <li><p>Set <var title="">response</var>'s
-   <a href="#concept-response-location" title="concept-response-location">location</a> to
-   <var title="">parsed location</var>.
-
    <li>
     <p>If <var title="">request</var>'s
     <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> is unset,
     run these substeps:
 
     <ol>
-     <li><p>If the <i title="">CORS flag</i> is set and <var title="">response</var>'s
-     <a href="#concept-response-location" title="concept-response-location">location</a>'s <span>origin</span> is not
+     <li><p>If the <i title="">CORS flag</i> is set and <var title="">locationURL</var>'s
+     <span>origin</span> is not
      <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
      <span>origin</span>, set <var title="">request</var>'s
      <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
 
-     <li><p>If the <i title="">CORS flag</i> is set and <var title="">response</var>'s
-     <a href="#concept-response-location" title="concept-response-location">location</a>'s
+     <li><p>If the <i title="">CORS flag</i> is set and <var title="">locationURL</var>'s
      <a class="external" href="http://url.spec.whatwg.org/#concept-url-username" title="concept-url-username">username</a> or
      <a class="external" href="http://url.spec.whatwg.org/#concept-url-password" title="concept-url-password">password</a> is non-null,
      return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
      <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
-     <var title="">response</var>'s <a href="#concept-response-location" title="concept-response-location">location</a>.
+     <var title="">locationURL</var>.
 
      <li><p>Return the result of performing a <a href="#concept-fetch" title="concept-fetch">fetch</a> using
      <var title="">request</var>, with the <i title="">CORS flag</i> set if set.

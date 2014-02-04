@@ -177,7 +177,7 @@ return the <span title=concept-header-value>values</span> obtained for the given
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-url>url</dfn> (a
-<span data-anolis-spec=url title=concept-parsed-url>parsed URL</span>).
+<span data-anolis-spec=url title=concept-url>URL</span>).
 
 <p>A <span title=concept-request>request</span> has associated
 <dfn title=concept-request-author-headers>author headers</dfn> and
@@ -322,7 +322,6 @@ evolves over time. That is, not all its fields are available straight away.
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-status>status</dfn>,
 <dfn title=concept-response-status-message>status message</dfn>,
-<dfn title=concept-response-location>location</dfn>,
 <dfn title=concept-response-headers>headers</dfn>, and a
 <dfn title=concept-response-body>body</dfn>.
 
@@ -331,7 +330,6 @@ evolves over time. That is, not all its fields are available straight away.
 <p>Unless stated otherwise, a <span title=concept-response>response</span>'s
 <span title=concept-response-status>status</span> is <code title>200</code>,
 <span title=concept-response-status-message>status message</span> is `<code title>OK</code>`,
-<span title=concept-response-location>location</span> is null,
 <span title=concept-response-headers>headers</span> is an empty list, and
 <span title=concept-response-body>body</span> is null,
 
@@ -342,7 +340,6 @@ evolves over time. That is, not all its fields are available straight away.
 <p>A <span title=concept-network-error>network error</span>'s
 <span title=concept-response-status>status</span> is <code title>0</code>,
 <span title=concept-response-status-message>status message</span> is the empty byte sequence,
-<span title=concept-response-location>location</span> is null,
 <span title=concept-response-headers>headers</span> is an empty list, and
 <span title=concept-response-body>body</span> is null.
 
@@ -396,7 +393,6 @@ whose <span title=concept-header-name>name</span> is one of the values of the
 <span title=concept-response-type>type</span> is <i title>error</i>,
 <span title=concept-response-status>status</span> is <code title>0</code>,
 <span title=concept-response-status-message>status message</span> is the empty byte sequence,
-<span title=concept-response-location>location</span> is null,
 <span title=concept-response-headers>headers</span> is an empty list, and
 <span title=concept-response-body>body</span> is null.
 
@@ -983,12 +979,12 @@ steps:
    <span title=concept-header-name>name</span> is `<code title>Location</code>` within
    <var title>response</var>'s <span title=concept-response-headers>headers</span>.
 
-   <li><p>Let <var title>parsed location</var> be the result of
+   <li><p>Let <var title>locationURL</var> be the result of
    <span data-anolis-spec=url title=concept-url-parser>parsing</span>
    <var title>location</var> with <var title>request</var>'s
    <span title=concept-request-url>url</span>.
 
-   <li><p>If <var title>parsed location</var> is failure, return a
+   <li><p>If <var title>locationURL</var> is failure, return a
    <span title=concept-network-error>network error</span>.
 
    <li><p>If <var title>request</var>'s
@@ -1001,30 +997,25 @@ steps:
    <li><p>Set <var title>response</var>'s <span title=concept-response-type>type</span> to
    <i title>redirect</i>.
 
-   <li><p>Set <var title>response</var>'s
-   <span title=concept-response-location>location</span> to
-   <var title>parsed location</var>.
-
    <li>
     <p>If <var title>request</var>'s
     <span title=concept-request-manual-redirect-flag>manual redirect flag</span> is unset,
     run these substeps:
 
     <ol>
-     <li><p>If the <i title>CORS flag</i> is set and <var title>response</var>'s
-     <span title=concept-response-location>location</span>'s <span>origin</span> is not
+     <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
+     <span>origin</span> is not
      <var title>request</var>'s <span title=concept-request-url>url</span>'s
      <span>origin</span>, set <var title>request</var>'s
      <span title=concept-request-origin>origin</span> to a globally unique identifier.
 
-     <li><p>If the <i title>CORS flag</i> is set and <var title>response</var>'s
-     <span title=concept-response-location>location</span>'s
+     <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
      <span data-anolis-spec=url title=concept-url-username>username</span> or
      <span data-anolis-spec=url title=concept-url-password>password</span> is non-null,
      return a <span title=concept-network-error>network error</span>.
 
      <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
-     <var title>response</var>'s <span title=concept-response-location>location</span>.
+     <var title>locationURL</var>.
 
      <li><p>Return the result of performing a <span title=concept-fetch>fetch</span> using
      <var title>request</var>, with the <i title>CORS flag</i> set if set.
