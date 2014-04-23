@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-25-march-2014">Living Standard — Last Updated 25 March 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-23-april-2014">Living Standard — Last Updated 23 April 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-25 March 2014, the editor has made this specification available
+23 April 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -214,6 +214,11 @@ and <a href="#concept-request-headers" title="concept-request-headers">headers</
 <a href="#concept-header" title="concept-header">headers</a>.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-body" title="concept-request-body">body</dfn>. Unless stated otherwise a
+<a href="#concept-request" title="concept-request">request</a>'s <a href="#concept-request-body" title="concept-request-body">body</a>
+is null.
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-origin" title="concept-request-origin">origin</dfn>, and
 <dfn id="force-origin-header-flag">force <code title="">Origin</code> header flag</dfn>. Unless stated otherwise a
 <a href="#concept-request" title="concept-request">request</a>'s
@@ -224,25 +229,15 @@ and <a href="#concept-request-headers" title="concept-request-headers">headers</
 <dfn id="concept-request-referrer" title="concept-request-referrer">referrer</dfn>. Unless stated otherwise it is null.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-body" title="concept-request-body">body</dfn>. Unless stated otherwise a
-<a href="#concept-request" title="concept-request">request</a>'s <a href="#concept-request-body" title="concept-request-body">body</a>
-is null.
-
-<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="synchronous-flag">synchronous flag</dfn>. Unless stated otherwise a
 <a href="#concept-request" title="concept-request">request</a>'s <a href="#synchronous-flag">synchronous flag</a> is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-mode" title="concept-request-mode">mode</dfn>, which is one of <i title="">same-origin</i>,
-<i title="">tainted cross-origin</i>, and <i title="">CORS</i>. Unless stated otherwise,
+<i title="">tainted cross-origin</i>, <i title="">CORS</i> and
+<i title="">CORS-with-forced-preflight</i>. Unless stated otherwise,
 <a href="#concept-request" title="concept-request">request</a>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a>
 is <i title="">tainted cross-origin</i>.
-
-<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="force-preflight-flag">force preflight flag</dfn>. Unless stated otherwise, it is unset.
-<span class="note no-backref">This is only considered when
-<a href="#concept-request" title="concept-request">request</a>'s
-<a href="#concept-request-mode" title="concept-request-mode">mode</a> is <i title="">CORS</i>.</span>
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</dfn>, which is
@@ -653,12 +648,12 @@ parameter in other standards.
    <dd><p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var title="">request</var>.
 
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-   "same-origin"
+   <i title="">same-origin</i>
 
    <dd><p>A <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-   "tainted cross-origin"
+   <i title="">tainted cross-origin</i>
    <dd>
     <p>Set <var title="">request</var>'s
     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
@@ -672,7 +667,8 @@ parameter in other standards.
 
    <dd><p>A <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
-   <dt><var title="">request</var>'s <a href="#force-preflight-flag">force preflight flag</a> is set
+   <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+   <i title="">CORS-with-forced-preflight</i>
    <dt><var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is not
    a <a href="#simple-method">simple method</a>
    <dt>A <a href="#concept-header" title="concept-header">header</a> in <var title="">request</var>'s
@@ -1128,7 +1124,8 @@ these steps:
    <var title="">request</var>, and
    <li>either <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
    is a not <a href="#simple-method">simple method</a> or <var title="">request</var>'s
-   <a href="#force-preflight-flag">force preflight flag</a> is set, and
+   <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+   <i title="">CORS-with-forced-preflight</i>, and
    <li>there is at least one <a href="#concept-header" title="concept-header">header</a>
    <a href="#concept-header-name" title="concept-header-name">name</a> in <var title="">request</var>'s
    <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> for which there is no
@@ -1238,11 +1235,14 @@ steps:
 
    <li>
     <p>If <var title="">methods</var> is empty and <var title="">request</var>'s
-    <a href="#force-preflight-flag">force preflight flag</a> is set, append <var title="">request</var>'s
+    <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+    <i title="">CORS-with-forced-preflight</i>, append <var title="">request</var>'s
     <a href="#concept-request-method" title="concept-request-method">method</a> to <var title="">methods</var>.
 
-    <p class="note">This ensures that a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> that happened
-    solely because of <var title="">request</var>'s <a href="#force-preflight-flag">force preflight flag</a> is too.
+    <p class="note no-backref">This ensures that a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> that
+    happened due to <var title="">request</var>'s
+    <a href="#concept-request-mode" title="concept-request-mode">mode</a> being
+    <i title="">CORS-with-forced-preflight</i> is <a href="#concept-cache" title="concept-cache">cached</a>.
 
    <li><p>If <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
    is not in <var title="">methods</var> and is not a <a href="#simple-method">simple method</a>, return
@@ -1484,8 +1484,8 @@ steps must be run:
  <var title="">referrer source</var> (if given).
 
  <li><p>Set <var title="">req</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> to
- same-origin if the <i>force same-origin flag</i> is set, and to tainted cross-origin
- otherwise.
+ <i title="">same-origin</i> if the <i>force same-origin flag</i> is set, and to
+ <i title="">tainted cross-origin</i> otherwise.
 
  <li><p>Set <var title="">req</var>'s
  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> if
@@ -1520,13 +1520,13 @@ or "<i>fail</i>", it must run these steps:
 
   <dl class="switch">
    <dt><var title="">mode</var> is "No CORS" and <var title="">default</var> is "<i>fail</i>"
-   <dd>same-origin
+   <dd><i title="">same-origin</i>
 
    <dt><var title="">mode</var> is "No CORS" and <var title="">default</var> is "<i>taint</i>"
-   <dd>tainted cross-origin
+   <dd><i title="">tainted cross-origin</i>
 
    <dt>Otherwise
-   <dd>CORS
+   <dd><i title="">CORS</i>
   </dl>
 
  <li>
