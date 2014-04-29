@@ -184,8 +184,9 @@ return the <span title=concept-header-value>values</span> obtained for the given
 <dfn title=concept-request-headers>headers</dfn>. Unless stated otherwise
 <span title=concept-request>request</span>'s
 <span title=concept-request-author-headers>author headers</span>
-and <span title=concept-request-headers>headers</span> are empty lists of
-<span title=concept-header>headers</span>.
+and <span title=concept-request-headers>headers</span> are empty maps, mapping a
+<span title=concept-header-name>header name</span> to one or more
+<span title=concept-header-value>header values</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-body>body</dfn>. Unless stated otherwise a
@@ -431,6 +432,10 @@ evolves over time. That is, not all its fields are available straight away.
 <span title=concept-response-status-message>status message</span> is `<code title>OK</code>`,
 <span title=concept-response-headers>headers</span> is an empty list, and
 <span title=concept-response-body>body</span> is null.
+
+<p class="note no-backref">A <span title=concept-response>response</span>'s
+<span title=concept-response-headers>headers</span> is a list rather than map to be able
+to deal with broken servers.
 
 <hr>
 
@@ -704,16 +709,86 @@ parameter in other standards.
  <li><p>Modify <var title>request</var>'s <span title=concept-request-url>url</span> per
  HTTP Strict Transport Security, if applicable. <span data-anolis-ref>HSTS</span>
 
- <li><p class=XXX>Invoke CSP hook with <var title>request</var>'s
- <span title=concept-request-url>url</span>,
- <span title=concept-request-context>context</span>, and
- <span title=concept-request-client>client</span>.
-
  <li><p>Let <var title>url</var> be <var title>request</var>'s
  <span title=concept-request-url>url</span>.
 
  <li><p>Let <var title>origin</var> be <var title>request</var>'s
  <span title=concept-request-origin>origin</span>.
+
+ <li><p class=XXX>Invoke CSP hook with <var title>request</var>'s
+ <var title>url</var>,
+ <span title=concept-request-context>context</span>, and
+ <span title=concept-request-client>client</span>.
+
+ <li>
+  <p class=XXX>Invoke CSP referrer hook to determine appropriate
+  <code title>Referer</code>.
+
+  <p class="note no-backref">User agents are encouraged to provide the end user with
+  options to always exclude `<code title>Referer</code>`
+  <span title=concept-header>headers</span> or have it expose less sensitive information.
+
+ <li><p>If <var title>request</var>'s <span>force <code>Origin</code> header flag</span>
+ is set, set `<code title>Origin</code>` to <var title>origin</var>,
+ <span class=XXX>serialized to a byte sequence</span>, in
+ <var title>request</var>'s <span title=concept-request-headers>headers</span>.
+
+ <li>
+  <p>If <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+  <i title>never</i>, or <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+  <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these substeps:
+
+  <ol>
+   <li><p>Set a `<code title>Cookie</code>` <span title=concept-header>header</span> in
+   <var title>request</var>'s <span title=concept-request-headers>headers</span> for
+   <var title>request</var> per HTTP State Management Mechanism.
+   <span data-anolis-ref>COOKIES</span>
+
+   <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
+   <li><p>Let <var title>authorizationValue</var> be null.
+
+   <li><p>If there's an <b title>authentication entry</b> for <var title>request</var> and
+   either <var title>request</var>'s
+   <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is
+   unset or <var title>url</var> does not
+   <span data-anolis-spec=url>include credentials</span>, set
+   <var title>authorizationValue</var> to <b title>authentication entry</b>.
+   <!-- need to define the cache concept -->
+
+   <li><p>Otherwise, if <var title>url</var> does
+   <span data-anolis-spec=url>include credentials</span> and the
+   <i title>HTTP authentication flag</i> is set, set
+   <var title>authorizationValue</var> to <var title>url</var>,
+   <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
+
+   <li><p>If <var title>authorizationValue</var> is non-null, set
+   `<code title>Authorization</code>` to <var title>authorizationValue</var> in
+   <var title>request</var>'s <span title=concept-request-headers>headers</span>
+  </ol>
+
+ <li>
+  <p>If there's a <b title>proxy authentication entry</b>, use it as appropriate.
+  <span data-anolis-ref>HTTP</span>
+
+  <p class=note>This intentionally does not depend on <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
+
+ <li><p>User agents may set additional <span title=concept-header>headers</span> in
+ <var title>request</var>'s <span title=concept-request-headers>headers</span> at this
+ point.
+ <!-- weaksauce -->
+
+ <li>
+  <p>Copy all of <var title>request</var>'s
+  <span title=concept-request-author-headers>author headers</span> to
+  <var title>request</var>'s <span title=concept-request-headers>headers</span> as long as
+  their <span title=concept-header-name>name</span> is <em>not</em> already present in
+  <var title>request</var>'s <span title=concept-request-headers>headers</span>.
+
+  <p class="note no-backref"><span title=concept-forbidden-author-header-names>Forbidden author header names</span>
+  are not supposed to reach this point.
 
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is unset and
  <span title=concept-fetch>fetch</span> is not invoked recursively, run the remaining steps asynchronously.
@@ -909,98 +984,21 @@ steps:
  <dt>"<code title>http</code>"
  <dt>"<code title>https</code>"
  <dd>
-  <p>Make an HTTP request following the requirements from HTTP and TLS as appropriate,
-  with these additional constraints:
+  <p>Make an HTTP request using <var title>request</var> following the requirements from
+  HTTP and TLS as appropriate, with these additional constraints:
 
   <ol>
    <li>
-    <p>Set the HTTP request method to <var title>request</var>'s
-    <span title=concept-request-method>method</span>.
-
-    <p class="note no-backref"><span title=concept-forbidden-methods>Forbidden methods</span>
-    are not supposed to reach this point.
-
-   <li>
-    <p>If <var title>request</var>'s
-    <span title=concept-request-referrer>referrer</span> is not null, include a
-    `<code title>Referer</code>` <span title=concept-header>header</span>
-    whose <span title=concept-header-value>value</span> is <var title>request</var>'s
-    <span title=concept-request-referrer>referrer</span>.
-
-    <p class="note no-backref">User agents are encouraged to provide the end user with
-    options to always exclude `<code title>Referer</code>`
-    <span title=concept-header>headers</span> or have it expose less sensitive
-    information.
-
-   <li>
-    <p>If <var title>request</var>'s <span>force <code>Origin</code> header flag</span> is
-    set, include an `<code title>Origin</code>` <span title=concept-header>header</span>
-    whose <span title=concept-header-value>value</span> is <var title>request</var>'s
-    <span title=concept-request-origin>origin</span>,
-    <span class=XXX>serialized to a byte sequence</span>.
-
-   <li>
-    <p>Include all of <var title>request</var>'s
-    <span title=concept-request-headers>headers</span> and let them replace any
-    <span title=concept-header>headers</span> with the same
-    <span title=concept-header-name>name</span> already present in the HTTP request.
-
-   <li>
-    <p>Include all of <var title>request</var>'s
-    <span title=concept-request-author-headers>author headers</span> as long as their
-    <span title=concept-header-name>name</span> is <em>not</em> already present in the
-    HTTP request.
-
-    <p class="note no-backref"><span title=concept-forbidden-author-header-names>Forbidden author header names</span>
-    are not supposed to reach this point.
-
-   <li>
-    <p>If <var title>request</var>'s
-    <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-    <i title>never</i> or <var title>request</var>'s
-    <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-    <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these substeps:
-
-    <ol>
-     <li><p>Include `<code title>Cookie</code>` headers associated with
-     <var title>request</var>'s <span title=concept-request-url>url</span>.
-     <span data-anolis-ref>COOKIES</span>
-
-     <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
-     <li><p>If there's an <b title>authentication entry</b> for <var title>request</var>'s
-     <span title=concept-request-url>url</span> and either
-     <var title>request</var>'s <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is unset or
-     <var title>request</var>'s <span title=concept-request-url>url</span>
-     does not include credentials, include the <code>Authorization</code> header from the
-     <b title>authentication entry</b>.
-     <!-- XXX need to define "includes credentials" in URL as username != "" and password != null??
-              need to define the cache concept -->
-
-     <li><p>Otherwise, if <var title>request</var>'s <span title=concept-request-url>url</span>
-     includes credentials, and the <i title>HTTP authentication flag</i> is set, include an
-     <code>Authorization</code> header using those credentials.
-     <!-- XXX ... -->
-    </ol>
-
-   <li>
-    <p>If there's a <b title>proxy authentication entry</b>, use it as appropriate.
-    <span data-anolis-ref>HTTP</span>
-
-    <p class=note>This intentionally does not depend on <var title>request</var>'s
-    <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
-
-   <li>
     <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
-    non-null, include it, and <span data-anolis-spec=html title="queue a task">queue</span>
+    non-null, <span data-anolis-spec=html title="queue a task">queue</span>
     a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
     byte of <var title>request</var>'s <span title=concept-request-body>body</span>
     transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
     for <var title>request</var>.
 
-    <p>If included, when <var title>request</var>'s
-    <span title=concept-request-body>body</span> is fully transmitted (and the HTTP
-    request has not been observably terminated yet),
-    <span data-anolis-spec=html title="queue a task">queue</span>
+    <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+    non-null and fully transmitted (and the HTTP request has not been observably
+    terminated yet), <span data-anolis-spec=html title="queue a task">queue</span>
     a <span data-anolis-spec=html title=concept-task>task</span> to
     <dfn>process request end-of-file</dfn> for <var title>request</var>.
 
