@@ -520,9 +520,8 @@ information.
 <p class=note>The `<code title=http-origin>Origin</code>` header is a stripped-down version
 of the `<code title=http-referer>Referer</code>` [sic] header as to not reveal confidential
 <span data-anolis-spec=url title=concept-url-path>path</span> information. It is used for
-all <span title=concept-basic-fetch>basic fetches</span> whose <i title>CORS flag</i> is
-set as well as <span title=concept-fetch>fetches</span> where
-<span title=concept-request>request</span>'s
+all <span title=concept-http-fetch>HTTP fetches</span> whose <i title>CORS flag</i> is
+set as well as those where <span title=concept-request>request</span>'s
 <span title=concept-request-method>method</span> is `<code title>POST</code>`. Due to
 compatibility constraints it is not included in all fetches.
 <!-- Ian Hickson told me Adam Barth researched that -->
@@ -720,76 +719,6 @@ parameter in other standards.
  <span title=concept-request-context>context</span>, and
  <span title=concept-request-client>client</span>.
 
- <li>
-  <p class=XXX>Invoke CSP referrer hook to determine appropriate
-  <code title>Referer</code>.
-
-  <p class="note no-backref">User agents are encouraged to provide the end user with
-  options to always exclude `<code title>Referer</code>`
-  <span title=concept-header>headers</span> or have it expose less sensitive information.
-
- <li><p>If <var title>request</var>'s <span>force <code>Origin</code> header flag</span>
- is set, set `<code title>Origin</code>` to <var title>origin</var>,
- <span class=XXX>serialized to a byte sequence</span>, in
- <var title>request</var>'s <span title=concept-request-headers>headers</span>.
-
- <li>
-  <p>If <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>never</i>, or <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these substeps:
-
-  <ol>
-   <li><p>Set a `<code title>Cookie</code>` <span title=concept-header>header</span> in
-   <var title>request</var>'s <span title=concept-request-headers>headers</span> for
-   <var title>request</var> per HTTP State Management Mechanism.
-   <span data-anolis-ref>COOKIES</span>
-
-   <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
-   <li><p>Let <var title>authorizationValue</var> be null.
-
-   <li><p>If there's an <b title>authentication entry</b> for <var title>request</var> and
-   either <var title>request</var>'s
-   <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is
-   unset or <var title>url</var> does not
-   <span data-anolis-spec=url>include credentials</span>, set
-   <var title>authorizationValue</var> to <b title>authentication entry</b>.
-   <!-- need to define the cache concept -->
-
-   <li><p>Otherwise, if <var title>url</var> does
-   <span data-anolis-spec=url>include credentials</span> and the
-   <i title>HTTP authentication flag</i> is set, set
-   <var title>authorizationValue</var> to <var title>url</var>,
-   <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
-
-   <li><p>If <var title>authorizationValue</var> is non-null, set
-   `<code title>Authorization</code>` to <var title>authorizationValue</var> in
-   <var title>request</var>'s <span title=concept-request-headers>headers</span>
-  </ol>
-
- <li>
-  <p>If there's a <b title>proxy authentication entry</b>, use it as appropriate.
-  <span data-anolis-ref>HTTP</span>
-
-  <p class=note>This intentionally does not depend on <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
-
- <li><p>User agents may set additional <span title=concept-header>headers</span> in
- <var title>request</var>'s <span title=concept-request-headers>headers</span> at this
- point.
- <!-- weaksauce -->
-
- <li>
-  <p>Copy all of <var title>request</var>'s
-  <span title=concept-request-author-headers>author headers</span> to
-  <var title>request</var>'s <span title=concept-request-headers>headers</span> as long as
-  their <span title=concept-header-name>name</span> is <em>not</em> already present in
-  <var title>request</var>'s <span title=concept-request-headers>headers</span>.
-
-  <p class="note no-backref"><span title=concept-forbidden-author-header-names>Forbidden author header names</span>
-  are not supposed to reach this point.
-
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is unset and
  <span title=concept-fetch>fetch</span> is not invoked recursively, run the remaining steps asynchronously.
 
@@ -842,7 +771,7 @@ parameter in other standards.
     <p>Set <var title>request</var>'s
     <span title=concept-request-response-tainting>response tainting</span> to
     <i title>CORS</i>.
-    <p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using
+    <p>The result of performing a <span title=concept-http-fetch>HTTP fetch</span> using
     <var title>request</var> with the <i title>CORS flag</i> set.
   </dl>
 
@@ -919,10 +848,10 @@ parameter in other standards.
 
 <h3>Basic fetch</h3>
 
-<p>To perform a <dfn title=concept-basic-fetch>basic fetch</dfn> using <var title>request</var>, with an optional
-<i title>CORS flag</i> and <i title>HTTP authentication flag</i>, switch on <var title>request</var>'s
+<p>To perform a <dfn title=concept-basic-fetch>basic fetch</dfn> using
+<var title>request</var>, switch on <var title>request</var>'s
 <span title=concept-request-url>url</span>'s
-<span data-anolis-spec=url title=concept-url-scheme>scheme</span> and run the associated
+<span data-anolis-spec=url title=concept-url-scheme>scheme</span>, and run the associated
 steps:
 
 <dl class=switch>
@@ -984,26 +913,112 @@ steps:
  <dt>"<code title>http</code>"
  <dt>"<code title>https</code>"
  <dd>
-  <p>Make an HTTP request using <var title>request</var> following the requirements from
-  HTTP and TLS as appropriate, with these additional constraints:
+  <p>Return the result of performing an <span>HTTP fetch</span> using
+  <var title>request</var>.
+
+ <dt>Otherwise
+ <dd><p>Return a <span title=concept-network-error>network error</span>.
+</dl>
+
+
+<h3>HTTP fetch</h3>
+
+<p>To perform an <dfn title=concept-http-fetch>HTTP fetch</dfn> using
+<var title>request</var> with an optional <i title>CORS flag</i> and
+<i title>authentication flag</i>, run these steps:
+
+<ol>
+ <!-- Upgrading "request" -->
+ <li>
+  <p class=XXX>Invoke CSP referrer hook to determine appropriate
+  <code title>Referer</code>.
+
+  <p class="note no-backref">User agents are encouraged to provide the end user with
+  options to always exclude `<code title>Referer</code>`
+  <span title=concept-header>headers</span> or have it expose less sensitive information.
+
+ <li><p>If <var title>request</var>'s <span>force <code>Origin</code> header flag</span>
+ is set, set `<code title>Origin</code>` to <var title>origin</var>,
+ <span class=XXX>serialized to a byte sequence</span>, in
+ <var title>request</var>'s <span title=concept-request-headers>headers</span>.
+
+ <li>
+  <p>If <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+  <i title>never</i>, or <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+  <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these substeps:
 
   <ol>
-   <li>
-    <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
-    non-null, <span data-anolis-spec=html title="queue a task">queue</span>
-    a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
-    byte of <var title>request</var>'s <span title=concept-request-body>body</span>
-    transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
-    for <var title>request</var>.
+   <li><p>Set a `<code title>Cookie</code>` <span title=concept-header>header</span> in
+   <var title>request</var>'s <span title=concept-request-headers>headers</span> for
+   <var title>request</var> per HTTP State Management Mechanism.
+   <span data-anolis-ref>COOKIES</span>
 
-    <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
-    non-null and fully transmitted (and the HTTP request has not been observably
-    terminated yet), <span data-anolis-spec=html title="queue a task">queue</span>
-    a <span data-anolis-spec=html title=concept-task>task</span> to
-    <dfn>process request end-of-file</dfn> for <var title>request</var>.
+   <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
+   <li><p>Let <var title>authorizationValue</var> be null.
 
-    <p>Use the <span data-anolis-spec=html>networking task source</span>.
+   <li><p>If there's an <b title>authentication entry</b> for <var title>request</var> and
+   either <var title>request</var>'s
+   <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is
+   unset or <var title>url</var> does not
+   <span data-anolis-spec=url>include credentials</span>, set
+   <var title>authorizationValue</var> to <b title>authentication entry</b>.
+   <!-- need to define the cache concept -->
+
+   <li><p>Otherwise, if <var title>url</var> does
+   <span data-anolis-spec=url>include credentials</span> and the
+   <i title>authentication flag</i> is set, set
+   <var title>authorizationValue</var> to <var title>url</var>,
+   <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
+
+   <li><p>If <var title>authorizationValue</var> is non-null, set
+   `<code title>Authorization</code>` to <var title>authorizationValue</var> in
+   <var title>request</var>'s <span title=concept-request-headers>headers</span>
   </ol>
+
+ <li>
+  <p>If there's a <b title>proxy authentication entry</b>, use it as appropriate.
+  <span data-anolis-ref>HTTP</span>
+
+  <p class=note>This intentionally does not depend on <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
+
+ <li><p>User agents may set additional <span title=concept-header>headers</span> in
+ <var title>request</var>'s <span title=concept-request-headers>headers</span> at this
+ point.
+ <!-- weaksauce -->
+
+ <li>
+  <p>Copy all of <var title>request</var>'s
+  <span title=concept-request-author-headers>author headers</span> to
+  <var title>request</var>'s <span title=concept-request-headers>headers</span> as long as
+  their <span title=concept-header-name>name</span> is <em>not</em> already present in
+  <var title>request</var>'s <span title=concept-request-headers>headers</span>.
+
+  <p class="note no-backref"><span title=concept-forbidden-author-header-names>Forbidden author header names</span>
+  are not supposed to reach this point.
+
+ <!-- Making a "request" -->
+ <li>
+  <p>Let <var title>response</var> be the result of making HTTP request using
+  <var title>request</var> following the requirements from HTTP as appropriate.
+  <!-- XXX put "HTTP request" in its own section for SW integration -->
+
+  <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+  non-null, <span data-anolis-spec=html title="queue a task">queue</span>
+  a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
+  byte of <var title>request</var>'s <span title=concept-request-body>body</span>
+  transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
+  for <var title>request</var>.
+
+  <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+  non-null and fully transmitted (and the HTTP request has not been observably
+  terminated yet), <span data-anolis-spec=html title="queue a task">queue</span>
+  a <span data-anolis-spec=html title=concept-task>task</span> to
+  <dfn>process request end-of-file</dfn> for <var title>request</var>.
+
+  <p>Use the <span data-anolis-spec=html>networking task source</span>.
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
   return a <span title=concept-network-error>network error</span>. If this is due to
@@ -1012,17 +1027,20 @@ steps:
   <var title>reason</var>, set the return value's
   <span title=concept-response-termination-reason>termination reason</span> to
   <var title>reason</var>.
+  <!-- XXX this should be part of that "HTTP request" algorithm -->
 
-  <p>Otherwise, when the headers from the resource are obtained, let
-  <var title>response</var> be a new <span title=concept-response>response</span> and set
-  its fields appropriately.
-  <!-- XXX do we need to spell this out? -->
+ <!-- Dealing with a "response" -->
+ <li><p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
+ <var title>request</var> and <var title>response</var> returns failure, return a
+ <span title=concept-network-error>network error</span>.
 
+ <li>
   <p>If there are cookies to be set and either <var title>request</var>'s
   <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
   <i title>never</i>, or <var title>request</var>'s
   <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
   <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these steps:
+  <!-- XXX should be a simple Set-Cookie header check -->
 
   <ol>
    <li><p>Wait until ownership of the <span data-anolis-spec=html>storage mutex</span> can
@@ -1032,6 +1050,7 @@ steps:
 
    <li>
     <p>Update the cookies. <span data-anolis-ref>COOKIES</span>
+    <!-- XXX ideally references something -->
 
     <p class=note>This is a fingerprinting vector.
 
@@ -1039,155 +1058,150 @@ steps:
    again free.
   </ol>
 
-  <p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
-  <var title>request</var> and <var title>response</var> returns failure, return a
-  <span title=concept-network-error>network error</span>.
+ <li>
+  <p>Then, switch on <var title>response</var>'s
+  <span title=concept-response-status>status</span>:
 
-  <p>If <var title>response</var>'s <span title=concept-response-status>status</span> is
-  304, run these steps:
-
-  <ol class=XXX>
-   <li><p>For responses that are a result of a user agent generated conditional request
+  <dl class=switch>
+   <dt>304
+   <dd><p class=XXXX>For responses that are a result of a user agent generated conditional request
    the user agent must act as if the server gave a <code>200 OK</code> response with the
    appropriate content. The user agent must allow a <var title>request</var>'s
    <span title=concept-request-author-headers>author headers</span> to
    override automatic cache validation (e.g. <code>If-None-Match</code> or
    <code>If-Modified-Since</code>), in which case <code>304 Not Modified</code> responses
    must be passed through.
-  </ol>
 
-  <p>Otherwise, if
-  <var title>response</var>'s <span title=concept-response-status>status</span> is
-  301, 302, 303, 307, or 308, run these steps:
-
-  <ol>
-   <li><p>If <var title>response</var>'s
-   <span title=concept-response-headers>headers</span> do not contain a
-   <span title=concept-header>header</span> whose
-   <span title=concept-header-name>name</span> is `<code title>Location</code>`, return
-   <var title>response</var>.
-
-   <li><p>If <var title>response</var>'s
-   <span title=concept-response-headers>headers</span> contain more than one
-   <span title=concept-header>header</span> whose
-   <span title=concept-header-name>name</span> is `<code title>Location</code>`, return a
-   <span title=concept-network-error>network error</span>.
-   <!-- only Gecko does this; if removed add "first" below -->
-
-   <li><p>Let <var title>location</var> be the
-   <span title=concept-header-value>value</span> of the
-   <span title=concept-header>header</span> whose
-   <span title=concept-header-name>name</span> is `<code title>Location</code>` within
-   <var title>response</var>'s <span title=concept-response-headers>headers</span>.
-
-   <li><p>Let <var title>locationURL</var> be the result of
-   <span data-anolis-spec=url title=concept-url-parser>parsing</span>
-   <var title>location</var> with <var title>request</var>'s
-   <span title=concept-request-url>url</span>.
-
-   <li><p>If <var title>locationURL</var> is failure, return a
-   <span title=concept-network-error>network error</span>.
-
-   <li><p>If <var title>request</var>'s
-   <span title=concept-request-redirect-count>redirect count</span> is twenty, return a
-   <span title=concept-network-error>network error</span>.
-
-   <li><p>Increase <var title>request</var>'s
-   <span title=concept-request-redirect-count>redirect count</span> by one.
-
-   <li><p>Set <var title>response</var>'s <span title=concept-response-type>type</span> to
-   <i title>redirect</i>.
-
-   <li>
-    <p>If <var title>request</var>'s
-    <span title=concept-request-manual-redirect-flag>manual redirect flag</span> is unset,
-    run these substeps:
-
+   <dt>301
+   <dt>302
+   <dt>303
+   <dt>307
+   <dt>308
+   <dd>
     <ol>
-     <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
-     <span>origin</span> is not
-     <var title>request</var>'s <span title=concept-request-url>url</span>'s
-     <span>origin</span>, set <var title>request</var>'s
-     <span title=concept-request-origin>origin</span> to a globally unique identifier.
+     <li><p>If <var title>response</var>'s
+     <span title=concept-response-headers>headers</span> do not contain a
+     <span title=concept-header>header</span> whose
+     <span title=concept-header-name>name</span> is `<code title>Location</code>`, return
+     <var title>response</var>.
 
-     <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
-     <span data-anolis-spec=url title=concept-url-username>username</span> or
-     <span data-anolis-spec=url title=concept-url-password>password</span> is non-null,
-     return a <span title=concept-network-error>network error</span>.
+     <li><p>If <var title>response</var>'s
+     <span title=concept-response-headers>headers</span> contain more than one
+     <span title=concept-header>header</span> whose
+     <span title=concept-header-name>name</span> is `<code title>Location</code>`, return a
+     <span title=concept-network-error>network error</span>.
+     <!-- only Gecko does this; if removed add "first" below -->
 
-     <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
-     <var title>locationURL</var>.
+     <li><p>Let <var title>location</var> be the
+     <span title=concept-header-value>value</span> of the
+     <span title=concept-header>header</span> whose
+     <span title=concept-header-name>name</span> is `<code title>Location</code>` within
+     <var title>response</var>'s <span title=concept-response-headers>headers</span>.
 
-     <li><p>Return the result of performing a <span title=concept-fetch>fetch</span> using
-     <var title>request</var>, with the <i title>CORS flag</i> set if set.
-    </ol>
-  </ol>
+     <li><p>Let <var title>locationURL</var> be the result of
+     <span data-anolis-spec=url title=concept-url-parser>parsing</span>
+     <var title>location</var> with <var title>request</var>'s
+     <span title=concept-request-url>url</span>.
 
-  <p>Otherwise, if
-  <var title>response</var>'s <span title=concept-response-status>status</span> is 401,
-  run these steps:
+     <li><p>If <var title>locationURL</var> is failure, return a
+     <span title=concept-network-error>network error</span>.
 
-  <ol>
-   <li><p>If the <i title>CORS flag</i> is set, return <var title>response</var>.
+     <li><p>If <var title>request</var>'s
+     <span title=concept-request-redirect-count>redirect count</span> is twenty, return a
+     <span title=concept-network-error>network error</span>.
 
-   <li class=XXX><p>Needs testing: multiple <code>WWW-Authenticate</code> headers,
-   missing, parsing issues.
+     <li><p>Increase <var title>request</var>'s
+     <span title=concept-request-redirect-count>redirect count</span> by one.
 
-   <li>
-    <p>If <var title>request</var>'s
-    <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span>
-    is unset, or the <i title>HTTP authentication flag</i> is set, run these substeps:
+     <li><p>Set <var title>response</var>'s <span title=concept-response-type>type</span> to
+     <i title>redirect</i>.
 
-    <ol>
-     <li><p>Prompt the end user for a username and password.
+     <li>
+      <p>If <var title>request</var>'s
+      <span title=concept-request-manual-redirect-flag>manual redirect flag</span> is unset,
+      run these substeps:
 
-     <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span>'s
-     <span data-anolis-spec=url title=concept-url-username>username</span> and
-     <span data-anolis-spec=url title=concept-url-password>password</span> to the given
-     values.
-     <!-- XXX sanitization? -->
+      <ol>
+       <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
+       <span>origin</span> is not
+       <var title>request</var>'s <span title=concept-request-url>url</span>'s
+       <span>origin</span>, set <var title>request</var>'s
+       <span title=concept-request-origin>origin</span> to a globally unique identifier.
+
+       <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
+       <span data-anolis-spec=url title=concept-url-username>username</span> or
+       <span data-anolis-spec=url title=concept-url-password>password</span> is non-null,
+       return a <span title=concept-network-error>network error</span>.
+
+       <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
+       <var title>locationURL</var>.
+
+       <li><p>Return the result of performing a <span title=concept-fetch>fetch</span> using
+       <var title>request</var>, with the <i title>CORS flag</i> set if set.
+       <!-- Unfortunately this has to invoke fetch to get response tainting correct -->
+      </ol>
     </ol>
 
-   <li><p>Return the result of performing a <span title=concept-basic-fetch>basic fetch</span> using
-   <var title>request</var>, with the <i title>HTTP authentication flag</i> set.
-  </ol>
+   <dt>401
+   <dd>
+    <ol>
+     <li><p>If the <i title>CORS flag</i> is set, return <var title>response</var>.
 
-  <p>Otherwise, if
-  <var title>response</var>'s <span title=concept-response-status>status</span> is 407,
-  run these steps:
+     <li class=XXX><p>Needs testing: multiple <code>WWW-Authenticate</code> headers,
+     missing, parsing issues.
 
-  <ol>
-   <li class=XXX><p>Needs testing: multiple <code>Proxy-Authenticate</code> headers,
-   missing, parsing issues.
+     <li>
+      <p>If <var title>request</var>'s
+      <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span>
+      is unset, or the <i title>authentication flag</i> is set, run these substeps:
 
-   <li>
-    <p>Prompt the end user as appropriate and store the result as appropriate as a
-    <b title>proxy authentication entry</b>.
-    <span data-anolis-ref>HTTP</span>
+      <ol>
+       <li><p>Prompt the end user for a username and password.
 
-    <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
+       <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span>'s
+       <span data-anolis-spec=url title=concept-url-username>username</span> and
+       <span data-anolis-spec=url title=concept-url-password>password</span> to the given
+       values.
+       <!-- XXX sanitization? -->
+      </ol>
 
-   <li><p>Return the result of performing <span title=concept-basic-fetch>basic fetch</span> using
-   <var title>request</var>.
-  </ol>
+     <li><p>Return the result of performing an
+     <span title=concept-http-fetch>HTTP fetch</span> using <var title>request</var>, with
+     the <i title>authentication flag</i> set.
+    </ol>
 
-  <p>If the <i title>HTTP authentication flag</i> is set, create an <b title>authentication entry</b> for
-  <var title>request</var>'s <span title=concept-request-url>url</span> and the given
-  realm. <span data-anolis-ref>HTTPAUTH</span>
+   <dt>407
+   <dd>
+    <ol>
+     <li class=XXX><p>Needs testing: multiple <code>Proxy-Authenticate</code> headers,
+     missing, parsing issues.
 
-  <p>Return <var title>response</var>, but continue with the request and growing
-  <var title>response</var>'s <span title=concept-response-body>body</span>. If at any
-  point <span title=concept-fetch>fetch</span> is
-  <span title=concept-fetch-terminate>terminated</span> with reason
-  <var title>reason</var>, set <var title>response</var>'s
-  <span title=concept-response-termination-reason>termination reason</span> to
-  <var title>reason</var>. <span class=note>This modifies <var title>response</var> after
-  it has been returned. Logic in <span title=concept-fetch>fetch</span> takes care of the
-  rest.</span>
+     <li>
+      <p>Prompt the end user as appropriate and store the result as appropriate as a
+      <b title>proxy authentication entry</b>.
+      <span data-anolis-ref>HTTP</span>
 
- <dt>Otherwise
- <dd><p>Return a <span title=concept-network-error>network error</span>.
-</dl>
+      <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
+
+     <li><p>Return the result of performing <span title=concept-basic-fetch>basic fetch</span> using
+     <var title>request</var>.
+    </ol>
+  </dl>
+
+ <li><p>If the <i title>authentication flag</i> is set, create an
+ <b title>authentication entry</b> for <var title>request</var> and the given realm.
+ <span data-anolis-ref>HTTPAUTH</span>
+
+ <li><p>Return <var title>response</var>, but continue with the request and growing
+ <var title>response</var>'s <span title=concept-response-body>body</span>. If at any
+ point <span title=concept-fetch>fetch</span> is
+ <span title=concept-fetch-terminate>terminated</span> with reason
+ <var title>reason</var>, set <var title>response</var>'s
+ <span title=concept-response-termination-reason>termination reason</span> to
+ <var title>reason</var>. <span class="note no-backref">This modifies
+ <var title>response</var> after it has been returned. Logic in
+ <span title=concept-fetch>fetch</span> takes care of the rest.</span>
+</ol>
 
 
 <h3>CORS fetch with preflight</h3>
@@ -1229,7 +1243,7 @@ these steps:
  <span title=concept-request-manual-redirect-flag>manual redirect flag</span>.
 
  <li><p>Let <var title>response</var> be a
- <span title=concept-basic-fetch>basic fetch</span> using <var title>request</var> with
+ <span title=concept-http-fetch>HTTP fetch</span> using <var title>request</var> with
  the <i title>CORS flag</i> set.
 
  <li><p>If <var title>response</var> is a <span title=concept-redirect>redirect</span>,
@@ -1289,7 +1303,7 @@ steps:
  <span title=concept-request-manual-redirect-flag>manual redirect flag</span>.
 
  <li><p>Let <var title>response</var> be the result of performing a
- <span title=concept-basic-fetch>basic fetch</span> using <var title>preflight</var> with the <i title>CORS flag</i>
+ <span title=concept-http-fetch>HTTP fetch</span> using <var title>preflight</var> with the <i title>CORS flag</i>
  set.
 
  <li>

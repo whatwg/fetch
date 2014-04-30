@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-29-april-2014">Living Standard — Last Updated 29 April 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-30-april-2014">Living Standard — Last Updated 30 April 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-29 April 2014, the editor has made this specification available
+30 April 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -73,10 +73,11 @@ fetching.
  <li><a href="#fetching"><span class="secno">4 </span>Fetching</a>
   <ol class="toc">
    <li><a href="#basic-fetch"><span class="secno">4.1 </span>Basic fetch</a></li>
-   <li><a href="#cors-fetch-with-preflight"><span class="secno">4.2 </span>CORS fetch with preflight</a></li>
-   <li><a href="#cors-preflight-fetch"><span class="secno">4.3 </span>CORS preflight fetch</a></li>
-   <li><a href="#cors-preflight-cache"><span class="secno">4.4 </span>CORS preflight cache</a></li>
-   <li><a href="#cors-check"><span class="secno">4.5 </span>CORS check</a></ol></li>
+   <li><a href="#http-fetch"><span class="secno">4.2 </span>HTTP fetch</a></li>
+   <li><a href="#cors-fetch-with-preflight"><span class="secno">4.3 </span>CORS fetch with preflight</a></li>
+   <li><a href="#cors-preflight-fetch"><span class="secno">4.4 </span>CORS preflight fetch</a></li>
+   <li><a href="#cors-preflight-cache"><span class="secno">4.5 </span>CORS preflight cache</a></li>
+   <li><a href="#cors-check"><span class="secno">4.6 </span>CORS check</a></ol></li>
  <li><a class="no-num" href="#html-fetch">HTML fetch</a></li>
  <li><a class="no-num" href="#references">References</a></li>
  <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
@@ -546,9 +547,8 @@ information.
 <p class="note">The `<code title="http-origin"><a href="#http-origin">Origin</a></code>` header is a stripped-down version
 of the `<code title="http-referer">Referer</code>` [sic] header as to not reveal confidential
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> information. It is used for
-all <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetches</a> whose <i title="">CORS flag</i> is
-set as well as <a href="#concept-fetch" title="concept-fetch">fetches</a> where
-<a href="#concept-request" title="concept-request">request</a>'s
+all <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetches</a> whose <i title="">CORS flag</i> is
+set as well as those where <a href="#concept-request" title="concept-request">request</a>'s
 <a href="#concept-request-method" title="concept-request-method">method</a> is `<code title="">POST</code>`. Due to
 compatibility constraints it is not included in all fetches.
 <!-- Ian Hickson told me Adam Barth researched that -->
@@ -746,76 +746,6 @@ parameter in other standards.
  <a href="#concept-request-context" title="concept-request-context">context</a>, and
  <a href="#concept-request-client" title="concept-request-client">client</a>.
 
- <li>
-  <p class="XXX">Invoke CSP referrer hook to determine appropriate
-  <code title="">Referer</code>.
-
-  <p class="note no-backref">User agents are encouraged to provide the end user with
-  options to always exclude `<code title="">Referer</code>`
-  <a href="#concept-header" title="concept-header">headers</a> or have it expose less sensitive information.
-
- <li><p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a>
- is set, set `<code title="">Origin</code>` to <var title="">origin</var>,
- <span class="XXX">serialized to a byte sequence</span>, in
- <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
-
- <li>
-  <p>If <var title="">request</var>'s
-  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
-  <i title="">never</i>, or <var title="">request</var>'s
-  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
-  <i title="">CORS</i> and the <i title="">CORS flag</i> is unset, run these substeps:
-
-  <ol>
-   <li><p>Set a `<code title="">Cookie</code>` <a href="#concept-header" title="concept-header">header</a> in
-   <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> for
-   <var title="">request</var> per HTTP State Management Mechanism.
-   <a href="#refsCOOKIES">[COOKIES]</a>
-
-   <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
-   <li><p>Let <var title="">authorizationValue</var> be null.
-
-   <li><p>If there's an <b title="">authentication entry</b> for <var title="">request</var> and
-   either <var title="">request</var>'s
-   <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a> is
-   unset or <var title="">url</var> does not
-   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
-   <var title="">authorizationValue</var> to <b title="">authentication entry</b>.
-   <!-- need to define the cache concept -->
-
-   <li><p>Otherwise, if <var title="">url</var> does
-   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a> and the
-   <i title="">HTTP authentication flag</i> is set, set
-   <var title="">authorizationValue</var> to <var title="">url</var>,
-   <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
-
-   <li><p>If <var title="">authorizationValue</var> is non-null, set
-   `<code title="">Authorization</code>` to <var title="">authorizationValue</var> in
-   <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>
-  </ol>
-
- <li>
-  <p>If there's a <b title="">proxy authentication entry</b>, use it as appropriate.
-  <a href="#refsHTTP">[HTTP]</a>
-
-  <p class="note">This intentionally does not depend on <var title="">request</var>'s
-  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a>.
-
- <li><p>User agents may set additional <a href="#concept-header" title="concept-header">headers</a> in
- <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> at this
- point.
- <!-- weaksauce -->
-
- <li>
-  <p>Copy all of <var title="">request</var>'s
-  <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> to
-  <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> as long as
-  their <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> already present in
-  <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
-
-  <p class="note no-backref"><a href="#concept-forbidden-author-header-names" title="concept-forbidden-author-header-names">Forbidden author header names</a>
-  are not supposed to reach this point.
-
  <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is unset and
  <a href="#concept-fetch" title="concept-fetch">fetch</a> is not invoked recursively, run the remaining steps asynchronously.
 
@@ -868,7 +798,7 @@ parameter in other standards.
     <p>Set <var title="">request</var>'s
     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
     <i title="">CORS</i>.
-    <p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
+    <p>The result of performing a <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using
     <var title="">request</var> with the <i title="">CORS flag</i> set.
   </dl>
 
@@ -945,10 +875,10 @@ parameter in other standards.
 
 <h3 id="basic-fetch"><span class="secno">4.1 </span>Basic fetch</h3>
 
-<p>To perform a <dfn id="concept-basic-fetch" title="concept-basic-fetch">basic fetch</dfn> using <var title="">request</var>, with an optional
-<i title="">CORS flag</i> and <i title="">HTTP authentication flag</i>, switch on <var title="">request</var>'s
+<p>To perform a <dfn id="concept-basic-fetch" title="concept-basic-fetch">basic fetch</dfn> using
+<var title="">request</var>, switch on <var title="">request</var>'s
 <a href="#concept-request-url" title="concept-request-url">url</a>'s
-<a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> and run the associated
+<a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a>, and run the associated
 steps:
 
 <dl class="switch">
@@ -1010,26 +940,112 @@ steps:
  <dt>"<code title="">http</code>"
  <dt>"<code title="">https</code>"
  <dd>
-  <p>Make an HTTP request using <var title="">request</var> following the requirements from
-  HTTP and TLS as appropriate, with these additional constraints:
+  <p>Return the result of performing an <span>HTTP fetch</span> using
+  <var title="">request</var>.
+
+ <dt>Otherwise
+ <dd><p>Return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+</dl>
+
+
+<h3 id="http-fetch"><span class="secno">4.2 </span>HTTP fetch</h3>
+
+<p>To perform an <dfn id="concept-http-fetch" title="concept-http-fetch">HTTP fetch</dfn> using
+<var title="">request</var> with an optional <i title="">CORS flag</i> and
+<i title="">authentication flag</i>, run these steps:
+
+<ol>
+ <!-- Upgrading "request" -->
+ <li>
+  <p class="XXX">Invoke CSP referrer hook to determine appropriate
+  <code title="">Referer</code>.
+
+  <p class="note no-backref">User agents are encouraged to provide the end user with
+  options to always exclude `<code title="">Referer</code>`
+  <a href="#concept-header" title="concept-header">headers</a> or have it expose less sensitive information.
+
+ <li><p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a>
+ is set, set `<code title="">Origin</code>` to <var title="">origin</var>,
+ <span class="XXX">serialized to a byte sequence</span>, in
+ <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+
+ <li>
+  <p>If <var title="">request</var>'s
+  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
+  <i title="">never</i>, or <var title="">request</var>'s
+  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
+  <i title="">CORS</i> and the <i title="">CORS flag</i> is unset, run these substeps:
 
   <ol>
-   <li>
-    <p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
-    non-null, <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
-    a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> every 50ms or for each
-    byte of <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
-    transmitted, whichever is <em>least</em> request, to <dfn id="process-request-body">process request body</dfn>
-    for <var title="">request</var>.
+   <li><p>Set a `<code title="">Cookie</code>` <a href="#concept-header" title="concept-header">header</a> in
+   <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> for
+   <var title="">request</var> per HTTP State Management Mechanism.
+   <a href="#refsCOOKIES">[COOKIES]</a>
 
-    <p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
-    non-null and fully transmitted (and the HTTP request has not been observably
-    terminated yet), <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
-    a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
-    <dfn id="process-request-end-of-file">process request end-of-file</dfn> for <var title="">request</var>.
+   <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
+   <li><p>Let <var title="">authorizationValue</var> be null.
 
-    <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
+   <li><p>If there's an <b title="">authentication entry</b> for <var title="">request</var> and
+   either <var title="">request</var>'s
+   <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a> is
+   unset or <var title="">url</var> does not
+   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
+   <var title="">authorizationValue</var> to <b title="">authentication entry</b>.
+   <!-- need to define the cache concept -->
+
+   <li><p>Otherwise, if <var title="">url</var> does
+   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a> and the
+   <i title="">authentication flag</i> is set, set
+   <var title="">authorizationValue</var> to <var title="">url</var>,
+   <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
+
+   <li><p>If <var title="">authorizationValue</var> is non-null, set
+   `<code title="">Authorization</code>` to <var title="">authorizationValue</var> in
+   <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>
   </ol>
+
+ <li>
+  <p>If there's a <b title="">proxy authentication entry</b>, use it as appropriate.
+  <a href="#refsHTTP">[HTTP]</a>
+
+  <p class="note">This intentionally does not depend on <var title="">request</var>'s
+  <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a>.
+
+ <li><p>User agents may set additional <a href="#concept-header" title="concept-header">headers</a> in
+ <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> at this
+ point.
+ <!-- weaksauce -->
+
+ <li>
+  <p>Copy all of <var title="">request</var>'s
+  <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> to
+  <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> as long as
+  their <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> already present in
+  <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+
+  <p class="note no-backref"><a href="#concept-forbidden-author-header-names" title="concept-forbidden-author-header-names">Forbidden author header names</a>
+  are not supposed to reach this point.
+
+ <!-- Making a "request" -->
+ <li>
+  <p>Let <var title="">response</var> be the result of making HTTP request using
+  <var title="">request</var> following the requirements from HTTP as appropriate.
+  <!-- XXX put "HTTP request" in its own section for SW integration -->
+
+  <p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+  non-null, <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
+  a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> every 50ms or for each
+  byte of <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
+  transmitted, whichever is <em>least</em> request, to <dfn id="process-request-body">process request body</dfn>
+  for <var title="">request</var>.
+
+  <p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+  non-null and fully transmitted (and the HTTP request has not been observably
+  terminated yet), <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
+  a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+  <dfn id="process-request-end-of-file">process request end-of-file</dfn> for <var title="">request</var>.
+
+  <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
 
   <p>If the HTTP request is terminated before all headers from the resource are obtained,
   return a <a href="#concept-network-error" title="concept-network-error">network error</a>. If this is due to
@@ -1038,17 +1054,20 @@ steps:
   <var title="">reason</var>, set the return value's
   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
   <var title="">reason</var>.
+  <!-- XXX this should be part of that "HTTP request" algorithm -->
 
-  <p>Otherwise, when the headers from the resource are obtained, let
-  <var title="">response</var> be a new <a href="#concept-response" title="concept-response">response</a> and set
-  its fields appropriately.
-  <!-- XXX do we need to spell this out? -->
+ <!-- Dealing with a "response" -->
+ <li><p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
+ <var title="">request</var> and <var title="">response</var> returns failure, return a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
+ <li>
   <p>If there are cookies to be set and either <var title="">request</var>'s
   <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
   <i title="">never</i>, or <var title="">request</var>'s
   <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
   <i title="">CORS</i> and the <i title="">CORS flag</i> is unset, run these steps:
+  <!-- XXX should be a simple Set-Cookie header check -->
 
   <ol>
    <li><p>Wait until ownership of the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#storage-mutex">storage mutex</a> can
@@ -1058,6 +1077,7 @@ steps:
 
    <li>
     <p>Update the cookies. <a href="#refsCOOKIES">[COOKIES]</a>
+    <!-- XXX ideally references something -->
 
     <p class="note">This is a fingerprinting vector.
 
@@ -1065,158 +1085,153 @@ steps:
    again free.
   </ol>
 
-  <p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
-  <var title="">request</var> and <var title="">response</var> returns failure, return a
-  <a href="#concept-network-error" title="concept-network-error">network error</a>.
+ <li>
+  <p>Then, switch on <var title="">response</var>'s
+  <a href="#concept-response-status" title="concept-response-status">status</a>:
 
-  <p>If <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
-  304, run these steps:
-
-  <ol class="XXX">
-   <li><p>For responses that are a result of a user agent generated conditional request
+  <dl class="switch">
+   <dt>304
+   <dd><p class="XXXX">For responses that are a result of a user agent generated conditional request
    the user agent must act as if the server gave a <code>200 OK</code> response with the
    appropriate content. The user agent must allow a <var title="">request</var>'s
    <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> to
    override automatic cache validation (e.g. <code>If-None-Match</code> or
    <code>If-Modified-Since</code>), in which case <code>304 Not Modified</code> responses
    must be passed through.
-  </ol>
 
-  <p>Otherwise, if
-  <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
-  301, 302, 303, 307, or 308, run these steps:
-
-  <ol>
-   <li><p>If <var title="">response</var>'s
-   <a href="#concept-response-headers" title="concept-response-headers">headers</a> do not contain a
-   <a href="#concept-header" title="concept-header">header</a> whose
-   <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>`, return
-   <var title="">response</var>.
-
-   <li><p>If <var title="">response</var>'s
-   <a href="#concept-response-headers" title="concept-response-headers">headers</a> contain more than one
-   <a href="#concept-header" title="concept-header">header</a> whose
-   <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>`, return a
-   <a href="#concept-network-error" title="concept-network-error">network error</a>.
-   <!-- only Gecko does this; if removed add "first" below -->
-
-   <li><p>Let <var title="">location</var> be the
-   <a href="#concept-header-value" title="concept-header-value">value</a> of the
-   <a href="#concept-header" title="concept-header">header</a> whose
-   <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>` within
-   <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
-
-   <li><p>Let <var title="">locationURL</var> be the result of
-   <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
-   <var title="">location</var> with <var title="">request</var>'s
-   <a href="#concept-request-url" title="concept-request-url">url</a>.
-
-   <li><p>If <var title="">locationURL</var> is failure, return a
-   <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
-   <li><p>If <var title="">request</var>'s
-   <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is twenty, return a
-   <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
-   <li><p>Increase <var title="">request</var>'s
-   <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> by one.
-
-   <li><p>Set <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> to
-   <i title="">redirect</i>.
-
-   <li>
-    <p>If <var title="">request</var>'s
-    <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> is unset,
-    run these substeps:
-
+   <dt>301
+   <dt>302
+   <dt>303
+   <dt>307
+   <dt>308
+   <dd>
     <ol>
-     <li><p>If the <i title="">CORS flag</i> is set and <var title="">locationURL</var>'s
-     <span>origin</span> is not
-     <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
-     <span>origin</span>, set <var title="">request</var>'s
-     <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
+     <li><p>If <var title="">response</var>'s
+     <a href="#concept-response-headers" title="concept-response-headers">headers</a> do not contain a
+     <a href="#concept-header" title="concept-header">header</a> whose
+     <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>`, return
+     <var title="">response</var>.
 
-     <li><p>If the <i title="">CORS flag</i> is set and <var title="">locationURL</var>'s
-     <a class="external" href="http://url.spec.whatwg.org/#concept-url-username" title="concept-url-username">username</a> or
-     <a class="external" href="http://url.spec.whatwg.org/#concept-url-password" title="concept-url-password">password</a> is non-null,
-     return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+     <li><p>If <var title="">response</var>'s
+     <a href="#concept-response-headers" title="concept-response-headers">headers</a> contain more than one
+     <a href="#concept-header" title="concept-header">header</a> whose
+     <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>`, return a
+     <a href="#concept-network-error" title="concept-network-error">network error</a>.
+     <!-- only Gecko does this; if removed add "first" below -->
 
-     <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
-     <var title="">locationURL</var>.
+     <li><p>Let <var title="">location</var> be the
+     <a href="#concept-header-value" title="concept-header-value">value</a> of the
+     <a href="#concept-header" title="concept-header">header</a> whose
+     <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>` within
+     <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
 
-     <li><p>Return the result of performing a <a href="#concept-fetch" title="concept-fetch">fetch</a> using
-     <var title="">request</var>, with the <i title="">CORS flag</i> set if set.
-    </ol>
-  </ol>
+     <li><p>Let <var title="">locationURL</var> be the result of
+     <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
+     <var title="">location</var> with <var title="">request</var>'s
+     <a href="#concept-request-url" title="concept-request-url">url</a>.
 
-  <p>Otherwise, if
-  <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is 401,
-  run these steps:
+     <li><p>If <var title="">locationURL</var> is failure, return a
+     <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
-  <ol>
-   <li><p>If the <i title="">CORS flag</i> is set, return <var title="">response</var>.
+     <li><p>If <var title="">request</var>'s
+     <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is twenty, return a
+     <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
-   <li class="XXX"><p>Needs testing: multiple <code>WWW-Authenticate</code> headers,
-   missing, parsing issues.
+     <li><p>Increase <var title="">request</var>'s
+     <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> by one.
 
-   <li>
-    <p>If <var title="">request</var>'s
-    <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a>
-    is unset, or the <i title="">HTTP authentication flag</i> is set, run these substeps:
+     <li><p>Set <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> to
+     <i title="">redirect</i>.
 
-    <ol>
-     <li><p>Prompt the end user for a username and password.
+     <li>
+      <p>If <var title="">request</var>'s
+      <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> is unset,
+      run these substeps:
 
-     <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
-     <a class="external" href="http://url.spec.whatwg.org/#concept-url-username" title="concept-url-username">username</a> and
-     <a class="external" href="http://url.spec.whatwg.org/#concept-url-password" title="concept-url-password">password</a> to the given
-     values.
-     <!-- XXX sanitization? -->
+      <ol>
+       <li><p>If the <i title="">CORS flag</i> is set and <var title="">locationURL</var>'s
+       <span>origin</span> is not
+       <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+       <span>origin</span>, set <var title="">request</var>'s
+       <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
+
+       <li><p>If the <i title="">CORS flag</i> is set and <var title="">locationURL</var>'s
+       <a class="external" href="http://url.spec.whatwg.org/#concept-url-username" title="concept-url-username">username</a> or
+       <a class="external" href="http://url.spec.whatwg.org/#concept-url-password" title="concept-url-password">password</a> is non-null,
+       return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+       <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
+       <var title="">locationURL</var>.
+
+       <li><p>Return the result of performing a <a href="#concept-fetch" title="concept-fetch">fetch</a> using
+       <var title="">request</var>, with the <i title="">CORS flag</i> set if set.
+       <!-- Unfortunately this has to invoke fetch to get response tainting correct -->
+      </ol>
     </ol>
 
-   <li><p>Return the result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
-   <var title="">request</var>, with the <i title="">HTTP authentication flag</i> set.
-  </ol>
+   <dt>401
+   <dd>
+    <ol>
+     <li><p>If the <i title="">CORS flag</i> is set, return <var title="">response</var>.
 
-  <p>Otherwise, if
-  <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is 407,
-  run these steps:
+     <li class="XXX"><p>Needs testing: multiple <code>WWW-Authenticate</code> headers,
+     missing, parsing issues.
 
-  <ol>
-   <li class="XXX"><p>Needs testing: multiple <code>Proxy-Authenticate</code> headers,
-   missing, parsing issues.
+     <li>
+      <p>If <var title="">request</var>'s
+      <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a>
+      is unset, or the <i title="">authentication flag</i> is set, run these substeps:
 
-   <li>
-    <p>Prompt the end user as appropriate and store the result as appropriate as a
-    <b title="">proxy authentication entry</b>.
-    <a href="#refsHTTP">[HTTP]</a>
+      <ol>
+       <li><p>Prompt the end user for a username and password.
 
-    <p class="note">Remaining details surrounding proxy authentication are defined by HTTP.
+       <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+       <a class="external" href="http://url.spec.whatwg.org/#concept-url-username" title="concept-url-username">username</a> and
+       <a class="external" href="http://url.spec.whatwg.org/#concept-url-password" title="concept-url-password">password</a> to the given
+       values.
+       <!-- XXX sanitization? -->
+      </ol>
 
-   <li><p>Return the result of performing <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
-   <var title="">request</var>.
-  </ol>
+     <li><p>Return the result of performing an
+     <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using <var title="">request</var>, with
+     the <i title="">authentication flag</i> set.
+    </ol>
 
-  <p>If the <i title="">HTTP authentication flag</i> is set, create an <b title="">authentication entry</b> for
-  <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> and the given
-  realm. <a href="#refsHTTPAUTH">[HTTPAUTH]</a>
+   <dt>407
+   <dd>
+    <ol>
+     <li class="XXX"><p>Needs testing: multiple <code>Proxy-Authenticate</code> headers,
+     missing, parsing issues.
 
-  <p>Return <var title="">response</var>, but continue with the request and growing
-  <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>. If at any
-  point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
-  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
-  <var title="">reason</var>, set <var title="">response</var>'s
-  <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
-  <var title="">reason</var>. <span class="note">This modifies <var title="">response</var> after
-  it has been returned. Logic in <a href="#concept-fetch" title="concept-fetch">fetch</a> takes care of the
-  rest.</span>
+     <li>
+      <p>Prompt the end user as appropriate and store the result as appropriate as a
+      <b title="">proxy authentication entry</b>.
+      <a href="#refsHTTP">[HTTP]</a>
 
- <dt>Otherwise
- <dd><p>Return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
-</dl>
+      <p class="note">Remaining details surrounding proxy authentication are defined by HTTP.
+
+     <li><p>Return the result of performing <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
+     <var title="">request</var>.
+    </ol>
+  </dl>
+
+ <li><p>If the <i title="">authentication flag</i> is set, create an
+ <b title="">authentication entry</b> for <var title="">request</var> and the given realm.
+ <a href="#refsHTTPAUTH">[HTTPAUTH]</a>
+
+ <li><p>Return <var title="">response</var>, but continue with the request and growing
+ <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>. If at any
+ point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
+ <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
+ <var title="">reason</var>, set <var title="">response</var>'s
+ <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
+ <var title="">reason</var>. <span class="note no-backref">This modifies
+ <var title="">response</var> after it has been returned. Logic in
+ <a href="#concept-fetch" title="concept-fetch">fetch</a> takes care of the rest.</span>
+</ol>
 
 
-<h3 id="cors-fetch-with-preflight"><span class="secno">4.2 </span>CORS fetch with preflight</h3>
+<h3 id="cors-fetch-with-preflight"><span class="secno">4.3 </span>CORS fetch with preflight</h3>
 
 <p>To perform a <dfn id="cors-fetch-with-preflight-0">CORS fetch with preflight</dfn> using <var title="">request</var>, run
 these steps:
@@ -1255,7 +1270,7 @@ these steps:
  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
 
  <li><p>Let <var title="">response</var> be a
- <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var title="">request</var> with
+ <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using <var title="">request</var> with
  the <i title="">CORS flag</i> set.
 
  <li><p>If <var title="">response</var> is a <a href="#concept-redirect" title="concept-redirect">redirect</a>,
@@ -1270,7 +1285,7 @@ these steps:
 </ol>
 
 
-<h3 id="cors-preflight-fetch"><span class="secno">4.3 </span>CORS preflight fetch</h3>
+<h3 id="cors-preflight-fetch"><span class="secno">4.4 </span>CORS preflight fetch</h3>
 
 <p>To perform a <dfn id="cors-preflight-fetch-0">CORS preflight fetch</dfn> using <var title="">request</var>, run these
 steps:
@@ -1315,7 +1330,7 @@ steps:
  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
 
  <li><p>Let <var title="">response</var> be the result of performing a
- <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var title="">preflight</var> with the <i title="">CORS flag</i>
+ <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using <var title="">preflight</var> with the <i title="">CORS flag</i>
  set.
 
  <li>
@@ -1444,7 +1459,7 @@ steps:
 </ol>
 
 
-<h3 id="cors-preflight-cache"><span class="secno">4.4 </span>CORS preflight cache</h3>
+<h3 id="cors-preflight-cache"><span class="secno">4.5 </span>CORS preflight cache</h3>
 
 <p>A <dfn id="concept-cache" title="concept-cache">CORS preflight cache</dfn> consists of a collection of
 entries where each entry has these fields:
@@ -1493,7 +1508,7 @@ and <var title="">request</var>'s
 <a href="#concept-cache-header-name" title="concept-cache-header-name">header name</a> is <var title="">headerName</var>.
 
 
-<h3 id="cors-check"><span class="secno">4.5 </span>CORS check</h3>
+<h3 id="cors-check"><span class="secno">4.6 </span>CORS check</h3>
 
 <p>To perform a <dfn id="cors-check-0">CORS check</dfn> for a <var title="">request</var> and
 <var title="">response</var>, run these steps:
