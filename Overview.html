@@ -81,6 +81,7 @@ fetching.
  <li><a class="no-num" href="#background-reading">Background reading</a>
   <ol class="toc">
    <li><a class="no-num" href="#atomic-http-redirect-handling">Atomic HTTP redirect handling</a></li>
+   <li><a class="no-num" href="#basic-safe-cors-protocol-setup">Basic safe CORS protocol setup</a></li>
    <li><a class="no-num" href="#http-cors-protocol-and-http-caches">HTTP CORS protocol and HTTP caches</a></ol></li>
  <li><a class="no-num" href="#html-fetch">HTML fetch</a></li>
  <li><a class="no-num" href="#references">References</a></li>
@@ -1605,6 +1606,29 @@ through a cross-site scripting attack.
 <code>http://other-origin.invalid/4af955781ea1c84a3b11</code>. This new URL contains a
 secret. If we expose redirects that secret would be available through a cross-site
 scripting attack.
+
+
+<h3 class="no-num" id="basic-safe-cors-protocol-setup">Basic safe CORS protocol setup</h3>
+
+<p>For resources where data is protected through IP authentication or a firewall
+(unfortunately relatively common still), using the <a href="#cors-protocol">CORS protocol</a> is
+<strong>unsafe</strong>. (This is the reason why the <a href="#cors-protocol">CORS protocol</a> had to be
+invented.)
+
+<p>However, otherwise using the following <a href="#concept-header" title="concept-header">header</a> is:
+
+<pre>Access-Control-Allow-Origin: *</pre>
+
+<p>Even if a resource exposes additional information based on cookie or HTTP
+authentication, using the above <a href="#concept-header" title="concept-header">header</a> will not reveal
+it. It will share the resource with APIs such as
+<code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>, much like it is already shared with
+<code title="">curl</code> and <code title="">wget</code>.
+
+<p>Thus in other words, if a resource cannot be accessed from a random device connected to
+the web using <code title="">curl</code> and <code title="">wget</code> the aforementioned
+<a href="#concept-header" title="concept-header">header</a> is not to be included. If it can be accessed
+however, it is perfectly fine to do so.
 
 
 <h3 class="no-num" id="http-cors-protocol-and-http-caches">HTTP CORS protocol and HTTP caches</h3>
