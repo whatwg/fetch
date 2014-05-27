@@ -1573,6 +1573,93 @@ and <var title>request</var>'s
 
 
 
+<h2>Fetch API</h2>
+
+<p class=XXX>This is a work-in-progress section covering a new API that handles slightly
+more <span title=concept-request-mode>modes</span> of
+<span title=concept-fetch>fetching</span> than
+<code data-anolis-spec=xhr>XMLHttpRequest</code>. The main driver behind this API is
+service workers, but it is applicable elsewhere too.
+
+
+<h3>Request class</h3>
+
+<pre class=idl>[<span title=dom-Request>Constructor</span>(<span data-anolis-spec=encoding>ScalarValueString</span> <var title>url</var>, optional <span>RequestInit</span> <var title>init</var>),
+ Exposed=Window,Worker]
+interface <dfn>Request</dfn> {
+  readonly attribute ByteString <span title=dom-Request-method>method</span>;
+  readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
+  readonly attribute <span class=XXX>...</span> <span title=dom-Request-headers>headers</span>;
+  readonly attribute <span class=XXX>...</span>? <span title=dom-Request-body>body</span>;
+
+  <!-- client
+  -->readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;
+  readonly attribute DOMString <span title=dom-Request-origin>origin</span>;
+  readonly attribute DOMString <span title=dom-Request-referrer>referrer</span>;
+  readonly attribute boolean <span title=dom-Request-handles401>handles401</span>;
+  readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;
+  readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
+  readonly attribute <span>RequestOmitCredentialsMode</span> <span title=dom-Request-omitCredentialsMode>omitCredentialsMode</span>;
+  readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
+  readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;
+};
+
+dictionary <dfn>RequestInit</dfn> {
+  ByteString method = "GET";
+  <span class=XXX>...</span> headers;
+  <span class=XXX>...</span> body = null;
+  <span>RequestMode</span> mode = "CORS";
+  <span>RequestOmitCredentialsMode</span> omitCredentialsMode = "always";
+
+};
+
+enum <dfn>RequestContext</dfn> { <span class=XXX>...</span> }; // <span title=concept-request-context>context</span>
+enum <dfn>RequestMode</dfn> { "same-origin", "tainted cross-origin", "CORS", "CORS-with-forced-preflight" };
+enum <dfn>RequestOmitCredentialsMode</dfn> { "always", "CORS", "never" };</pre>
+
+
+<h3>Response class</h3>
+
+<pre class=idl>[<span tilte=dom-Response>Constructor</span>(<span class=XXX>...</span> <var title>body</var>, optional <span>ResponseInit</span> <var title>init</var>),
+ Exposed=Window,Worker]
+interface <dfn>Response</dfn> {
+  readonly attribute <span>ResponseType</span> <span title=dom-Response-type>type</span>;
+
+  readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Response-url>url</span>;
+  readonly attribute unsigned short <span title=dom-Response-status>status</span>;
+  readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
+  readonly attribute <span class=XXX>...</span> <span title=dom-Response-headers>headers</span>;
+  readonly attribute <span class=XXX>...</span>? <span title=dom-Response-body>body</span>;
+};
+
+dictionary <dfn>ResponseInit</dfn> {
+  <span>ResponseType</span> type = "default"
+  unsigned short status = 200;
+  ByteString statusText = "OK";
+  <span class=XXX>...</span> headers;
+  <span class=XXX>...</span> body = null;
+};
+
+enum <span>ResponseType</span> { "default", "error" };</pre>
+
+
+<h3>Fetch method</h3>
+
+<pre class=idl>[NoInterfaceObject,
+ Exposed=Window,Worker]
+interface GlobalFetch {
+  Promise&lt;Response> <span title=dom-global-fetch>fetch</span>(<span data-anolis-spec=encoding>ScalarValueString</span> <var title>url</var>, optional <span>RequestInit</span> <var title>requestInit</var>);
+  Promise&lt;Response> <span title=dom-global-fetch>fetch</span>(<span>Request</span> <var title>request</var>);
+};
+<span data-anolis-spec=html>Window</span> implements <span>GlobalFetch</span>;
+<span data-anolis-spec=html>WorkerGlobalScope</span> implements <span>GlobalFetch</span>;</pre>
+
+
+
+<!-- XMLHttpRequest API -->
+
+
+
 <h2 class=no-num>Background reading</h2>
 
 <p><em>This section and its subsections are informative only.</em>

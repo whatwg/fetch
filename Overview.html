@@ -78,6 +78,11 @@ fetching.
    <li><a href="#cors-preflight-fetch"><span class="secno">4.4 </span>CORS preflight fetch</a></li>
    <li><a href="#cors-preflight-cache"><span class="secno">4.5 </span>CORS preflight cache</a></li>
    <li><a href="#cors-check"><span class="secno">4.6 </span>CORS check</a></ol></li>
+ <li><a href="#fetch-api"><span class="secno">5 </span>Fetch API</a>
+  <ol class="toc">
+   <li><a href="#request-class"><span class="secno">5.1 </span>Request class</a></li>
+   <li><a href="#response-class"><span class="secno">5.2 </span>Response class</a></li>
+   <li><a href="#fetch-method"><span class="secno">5.3 </span>Fetch method</a></ol></li>
  <li><a class="no-num" href="#background-reading">Background reading</a>
   <ol class="toc">
    <li><a class="no-num" href="#atomic-http-redirect-handling">Atomic HTTP redirect handling</a></li>
@@ -1602,6 +1607,93 @@ and <var title="">request</var>'s
 
  <li><p>Return failure.
 </ol>
+
+
+
+<h2 id="fetch-api"><span class="secno">5 </span>Fetch API</h2>
+
+<p class="XXX">This is a work-in-progress section covering a new API that handles slightly
+more <a href="#concept-request-mode" title="concept-request-mode">modes</a> of
+<a href="#concept-fetch" title="concept-fetch">fetching</a> than
+<code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>. The main driver behind this API is
+service workers, but it is applicable elsewhere too.
+
+
+<h3 id="request-class"><span class="secno">5.1 </span>Request class</h3>
+
+<pre class="idl">[<span title="dom-Request">Constructor</span>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>),
+ Exposed=Window,Worker]
+interface <dfn id="request">Request</dfn> {
+  readonly attribute ByteString <span title="dom-Request-method">method</span>;
+  readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Request-url">url</span>;
+  readonly attribute <span class="XXX">...</span> <span title="dom-Request-headers">headers</span>;
+  readonly attribute <span class="XXX">...</span>? <span title="dom-Request-body">body</span>;
+
+  <!-- client
+  -->readonly attribute <a href="#requestcontext">RequestContext</a> <span title="dom-Request-context">context</span>;
+  readonly attribute DOMString <span title="dom-Request-origin">origin</span>;
+  readonly attribute DOMString <span title="dom-Request-referrer">referrer</span>;
+  readonly attribute boolean <span title="dom-Request-handles401">handles401</span>;
+  readonly attribute boolean <span title="dom-Request-isSynchronous">isSynchronous</span>;
+  readonly attribute <a href="#requestmode">RequestMode</a> <span title="dom-Request-mode">mode</span>;
+  readonly attribute <a href="#requestomitcredentialsmode">RequestOmitCredentialsMode</a> <span title="dom-Request-omitCredentialsMode">omitCredentialsMode</span>;
+  readonly attribute boolean <span title="dom-Request-usingURLCredentials">usingURLCredentials</span>;
+  readonly attribute boolean <span title="dom-Request-handlesRedirects">handlesRedirects</span>;
+};
+
+dictionary <dfn id="requestinit">RequestInit</dfn> {
+  ByteString method = "GET";
+  <span class="XXX">...</span> headers;
+  <span class="XXX">...</span> body = null;
+  <a href="#requestmode">RequestMode</a> mode = "CORS";
+  <a href="#requestomitcredentialsmode">RequestOmitCredentialsMode</a> omitCredentialsMode = "always";
+
+};
+
+enum <dfn id="requestcontext">RequestContext</dfn> { <span class="XXX">...</span> }; // <a href="#concept-request-context" title="concept-request-context">context</a>
+enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "tainted cross-origin", "CORS", "CORS-with-forced-preflight" };
+enum <dfn id="requestomitcredentialsmode">RequestOmitCredentialsMode</dfn> { "always", "CORS", "never" };</pre>
+
+
+<h3 id="response-class"><span class="secno">5.2 </span>Response class</h3>
+
+<pre class="idl">[<span tilte="dom-Response">Constructor</span>(<span class="XXX">...</span> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
+ Exposed=Window,Worker]
+interface <dfn id="response">Response</dfn> {
+  readonly attribute <span>ResponseType</span> <span title="dom-Response-type">type</span>;
+
+  readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Response-url">url</span>;
+  readonly attribute unsigned short <span title="dom-Response-status">status</span>;
+  readonly attribute ByteString <span title="dom-Response-statusText">statusText</span>;
+  readonly attribute <span class="XXX">...</span> <span title="dom-Response-headers">headers</span>;
+  readonly attribute <span class="XXX">...</span>? <span title="dom-Response-body">body</span>;
+};
+
+dictionary <dfn id="responseinit">ResponseInit</dfn> {
+  <span>ResponseType</span> type = "default"
+  unsigned short status = 200;
+  ByteString statusText = "OK";
+  <span class="XXX">...</span> headers;
+  <span class="XXX">...</span> body = null;
+};
+
+enum <span>ResponseType</span> { "default", "error" };</pre>
+
+
+<h3 id="fetch-method"><span class="secno">5.3 </span>Fetch method</h3>
+
+<pre class="idl">[NoInterfaceObject,
+ Exposed=Window,Worker]
+interface GlobalFetch {
+  Promise&lt;Response&gt; <span title="dom-global-fetch">fetch</span>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional <a href="#requestinit">RequestInit</a> <var title="">requestInit</var>);
+  Promise&lt;Response&gt; <span title="dom-global-fetch">fetch</span>(<a href="#request">Request</a> <var title="">request</var>);
+};
+<a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#window">Window</a> implements <span>GlobalFetch</span>;
+<a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/workers.html#workerglobalscope">WorkerGlobalScope</a> implements <span>GlobalFetch</span>;</pre>
+
+
+
+<!-- XMLHttpRequest API -->
 
 
 
