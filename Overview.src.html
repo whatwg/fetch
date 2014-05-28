@@ -1617,10 +1617,57 @@ enum <dfn>RequestContext</dfn> { <span class=XXX>...</span> }; // <span title=co
 enum <dfn>RequestMode</dfn> { "same-origin", "tainted cross-origin", "CORS", "CORS-with-forced-preflight" };
 enum <dfn>RequestOmitCredentialsMode</dfn> { "always", "CORS", "never" };</pre>
 
+<p>A <span title=concept-request>request</span> is represented by zero or more
+<code>Request</code> objects. A <code>Request</code> object always has an associated
+<span title=concept-request>request</span>.
+
+<p>The <dfn title=dom-Request><code>Request(<var>url</var>, <var>init</var></code></dfn>
+constructor must run these steps:
+
+<ol>
+ <li><p>Let <var title>parsedURL</var> be the result of
+ <span data-anolis-spec=url title=concept-url-parser>parsing</span> <var title>url</var>
+ with <span data-anolis-spec=html>entry settings object</span>'s
+ <span data-anolis-spec=html>API base URL</span>.
+
+ <li><p>If <var title>parsedURL</var> is failure,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If <var title>init</var>'s <code title>method</code> member does not match the
+ <span data-anolis-spec=http>Method</span> token production,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If <var title>init</var>'s <code title>method</code> member is a
+ <span title=concept-forbidden-methods>forbidden method</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p class=XXX>Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+
+ <li><p class=XXX>Deal with headers.
+
+ <li><p class=XXX>Deal with body.
+
+ <li><p>Let <var title>r</var> be a new <span title=concept-request>request</span>, whose
+ <span title=concept-request-url>url</span> is <var title>parsedURL</var>,
+ <span title=concept-request-method>method</span> is <var title>init</var>'s
+ <code title>method</code> member,
+ <span title=concept-request-author-headers>author headers</span> is
+ <span class=XXX>...</span>,
+ <span title=concept-request-body>body</span> is <span class=XXX>...</span>,
+ <span title=concept-request-mode>mode</span> is <var title>init</var>'s
+ <code title>mode</code> member,
+ and
+ <span title=concept-request-omitCredentialsMode>mode</span> is <var title>init</var>'s
+ <code title>omitCredentialsMode</code> member.
+
+ <li><p>Return a new <code>Request</code> object associated with <var title>r</var>.
+</ol>
+
 
 <h3>Response class</h3>
 
 <pre class=idl>[<span tilte=dom-Response>Constructor</span>(<span class=XXX>...</span> <var title>body</var>, optional <span>ResponseInit</span> <var title>init</var>),
+ NamedConstructor=RedirectResponse(<span data-anolis-spec=encoding>ScalarValueString</span> <var title>url</var>, optional unsigned short <var title>status</var> = 302),
  Exposed=Window,Worker]
 interface <dfn>Response</dfn> {
   readonly attribute <span>ResponseType</span> <span title=dom-Response-type>type</span>;
@@ -1645,14 +1692,55 @@ enum <span>ResponseType</span> { "default", "error" };</pre>
 
 <h3>Fetch method</h3>
 
-<pre class=idl>[NoInterfaceObject,
- Exposed=Window,Worker]
-interface GlobalFetch {
-  Promise&lt;Response> <span title=dom-global-fetch>fetch</span>(<span data-anolis-spec=encoding>ScalarValueString</span> <var title>url</var>, optional <span>RequestInit</span> <var title>requestInit</var>);
-  Promise&lt;Response> <span title=dom-global-fetch>fetch</span>(<span>Request</span> <var title>request</var>);
+<pre class=idl>[NoInterfaceObject]
+interface <dfn>GlobalFetch</dfn> {
+  Promise&lt;<span>Response</span>> <span title=dom-global-fetch>fetch</span>(<span data-anolis-spec=encoding>ScalarValueString</span> <var title>url</var>, optional <span>RequestInit</span> <var title>requestInit</var>);
+  Promise&lt;<span>Response</span>> <span title=dom-global-fetch>fetch</span>(<span>Request</span> <var title>request</var>);
 };
 <span data-anolis-spec=html>Window</span> implements <span>GlobalFetch</span>;
 <span data-anolis-spec=html>WorkerGlobalScope</span> implements <span>GlobalFetch</span>;</pre>
+
+<p>The
+<dfn title=dom-global-fetch><code>fetch(<var>url</var>, <var>requestInit</var>)</code></dfn>
+and <code title=dom-global-fetch class=no-backref>fetch(<var title>request</var>)</code>
+methods, must run these steps:
+
+<ol>
+ <li><p>Let <var title>p</var> be a new <code title>Promise</code>.
+
+ <li><p class=XXX>Let <var title>r</var> be the associated
+ <span title=concept-request>request</span> after invoking the
+ <code title=dom-Request>Request()</code> constructor with the same arguments as passed to
+ this algorithm. If this throws an exception, reject <var title>p</var> with it.
+
+ <li>
+  <p>Run these substeps asynchronously:
+
+  <ol>
+   <li>
+    <p><span title=concept-fetch>Fetch</span> <var title>r</var>.
+
+    <p>To <span>process response</span> for <var title>response</var>, run these
+    subsubsteps:
+
+    <ol>
+     <li><p>Let <var title>r</var> be a new <code>Response</code> object associated with
+     <var title>response</var>.
+
+     <li><p>If <var title>response</var>'s <span title=concept-response-type>type</span>
+     is <i title>error</i>, reject <var title>p</var> with a <code title>TypeError</code>.
+
+     <li><p>Resolve <var title>p</var> with <var title>r</var>.
+    </ol>
+
+    <p>To <span>process response body</span> for <var title>response</var>,
+    <span class=XXX>...</span>.
+
+    <p>To <span>process response end-of-file</span> for <var title>response</var>,
+    <span class=XXX>...</span>.
+  </ol>
+ <li><p>Return <var title>p</var>.
+</ol>
 
 
 
