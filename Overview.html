@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-28-may-2014">Living Standard — Last Updated 28 May 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-29-may-2014">Living Standard — Last Updated 29 May 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-28 May 2014, the editor has made this specification available
+29 May 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -1621,7 +1621,9 @@ service workers, but it is applicable elsewhere too.
 
 <h3 id="request-class"><span class="secno">5.1 </span>Request class</h3>
 
-<pre class="idl">[<a href="#dom-request" title="dom-Request">Constructor</a>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>),
+<pre class="idl">typedef (<a href="#request">Request</a> or <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>) <dfn id="requestinfo">RequestInfo</dfn>;
+
+[<a href="#dom-request" title="dom-Request">Constructor</a>(<a href="#requestinfo">RequestInfo</a> <var title="">input</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="request">Request</dfn> {
   readonly attribute ByteString <span title="dom-Request-method">method</span>;
@@ -1642,12 +1644,11 @@ interface <dfn id="request">Request</dfn> {
 };
 
 dictionary <dfn id="requestinit">RequestInit</dfn> {
-  ByteString method = "GET";
+  ByteString method;
   <span class="XXX">...</span> headers;
-  <span class="XXX">...</span> body = null;
-  <a href="#requestmode">RequestMode</a> mode = "CORS";
-  <a href="#requestomitcredentialsmode">RequestOmitCredentialsMode</a> omitCredentialsMode = "always";
-
+  <span class="XXX">...</span> body;
+  <a href="#requestmode">RequestMode</a> mode;
+  <a href="#requestomitcredentialsmode">RequestOmitCredentialsMode</a> omitCredentialsMode;
 };
 
 enum <dfn id="requestcontext">RequestContext</dfn> { <span class="XXX">...</span> }; // <a href="#concept-request-context" title="concept-request-context">context</a>
@@ -1658,52 +1659,110 @@ enum <dfn id="requestomitcredentialsmode">RequestOmitCredentialsMode</dfn> { "al
 <code><a href="#request">Request</a></code> objects. A <code><a href="#request">Request</a></code> object always has an associated
 <a href="#concept-request" title="concept-request">request</a>.
 
-<p>The <dfn id="dom-request" title="dom-Request"><code>Request(<var>url</var>, <var>init</var>)</code></dfn>
+<p>To make a <dfn id="restricted-copy">restricted copy</dfn> of a <a href="#concept-request" title="concept-request">request</a>
+<var title="">request</var>, run these steps:
+
+<ol>
+ <li><p>Let <var title="">r</var> be a new <a href="#concept-request" title="concept-request">request</a> whose
+ <a href="#concept-request-url" title="concept-request-url">url</a> is <var title="">request</var>'s
+ <a href="#concept-request-url" title="concept-request-url">url</a>,
+ <a href="#concept-request-method" title="concept-request-method">method</a> is <var title="">request</var>'s
+ <a href="#concept-request-method" title="concept-request-method">method</a>,
+ <span class="XXX">headers</span>,
+ <a href="#concept-request-body" title="concept-request-body">body</a> is <var title="">request</var>'s
+ <a href="#concept-request-body" title="concept-request-body">body</a>,
+ <a href="#concept-request-client" title="concept-request-client">client</a> is
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#global-object">global object</a>,
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a>,
+ <span class="XXX">referrer</span>,
+ <a href="#concept-request-context" title="concept-request-context">context</a> is <i title="">connect</i>,
+ <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <var title="">request</var>'s
+ <a href="#concept-request-mode" title="concept-request-mode">mode</a>,
+ and
+ <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
+ <var title="">request</var>'s
+ <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a>.
+
+ <li><p>Return <var title="">r</var>.
+</ol>
+
+<p>The
+<dfn id="dom-request" title="dom-Request"><code>Request(<var>input</var>, <var>init</var>)</code></dfn>
 constructor must run these steps:
 
 <ol>
- <li><p>Let <var title="">parsedURL</var> be the result of
- <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a> <var title="">url</var>
- with <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#api-base-url">API base URL</a>.
+ <li>
+  <p>Let <var title="">r</var> be <var title="">input</var>'s associated
+  <a href="#concept-request" title="concept-request">request</a>, if <var title="">input</var> is a
+  <code><a href="#request">Request</a></code> object, and a new <a href="#concept-request" title="concept-request">request</a>
+  otherwise.
 
- <li><p>If <var title="">parsedURL</var> is failure,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+ <li><p>Set <var title="">r</var> to a <a href="#restricted-copy">restricted copy</a> of itself.
 
- <li><p>If <var title="">init</var>'s <code title="">method</code> member does not match the
- <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a> token production,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+ <li><p>Let <var title="">fallbackMode</var> be null.
 
- <li><p>If <var title="">init</var>'s <code title="">method</code> member is a
- <a href="#concept-forbidden-methods" title="concept-forbidden-methods">forbidden method</a>,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+ <li><p>Let <var title="">fallbackOmitCredentialsMode</var> be null.
 
- <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+ <li>
+  <p>If <var title="">input</var> is a string, run these substeps:
+
+  <ol>
+   <li><p>Let <var title="">parsedURL</var> be the result of
+   <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
+   <var title="">input</var> with <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#api-base-url">API base URL</a>.
+
+   <li><p>If <var title="">parsedURL</var> is failure,
+   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p>Set <var title="">r</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
+   <var title="">parsedURL</var>.
+
+   <li><p>Set <var title="">fallbackMode</var> to <i title="">CORS</i>.
+
+   <li><p>Set <var title="">fallbackOmitCredentialsMode</var> to <i title="">always</i>.
+  </ol>
+
+ <li>
+  <p>If <var title="">init</var>'s <code title="">method</code> member is present, let
+  <var title="">method</var> be it and run these substeps:
+
+  <ol>
+   <li><p>If <var title="">method</var> does not match the
+   <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a> token production,
+   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p>If <var title="">method</var> is a
+   <a href="#concept-forbidden-methods" title="concept-forbidden-methods">forbidden method</a>,
+   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+
+   <li><p>Set <var title="">r</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> to
+   <var title="">method</var>.
+  </ol>
 
  <li><p class="XXX">Deal with headers.
 
  <li><p class="XXX">Deal with body.
 
- <li><p>Let <var title="">r</var> be a new <a href="#concept-request" title="concept-request">request</a>, whose
- <a href="#concept-request-url" title="concept-request-url">url</a> is <var title="">parsedURL</var>,
- <a href="#concept-request-method" title="concept-request-method">method</a> is <var title="">init</var>'s
- <code title="">method</code> member,
- <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> is
- <span class="XXX">...</span>,
- <a href="#concept-request-body" title="concept-request-body">body</a> is <span class="XXX">...</span>,
- <a href="#concept-request-client" title="concept-request-client">client</a> is
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#global-object">global object</a>,
- <span data-anolis-request-origin="">origin</span> is
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a>,
- <span class="XXX">referrer</span>,
- <a href="#concept-request-context" title="concept-request-context">context</a> is <i title="">connect</i>,
- <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <var title="">init</var>'s
- <code title="">mode</code> member,
- and
- <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> is
- <var title="">init</var>'s <code title="">omitCredentialsMode</code> member.
+ <li><p>Let <var title="">mode</var> be <var title="">init</var>'s
+ <code title="">mode</code> member if it is present, and <var title="">fallbackMode</var>
+ otherwise.
+
+ <li><p>If <var title="">mode</var> is non-null, set <var title="">r</var>'s
+ <a href="#concept-request-mode" title="concept-request-mode">mode</a> to <var title="">mode</var>.
+
+ <li><p>Let <var title="">omitCredentialsMode</var> be <var title="">init</var>'s
+ <code title="">omitCredentialsMode</code> member if it is present, and
+ <var title="">fallbackOmitCredentialsMode</var> otherwise.
+
+ <li><p>If <var title="">omitCredentialsMode</var> is non-null, set <var title="">r</var>'s
+ <a href="#concept-request-omit-credentials-mode" title="concept-request-omit-credentials-mode">omit credentials mode</a> to
+ <var title="">omitCredentialsMode</var>.
 
  <li><p>Return a new <code><a href="#request">Request</a></code> object associated with <var title="">r</var>.
 </ol>
@@ -1739,24 +1798,22 @@ enum <span>ResponseType</span> { "default", "error" };</pre>
 
 <pre class="idl">[NoInterfaceObject]
 interface <dfn id="globalfetch">GlobalFetch</dfn> {
-  Promise&lt;<a href="#response">Response</a>&gt; <a href="#dom-global-fetch" title="dom-global-fetch">fetch</a>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional <a href="#requestinit">RequestInit</a> <var title="">requestInit</var>);
-  Promise&lt;<a href="#response">Response</a>&gt; <a href="#dom-global-fetch" title="dom-global-fetch">fetch</a>(<a href="#request">Request</a> <var title="">request</var>);
+  Promise&lt;<a href="#response">Response</a>&gt; <a href="#dom-global-fetch" title="dom-global-fetch">fetch</a>(<a href="#requestinfo">RequestInfo</a> <var title="">input</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>);
 };
 <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#window">Window</a> implements <a href="#globalfetch">GlobalFetch</a>;
 <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/workers.html#workerglobalscope">WorkerGlobalScope</a> implements <a href="#globalfetch">GlobalFetch</a>;</pre>
 
 <p>The
-<dfn id="dom-global-fetch" title="dom-global-fetch"><code>fetch(<var>url</var>, <var>requestInit</var>)</code></dfn>
-and <code class="no-backref" title="dom-global-fetch"><a href="#dom-global-fetch">fetch(<var title="">request</var>)</a></code>
-methods, must run these steps:
+<dfn id="dom-global-fetch" title="dom-global-fetch"><code>fetch(<var>input</var>, <var>init</var>)</code></dfn>
+method, must run these steps:
 
 <ol>
  <li><p>Let <var title="">p</var> be a new <code title="">Promise</code>.
 
- <li><p class="XXX">Let <var title="">r</var> be the associated
- <a href="#concept-request" title="concept-request">request</a> after invoking the
- <code title="dom-Request"><a href="#dom-request">Request()</a></code> constructor with the same arguments as passed to
- this algorithm. If this throws an exception, reject <var title="">p</var> with it.
+ <li><p>Let <var title="">r</var> be the associated
+ <a href="#concept-request" title="concept-request">request</a> of the result of invoking the initial value of
+ <code title="dom-Request"><a href="#dom-request">Request</a></code>'s constructor with <var title="">input</var> and
+ <var title="">init</var>. If this throws an exception, reject <var title="">p</var> with it.
 
  <li>
   <p>Run these substeps asynchronously:
