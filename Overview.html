@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-29-may-2014">Living Standard — Last Updated 29 May 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-30-may-2014">Living Standard — Last Updated 30 May 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-29 May 2014, the editor has made this specification available
+30 May 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -80,9 +80,10 @@ fetching.
    <li><a href="#cors-check"><span class="secno">4.6 </span>CORS check</a></ol></li>
  <li><a href="#fetch-api"><span class="secno">5 </span>Fetch API</a>
   <ol class="toc">
-   <li><a href="#request-class"><span class="secno">5.1 </span>Request class</a></li>
-   <li><a href="#response-class"><span class="secno">5.2 </span>Response class</a></li>
-   <li><a href="#fetch-method"><span class="secno">5.3 </span>Fetch method</a></ol></li>
+   <li><a href="#headers-class"><span class="secno">5.1 </span>Headers class</a></li>
+   <li><a href="#request-class"><span class="secno">5.2 </span>Request class</a></li>
+   <li><a href="#response-class"><span class="secno">5.3 </span>Response class</a></li>
+   <li><a href="#fetch-method"><span class="secno">5.4 </span>Fetch method</a></ol></li>
  <li><a class="no-num" href="#background-reading">Background reading</a>
   <ol class="toc">
    <li><a class="no-num" href="#atomic-http-redirect-handling">Atomic HTTP redirect handling</a></li>
@@ -1619,7 +1620,29 @@ more <a href="#concept-request-mode" title="concept-request-mode">modes</a> of
 service workers, but it is applicable elsewhere too.
 
 
-<h3 id="request-class"><span class="secno">5.1 </span>Request class</h3>
+<h3 id="headers-class"><span class="secno">5.1 </span>Headers class</h3>
+
+<pre class="idl">[<span title="dom-HeaderMap">Constructor</span>(),
+ Exposed=Window,Worker]
+interface <dfn id="headermap">HeaderMap</dfn> {
+  void <span title="dom-HeaderMap-add">add</span>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
+  void <span title="dom-HeaderMap-delete">delete</span>(ByteString <var title="">name</var>);
+  ByteString <span tilte="dom-HeaderMap-get">get</span>(ByteString <var title="">name</var>);
+  sequence&lt;ByteString&gt; <span title="dom-HeaderMap-getAll">getAll</span>(ByteString <var title="">name</var>);
+  boolean <span title="dom-HeaderMap-has">has</span>(ByteString <var title="">name</var>);
+  void <span title="dom-HeaderMap-set">set</span>(ByteString <var title="">name</var>, ByteString <var title="">value</var>)
+  void <span title="dom-HeaderMap-setAll">setAll</span>(ByteString <var title="">name</var>, sequence&lt;ByteString&gt; <var title="">values</var>);
+};</pre>
+
+<p class="XXX">Constrains used: header names are unique, headers can have multiple values,
+do not require parsing values out of a value (splitting on ","), provide convenience for
+single value (non-All methods return first), compatibility with Map (set() will set first
+value and remove others, delete() removes all). User agents will need a more complex data
+structure for responses underneath, to deal with broken servers. It is intentional to only
+expose what HTTP requires.
+
+
+<h3 id="request-class"><span class="secno">5.2 </span>Request class</h3>
 
 <pre class="idl">typedef (<a href="#request">Request</a> or <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>) <dfn id="requestinfo">RequestInfo</dfn>;
 
@@ -1628,7 +1651,7 @@ service workers, but it is applicable elsewhere too.
 interface <dfn id="request">Request</dfn> {
   readonly attribute ByteString <span title="dom-Request-method">method</span>;
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Request-url">url</span>;
-  readonly attribute <span class="XXX">...</span> <span title="dom-Request-headers">headers</span>;
+  readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Request-headers">headers</span>;
   readonly attribute <span class="XXX">...</span>? <span title="dom-Request-body">body</span>;
 
   <!-- client
@@ -1645,7 +1668,7 @@ interface <dfn id="request">Request</dfn> {
 
 dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
-  <span class="XXX">...</span> headers;
+  <a href="#headermap">HeaderMap</a> headers;
   <span class="XXX">...</span> body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestomitcredentialsmode">RequestOmitCredentialsMode</a> omitCredentialsMode;
@@ -1773,7 +1796,7 @@ constructor must run these steps:
 </ol>
 
 
-<h3 id="response-class"><span class="secno">5.2 </span>Response class</h3>
+<h3 id="response-class"><span class="secno">5.3 </span>Response class</h3>
 
 <pre class="idl">[<span tilte="dom-Response">Constructor</span>(<span class="XXX">...</span> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
  NamedConstructor=RedirectResponse(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional unsigned short <var title="">status</var> = 302),
@@ -1784,7 +1807,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Response-url">url</span>;
   readonly attribute unsigned short <span title="dom-Response-status">status</span>;
   readonly attribute ByteString <span title="dom-Response-statusText">statusText</span>;
-  readonly attribute <span class="XXX">...</span> <span title="dom-Response-headers">headers</span>;
+  readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Response-headers">headers</span>;
   readonly attribute <span class="XXX">...</span>? <span title="dom-Response-body">body</span>;
 };
 
@@ -1792,14 +1815,14 @@ dictionary <dfn id="responseinit">ResponseInit</dfn> {
   <span>ResponseType</span> type = "default"
   unsigned short status = 200;
   ByteString statusText = "OK";
-  <span class="XXX">...</span> headers;
+  <a href="#headermap">HeaderMap</a> headers;
   <span class="XXX">...</span> body = null;
 };
 
 enum <span>ResponseType</span> { "default", "error" };</pre>
 
 
-<h3 id="fetch-method"><span class="secno">5.3 </span>Fetch method</h3>
+<h3 id="fetch-method"><span class="secno">5.4 </span>Fetch method</h3>
 
 <pre class="idl">[NoInterfaceObject]
 interface <dfn id="globalfetch">GlobalFetch</dfn> {

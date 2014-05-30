@@ -1582,6 +1582,28 @@ more <span title=concept-request-mode>modes</span> of
 service workers, but it is applicable elsewhere too.
 
 
+<h3>Headers class</h3>
+
+<pre class=idl>[<span title=dom-HeaderMap>Constructor</span>(),
+ Exposed=Window,Worker]
+interface <dfn>HeaderMap</dfn> {
+  void <span title=dom-HeaderMap-add>add</span>(ByteString <var title>name</var>, ByteString <var title>value</var>);
+  void <span title=dom-HeaderMap-delete>delete</span>(ByteString <var title>name</var>);
+  ByteString <span tilte=dom-HeaderMap-get>get</span>(ByteString <var title>name</var>);
+  sequence&lt;ByteString> <span title=dom-HeaderMap-getAll>getAll</span>(ByteString <var title>name</var>);
+  boolean <span title=dom-HeaderMap-has>has</span>(ByteString <var title>name</var>);
+  void <span title=dom-HeaderMap-set>set</span>(ByteString <var title>name</var>, ByteString <var title>value</var>)
+  void <span title=dom-HeaderMap-setAll>setAll</span>(ByteString <var title>name</var>, sequence&lt;ByteString> <var title>values</var>);
+};</pre>
+
+<p class=XXX>Constrains used: header names are unique, headers can have multiple values,
+do not require parsing values out of a value (splitting on ","), provide convenience for
+single value (non-All methods return first), compatibility with Map (set() will set first
+value and remove others, delete() removes all). User agents will need a more complex data
+structure for responses underneath, to deal with broken servers. It is intentional to only
+expose what HTTP requires.
+
+
 <h3>Request class</h3>
 
 <pre class=idl>typedef (<span>Request</span> or <span data-anolis-spec=encoding>ScalarValueString</span>) <dfn>RequestInfo</dfn>;
@@ -1591,7 +1613,7 @@ service workers, but it is applicable elsewhere too.
 interface <dfn>Request</dfn> {
   readonly attribute ByteString <span title=dom-Request-method>method</span>;
   readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
-  readonly attribute <span class=XXX>...</span> <span title=dom-Request-headers>headers</span>;
+  readonly attribute <span>HeaderMap</span> <span title=dom-Request-headers>headers</span>;
   readonly attribute <span class=XXX>...</span>? <span title=dom-Request-body>body</span>;
 
   <!-- client
@@ -1608,7 +1630,7 @@ interface <dfn>Request</dfn> {
 
 dictionary <dfn>RequestInit</dfn> {
   ByteString method;
-  <span class=XXX>...</span> headers;
+  <span>HeaderMap</span> headers;
   <span class=XXX>...</span> body;
   <span>RequestMode</span> mode;
   <span>RequestOmitCredentialsMode</span> omitCredentialsMode;
@@ -1747,7 +1769,7 @@ interface <dfn>Response</dfn> {
   readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Response-url>url</span>;
   readonly attribute unsigned short <span title=dom-Response-status>status</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
-  readonly attribute <span class=XXX>...</span> <span title=dom-Response-headers>headers</span>;
+  readonly attribute <span>HeaderMap</span> <span title=dom-Response-headers>headers</span>;
   readonly attribute <span class=XXX>...</span>? <span title=dom-Response-body>body</span>;
 };
 
@@ -1755,7 +1777,7 @@ dictionary <dfn>ResponseInit</dfn> {
   <span>ResponseType</span> type = "default"
   unsigned short status = 200;
   ByteString statusText = "OK";
-  <span class=XXX>...</span> headers;
+  <span>HeaderMap</span> headers;
   <span class=XXX>...</span> body = null;
 };
 
