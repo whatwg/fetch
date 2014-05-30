@@ -58,9 +58,12 @@ fetching.
  <li><a href="#conformance"><span class="secno">1 </span>Conformance</a></li>
  <li><a href="#terminology"><span class="secno">2 </span>Terminology</a>
   <ol class="toc">
-   <li><a href="#http"><span class="secno">2.1 </span>HTTP</a></li>
-   <li><a href="#requests"><span class="secno">2.2 </span>Requests</a></li>
-   <li><a href="#responses"><span class="secno">2.3 </span>Responses</a></ol></li>
+   <li><a href="#http"><span class="secno">2.1 </span>HTTP</a>
+    <ol class="toc">
+     <li><a href="#methods"><span class="secno">2.1.1 </span>Methods</a></li>
+     <li><a href="#headers"><span class="secno">2.1.2 </span>Headers</a></li>
+     <li><a href="#requests"><span class="secno">2.1.3 </span>Requests</a></li>
+     <li><a href="#responses"><span class="secno">2.1.4 </span>Responses</a></ol></ol></li>
  <li><a href="#http-extensions"><span class="secno">3 </span>HTTP extensions</a>
   <ol class="toc">
    <li><a href="#origin-header"><span class="secno">3.1 </span>`<code title="">Origin</code>` header</a></li>
@@ -170,16 +173,31 @@ another byte sequence does so in a <a href="#byte-case-insensitive">byte case-in
 borrows a number of concepts from HTTP and applies these to resources obtained via other
 means (e.g. via <code title="">data</code> URL).
 
-<p>A <dfn id="concept-method" title="concept-method">method</dfn> is a byte sequence.
+
+<h4 id="methods"><span class="secno">2.1.1 </span>Methods</h4>
+
+<p>A <dfn id="concept-method" title="concept-method">method</dfn> is a byte sequence that matches the
+<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a> token production.
+
+<p>A <dfn id="simple-method">simple method</dfn> is a <a href="#concept-method" title="concept-method">method</a> that is
+`<code title="">GET</code>`, `<code title="">HEAD</code>`, or `<code title="">POST</code>`.
+
+<p>A <dfn id="forbidden-method">forbidden method</dfn> is a <a href="#concept-method" title="concept-method">method</a> that is a
+<a href="#byte-case-insensitive">byte case-insensitive</a> match for one of `<code title="">CONNECT</code>`,
+`<code title="">TRACE</code>`, and `<code title="">TRACK</code>`.
+<a href="#refsHTTPVERBSEC">[HTTPVERBSEC]</a>
+
+<p>A <dfn id="useful-method">useful method</dfn> is a <a href="#concept-method" title="concept-method">method</a> that is not a
+<a href="#forbidden-method">forbidden method</a>.
+
+
+<h4 id="headers"><span class="secno">2.1.2 </span>Headers</h4>
 
 <p>A <dfn id="concept-header" title="concept-header">header</dfn> consists of a
 <dfn id="concept-header-name" title="concept-header-name">name</dfn> and <dfn id="concept-header-value" title="concept-header-value">value</dfn>.
 A <a href="#concept-header-name" title="concept-header-name">name</a> is a
 <a href="#case-insensitive-byte-sequence">case-insensitive byte sequence</a> and a
 <a href="#concept-header-value" title="concept-header-value">value</a> is a byte sequence.
-
-<p>A <dfn id="simple-method">simple method</dfn> is a <a href="#concept-method" title="concept-method">method</a> that is
-`<code title="">GET</code>`, `<code title="">HEAD</code>`, or `<code title="">POST</code>`.
 
 <p>A <dfn id="simple-header">simple header</dfn> is a <a href="#concept-header" title="concept-header">header</a> whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Accept</code>`,
@@ -196,14 +214,54 @@ parameters should be allowed and how exactly the MIME type parsing would work. H
 solve this.
 <!-- example if people ask: "Content-Type: text/html;" -->
 
+<p>A <dfn id="forbidden-author-header-name">forbidden author header name</dfn> is a <a href="#concept-header" title="concept-header">header</a>
+<a href="#concept-header-name" title="concept-header-name">names</a> that is one of:
+
+<ul class="brief">
+ <li>`<code title="">Accept-Charset</code>`
+ <li>`<code title="">Accept-Encoding</code>`
+ <li>`<code title="">Access-Control-Request-Headers</code>`
+ <li>`<code title="">Access-Control-Request-Method</code>`
+ <li>`<code title="">Connection</code>`
+ <li>`<code title="">Content-Length</code>`
+ <li>`<code title="">Cookie</code>`
+ <li>`<code title="">Cookie2</code>`
+ <li>`<code title="">Date</code>`
+ <li>`<code title="">DNT</code>`
+ <li>`<code title="">Expect</code>`
+ <li>`<code title="">Host</code>`
+ <li>`<code title="">Keep-Alive</code>`
+ <li>`<code title="http-origin"><a href="#http-origin">Origin</a></code>`
+ <li>`<code title="">Referer</code>`
+ <li>`<code title="">TE</code>`
+ <li>`<code title="">Trailer</code>`
+ <li>`<code title="">Transfer-Encoding</code>`
+ <li>`<code title="">Upgrade</code>`
+ <li>`<code title="">User-Agent</code>`
+ <li>`<code title="">Via</code>`
+</ul>
+
+<p>… and a <a href="#concept-header" title="concept-header">header</a>
+<a href="#concept-header-name" title="concept-header-name">name</a> that starts with `<code title="">Proxy-</code>`
+or `<code title="">Sec-</code>` (including when it is just `<code title="">Proxy-</code>` or
+`<code title="">Sec-</code>`).
+
+<p class="note">These are forbidden so the user agent remains in full control over them.
+<a href="#concept-header-name" title="concept-header-name">Names</a> starting with `<code title="">Sec-</code>` are
+reserved to allow new <a href="#concept-header" title="concept-header">headers</a> to be minted that are safe
+from APIs using <a href="#concept-fetch" title="concept-fetch">fetch</a> that allow control over
+<a href="#concept-header" title="concept-header">headers</a> by authors, such as
+<code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>.
+<a class="informative" href="#refsXHR">[XHR]</a>
+
+
 <p>To <dfn id="concept-header-parse" title="concept-header-parse">parse a header value</dfn> parse it per the ABNF and
 return the <a href="#concept-header-value" title="concept-header-value">values</a> obtained for the given
 <a href="#concept-header-name" title="concept-header-name">name</a>, and return failure if the
 <a href="#concept-header-value" title="concept-header-value">value</a> did not match the ABNF.
 
 
-
-<h3 id="requests"><span class="secno">2.2 </span>Requests</h3>
+<h4 id="requests"><span class="secno">2.1.3 </span>Requests</h4>
 
 <p>The input to <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-request" title="concept-request">request</dfn>.
@@ -425,56 +483,11 @@ bookkeeping details by the <a href="#concept-fetch" title="concept-fetch">fetch<
 <a href="#concept-request-method" title="concept-request-method">method</a> and
 <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>.
 
-<p>The <dfn id="concept-forbidden-methods" title="concept-forbidden-methods">forbidden methods</dfn> are
-<a href="#concept-method" title="concept-method">methods</a> that are a <a href="#byte-case-insensitive">byte case-insensitive</a>
-match for `<code title="">CONNECT</code>`, `<code title="">TRACE</code>`, and
-`<code title="">TRACK</code>`. <a href="#refsHTTPVERBSEC">[HTTPVERBSEC]</a>
-
-<p>The
-<dfn id="concept-forbidden-author-header-names" title="concept-forbidden-author-header-names">forbidden author header names</dfn> are
-all these <a href="#concept-header" title="concept-header">header</a>
-<a href="#concept-header-name" title="concept-header-name">names</a>:
-
-<ul class="brief">
- <li>`<code title="">Accept-Charset</code>`
- <li>`<code title="">Accept-Encoding</code>`
- <li>`<code title="">Access-Control-Request-Headers</code>`
- <li>`<code title="">Access-Control-Request-Method</code>`
- <li>`<code title="">Connection</code>`
- <li>`<code title="">Content-Length</code>`
- <li>`<code title="">Cookie</code>`
- <li>`<code title="">Cookie2</code>`
- <li>`<code title="">Date</code>`
- <li>`<code title="">DNT</code>`
- <li>`<code title="">Expect</code>`
- <li>`<code title="">Host</code>`
- <li>`<code title="">Keep-Alive</code>`
- <li>`<code title="http-origin"><a href="#http-origin">Origin</a></code>`
- <li>`<code title="">Referer</code>`
- <li>`<code title="">TE</code>`
- <li>`<code title="">Trailer</code>`
- <li>`<code title="">Transfer-Encoding</code>`
- <li>`<code title="">Upgrade</code>`
- <li>`<code title="">User-Agent</code>`
- <li>`<code title="">Via</code>`
-</ul>
-
-<p>… and <a href="#concept-header" title="concept-header">header</a>
-<a href="#concept-header-name" title="concept-header-name">names</a> that start with `<code title="">Proxy-</code>`
-or `<code title="">Sec-</code>` (including when it is just `<code title="">Proxy-</code>` or
-`<code title="">Sec-</code>`).
-
-<p class="note">These are forbidden so the user agent remains in full control over them.
-<a href="#concept-header-name" title="concept-header-name">Names</a> starting with `<code title="">Sec-</code>` are
-reserved to allow new <a href="#concept-header" title="concept-header">headers</a> to be minted that are safe
-from APIs using <a href="#concept-fetch" title="concept-fetch">fetch</a> that allow control over
-<a href="#concept-header" title="concept-header">headers</a> by authors, such as
-<code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>.
-<a class="informative" href="#refsXHR">[XHR]</a>
+<p class="note no-backref">See e.g. <a href="#useful-method">useful method</a> and
+<span>forbidden header</span>.
 
 
-
-<h3 id="responses"><span class="secno">2.3 </span>Responses</h3>
+<h4 id="responses"><span class="secno">2.1.4 </span>Responses</h4>
 
 <p>The result of <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-response" title="concept-response">response</dfn>. A <a href="#concept-response" title="concept-response">response</a>
@@ -1080,7 +1093,7 @@ steps:
   their <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> already present in
   <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
 
-  <p class="note no-backref"><a href="#concept-forbidden-author-header-names" title="concept-forbidden-author-header-names">Forbidden author header names</a>
+  <p class="note no-backref"><span title="concept-forbidden-author-header-names">Forbidden author header names</span>
   are not supposed to reach this point.
 
  <!-- Making a "request" -->
@@ -1630,9 +1643,11 @@ interface <dfn id="headermap">HeaderMap</dfn> {
   ByteString <span tilte="dom-HeaderMap-get">get</span>(ByteString <var title="">name</var>);
   sequence&lt;ByteString&gt; <span title="dom-HeaderMap-getAll">getAll</span>(ByteString <var title="">name</var>);
   boolean <span title="dom-HeaderMap-has">has</span>(ByteString <var title="">name</var>);
-  void <span title="dom-HeaderMap-set">set</span>(ByteString <var title="">name</var>, ByteString <var title="">value</var>)
-  void <span title="dom-HeaderMap-setAll">setAll</span>(ByteString <var title="">name</var>, sequence&lt;ByteString&gt; <var title="">values</var>);
+  void <span title="dom-HeaderMap-set">set</span>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
 };</pre>
+
+<!-- Note: add rather than append as the latter has different semantics in
+     FormData/URLSearchParams -->
 
 <p class="XXX">Constrains used: header names are unique, headers can have multiple values,
 do not require parsing values out of a value (splitting on ","), provide convenience for
@@ -1649,10 +1664,10 @@ expose what HTTP requires.
 [<a href="#dom-request" title="dom-Request">Constructor</a>(<a href="#requestinfo">RequestInfo</a> <var title="">input</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="request">Request</dfn> {
-  readonly attribute ByteString <span title="dom-Request-method">method</span>;
-  readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Request-url">url</span>;
+           attribute ByteString <a href="#dom-request-method" title="dom-Request-method">method</a>;
+           attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Request-url">url</span>;
   readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Request-headers">headers</span>;
-  readonly attribute <span class="XXX">...</span>? <span title="dom-Request-body">body</span>;
+  <span class="XXX">...</span>? <span title="dom-Request-body">body</span>;
 
   <!-- client
   -->readonly attribute <a href="#requestcontext">RequestContext</a> <span title="dom-Request-context">context</span>;
@@ -1660,8 +1675,8 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute DOMString <span title="dom-Request-referrer">referrer</span>;
   readonly attribute boolean <span title="dom-Request-handles401">handles401</span>;
   readonly attribute boolean <span title="dom-Request-isSynchronous">isSynchronous</span>;
-  readonly attribute <a href="#requestmode">RequestMode</a> <span title="dom-Request-mode">mode</span>;
-  readonly attribute <a href="#requestomitcredentialsmode">RequestOmitCredentialsMode</a> <span title="dom-Request-omitCredentialsMode">omitCredentialsMode</span>;
+           attribute <a href="#requestmode">RequestMode</a> <span title="dom-Request-mode">mode</span>;
+           attribute <a href="#requestomitcredentialsmode">RequestOmitCredentialsMode</a> <span title="dom-Request-omitCredentialsMode">omitCredentialsMode</span>;
   readonly attribute boolean <span title="dom-Request-usingURLCredentials">usingURLCredentials</span>;
   readonly attribute boolean <span title="dom-Request-handlesRedirects">handlesRedirects</span>;
 };
@@ -1712,9 +1727,6 @@ enum <dfn id="requestomitcredentialsmode">RequestOmitCredentialsMode</dfn> { "al
  <li><p>Return <var title="">r</var>.
 </ol>
 
-<p class="note">Since <code><a href="#request">Request</a></code> objects are immutable, this operation does not
-always have to be performed.
-
 <hr>
 
 <p>The
@@ -1759,12 +1771,7 @@ constructor must run these steps:
   <var title="">method</var> be it and run these substeps:
 
   <ol>
-   <li><p>If <var title="">method</var> does not match the
-   <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a> token production,
-   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
-   <li><p>If <var title="">method</var> is a
-   <a href="#concept-forbidden-methods" title="concept-forbidden-methods">forbidden method</a>,
+   <li><p>If <var title="">method</var> is not a <a href="#useful-method">useful method</a>,
    <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
    <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
@@ -1795,6 +1802,25 @@ constructor must run these steps:
  <li><p>Return a new <code><a href="#request">Request</a></code> object associated with <var title="">r</var>.
 </ol>
 
+<p>The <dfn id="dom-request-method" title="dom-Request-method"><code>method</code> attribute's getter must return
+the associated <span title="concept-request">request</span>'s
+<span title="concept-request-method">method</span>.
+
+</dfn><p>The <code title="dom-Request-method"><a href="#dom-request-method">method</a></code> attribute's setter must run these
+steps:
+
+<ol>
+ <li><p>If the given value is not a <a href="#useful-method">useful method</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+
+ <li><p>If the given value is not a <a href="#simple-method">simple method</a>, <span class="XXX">...</span>
+
+ <li><p>Set associated <a href="#concept-request" title="concept-request">request</a>'s
+ <a href="#concept-request-method" title="concept-request-method">method</a> to the given value.
+</ol>
+
 
 <h3 id="response-class"><span class="secno">5.3 </span>Response class</h3>
 
@@ -1808,7 +1834,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute unsigned short <span title="dom-Response-status">status</span>;
   readonly attribute ByteString <span title="dom-Response-statusText">statusText</span>;
   readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Response-headers">headers</span>;
-  readonly attribute <span class="XXX">...</span>? <span title="dom-Response-body">body</span>;
+  <span class="XXX">...</span>? <span title="dom-Response-body">body</span>;
 };
 
 dictionary <dfn id="responseinit">ResponseInit</dfn> {

@@ -132,16 +132,31 @@ another byte sequence does so in a <span>byte case-insensitive</span> manner.
 borrows a number of concepts from HTTP and applies these to resources obtained via other
 means (e.g. via <code title>data</code> URL).
 
-<p>A <dfn title=concept-method>method</dfn> is a byte sequence.
+
+<h4>Methods</h4>
+
+<p>A <dfn title=concept-method>method</dfn> is a byte sequence that matches the
+<span data-anolis-spec=http>Method</span> token production.
+
+<p>A <dfn>simple method</dfn> is a <span title=concept-method>method</span> that is
+`<code title>GET</code>`, `<code title>HEAD</code>`, or `<code title>POST</code>`.
+
+<p>A <dfn>forbidden method</dfn> is a <span title=concept-method>method</span> that is a
+<span>byte case-insensitive</span> match for one of `<code title>CONNECT</code>`,
+`<code title>TRACE</code>`, and `<code title>TRACK</code>`.
+<span data-anolis-ref>HTTPVERBSEC</span>
+
+<p>A <dfn>useful method</dfn> is a <span title=concept-method>method</span> that is not a
+<span>forbidden method</span>.
+
+
+<h4>Headers</h4>
 
 <p>A <dfn title=concept-header>header</dfn> consists of a
 <dfn title=concept-header-name>name</dfn> and <dfn title=concept-header-value>value</dfn>.
 A <span title=concept-header-name>name</span> is a
 <span>case-insensitive byte sequence</span> and a
 <span title=concept-header-value>value</span> is a byte sequence.
-
-<p>A <dfn>simple method</dfn> is a <span title=concept-method>method</span> that is
-`<code title>GET</code>`, `<code title>HEAD</code>`, or `<code title>POST</code>`.
 
 <p>A <dfn>simple header</dfn> is a <span title=concept-header>header</span> whose
 <span title=concept-header-name>name</span> is `<code title>Accept</code>`,
@@ -158,14 +173,54 @@ parameters should be allowed and how exactly the MIME type parsing would work. H
 solve this.
 <!-- example if people ask: "Content-Type: text/html;" -->
 
+<p>A <dfn>forbidden author header name</dfn> is a <span title=concept-header>header</span>
+<span title=concept-header-name>names</span> that is one of:
+
+<ul class=brief>
+ <li>`<code title>Accept-Charset</code>`
+ <li>`<code title>Accept-Encoding</code>`
+ <li>`<code title>Access-Control-Request-Headers</code>`
+ <li>`<code title>Access-Control-Request-Method</code>`
+ <li>`<code title>Connection</code>`
+ <li>`<code title>Content-Length</code>`
+ <li>`<code title>Cookie</code>`
+ <li>`<code title>Cookie2</code>`
+ <li>`<code title>Date</code>`
+ <li>`<code title>DNT</code>`
+ <li>`<code title>Expect</code>`
+ <li>`<code title>Host</code>`
+ <li>`<code title>Keep-Alive</code>`
+ <li>`<code title=http-origin>Origin</code>`
+ <li>`<code title>Referer</code>`
+ <li>`<code title>TE</code>`
+ <li>`<code title>Trailer</code>`
+ <li>`<code title>Transfer-Encoding</code>`
+ <li>`<code title>Upgrade</code>`
+ <li>`<code title>User-Agent</code>`
+ <li>`<code title>Via</code>`
+</ul>
+
+<p>&hellip; and a <span title=concept-header>header</span>
+<span title=concept-header-name>name</span> that starts with `<code title>Proxy-</code>`
+or `<code title>Sec-</code>` (including when it is just `<code title>Proxy-</code>` or
+`<code title>Sec-</code>`).
+
+<p class=note>These are forbidden so the user agent remains in full control over them.
+<span title=concept-header-name>Names</span> starting with `<code title>Sec-</code>` are
+reserved to allow new <span title=concept-header>headers</span> to be minted that are safe
+from APIs using <span title=concept-fetch>fetch</span> that allow control over
+<span title=concept-header>headers</span> by authors, such as
+<code data-anolis-spec=xhr>XMLHttpRequest</code>.
+<span data-anolis-ref class=informative>XHR</span>
+
+
 <p>To <dfn title=concept-header-parse>parse a header value</dfn> parse it per the ABNF and
 return the <span title=concept-header-value>values</span> obtained for the given
 <span title=concept-header-name>name</span>, and return failure if the
 <span title=concept-header-value>value</span> did not match the ABNF.
 
 
-
-<h3>Requests</h3>
+<h4>Requests</h4>
 
 <p>The input to <span title=concept-fetch>fetch</span> is a
 <dfn title=concept-request>request</dfn>.
@@ -387,56 +442,11 @@ bookkeeping details by the <span title=concept-fetch>fetch</span> algorithm.
 <span title=concept-request-method>method</span> and
 <span title=concept-request-author-headers>author headers</span>.
 
-<p>The <dfn title=concept-forbidden-methods>forbidden methods</dfn> are
-<span title=concept-method>methods</span> that are a <span>byte case-insensitive</span>
-match for `<code title>CONNECT</code>`, `<code title>TRACE</code>`, and
-`<code title>TRACK</code>`. <span data-anolis-ref>HTTPVERBSEC</span>
-
-<p>The
-<dfn title=concept-forbidden-author-header-names>forbidden author header names</dfn> are
-all these <span title=concept-header>header</span>
-<span title=concept-header-name>names</span>:
-
-<ul class=brief>
- <li>`<code title>Accept-Charset</code>`
- <li>`<code title>Accept-Encoding</code>`
- <li>`<code title>Access-Control-Request-Headers</code>`
- <li>`<code title>Access-Control-Request-Method</code>`
- <li>`<code title>Connection</code>`
- <li>`<code title>Content-Length</code>`
- <li>`<code title>Cookie</code>`
- <li>`<code title>Cookie2</code>`
- <li>`<code title>Date</code>`
- <li>`<code title>DNT</code>`
- <li>`<code title>Expect</code>`
- <li>`<code title>Host</code>`
- <li>`<code title>Keep-Alive</code>`
- <li>`<code title=http-origin>Origin</code>`
- <li>`<code title>Referer</code>`
- <li>`<code title>TE</code>`
- <li>`<code title>Trailer</code>`
- <li>`<code title>Transfer-Encoding</code>`
- <li>`<code title>Upgrade</code>`
- <li>`<code title>User-Agent</code>`
- <li>`<code title>Via</code>`
-</ul>
-
-<p>&hellip; and <span title=concept-header>header</span>
-<span title=concept-header-name>names</span> that start with `<code title>Proxy-</code>`
-or `<code title>Sec-</code>` (including when it is just `<code title>Proxy-</code>` or
-`<code title>Sec-</code>`).
-
-<p class=note>These are forbidden so the user agent remains in full control over them.
-<span title=concept-header-name>Names</span> starting with `<code title>Sec-</code>` are
-reserved to allow new <span title=concept-header>headers</span> to be minted that are safe
-from APIs using <span title=concept-fetch>fetch</span> that allow control over
-<span title=concept-header>headers</span> by authors, such as
-<code data-anolis-spec=xhr>XMLHttpRequest</code>.
-<span data-anolis-ref class=informative>XHR</span>
+<p class="note no-backref">See e.g. <span>useful method</span> and
+<span>forbidden header</span>.
 
 
-
-<h3>Responses</h3>
+<h4>Responses</h4>
 
 <p>The result of <span title=concept-fetch>fetch</span> is a
 <dfn title=concept-response>response</dfn>. A <span title=concept-response>response</span>
@@ -1592,9 +1602,11 @@ interface <dfn>HeaderMap</dfn> {
   ByteString <span tilte=dom-HeaderMap-get>get</span>(ByteString <var title>name</var>);
   sequence&lt;ByteString> <span title=dom-HeaderMap-getAll>getAll</span>(ByteString <var title>name</var>);
   boolean <span title=dom-HeaderMap-has>has</span>(ByteString <var title>name</var>);
-  void <span title=dom-HeaderMap-set>set</span>(ByteString <var title>name</var>, ByteString <var title>value</var>)
-  void <span title=dom-HeaderMap-setAll>setAll</span>(ByteString <var title>name</var>, sequence&lt;ByteString> <var title>values</var>);
+  void <span title=dom-HeaderMap-set>set</span>(ByteString <var title>name</var>, ByteString <var title>value</var>);
 };</pre>
+
+<!-- Note: add rather than append as the latter has different semantics in
+     FormData/URLSearchParams -->
 
 <p class=XXX>Constrains used: header names are unique, headers can have multiple values,
 do not require parsing values out of a value (splitting on ","), provide convenience for
@@ -1611,10 +1623,10 @@ expose what HTTP requires.
 [<span title=dom-Request>Constructor</span>(<span>RequestInfo</span> <var title>input</var>, optional <span>RequestInit</span> <var title>init</var>),
  Exposed=Window,Worker]
 interface <dfn>Request</dfn> {
-  readonly attribute ByteString <span title=dom-Request-method>method</span>;
-  readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
+           attribute ByteString <span title=dom-Request-method>method</span>;
+           attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
   readonly attribute <span>HeaderMap</span> <span title=dom-Request-headers>headers</span>;
-  readonly attribute <span class=XXX>...</span>? <span title=dom-Request-body>body</span>;
+  <span class=XXX>...</span>? <span title=dom-Request-body>body</span>;
 
   <!-- client
   -->readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;
@@ -1622,8 +1634,8 @@ interface <dfn>Request</dfn> {
   readonly attribute DOMString <span title=dom-Request-referrer>referrer</span>;
   readonly attribute boolean <span title=dom-Request-handles401>handles401</span>;
   readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;
-  readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
-  readonly attribute <span>RequestOmitCredentialsMode</span> <span title=dom-Request-omitCredentialsMode>omitCredentialsMode</span>;
+           attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
+           attribute <span>RequestOmitCredentialsMode</span> <span title=dom-Request-omitCredentialsMode>omitCredentialsMode</span>;
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;
 };
@@ -1674,9 +1686,6 @@ enum <dfn>RequestOmitCredentialsMode</dfn> { "always", "CORS", "never" };</pre>
  <li><p>Return <var title>r</var>.
 </ol>
 
-<p class=note>Since <code>Request</code> objects are immutable, this operation does not
-always have to be performed.
-
 <hr>
 
 <p>The
@@ -1721,12 +1730,7 @@ constructor must run these steps:
   <var title>method</var> be it and run these substeps:
 
   <ol>
-   <li><p>If <var title>method</var> does not match the
-   <span data-anolis-spec=http>Method</span> token production,
-   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
-
-   <li><p>If <var title>method</var> is a
-   <span title=concept-forbidden-methods>forbidden method</span>,
+   <li><p>If <var title>method</var> is not a <span>useful method</span>,
    <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
    <li><p class=XXX>Add case correction as in XMLHttpRequest? Technically subsets HTTP.
@@ -1757,6 +1761,25 @@ constructor must run these steps:
  <li><p>Return a new <code>Request</code> object associated with <var title>r</var>.
 </ol>
 
+<p>The <dfn title=dom-Request-method><code>method</code> attribute's getter must return
+the associated <span title=concept-request>request</span>'s
+<span title=concept-request-method>method</span>.
+
+<p>The <code title=dom-Request-method>method</code> attribute's setter must run these
+steps:
+
+<ol>
+ <li><p>If the given value is not a <span>useful method</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p class=XXX>Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+
+ <li><p>If the given value is not a <span>simple method</span>, <span class=XXX>...</span>
+
+ <li><p>Set associated <span title=concept-request>request</span>'s
+ <span title=concept-request-method>method</span> to the given value.
+</ol>
+
 
 <h3>Response class</h3>
 
@@ -1770,7 +1793,7 @@ interface <dfn>Response</dfn> {
   readonly attribute unsigned short <span title=dom-Response-status>status</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
   readonly attribute <span>HeaderMap</span> <span title=dom-Response-headers>headers</span>;
-  readonly attribute <span class=XXX>...</span>? <span title=dom-Response-body>body</span>;
+  <span class=XXX>...</span>? <span title=dom-Response-body>body</span>;
 };
 
 dictionary <dfn>ResponseInit</dfn> {
