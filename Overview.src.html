@@ -405,11 +405,11 @@ not a <span>client request</span>.
 <i title>no CORS</i>.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-omit-credentials-mode>omit credentials mode</dfn>, which is
-one of <i title>always</i>, <i title>CORS</i>, and <i title>never</i>.
+<dfn title=concept-request-credentials-mode>credentials mode</dfn>, which is
+one of <i title>omit</i>, <i title>same-origin</i>, and <i title>include</i>.
 
-<p class=XXX>I think we want the default to become <i title>always</i>, but currently it
-is <i title>never</i>.
+<p class=XXX>I believe <i title>never</i> is currently not used although it has
+been argued it would be the best setting by Mark Miller and others.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-use-url-credentials-flag>use URL credentials flag</dfn>.
@@ -647,13 +647,13 @@ these <span title=concept-header>headers</span>:
  <dd>
   <p>Indicates whether a resource can be shared when
   <span title=concept-request>request</span>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>never</i>.
+  <span title=concept-request-credentials-mode>credentials mode</span> is
+  <i title>include</i>.
 
   <p class=note>For a <span>CORS preflight request</span>,
   <span title=concept-request>request</span>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is always
-  <i title>never</i>, but for any subsequent
+  <span title=concept-request-credentials-mode>credentials mode</span> is always
+  <i title>omit</i>, but for any subsequent
   <span title="CORS request">CORS requests</span> it might not be. Support therefore needs
   to be indicated as part of the HTTP response to the <span>CORS preflight request</span>
   as well.
@@ -1002,10 +1002,10 @@ steps:
 
  <li>
   <p>If <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>never</i>, or <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these substeps:
+  <span title=concept-request-credentials-mode>credentials mode</span> is
+  <i title>include</i>, or <var title>request</var>'s
+  <span title=concept-request-credentials-mode>credentials mode</span> is
+  <i title>same-origin</i> and the <i title>CORS flag</i> is unset, run these substeps:
 
   <ol>
    <li><p>Set a `<code title>Cookie</code>` <span title=concept-header>header</span> in
@@ -1039,8 +1039,9 @@ steps:
   <p>If there's a <b title>proxy authentication entry</b>, use it as appropriate.
   <span data-anolis-ref>HTTP</span>
 
-  <p class=note>This intentionally does not depend on <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
+  <p class="note no-backref">This intentionally does not depend on
+  <var title>request</var>'s
+  <span title=concept-request-credentials-mode>credentials mode</span>.
 
  <li><p>User agents may set additional <span title=concept-header>headers</span> in
  <var title>request</var>'s <span title=concept-request-headers>headers</span> at this
@@ -1060,10 +1061,10 @@ steps:
  <!-- Making a "request" -->
  <li>
   <p>Let <var title>set cookies flag</var> be set if either <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>never</i>, or <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>CORS</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
+  <span title=concept-request-credentials-mode>credentials mode</span> is
+  <i title>include</i>, or <var title>request</var>'s
+  <span title=concept-request-credentials-mode>credentials mode</span> is
+  <i title>same-origin</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
 
  <li><p>Let <var title>response</var> be null.
 
@@ -1353,6 +1354,9 @@ steps:
 <ol>
  <li><p>Let <var title>preflight</var> be a new <span title=concept-request>request</span>.
 
+ <li><p>Set <var title>preflight</var>'s <span title=concept-request-method>method</span> to
+ `<code title>OPTIONS</code>`.
+
  <li><p>Set <var title>preflight</var>'s <span title=concept-request-url>url</span> to
  <var title>request</var>'s <span title=concept-request-url>url</span>.
 
@@ -1361,9 +1365,6 @@ steps:
 
  <li><p>Set <var title>preflight</var>'s <span title=concept-request-referrer>referrer</span> to
  <var title>request</var>'s <span title=concept-request-referrer>referrer</span>.
-
- <li><p>Set <var title>preflight</var>'s <span title=concept-request-method>method</span> to
- `<code title>OPTIONS</code>`.
 
  <li><p>Append a <span title=concept-header>header</span>
  <span title=concept-header-name>named</span>
@@ -1389,9 +1390,13 @@ steps:
  <li><p>Set <var title>preflight</var>'s
  <span title=concept-request-manual-redirect-flag>manual redirect flag</span>.
 
+ <li><p>Set <var title>preflight</var>'s
+ <span title=concept-request-credentials-mode>credentials mode</span> to
+ <i title>omit</i>.
+
  <li><p>Let <var title>response</var> be the result of performing a
- <span title=concept-http-fetch>HTTP fetch</span> using <var title>preflight</var> with the <i title>CORS flag</i>
- set.
+ <span title=concept-http-fetch>HTTP fetch</span> using <var title>preflight</var> with
+ the <i title>CORS flag</i> set.
 
  <li>
   <p>If <var title>response</var>'s <span title=concept-response-status>status</span> is
@@ -1474,8 +1479,8 @@ steps:
 
      <dt><span title=concept-cache-credentials>credentials</span>
      <dd>False if <var title>request</var>'s
-     <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
-     <i title>never</i>, and true otherwise
+     <span title=concept-request-credentials-mode>credentials mode</span> is not
+     <i title>include</i>, and true otherwise
 
      <dt><span title=concept-cache-method>method</span></dt>
      <dd><var title>method</var>
@@ -1505,8 +1510,8 @@ steps:
 
      <dt><span title=concept-cache-credentials>credentials</span>
      <dd>False if <var title>request</var>'s
-     <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
-     <i title>never</i>, and true otherwise
+     <span title=concept-request-credentials-mode>credentials mode</span> is not
+     <i title>include</i>, and true otherwise
 
      <dt><span title=concept-cache-header-name>header name</span></dt>
      <dd><var title>header name</var>
@@ -1549,11 +1554,11 @@ Entries may be removed before that moment arrives.
 <span title=concept-request-url>url</span>, and either
 <span title=concept-cache-credentials>credentials</span> is false and
 <var title>request</var>'s
-<span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
-<i title>never</i> or <span title=concept-cache-credentials>credentials</span> is true
+<span title=concept-request-credentials-mode>credentials mode</span> is not
+<i title>include</i> or <span title=concept-cache-credentials>credentials</span> is true
 and <var title>request</var>'s
-<span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-<i title>never</i>.
+<span title=concept-request-credentials-mode>credentials mode</span> is
+<i title>include</i>.
 
 <p>There is a <dfn title=concept-cache-match-method>method cache match</dfn> for
 <var title>method</var> using <var title>request</var> when there is an entry in
@@ -1587,16 +1592,16 @@ and <var title>request</var>'s
  <var title>response</var>'s <span title=concept-response-headers>headers</span>.
 
  <li><p>If <var title>request</var>'s
- <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
- <i title>never</i> and <var title>result</var> is `<code title>*</code>`, return success.
+ <span title=concept-request-credentials-mode>credentials mode</span> is not
+ <i title>include</i> and <var title>result</var> is `<code title>*</code>`, return success.
 
  <li><p>If <var title>request</var>'s <span title=concept-request-origin>origin</span>
  serialized to a byte sequence is not <var title>result</var>, return failure.
  <!-- XXX serialized to a byte sequence -->
 
  <li><p>If <var title>request</var>'s
- <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is not
- <i title>never</i>, return success.
+ <span title=concept-request-credentials-mode>credentials mode</span> is not
+ <i title>include</i>, return success.
 
  <li><p>If <var title>response</var>'s <span title=concept-response-headers>headers</span>
  contains zero or more than one <span title=concept-header>header</span> whose
@@ -1668,7 +1673,7 @@ interface <dfn>Request</dfn> {
   readonly attribute boolean <span title=dom-Request-handles401>handles401</span>;
   readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;
            attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
-           attribute <span>RequestOmitCredentialsMode</span> <span title=dom-Request-omitCredentialsMode>omitCredentialsMode</span>;
+           attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;
 };
@@ -1678,12 +1683,12 @@ dictionary <dfn>RequestInit</dfn> {
   <span>HeaderMap</span> headers;
   <span class=XXX>...</span> body;
   <span>RequestMode</span> mode;
-  <span>RequestOmitCredentialsMode</span> omitCredentialsMode;
+  <span>RequestCredentials</span> credentials;
 };
 
 enum <dfn>RequestContext</dfn> { <span class=XXX>...</span> }; // <span title=concept-request-context>context</span>
 enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors", "cors-with-forced-preflight" };
-enum <dfn>RequestOmitCredentialsMode</dfn> { "always", "cors", "never" };</pre>
+enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
 <p>A <span title=concept-request>request</span> is represented by zero or more
 <code>Request</code> objects. A <code>Request</code> object always has an associated
@@ -1712,9 +1717,9 @@ enum <dfn>RequestOmitCredentialsMode</dfn> { "always", "cors", "never" };</pre>
  <span title=concept-request-mode>mode</span> is <var title>request</var>'s
  <span title=concept-request-mode>mode</span>,
  and
- <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+ <span title=concept-request-credentials-mode>credentials mode</span> is
  <var title>request</var>'s
- <span title=concept-request-omit-credentials-mode>omit credentials mode</span>.
+ <span title=concept-request-credentials-mode>credentials mode</span>.
 
  <li><p>Return <var title>r</var>.
 </ol>
@@ -1736,7 +1741,7 @@ constructor must run these steps:
 
  <li><p>Let <var title>fallbackMode</var> be null.
 
- <li><p>Let <var title>fallbackOmitCredentialsMode</var> be null.
+ <li><p>Let <var title>fallbackCredentials</var> be null.
 
  <li>
   <p>If <var title>input</var> is a string, run these substeps:
@@ -1755,7 +1760,7 @@ constructor must run these steps:
 
    <li><p>Set <var title>fallbackMode</var> to <i title>CORS</i>.
 
-   <li><p>Set <var title>fallbackOmitCredentialsMode</var> to <i title>always</i>.
+   <li><p>Set <var title>fallbackCredentials</var> to <i title>omit</i>.
   </ol>
 
  <li>
@@ -1783,13 +1788,13 @@ constructor must run these steps:
  <li><p>If <var title>mode</var> is non-null, set <var title>r</var>'s
  <span title=concept-request-mode>mode</span> to <var title>mode</var>.
 
- <li><p>Let <var title>omitCredentialsMode</var> be <var title>init</var>'s
- <code title>omitCredentialsMode</code> member if it is present, and
- <var title>fallbackOmitCredentialsMode</var> otherwise.
+ <li><p>Let <var title>credentials</var> be <var title>init</var>'s
+ <code title>credentials</code> member if it is present, and
+ <var title>fallbackCredentials</var> otherwise.
 
- <li><p>If <var title>omitCredentialsMode</var> is non-null, set <var title>r</var>'s
- <span title=concept-request-omit-credentials-mode>omit credentials mode</span> to
- <var title>omitCredentialsMode</var>.
+ <li><p>If <var title>credentials</var> is non-null, set <var title>r</var>'s
+ <span title=concept-request-credentials-mode>credentials mode</span> to
+ <var title>credentials</var>.
 
  <li><p>Return a new <code>Request</code> object associated with <var title>r</var>.
 </ol>
@@ -2044,8 +2049,8 @@ or "<i>fail</i>", it must run these steps:
 
  <li>
   <p>If <var title>mode</var> is "Anonymous", set <var title>req</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> to
-  <i title>always</i>.
+  <span title=concept-request-credentials-mode>credentials mode</span> to
+  <i title>omit</i>.
   <!-- XXX unset by default? -->
   <!-- nullify Origin / Referer too? -->
 
