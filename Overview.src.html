@@ -1056,56 +1056,26 @@ steps:
 
  <!-- Making a "request" -->
  <li>
-  <p>Let <var title>response</var> be the result of making HTTP request using
-  <var title>request</var> following the requirements from HTTP as appropriate.
-  <!-- XXX put "HTTP request" in its own section for SW integration -->
+  <p>Let <var title>set cookies flag</var> be set if either <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+  <i title>never</i>, or <var title>request</var>'s
+  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
+  <i title>CORS</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
 
-  <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
-  non-null, <span data-anolis-spec=html title="queue a task">queue</span>
-  a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
-  byte of <var title>request</var>'s <span title=concept-request-body>body</span>
-  transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
-  for <var title>request</var>.
+ <li><p>Let <var title>response</var> be null.
 
-  <p>Use the <span data-anolis-spec=html>networking task source</span>.
+ <li class=XXX><p>Set <var title>response</var> to the result of invoking
+ <span>handle a fetch</span> for <var title>request</var>.
+ <span>SERVICEWORKER</span>
 
-  <p>If the HTTP request is terminated before all headers from the resource are obtained,
-  return a <span title=concept-network-error>network error</span>. If this is due to
-  <span title=concept-fetch>fetch</span> being
-  <span title=concept-fetch-terminate>terminated</span> with reason
-  <var title>reason</var>, set the return value's
-  <span title=concept-response-termination-reason>termination reason</span> to
-  <var title>reason</var>.
-  <!-- XXX this should be part of that "HTTP request" algorithm -->
+ <li><p>If <var title>response</var> is null, set <var title>response</var> to the result
+ of performing an
+ <span title=concept-http-network-or-cache-fetch>HTTP network or cache fetch</span>.
 
  <!-- Dealing with a "response" -->
  <li><p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
  <var title>request</var> and <var title>response</var> returns failure, return a
  <span title=concept-network-error>network error</span>.
-
- <li>
-  <p>If there are cookies to be set and either <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>never</i>, or <var title>request</var>'s
-  <span title=concept-request-omit-credentials-mode>omit credentials mode</span> is
-  <i title>CORS</i> and the <i title>CORS flag</i> is unset, run these steps:
-  <!-- XXX should be a simple Set-Cookie header check -->
-
-  <ol>
-   <li><p>Wait until ownership of the <span data-anolis-spec=html>storage mutex</span> can
-   be taken by this instance of the <span title=concept-fetch>fetch</span> algorithm.
-
-   <li><p>Take ownership of the <span data-anolis-spec=html>storage mutex</span>.
-
-   <li>
-    <p>Update the cookies. <span data-anolis-ref>COOKIES</span>
-    <!-- XXX ideally references something -->
-
-    <p class=note>This is a fingerprinting vector.
-
-   <li><p>Release the <span data-anolis-spec=html>storage mutex</span> so that it is once
-   again free.
-  </ol>
 
  <li>
   <p>Then, switch on <var title>response</var>'s
@@ -1256,6 +1226,60 @@ steps:
  <var title>reason</var>. <span class="note no-backref">This modifies
  <var title>response</var> after it has been returned. Logic in
  <span title=concept-fetch>fetch</span> takes care of the rest.</span>
+</ol>
+
+
+<h3>HTTP network or cache fetch</h3>
+
+<p>To perform a
+<dfn title=concept-http-network-or-cache-fetch>HTTP network or cache fetch</dfn> using
+<var title>request</var> and a <i title>set cookies flag</i>, run these steps:
+
+<ol>
+ <li>
+  <p>Let <var title>response</var> be the result of making HTTP request using
+  <var title>request</var> following the requirements from HTTP as appropriate.
+  <span data-anolis-ref>HTTP</span>
+
+  <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+  non-null, <span data-anolis-spec=html title="queue a task">queue</span>
+  a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
+  byte of <var title>request</var>'s <span title=concept-request-body>body</span>
+  transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
+  for <var title>request</var>.
+
+  <p>Use the <span data-anolis-spec=html>networking task source</span>.
+
+  <p>If the HTTP request is terminated before all headers from the resource are obtained,
+  return a <span title=concept-network-error>network error</span>. If this is due to
+  <span title=concept-fetch>fetch</span> being
+  <span title=concept-fetch-terminate>terminated</span> with reason
+  <var title>reason</var>, set the return value's
+  <span title=concept-response-termination-reason>termination reason</span> to
+  <var title>reason</var>.
+
+ <li>
+  <p>If the <i title>set cookies flag</i> is set and there are cookies to be set,
+  run these substeps:
+  <!-- XXX non-flag should be a simple Set-Cookie header check -->
+
+  <ol>
+   <li><p>Wait until ownership of the <span data-anolis-spec=html>storage mutex</span> can
+   be taken by this instance of the <span title=concept-fetch>fetch</span> algorithm.
+
+   <li><p>Take ownership of the <span data-anolis-spec=html>storage mutex</span>.
+
+   <li>
+    <p>Update the cookies. <span data-anolis-ref>COOKIES</span>
+    <!-- XXX ideally references something -->
+
+    <p class=note>This is a fingerprinting vector.
+
+   <li><p>Release the <span data-anolis-spec=html>storage mutex</span> so that it is once
+   again free.
+  </ol>
+
+ <li><p>Return <var title>response</var>.
 </ol>
 
 
