@@ -1665,6 +1665,9 @@ and <var title="">request</var>'s
 
 <h2 id="fetch-api"><span class="secno">5 </span>Fetch API</h2>
 
+<pre class="idl">typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a> or <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>) <dfn id="fetchbody">FetchBody</dfn>;
+enum <dfn id="fetchbodytype">FetchBodyType</dfn> { "arraybuffer", "blob", "text" };</pre>
+
 <p class="XXX">This is a work-in-progress section covering a new API that handles slightly
 more <a href="#concept-request-mode" title="concept-request-mode">modes</a> of
 <a href="#concept-fetch" title="concept-fetch">fetching</a> than
@@ -1706,7 +1709,7 @@ interface <dfn id="request">Request</dfn> {
            attribute ByteString <a href="#dom-request-method" title="dom-Request-method">method</a>;
            attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Request-url">url</span>;
   readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Request-headers">headers</span>;
-  <span class="XXX">...</span>? <span title="dom-Request-body">body</span>;
+  Promise&lt;<a href="#fetchbody">FetchBody</a>&gt; <span title="dom-Request-bodyAs">bodyAs</span>(<a href="#fetchbodytype">FetchBodyType</a> <var title="">type</var>);
 
   <!-- client
   -->readonly attribute <a href="#requestcontext">RequestContext</a> <span title="dom-Request-context">context</span>;
@@ -1723,7 +1726,7 @@ interface <dfn id="request">Request</dfn> {
 dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
   <a href="#headermap">HeaderMap</a> headers;
-  <span class="XXX">...</span> body;
+  <a href="#fetchbody">FetchBody</a> body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
 };
@@ -1841,11 +1844,11 @@ constructor must run these steps:
  <li><p>Return a new <code><a href="#request">Request</a></code> object associated with <var title="">r</var>.
 </ol>
 
-<p>The <dfn id="dom-request-method" title="dom-Request-method"><code>method</code> attribute's getter must return
-the associated <span title="concept-request">request</span>'s
-<span title="concept-request-method">method</span>.
+<p>The <dfn id="dom-request-method" title="dom-Request-method"><code>method</code></dfn> attribute's getter must
+return the associated <a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-method" title="concept-request-method">method</a>.
 
-</dfn><p>The <code title="dom-Request-method"><a href="#dom-request-method">method</a></code> attribute's setter must run these
+<p>The <code title="dom-Request-method"><a href="#dom-request-method">method</a></code> attribute's setter must run these
 steps:
 
 <ol>
@@ -1863,7 +1866,7 @@ steps:
 
 <h3 id="response-class"><span class="secno">5.3 </span>Response class</h3>
 
-<pre class="idl">[<span tilte="dom-Response">Constructor</span>(<span class="XXX">...</span> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
+<pre class="idl">[<span tilte="dom-Response">Constructor</span>(<a href="#fetchbody">FetchBody</a> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="response">Response</dfn> {
   static <a href="#response">Response</a> <span title="dom-Response-redirect">redirect</span>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
@@ -1874,7 +1877,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute unsigned short <span title="dom-Response-status">status</span>;
   readonly attribute ByteString <span title="dom-Response-statusText">statusText</span>;
   readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Response-headers">headers</span>;
-  <span class="XXX">...</span>? <span title="dom-Response-body">body</span>;
+  Promise&lt;<a href="#fetchbody">FetchBody</a>&gt; <span title="dom-Response-bodyAs">bodyAs</span>(<a href="#fetchbodytype">FetchBodyType</a> <var title="">type</var>);
 };
 
 dictionary <dfn id="responseinit">ResponseInit</dfn> {
@@ -1882,7 +1885,7 @@ dictionary <dfn id="responseinit">ResponseInit</dfn> {
   unsigned short status = 200;
   ByteString statusText = "OK";
   <a href="#headermap">HeaderMap</a> headers;
-  <span class="XXX">...</span> body = null;
+  <a href="#fetchbody">FetchBody</a>? body = null;
 };
 
 enum <span>ResponseType</span> { "default", "error" };</pre>
