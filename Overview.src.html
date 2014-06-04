@@ -252,7 +252,7 @@ and <span title=concept-request-headers>headers</span> are empty maps, mapping a
 <span data-anolis-spec=html>JavaScript global environment</span>).
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn>service worker default flag</dfn>. Unless stated otherwise it is unset.
+<dfn>skip service worker flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-context>context</dfn>, which is one of
@@ -1059,16 +1059,9 @@ steps:
   to reach this point.
 
  <!-- Making a "request" -->
- <li>
-  <p>Let <var title>set cookies flag</var> be set if either <var title>request</var>'s
-  <span title=concept-request-credentials-mode>credentials mode</span> is
-  <i title>include</i>, or <var title>request</var>'s
-  <span title=concept-request-credentials-mode>credentials mode</span> is
-  <i title>same-origin</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
-
  <li><p>Let <var title>response</var> be null.
 
- <li><p>If <var title>request</var>'s <span>service worker default flag</span>
+ <li><p>If <var title>request</var>'s <span>skip service worker flag</span>
  is unset and <var title>request</var>'s
  <span title=concept-request-client>client</span> is not a
  <span>service worker environment</span>, set <var title>response</var> to the result of
@@ -1077,14 +1070,28 @@ steps:
  <span data-anolis-ref>HTML</span>
  <span data-anolis-ref>SERVICEWORKERS</span>
 
- <li><p>If <var title>response</var> is null, set <var title>response</var> to the result
- of performing an
- <span title=concept-http-network-or-cache-fetch>HTTP network or cache fetch</span>.
+ <li><p>Let <var title>set cookies flag</var> be set if either <var title>request</var>'s
+ <span title=concept-request-credentials-mode>credentials mode</span> is
+ <i title>include</i>, or <var title>request</var>'s
+ <span title=concept-request-credentials-mode>credentials mode</span> is
+ <i title>same-origin</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
 
- <!-- Dealing with a "response" -->
- <li><p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
- <var title>request</var> and <var title>response</var> returns failure, return a
- <span title=concept-network-error>network error</span>.
+ <li>
+  <p>If <var title>response</var> is null, run these substeps:
+
+  <ol>
+   <li><p>Set <var title>response</var> to the result of performing an
+   <span title=concept-http-network-or-cache-fetch>HTTP network or cache fetch</span>
+   using <var title>request</var> and <var title>set cookies flag</var>.
+
+   <li>
+    <p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
+    <var title>request</var> and <var title>response</var> returns failure, return a
+    <span title=concept-network-error>network error</span>.
+
+    <p class=note>There is no need to apply this to a
+    <span title=concept-response>response</span> from a service worker.
+  </ol>
 
  <li>
   <p>Then, switch on <var title>response</var>'s
@@ -1363,8 +1370,7 @@ steps:
  <li><p>Set <var title>preflight</var>'s <span title=concept-request-client>client</span>
  to <var title>request</var>'s <span title=concept-request-client>client</span>.
 
- <li><p>Set <var title>preflight</var>'s <span>service worker default flag</span>
- to <var title>request</var>'s <span>service worker default flag</span>.
+ <li><p>Set <var title>preflight</var>'s <span>skip service worker flag</span>.
 
  <li><p>Set <var title>preflight</var>'s
  <span title=concept-request-context>context</span> to

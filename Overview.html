@@ -294,7 +294,7 @@ and <a href="#concept-request-headers" title="concept-request-headers">headers</
 <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/infrastructure.html#javascript-global-environment">JavaScript global environment</a>).
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="service-worker-default-flag">service worker default flag</dfn>. Unless stated otherwise it is unset.
+<dfn id="skip-service-worker-flag">skip service worker flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-context" title="concept-request-context">context</dfn>, which is one of
@@ -1101,16 +1101,9 @@ steps:
   to reach this point.
 
  <!-- Making a "request" -->
- <li>
-  <p>Let <var title="">set cookies flag</var> be set if either <var title="">request</var>'s
-  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-  <i title="">include</i>, or <var title="">request</var>'s
-  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-  <i title="">same-origin</i> and the <i title="">CORS flag</i> is unset, and unset otherwise.
-
  <li><p>Let <var title="">response</var> be null.
 
- <li><p>If <var title="">request</var>'s <a href="#service-worker-default-flag">service worker default flag</a>
+ <li><p>If <var title="">request</var>'s <a href="#skip-service-worker-flag">skip service worker flag</a>
  is unset and <var title="">request</var>'s
  <a href="#concept-request-client" title="concept-request-client">client</a> is not a
  <span>service worker environment</span>, set <var title="">response</var> to the result of
@@ -1119,14 +1112,28 @@ steps:
  <a href="#refsHTML">[HTML]</a>
  <a href="#refsSERVICEWORKERS">[SERVICEWORKERS]</a>
 
- <li><p>If <var title="">response</var> is null, set <var title="">response</var> to the result
- of performing an
- <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</a>.
+ <li><p>Let <var title="">set cookies flag</var> be set if either <var title="">request</var>'s
+ <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
+ <i title="">include</i>, or <var title="">request</var>'s
+ <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
+ <i title="">same-origin</i> and the <i title="">CORS flag</i> is unset, and unset otherwise.
 
- <!-- Dealing with a "response" -->
- <li><p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
- <var title="">request</var> and <var title="">response</var> returns failure, return a
- <a href="#concept-network-error" title="concept-network-error">network error</a>.
+ <li>
+  <p>If <var title="">response</var> is null, run these substeps:
+
+  <ol>
+   <li><p>Set <var title="">response</var> to the result of performing an
+   <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</a>
+   using <var title="">request</var> and <var title="">set cookies flag</var>.
+
+   <li>
+    <p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
+    <var title="">request</var> and <var title="">response</var> returns failure, return a
+    <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+    <p class="note">There is no need to apply this to a
+    <a href="#concept-response" title="concept-response">response</a> from a service worker.
+  </ol>
 
  <li>
   <p>Then, switch on <var title="">response</var>'s
@@ -1405,8 +1412,7 @@ steps:
  <li><p>Set <var title="">preflight</var>'s <a href="#concept-request-client" title="concept-request-client">client</a>
  to <var title="">request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a>.
 
- <li><p>Set <var title="">preflight</var>'s <a href="#service-worker-default-flag">service worker default flag</a>
- to <var title="">request</var>'s <a href="#service-worker-default-flag">service worker default flag</a>.
+ <li><p>Set <var title="">preflight</var>'s <a href="#skip-service-worker-flag">skip service worker flag</a>.
 
  <li><p>Set <var title="">preflight</var>'s
  <a href="#concept-request-context" title="concept-request-context">context</a> to
