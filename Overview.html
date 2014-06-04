@@ -78,10 +78,9 @@ fetching.
    <li><a href="#basic-fetch"><span class="secno">4.1 </span>Basic fetch</a></li>
    <li><a href="#http-fetch"><span class="secno">4.2 </span>HTTP fetch</a></li>
    <li><a href="#http-network-or-cache-fetch"><span class="secno">4.3 </span>HTTP network or cache fetch</a></li>
-   <li><a href="#cors-fetch-with-preflight"><span class="secno">4.4 </span>CORS fetch with preflight</a></li>
-   <li><a href="#cors-preflight-fetch"><span class="secno">4.5 </span>CORS preflight fetch</a></li>
-   <li><a href="#cors-preflight-cache"><span class="secno">4.6 </span>CORS preflight cache</a></li>
-   <li><a href="#cors-check"><span class="secno">4.7 </span>CORS check</a></ol></li>
+   <li><a href="#cors-preflight-fetch"><span class="secno">4.4 </span>CORS preflight fetch</a></li>
+   <li><a href="#cors-preflight-cache"><span class="secno">4.5 </span>CORS preflight cache</a></li>
+   <li><a href="#cors-check"><span class="secno">4.6 </span>CORS check</a></ol></li>
  <li><a href="#fetch-api"><span class="secno">5 </span>Fetch API</a>
   <ol class="toc">
    <li><a href="#headers-class"><span class="secno">5.1 </span>Headers class</a></li>
@@ -848,14 +847,16 @@ parameter in other standards.
     <p>Set <var title="">request</var>'s
     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
     <i title="">CORS</i>.
-    <p>The result of performing a <a href="#cors-fetch-with-preflight-0">CORS fetch with preflight</a> using <var title="">request.
+    <p>The result of performing an <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using
+    <var title="">request</var> with the <i title="">CORS flag</i> and
+    <i title="">CORS preflight flag</i> set.
 
-   </var><dt>Otherwise
+   <dt>Otherwise
    <dd>
     <p>Set <var title="">request</var>'s
     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
     <i title="">CORS</i>.
-    <p>The result of performing a <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using
+    <p>The result of performing an <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using
     <var title="">request</var> with the <i title="">CORS flag</i> set.
   </dl>
 
@@ -1019,12 +1020,14 @@ steps:
 <h3 id="http-fetch"><span class="secno">4.2 </span>HTTP fetch</h3>
 
 <p>To perform an <dfn id="concept-http-fetch" title="concept-http-fetch">HTTP fetch</dfn> using
-<var title="">request</var> with an optional <i title="">CORS flag</i> and
-<i title="">authentication fetch flag</i>, run these steps:
+<var title="">request</var> with an optional <i title="">CORS flag</i>,
+<i title="">CORS preflight flag</i>, and <i title="">authentication fetch flag</i>, run these
+steps:
 
 <p class="note no-backref">The <i title="">CORS flag</i> is still a bookkeeping detail. The
-<i title="">authentication fetch flag</i> is too, to indicate the
-<a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> is trying to authenticate.
+<i title="">CORS preflight flag</i> and <i title="">authentication fetch flag</i> are too. The
+former indicates a <a href="#cors-preflight-request">CORS preflight request</a> is required and the latter
+indicates an attempt to authenticate.
 
 <ol>
  <!-- Upgrading "request" -->
@@ -1122,6 +1125,40 @@ steps:
   <p>If <var title="">response</var> is null, run these substeps:
 
   <ol>
+   <li><p>Set <var title="">request</var>'s <a href="#skip-service-worker-flag">skip service worker flag</a>.
+
+   <li>
+    <p>If the <i title="">CORS preflight flag</i> is set and
+
+    <ul>
+     <li>there is no <a href="#concept-cache-match-method" title="concept-cache-match-method">method cache match</a> for
+     <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> using
+     <var title="">request</var>, and
+
+     <li>either <var title="">request</var>'s
+     <a href="#concept-request-method" title="concept-request-method">method</a> is a not <a href="#simple-method">simple method</a>
+     or <var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+     <i title="">CORS-with-forced-preflight</i>, and
+
+     <li>there is at least one <a href="#concept-header" title="concept-header">header</a>
+     <a href="#concept-header-name" title="concept-header-name">name</a> in <var title="">request</var>'s
+     <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> for which there is
+     no <a href="#concept-cache-match-header" title="concept-cache-match-header">header name cache match</a> using
+     <var title="">request</var> and for which the <a href="#concept-header" title="concept-header">header</a>
+     is not a <a href="#simple-header">simple header</a>
+    </ul>
+
+    <p>then run these substeps:
+
+    <ol>
+     <li><p>Let <var title="">response</var> be the result of performing a
+     <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> using <var title="">request</var>.
+
+     <li><p>If <var title="">response</var> is a
+     <a href="#concept-network-error" title="concept-network-error">network error</a>, return
+     <var title="">response</var>.
+    </ol>
+
    <li><p>Set <var title="">response</var> to the result of performing an
    <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</a>
    using <var title="">request</var> and <var title="">set cookies flag</var>.
@@ -1194,6 +1231,12 @@ steps:
 
      <li><p>Set <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> to
      <i title="">redirect</i>.
+
+     <li><p>If the <i title="">CORS preflight flag</i> is set, set
+     <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> to
+     <i title="">error</i> and set <var title="">request</var>'s
+     <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
+     <span class="note">This way we avoid running the substeps below.</span>
 
      <li>
       <p>If <var title="">request</var>'s
@@ -1275,6 +1318,11 @@ steps:
  <b title="">authentication entry</b> for <var title="">request</var> and the given realm.
  <a href="#refsHTTPAUTH">[HTTPAUTH]</a>
 
+ <li><p>If the <i title="">CORS preflight flag</i> is set and <var title="">response</var> is a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>,
+ <a href="#concept-cache-clear" title="concept-cache-clear">clear cache entries</a> using
+ <var title="">request</var>.
+
  <li><p>Return <var title="">response</var>, but continue with the request and growing
  <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>. If at any
  point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
@@ -1341,61 +1389,7 @@ steps:
 </ol>
 
 
-<h3 id="cors-fetch-with-preflight"><span class="secno">4.4 </span>CORS fetch with preflight</h3>
-
-<p>To perform a <dfn id="cors-fetch-with-preflight-0">CORS fetch with preflight</dfn> using <var title="">request</var>, run
-these steps:
-
-<ol>
- <li>
-  <p>If
-
-  <ul>
-   <li>there is no <a href="#concept-cache-match-method" title="concept-cache-match-method">method cache match</a> for
-   <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> using
-   <var title="">request</var>, and
-   <li>either <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
-   is a not <a href="#simple-method">simple method</a> or <var title="">request</var>'s
-   <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-   <i title="">CORS-with-forced-preflight</i>, and
-   <li>there is at least one <a href="#concept-header" title="concept-header">header</a>
-   <a href="#concept-header-name" title="concept-header-name">name</a> in <var title="">request</var>'s
-   <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> for which there is no
-   <a href="#concept-cache-match-header" title="concept-cache-match-header">header name cache match</a> using
-   <var title="">request</var> and for which the <a href="#concept-header" title="concept-header">header</a> is
-   not a <a href="#simple-header">simple header</a>
-  </ul>
-
-  <p>then run these substeps:
-
-  <ol>
-   <li><p>Let <var title="">response</var> be a <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> using
-   <var title="">request</var>.
-
-   <li><p>If <var title="">response</var> is a <a href="#concept-network-error" title="concept-network-error">network error</a>, return
-   <var title="">response</var>.
-  </ol>
-
- <li><p>Set <var title="">request</var>'s
- <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
-
- <li><p>Let <var title="">response</var> be a
- <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using <var title="">request</var> with
- the <i title="">CORS flag</i> set.
-
- <li><p>If <var title="">response</var> is a <a href="#concept-redirect" title="concept-redirect">redirect</a>,
- set its <a href="#concept-response-type" title="concept-response-type">type</a> to <i title="">error</i>.
-
- <li><p>If <var title="">response</var> is a
- <a href="#concept-network-error" title="concept-network-error">network error</a>,
- <a href="#concept-cache-clear" title="concept-cache-clear">clear cache entries</a> using
- <var title="">request</var>.
-
- <li><p>Return <var title="">response</var>.
-</ol>
-
-
-<h3 id="cors-preflight-fetch"><span class="secno">4.5 </span>CORS preflight fetch</h3>
+<h3 id="cors-preflight-fetch"><span class="secno">4.4 </span>CORS preflight fetch</h3>
 
 <p>To perform a <dfn id="cors-preflight-fetch-0">CORS preflight fetch</dfn> using <var title="">request</var>, run these
 steps:
@@ -1452,7 +1446,7 @@ steps:
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
  <i title="">omit</i>.
 
- <li><p>Let <var title="">response</var> be the result of performing a
+ <li><p>Let <var title="">response</var> be the result of performing an
  <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using <var title="">preflight</var> with
  the <i title="">CORS flag</i> set.
 
@@ -1582,7 +1576,7 @@ steps:
 </ol>
 
 
-<h3 id="cors-preflight-cache"><span class="secno">4.6 </span>CORS preflight cache</h3>
+<h3 id="cors-preflight-cache"><span class="secno">4.5 </span>CORS preflight cache</h3>
 
 <p>A <dfn id="concept-cache" title="concept-cache">CORS preflight cache</dfn> consists of a collection of
 entries where each entry has these fields:
@@ -1631,7 +1625,7 @@ and <var title="">request</var>'s
 <a href="#concept-cache-header-name" title="concept-cache-header-name">header name</a> is <var title="">headerName</var>.
 
 
-<h3 id="cors-check"><span class="secno">4.7 </span>CORS check</h3>
+<h3 id="cors-check"><span class="secno">4.6 </span>CORS check</h3>
 
 <p>To perform a <dfn id="cors-check-0">CORS check</dfn> for a <var title="">request</var> and
 <var title="">response</var>, run these steps:
