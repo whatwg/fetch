@@ -1889,13 +1889,13 @@ steps:
 <pre class="idl">[<span tilte="dom-Response">Constructor</span>(<a href="#fetchbody">FetchBody</a> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="response">Response</dfn> {
-  static <a href="#response">Response</a> <span title="dom-Response-redirect">redirect</span>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
+  static <a href="#response">Response</a> <a href="#dom-response-redirect" title="dom-Response-redirect">redirect</a>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
 
-  readonly attribute <a href="#responsetype">ResponseType</a> <span title="dom-Response-type">type</span>;
+  readonly attribute <a href="#responsetype">ResponseType</a> <a href="#dom-response-type" title="dom-Response-type">type</a>;
 
-  readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Response-url">url</span>;
-  readonly attribute unsigned short <span title="dom-Response-status">status</span>;
-  readonly attribute ByteString <span title="dom-Response-statusText">statusText</span>;
+  readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-response-url" title="dom-Response-url">url</a>;
+           attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
+           attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
   readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Response-headers">headers</span>;
   Promise&lt;<a href="#fetchbody">FetchBody</a>&gt; <span title="dom-Response-bodyAs">bodyAs</span>(<a href="#fetchbodytype">FetchBodyType</a> <var title="">type</var>);
 };
@@ -1909,6 +1909,99 @@ dictionary <dfn id="responseinit">ResponseInit</dfn> {
 };
 
 enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>
+
+<p>A <code><a href="#response">Response</a></code> object has an associated
+<a href="#concept-response" title="concept-response">response</a>.
+
+<p class="XXX">constructor
+
+<p>The static
+<dfn id="dom-response-redirect" title="dom-Response-redirect"><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>Let <var title="">parsedURL</var> be the result of
+ <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
+ <var title="">url</var> with <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#api-base-url">API base URL</a>.
+
+ <li><p>If <var title="">parsedURL</var> is failure,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>If <var title="">status</var> is not one of
+ 301,
+ 302,
+ 303,
+ 307, and
+ 308,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Let <var title="">r</var> be a new <a href="#concept-response" title="concept-response">response</a>.
+
+ <li><p>Set <var title="">r</var>'s <a href="#concept-response-url" title="concept-response-url">url</a> to
+ <span class="XXX">...</span>.
+
+ <li><p>Set <var title="">r</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> to
+ <var title="">status</var>.
+
+ <li><p>Set `<code title="">Location</code>` to <var title="">parsedURL</var> in
+ <var title="">r</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+
+ <li><p>Return a new <code><a href="#response">Response</a></code> object associated with <var title="">r</var>.
+</ol>
+
+<p>The <dfn id="dom-response-type" title="dom-Response-type"><code>type</code></dfn> attribute's getter must return
+the associated <a href="#concept-response" title="concept-response">response</a>'s
+<a href="#concept-response-type" title="concept-response-type">type</a>.
+
+<p>The <dfn id="dom-response-url" title="dom-Response-url"><code>url</code></dfn> attribute's getter must return
+the associated <a href="#concept-response" title="concept-response">response</a>'s
+<a href="#concept-response-url" title="concept-response-url">url</a>,
+<a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a>.
+<a href="#refsURL">[URL]</a>
+
+<p>The <dfn id="dom-response-status" title="dom-Response-status"><code>status</code></dfn> attribute's getter must
+return the associated <a href="#concept-response" title="concept-response">response</a>'s
+<a href="#concept-response-status" title="concept-response-status">status</a>.
+
+<p>The <code title="dom-Response-status"><a href="#dom-response-status">status</a></code> attribute's setter must run these
+steps:
+
+<ol>
+ <li><p>If the associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">opaque</i>, return.
+
+ <li><p>If the given value is not in the range 200 to 599,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p class="XXX">Do we need to ban any status codes?
+
+ <li><p>Set the associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-status" title="concept-response-status">status</a> to the given value.
+</ol>
+
+<p>The <dfn id="dom-response-statustext" title="dom-Response-statusText"><code>statusText</code></dfn> attribute's getter
+must return the associated <a href="#concept-response" title="concept-response">response</a>'s
+<a href="#concept-response-status-message" title="concept-response-status-message">status message</a>.
+
+<p>The <code title="dom-Response-statusText"><a href="#dom-response-statustext">statusText</a></code> attribute's setter must run
+these steps:
+
+<ol>
+ <li><p>If the associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">opaque</i>, return.
+
+ <li><p>If the given value does not match the
+ <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-6.1.1">Reason-Phrase</a> token production,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Set the associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> to the given value.
+</ol>
+
+<p class="XXX">headers
+
+<p class="XXX">bodyAs
 
 
 <h3 id="fetch-method"><span class="secno">5.4 </span>Fetch method</h3>

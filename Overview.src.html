@@ -1853,8 +1853,8 @@ interface <dfn>Response</dfn> {
   readonly attribute <span>ResponseType</span> <span title=dom-Response-type>type</span>;
 
   readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Response-url>url</span>;
-  readonly attribute unsigned short <span title=dom-Response-status>status</span>;
-  readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
+           attribute unsigned short <span title=dom-Response-status>status</span>;
+           attribute ByteString <span title=dom-Response-statusText>statusText</span>;
   readonly attribute <span>HeaderMap</span> <span title=dom-Response-headers>headers</span>;
   Promise&lt;<span>FetchBody</span>> <span title=dom-Response-bodyAs>bodyAs</span>(<span>FetchBodyType</span> <var title>type</var>);
 };
@@ -1868,6 +1868,99 @@ dictionary <dfn>ResponseInit</dfn> {
 };
 
 enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>
+
+<p>A <code>Response</code> object has an associated
+<span title=concept-response>response</span>.
+
+<p class=XXX>constructor
+
+<p>The static
+<dfn title=dom-Response-redirect><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>Let <var title>parsedURL</var> be the result of
+ <span data-anolis-spec=url title=concept-url-parser>parsing</span>
+ <var title>url</var> with <span data-anolis-spec=html>entry settings object</span>'s
+ <span data-anolis-spec=html>API base URL</span>.
+
+ <li><p>If <var title>parsedURL</var> is failure,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If <var title>status</var> is not one of
+ 301,
+ 302,
+ 303,
+ 307, and
+ 308,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Let <var title>r</var> be a new <span title=concept-response>response</span>.
+
+ <li><p>Set <var title>r</var>'s <span title=concept-response-url>url</span> to
+ <span class=XXX>...</span>.
+
+ <li><p>Set <var title>r</var>'s <span title=concept-response-status>status</span> to
+ <var title>status</var>.
+
+ <li><p>Set `<code title>Location</code>` to <var title>parsedURL</var> in
+ <var title>r</var>'s <span title=concept-response-headers>headers</span>.
+
+ <li><p>Return a new <code>Response</code> object associated with <var title>r</var>.
+</ol>
+
+<p>The <dfn title=dom-Response-type><code>type</code></dfn> attribute's getter must return
+the associated <span title=concept-response>response</span>'s
+<span title=concept-response-type>type</span>.
+
+<p>The <dfn title=dom-Response-url><code>url</code></dfn> attribute's getter must return
+the associated <span title=concept-response>response</span>'s
+<span title=concept-response-url>url</span>,
+<span data-anolis-spec=url title=concept-url-serializer>serialized</span>.
+<span data-anolis-ref>URL</span>
+
+<p>The <dfn title=dom-Response-status><code>status</code></dfn> attribute's getter must
+return the associated <span title=concept-response>response</span>'s
+<span title=concept-response-status>status</span>.
+
+<p>The <code title=dom-Response-status>status</code> attribute's setter must run these
+steps:
+
+<ol>
+ <li><p>If the associated <span title=concept-response>response</span>'s
+ <span title=concept-response-type>type</span> is <i title>opaque</i>, return.
+
+ <li><p>If the given value is not in the range 200 to 599,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p class=XXX>Do we need to ban any status codes?
+
+ <li><p>Set the associated <span title=concept-response>response</span>'s
+ <span title=concept-response-status>status</span> to the given value.
+</ol>
+
+<p>The <dfn title=dom-Response-statusText><code>statusText</code></dfn> attribute's getter
+must return the associated <span title=concept-response>response</span>'s
+<span title=concept-response-status-message>status message</span>.
+
+<p>The <code title=dom-Response-statusText>statusText</code> attribute's setter must run
+these steps:
+
+<ol>
+ <li><p>If the associated <span title=concept-response>response</span>'s
+ <span title=concept-response-type>type</span> is <i title>opaque</i>, return.
+
+ <li><p>If the given value does not match the
+ <span data-anolis-spec=http>Reason-Phrase</span> token production,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Set the associated <span title=concept-response>response</span>'s
+ <span title=concept-response-status-message>status message</span> to the given value.
+</ol>
+
+<p class=XXX>headers
+
+<p class=XXX>bodyAs
 
 
 <h3>Fetch method</h3>
