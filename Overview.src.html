@@ -451,9 +451,14 @@ bookkeeping details by the <span title=concept-fetch>fetch</span> algorithm.
 evolves over time. That is, not all its fields are available straight away.
 
 <p>A <span title=concept-response>response</span> has an associated
-<dfn title=concept-response-type>type</dfn> which is one of <i title>default</i>,
-<i title>redirect</i>, and <i title>error</i>. Unless stated otherwise, it is
-<i title>default</i>.
+<dfn title=concept-response-type>type</dfn> which is one of
+<i title>basic</i>,
+<i title>CORS</i>,
+<i title>default</i>,
+<i title>error</i>,
+<i title>opaque</i>, and
+<i title>redirect</i>.
+Unless stated otherwise, it is <i title>default</i>.
 
 <p>A <span title=concept-response>response</span> can have an associated
 <dfn title=concept-response-termination-reason>termination reason</dfn> which is one of
@@ -482,18 +487,24 @@ to deal with broken servers.
 <span title=concept-response-type>type</span> is <i title>error</i> is known as a
 <dfn title=concept-network-error>network error</dfn>.
 
-<p>A <span title=concept-network-error>network error</span>'s
-<span title=concept-response-status>status</span> is <code title>0</code> and its
-<span title=concept-response-status-message>status message</span> is the empty byte sequence.
+<p>A <span title=concept-network-error>network error</span> is a
+<span title=concept-response>response</span> whose
+<span title=concept-response-status>status</span> is always <code title>0</code>,
+<span title=concept-response-status-message>status message</span> is always the empty byte sequence,
+<span title=concept-response-headers>headers</span> is aways an empty list, and
+<span title=concept-response-body>body</span> is always null.
 
 <p>A <span title=concept-response>response</span> whose
 <span title=concept-response-type>type</span> is <i title>redirect</i> is known as a
 <dfn title=concept-redirect>redirect</dfn>.
 
+<!-- Introduce concept-redirect-location for navigate algorithm? -->
+
 <hr>
 
 <p>A <dfn title=concept-filtered-response>filtered response</dfn> is a limited view on a
-<span title=concept-response>response</span>. This
+<span title=concept-response>response</span> that is not a
+<span title=concept-network-error>network error</span>. This
 <span title=concept-response>response</span> is referred to as the
 <span title=concept-filtered-response>filtered response</span>'s associated
 <dfn title=concept-internal-response>internal response</dfn>.
@@ -505,6 +516,7 @@ required, e.g. to feed image data to a decoder, the associated
 
 <p>A <dfn title=concept-filtered-response-basic>basic filtered response</dfn> is a
 <span title=concept-filtered-response>filtered response</span> whose
+<span title=concept-response-type>type</span> is <i title>basic</i>,
 <span title=concept-response-headers>response headers</span> exclude any
 <span title=concept-header>headers</span> in
 <span title=concept-internal-response>internal response</span>'s
@@ -514,6 +526,7 @@ required, e.g. to feed image data to a decoder, the associated
 
 <p>A <dfn title=concept-filtered-response-cors>CORS filtered response</dfn> is a
 <span title=concept-filtered-response>filtered response</span> whose
+<span title=concept-response-type>type</span> is <i title>CORS</i>,
 <span title=concept-response-headers>response headers</span> exclude all
 <span title=concept-header>headers</span> in
 <span title=concept-internal-response>internal response</span>'s
@@ -533,14 +546,14 @@ whose <span title=concept-header-name>name</span> is one of the values of the
 
 <p>An <dfn title=concept-filtered-response-opaque>opaque filtered response</dfn> is a
 <span title=concept-filtered-response>filtered response</span> whose
-<span title=concept-response-type>type</span> is <i title>error</i>,
+<span title=concept-response-type>type</span> is <i title>opaque</i>,
 <span title=concept-response-status>status</span> is <code title>0</code>,
 <span title=concept-response-status-message>status message</span> is the empty byte sequence,
 <span title=concept-response-headers>headers</span> is an empty list, and
 <span title=concept-response-body>body</span> is null.
 
 <p class="note no-backref">In other words, an
-<span title=concept-filtered-response-opaque>opaque filtered response</span> is
+<span title=concept-filtered-response-opaque>opaque filtered response</span> is nearly
 indistinguishable from a <span title=concept-network-error>network error</span>. When
 introducing new APIs, do not use the
 <span title=concept-internal-response>internal response</span> as you will leak
@@ -825,8 +838,9 @@ parameter in other standards.
  <var title>request</var>'s <span title=concept-request-url>url</span>.
 
  <li>
-  <p>Set <var title>response</var> to the following
-  <span title=concept-filtered-response>filtered response</span> with
+  <p>If <var title>response</var> is not a
+  <span title=concept-network-error>network error</span>, set <var title>response</var> to
+  the following <span title=concept-filtered-response>filtered response</span> with
   <var title>response</var> as its
   <span title=concept-internal-response>internal response</span>, depending on
   <var title>request</var>'s
@@ -1084,7 +1098,12 @@ indicates an attempt to authenticate.
   <p>If <var title>response</var> is null, run these substeps:
 
   <ol>
-   <li><p>Set <var title>request</var>'s <span>skip service worker flag</span>.
+   <li>
+    <p>Set <var title>request</var>'s <span>skip service worker flag</span>.
+
+    <p class="note no-backref">There might be redirects. Alternatively,
+    <var title>request</var>'s <span>authentication flag</span> is set and the
+    <i title>CORS flag</i> is unset.</span>
 
    <li>
     <p>If the <i title>CORS preflight flag</i> is set and
@@ -1857,7 +1876,7 @@ dictionary <dfn>ResponseInit</dfn> {
   <span>FetchBody</span>? body = null;
 };
 
-enum <dfn>ResponseType</dfn> { "default", "error" };</pre>
+enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque", "redirect" };</pre>
 
 
 <h3>Fetch method</h3>
