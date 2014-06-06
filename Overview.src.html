@@ -1644,9 +1644,6 @@ and <var title>request</var>'s
 
 <h2>Fetch API</h2>
 
-<pre class=idl>typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</span> or <span data-anolis-spec=encoding>ScalarValueString</span>) <dfn>FetchBody</dfn>;
-enum <dfn>FetchBodyType</dfn> { "arraybuffer", "blob", "text" };</pre>
-
 <p class=XXX>This is a work-in-progress section covering a new API that handles slightly
 more <span title=concept-request-mode>modes</span> of
 <span title=concept-fetch>fetching</span> than
@@ -1678,6 +1675,24 @@ structure for responses underneath, to deal with broken servers. It is intention
 expose what HTTP requires.
 
 
+<h3>Body stream concept</h3>
+
+<p class=note>The interface in this section is to become a subclass of a future native
+JavaScript IO stream class. For now all it offers is a single method for getting all the
+data out of the underlying stream in a chosen representation.
+
+<pre class=idl>typedef object <dfn>JSON</dfn>;
+typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</span> or <span data-anolis-spec=encoding>ScalarValueString</span>) <dfn>FetchBodyInit</dfn>;
+typedef (<span>JSON</span> or <span>FetchBodyInit</span>) <dfn>FetchBody</dfn>;
+
+[NoInterfaceObject]
+interface <dfn>FetchBodyStream</dfn> {
+  Promise&lt;<span>FetchBody</span>> <span title=dom-FetchBodyStream-to>to</span>(<span>FetchBodyType</span> <var title>type</var>);
+}
+
+enum <dfn>FetchBodyType</dfn> { "arraybuffer", "blob", "json", "text" };</pre>
+
+
 <h3>Request class</h3>
 
 <pre class=idl>typedef (<span>Request</span> or <span data-anolis-spec=encoding>ScalarValueString</span>) <dfn>RequestInfo</dfn>;
@@ -1688,7 +1703,7 @@ interface <dfn>Request</dfn> {
            attribute ByteString <span title=dom-Request-method>method</span>;
            attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
   readonly attribute <span>HeaderMap</span> <span title=dom-Request-headers>headers</span>;
-  Promise&lt;<span>FetchBody</span>> <span title=dom-Request-bodyAs>bodyAs</span>(<span>FetchBodyType</span> <var title>type</var>);
+  readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
 
   <!-- client
   -->readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;
@@ -1705,7 +1720,7 @@ interface <dfn>Request</dfn> {
 dictionary <dfn>RequestInit</dfn> {
   ByteString method;
   <span>HeaderMap</span> headers;
-  <span>FetchBody</span> body;
+  <span>FetchBodyInit</span> body;
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
 };
@@ -1856,7 +1871,7 @@ interface <dfn>Response</dfn> {
            attribute unsigned short <span title=dom-Response-status>status</span>;
            attribute ByteString <span title=dom-Response-statusText>statusText</span>;
   readonly attribute <span>HeaderMap</span> <span title=dom-Response-headers>headers</span>;
-  Promise&lt;<span>FetchBody</span>> <span title=dom-Response-bodyAs>bodyAs</span>(<span>FetchBodyType</span> <var title>type</var>);
+  readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
 };
 
 dictionary <dfn>ResponseInit</dfn> {
@@ -1864,7 +1879,7 @@ dictionary <dfn>ResponseInit</dfn> {
   unsigned short status = 200;
   ByteString statusText = "OK";
   <span>HeaderMap</span> headers;
-  <span>FetchBody</span>? body = null;
+  <span>FetchBodyInit</span>? body = null;
 };
 
 enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>
@@ -1959,7 +1974,7 @@ these steps:
 
 <p class=XXX>headers
 
-<p class=XXX>bodyAs
+<p class=XXX>body
 
 
 <h3>Fetch method</h3>
