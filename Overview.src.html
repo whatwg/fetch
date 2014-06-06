@@ -1653,7 +1653,9 @@ service workers, but it is applicable elsewhere too.
 
 <h3>Headers class</h3>
 
-<pre class=idl>[<span title=dom-HeaderMap>Constructor</span>(),
+<pre class=idl>typedef (<span>HeaderMap</span> or <span class=XXX>...</span>) <dfn>HeaderInit</dfn>;
+
+[<span title=dom-HeaderMap>Constructor</span>(<span>HeaderInit</span> <var title>init</var>),
  Exposed=Window,Worker]
 interface <dfn>HeaderMap</dfn> {
   void <span title=dom-HeaderMap-add>add</span>(ByteString <var title>name</var>, ByteString <var title>value</var>);
@@ -1700,8 +1702,8 @@ enum <dfn>FetchBodyType</dfn> { "arraybuffer", "blob", "json", "text" };</pre>
 [<span title=dom-Request>Constructor</span>(<span>RequestInfo</span> <var title>input</var>, optional <span>RequestInit</span> <var title>init</var>),
  Exposed=Window,Worker]
 interface <dfn>Request</dfn> {
-           attribute ByteString <span title=dom-Request-method>method</span>;
-           attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
+  readonly attribute ByteString <span title=dom-Request-method>method</span>;
+  readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
   readonly attribute <span>HeaderMap</span> <span title=dom-Request-headers>headers</span>;
   readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
 
@@ -1711,22 +1713,22 @@ interface <dfn>Request</dfn> {
   readonly attribute DOMString <span title=dom-Request-referrer>referrer</span>;
   readonly attribute boolean <span title=dom-Request-handles401>handles401</span>;
   readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;
-           attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
-           attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;
+  readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
+  readonly attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;
 };
 
 dictionary <dfn>RequestInit</dfn> {
   ByteString method;
-  <span>HeaderMap</span> headers;
+  <span>HeaderInit</span> headers;
   <span>FetchBodyInit</span> body;
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
 };
 
 enum <dfn>RequestContext</dfn> { <span class=XXX>...</span> }; // <span title=concept-request-context>context</span>
-enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors", "cors-with-forced-preflight" };
+enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
 <p>A <span title=concept-request>request</span> is represented by zero or more
@@ -1842,20 +1844,39 @@ constructor must run these steps:
 return the associated <span title=concept-request>request</span>'s
 <span title=concept-request-method>method</span>.
 
-<p>The <code title=dom-Request-method>method</code> attribute's setter must run these
-steps:
+<p>The <dfn title=dom-Request-url><code>url</code></dfn> attribute's getter must
+return the associated <span title=concept-request>request</span>'s
+<span title=concept-request-url>url</span>,
+<span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
+<i title>exclude fragment flag</i> set.
 
-<ol>
- <li><p>If the given value is not a <span>useful method</span>,
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+<p>The <dfn title=dom-Request-mode><code>mode</code></dfn> attribute's getter must
+return the value corresponding to the first matching statement, switching on
+<span title=concept-request>request</span>'s <span title=concept-request-mode>mode</span>:
 
- <li><p class=XXX>Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+<dl class=switch>
+ <dt><i title>same-origin</i>
+ <dd>"<code title>same-origin</code>"
+ <dt><i title>no CORS</i>
+ <dd>"<code title>no-cors</code>"
+ <dt><i title>CORS</i>
+ <dt><i title>CORS-with-forced-preflight</i>
+ <dd>"<code title>cors</code>"
+</dl>
 
- <li><p>If the given value is not a <span>simple method</span>, <span class=XXX>...</span>
+<p>The <dfn title=dom-Request-credentials><code>credentials</code></dfn> attribute's
+getter must return the value corresponding to the first matching statement, switching on
+<span title=concept-request>request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span>:
 
- <li><p>Set associated <span title=concept-request>request</span>'s
- <span title=concept-request-method>method</span> to the given value.
-</ol>
+<dl class=switch>
+ <dt><i title>omit</i>
+ <dd>"<code title>omit</code>"
+ <dt><i title>same-origin</i>
+ <dd>"<code title>same-origin</code>"
+ <dt><i title>include</i>
+ <dd>"<code title>include</code>"
+</dl>
 
 
 <h3>Response class</h3>
@@ -1870,7 +1891,7 @@ interface <dfn>Response</dfn> {
   readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Response-url>url</span>;
            attribute unsigned short <span title=dom-Response-status>status</span>;
            attribute ByteString <span title=dom-Response-statusText>statusText</span>;
-  readonly attribute <span>HeaderMap</span> <span title=dom-Response-headers>headers</span>;
+  readonly attribute <span>HeaderInit</span> <span title=dom-Response-headers>headers</span>;
   readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
 };
 
@@ -1878,7 +1899,7 @@ dictionary <dfn>ResponseInit</dfn> {
   <span>ResponseType</span> type = "default"
   unsigned short status = 200;
   ByteString statusText = "OK";
-  <span>HeaderMap</span> headers;
+  <span>HeaderInit</span> headers;
   <span>FetchBodyInit</span>? body = null;
 };
 
@@ -1930,7 +1951,8 @@ the empty string if the associated <span title=concept-response>response</span>'
 <span title=concept-response-url>url</span> is null and the associated
 <span title=concept-response>response</span>'s
 <span title=concept-response-url>url</span>,
-<span data-anolis-spec=url title=concept-url-serializer>serialized</span>, otherwise.
+<span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
+<i title>exclude fragment flag</i> set, otherwise.
 <span data-anolis-ref>URL</span>
 
 <p>The <dfn title=dom-Response-status><code>status</code></dfn> attribute's getter must

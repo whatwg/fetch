@@ -1695,7 +1695,9 @@ service workers, but it is applicable elsewhere too.
 
 <h3 id="headers-class"><span class="secno">5.1 </span>Headers class</h3>
 
-<pre class="idl">[<span title="dom-HeaderMap">Constructor</span>(),
+<pre class="idl">typedef (<a href="#headermap">HeaderMap</a> or <span class="XXX">...</span>) <dfn id="headerinit">HeaderInit</dfn>;
+
+[<span title="dom-HeaderMap">Constructor</span>(<a href="#headerinit">HeaderInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="headermap">HeaderMap</dfn> {
   void <span title="dom-HeaderMap-add">add</span>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
@@ -1742,8 +1744,8 @@ enum <dfn id="fetchbodytype">FetchBodyType</dfn> { "arraybuffer", "blob", "json"
 [<a href="#dom-request" title="dom-Request">Constructor</a>(<a href="#requestinfo">RequestInfo</a> <var title="">input</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="request">Request</dfn> {
-           attribute ByteString <a href="#dom-request-method" title="dom-Request-method">method</a>;
-           attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <span title="dom-Request-url">url</span>;
+  readonly attribute ByteString <a href="#dom-request-method" title="dom-Request-method">method</a>;
+  readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-request-url" title="dom-Request-url">url</a>;
   readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Request-headers">headers</span>;
   readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <span title="dom-Request-body">body</span>;
 
@@ -1753,22 +1755,22 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute DOMString <span title="dom-Request-referrer">referrer</span>;
   readonly attribute boolean <span title="dom-Request-handles401">handles401</span>;
   readonly attribute boolean <span title="dom-Request-isSynchronous">isSynchronous</span>;
-           attribute <a href="#requestmode">RequestMode</a> <span title="dom-Request-mode">mode</span>;
-           attribute <a href="#requestcredentials">RequestCredentials</a> <span title="dom-Request-credentials">credentials</span>;
+  readonly attribute <a href="#requestmode">RequestMode</a> <a href="#dom-request-mode" title="dom-Request-mode">mode</a>;
+  readonly attribute <a href="#requestcredentials">RequestCredentials</a> <a href="#dom-request-credentials" title="dom-Request-credentials">credentials</a>;
   readonly attribute boolean <span title="dom-Request-usingURLCredentials">usingURLCredentials</span>;
   readonly attribute boolean <span title="dom-Request-handlesRedirects">handlesRedirects</span>;
 };
 
 dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
-  <a href="#headermap">HeaderMap</a> headers;
+  <a href="#headerinit">HeaderInit</a> headers;
   <a href="#fetchbodyinit">FetchBodyInit</a> body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
 };
 
 enum <dfn id="requestcontext">RequestContext</dfn> { <span class="XXX">...</span> }; // <a href="#concept-request-context" title="concept-request-context">context</a>
-enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "no-cors", "cors", "cors-with-forced-preflight" };
+enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
 <p>A <a href="#concept-request" title="concept-request">request</a> is represented by zero or more
@@ -1884,20 +1886,39 @@ constructor must run these steps:
 return the associated <a href="#concept-request" title="concept-request">request</a>'s
 <a href="#concept-request-method" title="concept-request-method">method</a>.
 
-<p>The <code title="dom-Request-method"><a href="#dom-request-method">method</a></code> attribute's setter must run these
-steps:
+<p>The <dfn id="dom-request-url" title="dom-Request-url"><code>url</code></dfn> attribute's getter must
+return the associated <a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-url" title="concept-request-url">url</a>,
+<a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> with the
+<i title="">exclude fragment flag</i> set.
 
-<ol>
- <li><p>If the given value is not a <a href="#useful-method">useful method</a>,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+<p>The <dfn id="dom-request-mode" title="dom-Request-mode"><code>mode</code></dfn> attribute's getter must
+return the value corresponding to the first matching statement, switching on
+<a href="#concept-request" title="concept-request">request</a>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a>:
 
- <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+<dl class="switch">
+ <dt><i title="">same-origin</i>
+ <dd>"<code title="">same-origin</code>"
+ <dt><i title="">no CORS</i>
+ <dd>"<code title="">no-cors</code>"
+ <dt><i title="">CORS</i>
+ <dt><i title="">CORS-with-forced-preflight</i>
+ <dd>"<code title="">cors</code>"
+</dl>
 
- <li><p>If the given value is not a <a href="#simple-method">simple method</a>, <span class="XXX">...</span>
+<p>The <dfn id="dom-request-credentials" title="dom-Request-credentials"><code>credentials</code></dfn> attribute's
+getter must return the value corresponding to the first matching statement, switching on
+<a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>:
 
- <li><p>Set associated <a href="#concept-request" title="concept-request">request</a>'s
- <a href="#concept-request-method" title="concept-request-method">method</a> to the given value.
-</ol>
+<dl class="switch">
+ <dt><i title="">omit</i>
+ <dd>"<code title="">omit</code>"
+ <dt><i title="">same-origin</i>
+ <dd>"<code title="">same-origin</code>"
+ <dt><i title="">include</i>
+ <dd>"<code title="">include</code>"
+</dl>
 
 
 <h3 id="response-class"><span class="secno">5.4 </span>Response class</h3>
@@ -1912,7 +1933,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-response-url" title="dom-Response-url">url</a>;
            attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
            attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
-  readonly attribute <a href="#headermap">HeaderMap</a> <span title="dom-Response-headers">headers</span>;
+  readonly attribute <a href="#headerinit">HeaderInit</a> <span title="dom-Response-headers">headers</span>;
   readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <span title="dom-Request-body">body</span>;
 };
 
@@ -1920,7 +1941,7 @@ dictionary <dfn id="responseinit">ResponseInit</dfn> {
   <a href="#responsetype">ResponseType</a> type = "default"
   unsigned short status = 200;
   ByteString statusText = "OK";
-  <a href="#headermap">HeaderMap</a> headers;
+  <a href="#headerinit">HeaderInit</a> headers;
   <a href="#fetchbodyinit">FetchBodyInit</a>? body = null;
 };
 
@@ -1972,7 +1993,8 @@ the empty string if the associated <a href="#concept-response" title="concept-re
 <a href="#concept-response-url" title="concept-response-url">url</a> is null and the associated
 <a href="#concept-response" title="concept-response">response</a>'s
 <a href="#concept-response-url" title="concept-response-url">url</a>,
-<a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a>, otherwise.
+<a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> with the
+<i title="">exclude fragment flag</i> set, otherwise.
 <a href="#refsURL">[URL]</a>
 
 <p>The <dfn id="dom-response-status" title="dom-Response-status"><code>status</code></dfn> attribute's getter must
