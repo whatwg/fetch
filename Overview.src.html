@@ -152,6 +152,9 @@ means (e.g. via <code title>data</code> URL).
 
 <h4 id=terminology-headers>Headers</h4>
 
+<p>A <dfn title=concept-header-list>header list</dfn> consists of zero or more
+<span title=concept-header>headers</span>.
+
 <p>A <dfn title=concept-header>header</dfn> consists of a
 <dfn title=concept-header-name>name</dfn> and <dfn title=concept-header-value>value</dfn>.
 A <span title=concept-header-name>name</span> is a
@@ -159,13 +162,13 @@ A <span title=concept-header-name>name</span> is a
 <span title=concept-header-value>value</span> is a byte sequence.
 
 <p>A <dfn>simple header</dfn> is a <span title=concept-header>header</span> whose
-<span title=concept-header-name>name</span> is `<code title>Accept</code>`,
-`<code title>Accept-Language</code>`, or `<code title>Content-Language</code>`, or whose
+<span title=concept-header-name>name</span> is either one of `<code title>Accept</code>`,
+`<code title>Accept-Language</code>`, and `<code title>Content-Language</code>`, or whose
 <span title=concept-header-name>name</span> is `<code title>Content-Type</code>` and
-<span title=concept-header-value>value</span>, <span class=XXX>once parsed,</span> is
+<span title=concept-header-value>value</span>,
+<span class=concept-header-parse>once parsed</span>, is one of
 `<code title>application/x-www-form-urlencoded</code>`,
-`<code title>multipart/form-data</code>`,
-or `<code title>text/plain</code>`.
+`<code title>multipart/form-data</code>`, and `<code title>text/plain</code>`.
 
 <p class=XXX>What we never resolved in CORS was whether only certain
 parameters should be allowed and how exactly the MIME type parsing would work. Hopefully
@@ -238,9 +241,9 @@ return the <span title=concept-header-value>values</span> obtained for the given
 <dfn title=concept-request-headers>headers</dfn>. Unless stated otherwise
 <span title=concept-request>request</span>'s
 <span title=concept-request-author-headers>author headers</span>
-and <span title=concept-request-headers>headers</span> are empty maps, mapping a
-<span title=concept-header-name>header name</span> to one or more
-<span title=concept-header-value>header values</span>.
+and <span title=concept-request-headers>headers</span> are
+<span title=concept-header-list>header lists</span>.
+<!-- XXX merge author headers and headers? -->
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-body>body</dfn>. Unless stated otherwise it is null.
@@ -473,12 +476,9 @@ Unless stated otherwise, it is <i title>default</i>.
 <span title=concept-response-url>url</span> is null,
 <span title=concept-response-status>status</span> is <code title>200</code>,
 <span title=concept-response-status-message>status message</span> is `<code title>OK</code>`,
-<span title=concept-response-headers>headers</span> is an empty list, and
+<span title=concept-response-headers>headers</span> is an empty
+<span title=concept-header-list>header list</span>, and
 <span title=concept-response-body>body</span> is null.
-
-<p class="note no-backref">A <span title=concept-response>response</span>'s
-<span title=concept-response-headers>headers</span> is a list rather than map to be able
-to deal with broken servers.
 
 <hr>
 
@@ -1698,23 +1698,19 @@ enum <dfn>FetchBodyType</dfn> { "arraybuffer", "blob", "json", "text" };</pre>
 
 <p>A <code>FetchBodyStream</code> object has an associated
 <dfn title=concept-FetchBodyStream-MIME-type>MIME type</dfn>
-(initially the empty byte sequence) and
-<dfn title=concept-FetchBodyStream-promise>promise</dfn> (initially null).
+(initially the empty byte sequence).
 
 <p>The <dfn title=dom-FetchBodyStream-to><code>to(<var>type</var>)</code></dfn> method,
 when invoked, must run these steps:
 
 <ol>
- <li><p>If <span data-anolis-spec=dom>context object</span>'s
- <span title=concept-FetchBodyStream-promise>promise</span> is non-null, return it.
-
  <li><p>Let <var title>p</var> be a new promise.
-
- <li><p>Set <span data-anolis-spec=dom>context object</span>'s
- <span title=concept-FetchBodyStream-promise>promise</span> to <var title>p</var>.
 
  <li><p>Let <var title>stream</var> be <span data-anolis-spec=dom>context object</span>'s
  byte stream.
+
+ <li><p>If <var title>stream</var> has been fully read, reject <var title>p</var> with a
+ <code title>TypeError</code>.
 
  <li>
   <p>Run these substeps asynchronously:
@@ -1795,9 +1791,11 @@ enum <dfn>RequestContext</dfn> { <span class=XXX>...</span> }; // <span title=co
 enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
-<p>A <span title=concept-request>request</span> is represented by zero or more
-<code>Request</code> objects. A <code>Request</code> object always has an associated
+<p>A <code>Request</code> object has an associated
 <span title=concept-request>request</span>.
+
+<p>A <code>Request</code> object also has an associated <code>Headers</code> and
+<code>FetchBodyStream</code> object.
 
 <p>To make a <dfn>restricted copy</dfn> of a <span title=concept-request>request</span>
 <var title>request</var>, run these steps:
@@ -1976,6 +1974,9 @@ enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };<
 <p>A <code>Response</code> object has an associated
 <span title=concept-response>response</span>.
 
+<p>A <code>Request</code> object also has an associated <code>Headers</code> and
+<code>FetchBodyStream</code> object.
+
 <p class=XXX>constructor
 
 <p>The static
@@ -2035,7 +2036,7 @@ steps:
  <span title=concept-response-type>type</span> is <i title>opaque</i>, return.
 
  <li><p>If the given value is not in the range 200 to 599,
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+ <span data-anolis-spec=webidl>throw</span> a <code title>RangeError</code>.
 
  <li><p class=XXX>Do we need to ban any status codes?
 
@@ -2359,6 +2360,7 @@ Clement Pellerin,
 Collin Jackson,
 David H&aring;s&auml;ther,
 David Orchard,
+Domenic Denicola,
 Dean Jackson,
 Eric Lawrence,
 Frank Ellerman,

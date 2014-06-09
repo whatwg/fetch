@@ -194,6 +194,9 @@ means (e.g. via <code title="">data</code> URL).
 
 <h4 id="terminology-headers"><span class="secno">2.1.2 </span>Headers</h4>
 
+<p>A <dfn id="concept-header-list" title="concept-header-list">header list</dfn> consists of zero or more
+<a href="#concept-header" title="concept-header">headers</a>.
+
 <p>A <dfn id="concept-header" title="concept-header">header</dfn> consists of a
 <dfn id="concept-header-name" title="concept-header-name">name</dfn> and <dfn id="concept-header-value" title="concept-header-value">value</dfn>.
 A <a href="#concept-header-name" title="concept-header-name">name</a> is a
@@ -201,13 +204,13 @@ A <a href="#concept-header-name" title="concept-header-name">name</a> is a
 <a href="#concept-header-value" title="concept-header-value">value</a> is a byte sequence.
 
 <p>A <dfn id="simple-header">simple header</dfn> is a <a href="#concept-header" title="concept-header">header</a> whose
-<a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Accept</code>`,
-`<code title="">Accept-Language</code>`, or `<code title="">Content-Language</code>`, or whose
+<a href="#concept-header-name" title="concept-header-name">name</a> is either one of `<code title="">Accept</code>`,
+`<code title="">Accept-Language</code>`, and `<code title="">Content-Language</code>`, or whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Content-Type</code>` and
-<a href="#concept-header-value" title="concept-header-value">value</a>, <span class="XXX">once parsed,</span> is
+<a href="#concept-header-value" title="concept-header-value">value</a>,
+<span class="concept-header-parse">once parsed</span>, is one of
 `<code title="">application/x-www-form-urlencoded</code>`,
-`<code title="">multipart/form-data</code>`,
-or `<code title="">text/plain</code>`.
+`<code title="">multipart/form-data</code>`, and `<code title="">text/plain</code>`.
 
 <p class="XXX">What we never resolved in CORS was whether only certain
 parameters should be allowed and how exactly the MIME type parsing would work. Hopefully
@@ -280,9 +283,9 @@ return the <a href="#concept-header-value" title="concept-header-value">values</
 <dfn id="concept-request-headers" title="concept-request-headers">headers</dfn>. Unless stated otherwise
 <a href="#concept-request" title="concept-request">request</a>'s
 <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>
-and <a href="#concept-request-headers" title="concept-request-headers">headers</a> are empty maps, mapping a
-<a href="#concept-header-name" title="concept-header-name">header name</a> to one or more
-<a href="#concept-header-value" title="concept-header-value">header values</a>.
+and <a href="#concept-request-headers" title="concept-request-headers">headers</a> are
+<a href="#concept-header-list" title="concept-header-list">header lists</a>.
+<!-- XXX merge author headers and headers? -->
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-body" title="concept-request-body">body</dfn>. Unless stated otherwise it is null.
@@ -515,12 +518,9 @@ Unless stated otherwise, it is <i title="">default</i>.
 <a href="#concept-response-url" title="concept-response-url">url</a> is null,
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">200</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is `<code title="">OK</code>`,
-<a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty list, and
+<a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty
+<a href="#concept-header-list" title="concept-header-list">header list</a>, and
 <a href="#concept-response-body" title="concept-response-body">body</a> is null.
-
-<p class="note no-backref">A <a href="#concept-response" title="concept-response">response</a>'s
-<a href="#concept-response-headers" title="concept-response-headers">headers</a> is a list rather than map to be able
-to deal with broken servers.
 
 <hr>
 
@@ -1740,23 +1740,19 @@ enum <dfn id="fetchbodytype">FetchBodyType</dfn> { "arraybuffer", "blob", "json"
 
 <p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object has an associated
 <dfn id="concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</dfn>
-(initially the empty byte sequence) and
-<dfn id="concept-fetchbodystream-promise" title="concept-FetchBodyStream-promise">promise</dfn> (initially null).
+(initially the empty byte sequence).
 
 <p>The <dfn id="dom-fetchbodystream-to" title="dom-FetchBodyStream-to"><code>to(<var>type</var>)</code></dfn> method,
 when invoked, must run these steps:
 
 <ol>
- <li><p>If <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
- <a href="#concept-fetchbodystream-promise" title="concept-FetchBodyStream-promise">promise</a> is non-null, return it.
-
  <li><p>Let <var title="">p</var> be a new promise.
-
- <li><p>Set <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
- <a href="#concept-fetchbodystream-promise" title="concept-FetchBodyStream-promise">promise</a> to <var title="">p</var>.
 
  <li><p>Let <var title="">stream</var> be <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
  byte stream.
+
+ <li><p>If <var title="">stream</var> has been fully read, reject <var title="">p</var> with a
+ <code title="">TypeError</code>.
 
  <li>
   <p>Run these substeps asynchronously:
@@ -1837,9 +1833,11 @@ enum <dfn id="requestcontext">RequestContext</dfn> { <span class="XXX">...</span
 enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
-<p>A <a href="#concept-request" title="concept-request">request</a> is represented by zero or more
-<code><a href="#request">Request</a></code> objects. A <code><a href="#request">Request</a></code> object always has an associated
+<p>A <code><a href="#request">Request</a></code> object has an associated
 <a href="#concept-request" title="concept-request">request</a>.
+
+<p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#headers">Headers</a></code> and
+<code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
 
 <p>To make a <dfn id="restricted-copy">restricted copy</dfn> of a <a href="#concept-request" title="concept-request">request</a>
 <var title="">request</var>, run these steps:
@@ -2018,6 +2016,9 @@ enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "er
 <p>A <code><a href="#response">Response</a></code> object has an associated
 <a href="#concept-response" title="concept-response">response</a>.
 
+<p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#headers">Headers</a></code> and
+<code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+
 <p class="XXX">constructor
 
 <p>The static
@@ -2077,7 +2078,7 @@ steps:
  <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">opaque</i>, return.
 
  <li><p>If the given value is not in the range 200 to 599,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
 
  <li><p class="XXX">Do we need to ban any status codes?
 
@@ -2447,6 +2448,7 @@ Clement Pellerin,
 Collin Jackson,
 David Håsäther,
 David Orchard,
+Domenic Denicola,
 Dean Jackson,
 Eric Lawrence,
 Frank Ellerman,
