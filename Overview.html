@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-6-june-2014">Living Standard — Last Updated 6 June 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-june-2014">Living Standard — Last Updated 9 June 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-6 June 2014, the editor has made this specification available
+9 June 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -1731,10 +1731,74 @@ typedef (<a href="#json">JSON</a> or <a href="#fetchbodyinit">FetchBodyInit</a>)
 
 [NoInterfaceObject]
 interface <dfn id="fetchbodystream">FetchBodyStream</dfn> {
-  Promise&lt;<a href="#fetchbody">FetchBody</a>&gt; <span title="dom-FetchBodyStream-to">to</span>(<a href="#fetchbodytype">FetchBodyType</a> <var title="">type</var>);
+  Promise&lt;<a href="#fetchbody">FetchBody</a>&gt; <a href="#dom-fetchbodystream-to" title="dom-FetchBodyStream-to">to</a>(<a href="#fetchbodytype">FetchBodyType</a> <var title="">type</var>);
 }
 
 enum <dfn id="fetchbodytype">FetchBodyType</dfn> { "arraybuffer", "blob", "json", "text" };</pre>
+
+<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object represents a byte stream.
+
+<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object has an associated
+<dfn id="concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</dfn>
+(initially the empty byte sequence) and
+<dfn id="concept-fetchbodystream-promise" title="concept-FetchBodyStream-promise">promise</dfn> (initially null).
+
+<p>The <dfn id="dom-fetchbodystream-to" title="dom-FetchBodyStream-to"><code>to(<var>type</var>)</code></dfn> method,
+when invoked, must run these steps:
+
+<ol>
+ <li><p>If <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
+ <a href="#concept-fetchbodystream-promise" title="concept-FetchBodyStream-promise">promise</a> is non-null, return it.
+
+ <li><p>Let <var title="">p</var> be a new promise.
+
+ <li><p>Set <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
+ <a href="#concept-fetchbodystream-promise" title="concept-FetchBodyStream-promise">promise</a> to <var title="">p</var>.
+
+ <li><p>Let <var title="">stream</var> be <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
+ byte stream.
+
+ <li>
+  <p>Run these substeps asynchronously:
+
+  <ol>
+   <li><p>Let <var title="">bytes</var> be the result of reading from <var title="">stream</var>
+   until it returns end-of-stream.
+
+   <li>
+    <p>Switch on <var title="">type</var>:
+
+    <dl class="switch">
+     <dt>"<code title="">arraybuffer</code>"
+     <dd><p>Resolve <var title="">p</var> with an <code>ArrayBuffer</code> whose contents are
+     <var title="">bytes</var>.
+
+     <dt>"<code title="">blob</code>"
+     <dd><p>Resolve <var title="">p</var> with a <code class="external"><a href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a></code>
+     whose contents are <var title="">bytes</var> and
+     <code class="external" title="dom-Blob-type"><a href="http://dev.w3.org/2006/webapi/FileAPI/#dfn-type">type</a></code> is
+     <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
+     <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a>.
+
+     <dt>"<code title="">json</code>"
+     <dd>
+      <p>Let <var title="">JSON</var> be the result of invoking the initial value of the
+      <code title="">parse</code> property of the <code title="">JSON</code> object with the
+      result of running <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-decode">utf-8 decode</a> on
+      <var title="">bytes</var> as argument.
+
+      <p>If that threw an exception, reject <var title="">p</var> with that exception.
+
+      <p>Otherwise, resolve <var title="">p</var> with <var title="">JSON</var>.
+
+     <dt>"<code title="">text</code>"
+     <dd><p>Resolve <var title="">p</var> with the result of running
+     <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-decode">utf-8 decode</a> on <var title="">bytes</var>.
+    </dl>
+  </ol>
+
+ <li><p>Return <var title="">p</var>.
+</ol>
 
 
 <h3 id="request-class"><span class="secno">5.3 </span>Request class</h3>
