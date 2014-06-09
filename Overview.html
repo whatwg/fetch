@@ -1726,8 +1726,48 @@ JavaScript IO stream class. For now all it offers is a single method for getting
 data out of the underlying stream in a chosen representation.
 
 <pre class="idl">typedef object <dfn id="json">JSON</dfn>;
-typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a> or <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>) <dfn id="fetchbodyinit">FetchBodyInit</dfn>;
-typedef (<a href="#json">JSON</a> or <a href="#fetchbodyinit">FetchBodyInit</a>) <dfn id="fetchbody">FetchBody</dfn>;
+typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a> or <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>) <dfn id="fetchbodyinit">FetchBodyInit</dfn>;</pre>
+
+<p>To <dfn id="concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extract</dfn> a byte stream and a
+`<code title="">Content-Type</code>` <a href="#concept-header-value" title="concept-header-value">value</a> from
+<var title="">object</var>, run these steps:
+
+<ol>
+ <li><p>Let <var title="">stream</var> be an empty byte stream.
+
+ <li><p>Let <var title="">Content-Type</var> be an empty byte sequence.
+
+ <li>
+  <p>Switch on <var title="">object</var>'s type:
+
+  <dl class="switch">
+   <dt>null
+   <dd>Do nothing.
+
+   <dt><code title="">ArrayBuffer</code>
+   <dt><code title="">ArrayBufferView</code>
+   <dd>
+    <p>Push a copy of <var title="">object</var>'s contents to <var title="">stream</var>.
+
+   <dt><code class="external"><a href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a></code>
+   <dd>
+    <p>Push a copy of <var title="">object</var>'s contents to <var title="">stream</var>.
+    <p>If <var title="">object</var>'s
+    <code class="external" title="dom-Blob-type"><a href="http://dev.w3.org/2006/webapi/FileAPI/#dfn-type">type</a></code> attribute is not the
+    empty byte sequence, set <var title="">Content-Type</var> to its value.
+
+   <dt><a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>
+   <dd>
+    <p>Push the result of running <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-encode">utf-8 encode</a> on
+    <var title="">object</var> to <var title="">stream</var>.
+    <p>Set <var title="">Content-Type</var> to `<code title="">text/plain;charset=UTF-8</code>`.
+  </dl>
+
+ <li><p>Return <var title="">stream</var> and <var title="">MIMEType</var>.
+</ol>
+
+
+<pre>typedef (<a href="#json">JSON</a> or <a href="#fetchbodyinit">FetchBodyInit</a>) <dfn id="fetchbody">FetchBody</dfn>;
 
 [NoInterfaceObject]
 interface <dfn id="fetchbodystream">FetchBodyStream</dfn> {
@@ -1736,9 +1776,9 @@ interface <dfn id="fetchbodystream">FetchBodyStream</dfn> {
 
 enum <dfn id="fetchbodytype">FetchBodyType</dfn> { "arraybuffer", "blob", "json", "text" };</pre>
 
-<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object represents a byte stream.
+<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object has an associated byte stream.
 
-<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object has an associated
+<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object also has an associated
 <dfn id="concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</dfn>
 (initially the empty byte sequence).
 
@@ -1824,7 +1864,7 @@ interface <dfn id="request">Request</dfn> {
 dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
   <a href="#headerinit">HeaderInit</a> headers;
-  <a href="#fetchbodyinit">FetchBodyInit</a> body;
+  <a href="#fetchbodyinit">FetchBodyInit</a>? body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
 };
@@ -1989,7 +2029,7 @@ getter must return the value corresponding to the first matching statement, swit
 
 <h3 id="response-class"><span class="secno">5.4 </span>Response class</h3>
 
-<pre class="idl">[<span tilte="dom-Response">Constructor</span>(<a href="#fetchbody">FetchBody</a> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
+<pre class="idl">[<span tilte="dom-Response">Constructor</span>(<a href="#fetchbodyinit">FetchBodyInit</a>? <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="response">Response</dfn> {
   static <a href="#response">Response</a> <a href="#dom-response-redirect" title="dom-Response-redirect">redirect</a>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
@@ -1997,29 +2037,79 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute <a href="#responsetype">ResponseType</a> <a href="#dom-response-type" title="dom-Response-type">type</a>;
 
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-response-url" title="dom-Response-url">url</a>;
-           attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
-           attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
-  readonly attribute <a href="#headerinit">HeaderInit</a> <span title="dom-Response-headers">headers</span>;
+  readonly attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
+  readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
+  readonly attribute <a href="#headerinit">HeaderInit</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
   readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <span title="dom-Request-body">body</span>;
 };
 
 dictionary <dfn id="responseinit">ResponseInit</dfn> {
-  <a href="#responsetype">ResponseType</a> type = "default"
   unsigned short status = 200;
   ByteString statusText = "OK";
   <a href="#headerinit">HeaderInit</a> headers;
-  <a href="#fetchbodyinit">FetchBodyInit</a>? body = null;
 };
 
 enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>
 
 <p>A <code><a href="#response">Response</a></code> object has an associated
-<a href="#concept-response" title="concept-response">response</a>.
+<dfn id="concept-response-response" title="concept-Response-response">response</dfn> (a
+<a href="#concept-response" title="concept-response">response</a>).
 
-<p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#headers">Headers</a></code> and
-<code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+<p>A <code><a href="#response">Response</a></code> object also has an associated <code><a href="#headers">Headers</a></code> object which
+is itself associated with <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+<a href="#concept-response-headers" title="concept-response-headers">headers</a>.
 
-<p class="XXX">constructor
+<p>A <code><a href="#response">Response</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
+object which is itself associated with
+<a href="#concept-response-response" title="concept-Response-response">response</a>'s
+<a href="#concept-response-body" title="concept-response-body">body</a>.
+
+<p>The
+<dfn id="dom-response" title="dom-Response"><code>Response(<var>body</var>, <var>init</var>)</code></dfn>
+constructor, when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title="">init</var>'s <code title="">status</code> member is not in the range
+ 200 to 599, <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
+
+ <li><p class="XXX">Do we need to ban any status codes?
+
+ <li><p>If <var title="">init</var>'s <code title="">statusText</code> member does not match the
+ <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-6.1.1">Reason-Phrase</a> token production,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
+ new <a href="#concept-response" title="concept-response">response</a>, <code><a href="#headers">Headers</a></code> object, and
+ <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+
+ <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
+ <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">body</var>.
+
+ <li><p>Set <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-body" title="concept-response-body">body</a> to <var title="">stream</var>.
+
+ <li><p>Set `<code title="">Content-Type</code>` to <var title="">Content-Type</var> in
+ <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+
+ <li><p>Set <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">init</var>'s
+ <code title="">status</code> member.
+
+ <li><p>Set <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> to
+ <var title="">init</var>'s <code title="">statusText</code> member.
+
+ <li><p class="XXX">headers
+
+ <li><p>Set <var title="">r</var>'s associated <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
+ <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
+ <span class="XXX" title="">extracting a MIME type</span> from <var title="">r</var>'s associated
+ <a href="#concept-response" title="concept-response">response</a>'s
+ <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+
+ <li><p>Return <var title="">r</var>.
+</ol>
 
 <p>The static
 <dfn id="dom-response-redirect" title="dom-Response-redirect"><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
@@ -2042,15 +2132,18 @@ method, when invoked, must run these steps:
  308,
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>Let <var title="">r</var> be a new <a href="#concept-response" title="concept-response">response</a>.
+ <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
+ new <a href="#concept-response" title="concept-response">response</a>, <code><a href="#headers">Headers</a></code> object, and
+ <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
 
- <li><p>Set <var title="">r</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> to
- <var title="">status</var>.
+ <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+ <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">status</var>.
 
  <li><p>Set `<code title="">Location</code>` to <var title="">parsedURL</var> in
- <var title="">r</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+ <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+ <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
 
- <li><p>Return a new <code><a href="#response">Response</a></code> object associated with <var title="">r</var>.
+ <li><p>Return <var title="">r</var>.
 </ol>
 
 <p>The <dfn id="dom-response-type" title="dom-Response-type"><code>type</code></dfn> attribute's getter must return
@@ -2070,44 +2163,15 @@ the empty string if the associated <a href="#concept-response" title="concept-re
 return the associated <a href="#concept-response" title="concept-response">response</a>'s
 <a href="#concept-response-status" title="concept-response-status">status</a>.
 
-<p>The <code title="dom-Response-status"><a href="#dom-response-status">status</a></code> attribute's setter must run these
-steps:
-
-<ol>
- <li><p>If the associated <a href="#concept-response" title="concept-response">response</a>'s
- <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">opaque</i>, return.
-
- <li><p>If the given value is not in the range 200 to 599,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
-
- <li><p class="XXX">Do we need to ban any status codes?
-
- <li><p>Set the associated <a href="#concept-response" title="concept-response">response</a>'s
- <a href="#concept-response-status" title="concept-response-status">status</a> to the given value.
-</ol>
-
 <p>The <dfn id="dom-response-statustext" title="dom-Response-statusText"><code>statusText</code></dfn> attribute's getter
 must return the associated <a href="#concept-response" title="concept-response">response</a>'s
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a>.
 
-<p>The <code title="dom-Response-statusText"><a href="#dom-response-statustext">statusText</a></code> attribute's setter must run
-these steps:
+<p>The <dfn id="dom-response-headers" title="dom-Response-headers"><code>headers</code></dfn> attribute's getter must
+return the associated <code><a href="#headers">Headers</a></code> object.
 
-<ol>
- <li><p>If the associated <a href="#concept-response" title="concept-response">response</a>'s
- <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">opaque</i>, return.
-
- <li><p>If the given value does not match the
- <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-6.1.1">Reason-Phrase</a> token production,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
- <li><p>Set the associated <a href="#concept-response" title="concept-response">response</a>'s
- <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> to the given value.
-</ol>
-
-<p class="XXX">headers
-
-<p class="XXX">body
+<p>The <dfn id="dom-response-body" title="dom-Response-body"><code>body</code></dfn> attribute's getter must return
+the associated <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
 
 
 <h3 id="fetch-method"><span class="secno">5.5 </span>Fetch method</h3>
