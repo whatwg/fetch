@@ -1767,7 +1767,7 @@ typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.
 </ol>
 
 
-<pre>typedef (<a href="#json">JSON</a> or <a href="#fetchbodyinit">FetchBodyInit</a>) <dfn id="fetchbody">FetchBody</dfn>;
+<pre class="idl">typedef (<a href="#json">JSON</a> or <a href="#fetchbodyinit">FetchBodyInit</a>) <dfn id="fetchbody">FetchBody</dfn>;
 
 [NoInterfaceObject]
 interface <dfn id="fetchbodystream">FetchBodyStream</dfn> {
@@ -1846,8 +1846,8 @@ when invoked, must run these steps:
 interface <dfn id="request">Request</dfn> {
   readonly attribute ByteString <a href="#dom-request-method" title="dom-Request-method">method</a>;
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-request-url" title="dom-Request-url">url</a>;
-  readonly attribute <a href="#headers">Headers</a> <span title="dom-Request-headers">headers</span>;
-  readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <span title="dom-Request-body">body</span>;
+  readonly attribute <a href="#headers">Headers</a> <a href="#dom-request-headers" title="dom-Request-headers">headers</a>;
+  readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <a href="#dom-request-body" title="dom-Request-body">body</a>;
 <!--
   readonly attribute XXX <span title=dom-Request-client>client</span>-->
   readonly attribute <a href="#requestcontext">RequestContext</a> <span title="dom-Request-context">context</span>;<!--
@@ -1874,10 +1874,17 @@ enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "no-cors", "cors" 
 enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
 <p>A <code><a href="#request">Request</a></code> object has an associated
-<a href="#concept-request" title="concept-request">request</a>.
+<dfn id="concept-request-request" title="concept-Request-request">request</dfn> (a
+<a href="#concept-request" title="concept-request">request</a>).
 
-<p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#headers">Headers</a></code> and
-<code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+<p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#headers">Headers</a></code> object which
+is itself associated with <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+<a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+
+<p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
+object which is itself associated with
+<a href="#concept-request-request" title="concept-Request-request">request</a>'s
+<a href="#concept-response-body" title="concept-response-body">body</a>.
 
 <p>To make a <dfn id="restricted-copy">restricted copy</dfn> of a <a href="#concept-request" title="concept-request">request</a>
 <var title="">request</var>, run these steps:
@@ -1897,7 +1904,7 @@ enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origi
  <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a>,
- <span class="XXX">referrer</span>,
+ <span class="XXX" title="">referrer</span>,
  <a href="#concept-request-context" title="concept-request-context">context</a> is <i title="">connect</i>,
  <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <var title="">request</var>'s
  <a href="#concept-request-mode" title="concept-request-mode">mode</a>,
@@ -1985,22 +1992,25 @@ constructor must run these steps:
 </ol>
 
 <p>The <dfn id="dom-request-method" title="dom-Request-method"><code>method</code></dfn> attribute's getter must
-return the associated <a href="#concept-request" title="concept-request">request</a>'s
+return the associated <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-method" title="concept-request-method">method</a>.
 
 <p>The <dfn id="dom-request-url" title="dom-Request-url"><code>url</code></dfn> attribute's getter must
-return the associated <a href="#concept-request" title="concept-request">request</a>'s
+return the associated <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-url" title="concept-request-url">url</a>,
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> with the
 <i title="">exclude fragment flag</i> set.
 
-<p class="XXX">headers
+<p>The <dfn id="dom-request-headers" title="dom-Request-headers"><code>headers</code></dfn> attribute's getter must
+return the associated <code><a href="#headers">Headers</a></code> object.
 
-<p class="XXX">body
+<p>The <dfn id="dom-request-body" title="dom-Request-body"><code>body</code></dfn> attribute's getter must return
+the associated <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
 
 <p>The <dfn id="dom-request-mode" title="dom-Request-mode"><code>mode</code></dfn> attribute's getter must
 return the value corresponding to the first matching statement, switching on
-<a href="#concept-request" title="concept-request">request</a>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a>:
+<a href="#concept-request-request" title="concept-Request-request">request</a>'s
+<a href="#concept-request-mode" title="concept-request-mode">mode</a>:
 
 <dl class="switch">
  <dt><i title="">same-origin</i>
@@ -2014,7 +2024,7 @@ return the value corresponding to the first matching statement, switching on
 
 <p>The <dfn id="dom-request-credentials" title="dom-Request-credentials"><code>credentials</code></dfn> attribute's
 getter must return the value corresponding to the first matching statement, switching on
-<a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>:
 
 <dl class="switch">
@@ -2040,7 +2050,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
   readonly attribute <a href="#headerinit">HeaderInit</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
-  readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <span title="dom-Request-body">body</span>;
+  readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <a href="#dom-request-body" title="dom-Request-body">body</a>;
 };
 
 dictionary <dfn id="responseinit">ResponseInit</dfn> {
@@ -2071,8 +2081,6 @@ constructor, when invoked, must run these steps:
 <ol>
  <li><p>If <var title="">init</var>'s <code title="">status</code> member is not in the range
  200 to 599, <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
-
- <li><p class="XXX">Do we need to ban any status codes?
 
  <li><p>If <var title="">init</var>'s <code title="">statusText</code> member does not match the
  <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-6.1.1">Reason-Phrase</a> token production,
@@ -2130,7 +2138,7 @@ method, when invoked, must run these steps:
  303,
  307, and
  308,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
  new <a href="#concept-response" title="concept-response">response</a>, <code><a href="#headers">Headers</a></code> object, and
@@ -2151,20 +2159,20 @@ the associated <a href="#concept-response" title="concept-response">response</a>
 <a href="#concept-response-type" title="concept-response-type">type</a>.
 
 <p>The <dfn id="dom-response-url" title="dom-Response-url"><code>url</code></dfn> attribute's getter must return
-the empty string if the associated <a href="#concept-response" title="concept-response">response</a>'s
+the empty string if the associated <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-url" title="concept-response-url">url</a> is null and the associated
-<a href="#concept-response" title="concept-response">response</a>'s
+<a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-url" title="concept-response-url">url</a>,
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> with the
 <i title="">exclude fragment flag</i> set, otherwise.
 <a href="#refsURL">[URL]</a>
 
 <p>The <dfn id="dom-response-status" title="dom-Response-status"><code>status</code></dfn> attribute's getter must
-return the associated <a href="#concept-response" title="concept-response">response</a>'s
+return the associated <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-status" title="concept-response-status">status</a>.
 
 <p>The <dfn id="dom-response-statustext" title="dom-Response-statusText"><code>statusText</code></dfn> attribute's getter
-must return the associated <a href="#concept-response" title="concept-response">response</a>'s
+must return the associated <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a>.
 
 <p>The <dfn id="dom-response-headers" title="dom-Response-headers"><code>headers</code></dfn> attribute's getter must

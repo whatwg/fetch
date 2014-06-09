@@ -1725,7 +1725,7 @@ typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</
 </ol>
 
 
-<pre>typedef (<span>JSON</span> or <span>FetchBodyInit</span>) <dfn>FetchBody</dfn>;
+<pre class=idl>typedef (<span>JSON</span> or <span>FetchBodyInit</span>) <dfn>FetchBody</dfn>;
 
 [NoInterfaceObject]
 interface <dfn>FetchBodyStream</dfn> {
@@ -1832,10 +1832,17 @@ enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
 <p>A <code>Request</code> object has an associated
-<span title=concept-request>request</span>.
+<dfn title=concept-Request-request>request</dfn> (a
+<span title=concept-request>request</span>).
 
-<p>A <code>Request</code> object also has an associated <code>Headers</code> and
-<code>FetchBodyStream</code> object.
+<p>A <code>Request</code> object also has an associated <code>Headers</code> object which
+is itself associated with <span title=concept-Request-request>request</span>'s
+<span title=concept-request-headers>headers</span>.
+
+<p>A <code>Request</code> object also has an associated <code>FetchBodyStream</code>
+object which is itself associated with
+<span title=concept-Request-request>request</span>'s
+<span title=concept-response-body>body</span>.
 
 <p>To make a <dfn>restricted copy</dfn> of a <span title=concept-request>request</span>
 <var title>request</var>, run these steps:
@@ -1855,7 +1862,7 @@ enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
  <span title=concept-request-origin>origin</span> is
  <span data-anolis-spec=html>entry settings object</span>'s
  <span data-anolis-spec=html>origin</span>,
- <span class=XXX>referrer</span>,
+ <span title class=XXX>referrer</span>,
  <span title=concept-request-context>context</span> is <i title>connect</i>,
  <span title=concept-request-mode>mode</span> is <var title>request</var>'s
  <span title=concept-request-mode>mode</span>,
@@ -1943,22 +1950,25 @@ constructor must run these steps:
 </ol>
 
 <p>The <dfn title=dom-Request-method><code>method</code></dfn> attribute's getter must
-return the associated <span title=concept-request>request</span>'s
+return the associated <span title=concept-Request-request>request</span>'s
 <span title=concept-request-method>method</span>.
 
 <p>The <dfn title=dom-Request-url><code>url</code></dfn> attribute's getter must
-return the associated <span title=concept-request>request</span>'s
+return the associated <span title=concept-Request-request>request</span>'s
 <span title=concept-request-url>url</span>,
 <span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
 <i title>exclude fragment flag</i> set.
 
-<p class=XXX>headers
+<p>The <dfn title=dom-Request-headers><code>headers</code></dfn> attribute's getter must
+return the associated <code>Headers</code> object.
 
-<p class=XXX>body
+<p>The <dfn title=dom-Request-body><code>body</code></dfn> attribute's getter must return
+the associated <code>FetchBodyStream</code> object.
 
 <p>The <dfn title=dom-Request-mode><code>mode</code></dfn> attribute's getter must
 return the value corresponding to the first matching statement, switching on
-<span title=concept-request>request</span>'s <span title=concept-request-mode>mode</span>:
+<span title=concept-Request-request>request</span>'s
+<span title=concept-request-mode>mode</span>:
 
 <dl class=switch>
  <dt><i title>same-origin</i>
@@ -1972,7 +1982,7 @@ return the value corresponding to the first matching statement, switching on
 
 <p>The <dfn title=dom-Request-credentials><code>credentials</code></dfn> attribute's
 getter must return the value corresponding to the first matching statement, switching on
-<span title=concept-request>request</span>'s
+<span title=concept-Request-request>request</span>'s
 <span title=concept-request-credentials-mode>credentials mode</span>:
 
 <dl class=switch>
@@ -2030,8 +2040,6 @@ constructor, when invoked, must run these steps:
  <li><p>If <var title>init</var>'s <code title>status</code> member is not in the range
  200 to 599, <span data-anolis-spec=webidl>throw</span> a <code title>RangeError</code>.
 
- <li><p class=XXX>Do we need to ban any status codes?
-
  <li><p>If <var title>init</var>'s <code title>statusText</code> member does not match the
  <span data-anolis-spec=http>Reason-Phrase</span> token production,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
@@ -2088,7 +2096,7 @@ method, when invoked, must run these steps:
  303,
  307, and
  308,
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+ <span data-anolis-spec=webidl>throw</span> a <code title>RangeError</code>.
 
  <li><p>Let <var title>r</var> be a new <code>Response</code> object, associated with a
  new <span title=concept-response>response</span>, <code>Headers</code> object, and
@@ -2109,20 +2117,20 @@ the associated <span title=concept-response>response</span>'s
 <span title=concept-response-type>type</span>.
 
 <p>The <dfn title=dom-Response-url><code>url</code></dfn> attribute's getter must return
-the empty string if the associated <span title=concept-response>response</span>'s
+the empty string if the associated <span title=concept-Response-response>response</span>'s
 <span title=concept-response-url>url</span> is null and the associated
-<span title=concept-response>response</span>'s
+<span title=concept-Response-response>response</span>'s
 <span title=concept-response-url>url</span>,
 <span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
 <i title>exclude fragment flag</i> set, otherwise.
 <span data-anolis-ref>URL</span>
 
 <p>The <dfn title=dom-Response-status><code>status</code></dfn> attribute's getter must
-return the associated <span title=concept-response>response</span>'s
+return the associated <span title=concept-Response-response>response</span>'s
 <span title=concept-response-status>status</span>.
 
 <p>The <dfn title=dom-Response-statusText><code>statusText</code></dfn> attribute's getter
-must return the associated <span title=concept-response>response</span>'s
+must return the associated <span title=concept-Response-response>response</span>'s
 <span title=concept-response-status-message>status message</span>.
 
 <p>The <dfn title=dom-Response-headers><code>headers</code></dfn> attribute's getter must
