@@ -158,15 +158,20 @@ means (e.g. via <code title>data</code> URL).
 <p>A <dfn title=concept-header>header</dfn> consists of a
 <dfn title=concept-header-name>name</dfn> and <dfn title=concept-header-value>value</dfn>.
 A <span title=concept-header-name>name</span> is a
-<span>case-insensitive byte sequence</span> and a
-<span title=concept-header-value>value</span> is a byte sequence.
+<span>case-insensitive byte sequence</span> that matches the
+<span data-anolis-spec=http>field-name</span> token production. A
+<span title=concept-header-value>value</span> is a byte sequence that matches the
+<span data-anolis-spec=http>field-value</span> token production and contains no 0x0A or
+0x0C bytes.
+
+<p class=note>Allowing 0x0A and 0x0C bytes can lead to reparsing issues.
 
 <p>A <dfn>simple header</dfn> is a <span title=concept-header>header</span> whose
 <span title=concept-header-name>name</span> is either one of `<code title>Accept</code>`,
 `<code title>Accept-Language</code>`, and `<code title>Content-Language</code>`, or whose
 <span title=concept-header-name>name</span> is `<code title>Content-Type</code>` and
 <span title=concept-header-value>value</span>,
-<span class=concept-header-parse>once parsed</span>, is one of
+<span title=concept-header-parse>once parsed</span>, is one of
 `<code title>application/x-www-form-urlencoded</code>`,
 `<code title>multipart/form-data</code>`, and `<code title>text/plain</code>`.
 
@@ -1660,21 +1665,116 @@ service workers, but it is applicable elsewhere too.
 interface <dfn>Headers</dfn> {
   void <span title=dom-Headers-append>append</span>(ByteString <var title>name</var>, ByteString <var title>value</var>);
   void <span title=dom-Headers-delete>delete</span>(ByteString <var title>name</var>);
-  ByteString <span tilte=dom-Headers-get>get</span>(ByteString <var title>name</var>);
+  ByteString? <span tilte=dom-Headers-get>get</span>(ByteString <var title>name</var>);
   sequence&lt;ByteString> <span title=dom-Headers-getAll>getAll</span>(ByteString <var title>name</var>);
   boolean <span title=dom-Headers-has>has</span>(ByteString <var title>name</var>);
   void <span title=dom-Headers-set>set</span>(ByteString <var title>name</var>, ByteString <var title>value</var>);
 };</pre>
 
-<!-- Note: add rather than append as the latter has different semantics in
-     FormData/URLSearchParams -->
+<p>A <code>Headers</code> object has an associated
+<dfn title=concept-Headers-header-list>header list</dfn> (a
+<span title=concept-header-list>header list</span>).
 
-<p class=XXX>Constrains used: header names are unique, headers can have multiple values,
-do not require parsing values out of a value (splitting on ","), provide convenience for
-single value (non-All methods return first), compatibility with Map (set() will set first
-value and remove others, delete() removes all). User agents will need a more complex data
-structure for responses underneath, to deal with broken servers. It is intentional to only
-expose what HTTP requires.
+<p>A <code>Headers</code> object also has an associated
+<dfn title=concept-Headers-guard>guard</dfn> which is one of <i title>request</i> or
+<i title>none</i> (initially <i title>none</i>).
+
+<p>The
+<dfn title=dom-Headers-append><code>append(<var>name</var>, <var>value</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span> or
+ <var title>value</var> is not a <span title=concept-header-value>value</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>request</i> and
+ <var title>name</var> is a <span>forbidden author header name</span>, return.
+
+ <li><p>Append a new <span title=concept-header>header</span> whose
+ <span title=concept-header-name>name</span> is <var title>name</var> and
+ <span title=concept-header-value>value</span> is <var title>value</var>, to
+ <span tilte=concept-Headers-header-list>header list</span>.
+</ol>
+
+<p>The <dfn title=dom-Headers-delete><code>delete(<var>name</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>request</i> and
+ <var title>name</var> is a <span>forbidden author header name</span>, return.
+
+ <li><p>Remove all <span title=concept-header>headers</span> whose
+ <span title=concept-header-name>name</span> is <var title>name</var> from
+ <span tilte=concept-Headers-header-list>header list</span>.
+</ol>
+
+<p>The <dfn title=dom-Headers-get><code>get(<var>name</var>)</code></dfn> method, when
+invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Return the <span title=concept-header-value>value</span> of the first
+ <span title=concept-header>header</span> in
+ <span title=concept-Headers-header-list>header list</span> whose
+ <span title=concept-header-name>name</span> is <var title>name</var>, and null otherwise.
+</ol>
+
+<p>The <dfn title=dom-Headers-getAll><code>getAll(<var>name</var>)</code></dfn> method,
+when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Return the <span title=concept-header-value>values</span> of all
+ <span title=concept-header>headers</span> in
+ <span title=concept-Headers-header-list>header list</span> whose
+ <span title=concept-header-name>name</span> is <var title>name</var>, in list order, and
+ the empty sequence otherwise.
+</ol>
+
+<p>The <dfn title=dom-Headers-has><code>has(<var title>name</var>)</code></dfn> method,
+when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Return true if there is a <span title=concept-header>header</span> in
+ <span title=concept-Headers-header-list>header list</span> whose
+ <span title=concept-header-name>name</span> is <var title>name</var>, and false
+ otherwise.
+</ol>
+
+<p>The
+<dfn title=dom-Headers-set><code>set(<var>name</var>, <var>value</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span> or
+ <var title>value</var> is not a <span title=concept-header-value>value</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>request</i> and
+ <var title>name</var> is a <span>forbidden author header name</span>, return.
+
+ <li><p>If there are any <span title=concept-header>headers</span> in
+ <span title=concept-Headers-header-list>header list</span> whose
+ <span title=concept-header-name>name</span> is <var title>name</var>, set the
+ <span title=concept-header-value>value</span> of the first such
+ <span title=concept-header>header</span> to <var title>value</var> and remove the others.
+
+ <li><p>Otherwise, append a new <span title=concept-header>header</span> whose
+ <span title=concept-header-name>name</span> is <var title>name</var> and
+ <span title=concept-header-value>value</span> is <var title>value</var>, to
+ <span tilte=concept-Headers-header-list>header list</span>.
+</ol>
 
 
 <h3>Body stream concept</h3>
@@ -1721,7 +1821,7 @@ typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</
     <p>Set <var title>Content-Type</var> to `<code title>text/plain;charset=UTF-8</code>`.
   </dl>
 
- <li><p>Return <var title>stream</var> and <var title>MIMEType</var>.
+ <li><p>Return <var title>stream</var> and <var title>Content-Type</var>.
 </ol>
 
 
@@ -1837,7 +1937,8 @@ enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
 
 <p>A <code>Request</code> object also has an associated <code>Headers</code> object which
 is itself associated with <span title=concept-Request-request>request</span>'s
-<span title=concept-request-headers>headers</span>.
+<span title=concept-request-headers>headers</span> and whose
+<span title=concept-Headers-guard>guard</span> is <i title>request</i>.
 
 <p>A <code>Request</code> object also has an associated <code>FetchBodyStream</code>
 object which is itself associated with
@@ -1950,11 +2051,11 @@ constructor must run these steps:
 </ol>
 
 <p>The <dfn title=dom-Request-method><code>method</code></dfn> attribute's getter must
-return the associated <span title=concept-Request-request>request</span>'s
+return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-method>method</span>.
 
 <p>The <dfn title=dom-Request-url><code>url</code></dfn> attribute's getter must
-return the associated <span title=concept-Request-request>request</span>'s
+return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-url>url</span>,
 <span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
 <i title>exclude fragment flag</i> set.
@@ -2051,27 +2152,27 @@ constructor, when invoked, must run these steps:
  <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
  <span title=concept-FetchBodyInit-extract>extracting</span> <var title>body</var>.
 
- <li><p>Set <var title>r</var>'s associated <span title=concept-response>response</span>'s
+ <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-body>body</span> to <var title>stream</var>.
 
  <li><p>Set `<code title>Content-Type</code>` to <var title>Content-Type</var> in
- <var title>r</var>'s associated <span title=concept-response>response</span>'s
+ <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-headers>headers</span>.
 
- <li><p>Set <var title>r</var>'s associated <span title=concept-response>response</span>'s
+ <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var title>init</var>'s
  <code title>status</code> member.
 
- <li><p>Set <var title>r</var>'s associated <span title=concept-response>response</span>'s
+ <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status-message>status message</span> to
  <var title>init</var>'s <code title>statusText</code> member.
 
  <li><p class=XXX>headers
 
- <li><p>Set <var title>r</var>'s associated <code>FetchBodyStream</code> object's
+ <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
  <span title=concept-FetchBodyStream-MIME-type>MIME type</span> to the result of
- <span title class=XXX>extracting a MIME type</span> from <var title>r</var>'s associated
- <span title=concept-response>response</span>'s
+ <span title class=XXX>extracting a MIME type</span> from <var title>r</var>'s
+ <span title=concept-Response-response>response</span>'s
  <span title=concept-response-headers>headers</span>.
 
  <li><p>Return <var title>r</var>.
@@ -2113,12 +2214,12 @@ method, when invoked, must run these steps:
 </ol>
 
 <p>The <dfn title=dom-Response-type><code>type</code></dfn> attribute's getter must return
-the associated <span title=concept-response>response</span>'s
+<span title=concept-Response-response>response</span>'s
 <span title=concept-response-type>type</span>.
 
 <p>The <dfn title=dom-Response-url><code>url</code></dfn> attribute's getter must return
-the empty string if the associated <span title=concept-Response-response>response</span>'s
-<span title=concept-response-url>url</span> is null and the associated
+the empty string if <span title=concept-Response-response>response</span>'s
+<span title=concept-response-url>url</span> is null and
 <span title=concept-Response-response>response</span>'s
 <span title=concept-response-url>url</span>,
 <span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
@@ -2126,11 +2227,11 @@ the empty string if the associated <span title=concept-Response-response>respons
 <span data-anolis-ref>URL</span>
 
 <p>The <dfn title=dom-Response-status><code>status</code></dfn> attribute's getter must
-return the associated <span title=concept-Response-response>response</span>'s
+return <span title=concept-Response-response>response</span>'s
 <span title=concept-response-status>status</span>.
 
 <p>The <dfn title=dom-Response-statusText><code>statusText</code></dfn> attribute's getter
-must return the associated <span title=concept-Response-response>response</span>'s
+must return <span title=concept-Response-response>response</span>'s
 <span title=concept-response-status-message>status message</span>.
 
 <p>The <dfn title=dom-Response-headers><code>headers</code></dfn> attribute's getter must

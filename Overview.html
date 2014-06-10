@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-june-2014">Living Standard — Last Updated 9 June 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-june-2014">Living Standard — Last Updated 10 June 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-9 June 2014, the editor has made this specification available
+10 June 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -200,15 +200,20 @@ means (e.g. via <code title="">data</code> URL).
 <p>A <dfn id="concept-header" title="concept-header">header</dfn> consists of a
 <dfn id="concept-header-name" title="concept-header-name">name</dfn> and <dfn id="concept-header-value" title="concept-header-value">value</dfn>.
 A <a href="#concept-header-name" title="concept-header-name">name</a> is a
-<a href="#case-insensitive-byte-sequence">case-insensitive byte sequence</a> and a
-<a href="#concept-header-value" title="concept-header-value">value</a> is a byte sequence.
+<a href="#case-insensitive-byte-sequence">case-insensitive byte sequence</a> that matches the
+<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a> token production. A
+<a href="#concept-header-value" title="concept-header-value">value</a> is a byte sequence that matches the
+<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-value</a> token production and contains no 0x0A or
+0x0C bytes.
+
+<p class="note">Allowing 0x0A and 0x0C bytes can lead to reparsing issues.
 
 <p>A <dfn id="simple-header">simple header</dfn> is a <a href="#concept-header" title="concept-header">header</a> whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is either one of `<code title="">Accept</code>`,
 `<code title="">Accept-Language</code>`, and `<code title="">Content-Language</code>`, or whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Content-Type</code>` and
 <a href="#concept-header-value" title="concept-header-value">value</a>,
-<span class="concept-header-parse">once parsed</span>, is one of
+<a href="#concept-header-parse" title="concept-header-parse">once parsed</a>, is one of
 `<code title="">application/x-www-form-urlencoded</code>`,
 `<code title="">multipart/form-data</code>`, and `<code title="">text/plain</code>`.
 
@@ -1700,23 +1705,118 @@ service workers, but it is applicable elsewhere too.
 [<span title="dom-Headers">Constructor</span>(<a href="#headerinit">HeaderInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="headers">Headers</dfn> {
-  void <span title="dom-Headers-append">append</span>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
-  void <span title="dom-Headers-delete">delete</span>(ByteString <var title="">name</var>);
-  ByteString <span tilte="dom-Headers-get">get</span>(ByteString <var title="">name</var>);
-  sequence&lt;ByteString&gt; <span title="dom-Headers-getAll">getAll</span>(ByteString <var title="">name</var>);
-  boolean <span title="dom-Headers-has">has</span>(ByteString <var title="">name</var>);
-  void <span title="dom-Headers-set">set</span>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
+  void <a href="#dom-headers-append" title="dom-Headers-append">append</a>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
+  void <a href="#dom-headers-delete" title="dom-Headers-delete">delete</a>(ByteString <var title="">name</var>);
+  ByteString? <span tilte="dom-Headers-get">get</span>(ByteString <var title="">name</var>);
+  sequence&lt;ByteString&gt; <a href="#dom-headers-getall" title="dom-Headers-getAll">getAll</a>(ByteString <var title="">name</var>);
+  boolean <a href="#dom-headers-has" title="dom-Headers-has">has</a>(ByteString <var title="">name</var>);
+  void <a href="#dom-headers-set" title="dom-Headers-set">set</a>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
 };</pre>
 
-<!-- Note: add rather than append as the latter has different semantics in
-     FormData/URLSearchParams -->
+<p>A <code><a href="#headers">Headers</a></code> object has an associated
+<dfn id="concept-headers-header-list" title="concept-Headers-header-list">header list</dfn> (a
+<a href="#concept-header-list" title="concept-header-list">header list</a>).
 
-<p class="XXX">Constrains used: header names are unique, headers can have multiple values,
-do not require parsing values out of a value (splitting on ","), provide convenience for
-single value (non-All methods return first), compatibility with Map (set() will set first
-value and remove others, delete() removes all). User agents will need a more complex data
-structure for responses underneath, to deal with broken servers. It is intentional to only
-expose what HTTP requires.
+<p>A <code><a href="#headers">Headers</a></code> object also has an associated
+<dfn id="concept-headers-guard" title="concept-Headers-guard">guard</dfn> which is one of <i title="">request</i> or
+<i title="">none</i> (initially <i title="">none</i>).
+
+<p>The
+<dfn id="dom-headers-append" title="dom-Headers-append"><code>append(<var>name</var>, <var>value</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a> or
+ <var title="">value</var> is not a <a href="#concept-header-value" title="concept-header-value">value</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
+ <var title="">name</var> is a <a href="#forbidden-author-header-name">forbidden author header name</a>, return.
+
+ <li><p>Append a new <a href="#concept-header" title="concept-header">header</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> and
+ <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">value</var>, to
+ <span tilte="concept-Headers-header-list">header list</span>.
+</ol>
+
+<p>The <dfn id="dom-headers-delete" title="dom-Headers-delete"><code>delete(<var>name</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
+ <var title="">name</var> is a <a href="#forbidden-author-header-name">forbidden author header name</a>, return.
+
+ <li><p>Remove all <a href="#concept-header" title="concept-header">headers</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> from
+ <span tilte="concept-Headers-header-list">header list</span>.
+</ol>
+
+<p>The <dfn id="dom-headers-get" title="dom-Headers-get"><code>get(<var>name</var>)</code></dfn> method, when
+invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Return the <a href="#concept-header-value" title="concept-header-value">value</a> of the first
+ <a href="#concept-header" title="concept-header">header</a> in
+ <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var>, and null otherwise.
+</ol>
+
+<p>The <dfn id="dom-headers-getall" title="dom-Headers-getAll"><code>getAll(<var>name</var>)</code></dfn> method,
+when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Return the <a href="#concept-header-value" title="concept-header-value">values</a> of all
+ <a href="#concept-header" title="concept-header">headers</a> in
+ <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var>, in list order, and
+ the empty sequence otherwise.
+</ol>
+
+<p>The <dfn id="dom-headers-has" title="dom-Headers-has"><code>has(<var title="">name</var>)</code></dfn> method,
+when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Return true if there is a <a href="#concept-header" title="concept-header">header</a> in
+ <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var>, and false
+ otherwise.
+</ol>
+
+<p>The
+<dfn id="dom-headers-set" title="dom-Headers-set"><code>set(<var>name</var>, <var>value</var>)</code></dfn>
+method, when invoked, must run these steps:
+
+<ol>
+ <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a> or
+ <var title="">value</var> is not a <a href="#concept-header-value" title="concept-header-value">value</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
+ <var title="">name</var> is a <a href="#forbidden-author-header-name">forbidden author header name</a>, return.
+
+ <li><p>If there are any <a href="#concept-header" title="concept-header">headers</a> in
+ <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var>, set the
+ <a href="#concept-header-value" title="concept-header-value">value</a> of the first such
+ <a href="#concept-header" title="concept-header">header</a> to <var title="">value</var> and remove the others.
+
+ <li><p>Otherwise, append a new <a href="#concept-header" title="concept-header">header</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> and
+ <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">value</var>, to
+ <span tilte="concept-Headers-header-list">header list</span>.
+</ol>
 
 
 <h3 id="body-stream-concept"><span class="secno">5.2 </span>Body stream concept</h3>
@@ -1763,7 +1863,7 @@ typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.
     <p>Set <var title="">Content-Type</var> to `<code title="">text/plain;charset=UTF-8</code>`.
   </dl>
 
- <li><p>Return <var title="">stream</var> and <var title="">MIMEType</var>.
+ <li><p>Return <var title="">stream</var> and <var title="">Content-Type</var>.
 </ol>
 
 
@@ -1879,7 +1979,8 @@ enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origi
 
 <p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#headers">Headers</a></code> object which
 is itself associated with <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-<a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+<a href="#concept-request-headers" title="concept-request-headers">headers</a> and whose
+<a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i>.
 
 <p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
 object which is itself associated with
@@ -1992,11 +2093,11 @@ constructor must run these steps:
 </ol>
 
 <p>The <dfn id="dom-request-method" title="dom-Request-method"><code>method</code></dfn> attribute's getter must
-return the associated <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-method" title="concept-request-method">method</a>.
 
 <p>The <dfn id="dom-request-url" title="dom-Request-url"><code>url</code></dfn> attribute's getter must
-return the associated <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-url" title="concept-request-url">url</a>,
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> with the
 <i title="">exclude fragment flag</i> set.
@@ -2093,27 +2194,27 @@ constructor, when invoked, must run these steps:
  <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
  <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">body</var>.
 
- <li><p>Set <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-body" title="concept-response-body">body</a> to <var title="">stream</var>.
 
  <li><p>Set `<code title="">Content-Type</code>` to <var title="">Content-Type</var> in
- <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
 
- <li><p>Set <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">init</var>'s
  <code title="">status</code> member.
 
- <li><p>Set <var title="">r</var>'s associated <a href="#concept-response" title="concept-response">response</a>'s
+ <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> to
  <var title="">init</var>'s <code title="">statusText</code> member.
 
  <li><p class="XXX">headers
 
- <li><p>Set <var title="">r</var>'s associated <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
+ <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
  <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
- <span class="XXX" title="">extracting a MIME type</span> from <var title="">r</var>'s associated
- <a href="#concept-response" title="concept-response">response</a>'s
+ <span class="XXX" title="">extracting a MIME type</span> from <var title="">r</var>'s
+ <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
 
  <li><p>Return <var title="">r</var>.
@@ -2155,12 +2256,12 @@ method, when invoked, must run these steps:
 </ol>
 
 <p>The <dfn id="dom-response-type" title="dom-Response-type"><code>type</code></dfn> attribute's getter must return
-the associated <a href="#concept-response" title="concept-response">response</a>'s
+<a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-type" title="concept-response-type">type</a>.
 
 <p>The <dfn id="dom-response-url" title="dom-Response-url"><code>url</code></dfn> attribute's getter must return
-the empty string if the associated <a href="#concept-response-response" title="concept-Response-response">response</a>'s
-<a href="#concept-response-url" title="concept-response-url">url</a> is null and the associated
+the empty string if <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+<a href="#concept-response-url" title="concept-response-url">url</a> is null and
 <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-url" title="concept-response-url">url</a>,
 <a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> with the
@@ -2168,11 +2269,11 @@ the empty string if the associated <a href="#concept-response-response" title="c
 <a href="#refsURL">[URL]</a>
 
 <p>The <dfn id="dom-response-status" title="dom-Response-status"><code>status</code></dfn> attribute's getter must
-return the associated <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+return <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-status" title="concept-response-status">status</a>.
 
 <p>The <dfn id="dom-response-statustext" title="dom-Response-statusText"><code>statusText</code></dfn> attribute's getter
-must return the associated <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+must return <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a>.
 
 <p>The <dfn id="dom-response-headers" title="dom-Response-headers"><code>headers</code></dfn> attribute's getter must
