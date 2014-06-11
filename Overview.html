@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-june-2014">Living Standard — Last Updated 10 June 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-11-june-2014">Living Standard — Last Updated 11 June 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-10 June 2014, the editor has made this specification available
+11 June 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -223,7 +223,7 @@ parameters should be allowed and how exactly the MIME type parsing would work. H
 solve this.
 <!-- example if people ask: "Content-Type: text/html;" -->
 
-<p>A <dfn id="forbidden-author-header-name">forbidden author header name</dfn> is a <a href="#concept-header" title="concept-header">header</a>
+<p>A <dfn id="forbidden-header-name">forbidden header name</dfn> is a <a href="#concept-header" title="concept-header">header</a>
 <a href="#concept-header-name" title="concept-header-name">names</a> that is one of:
 
 <ul class="brief">
@@ -276,21 +276,28 @@ return the <a href="#concept-header-value" title="concept-header-value">values</
 <dfn id="concept-request" title="concept-request">request</dfn>.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-method" title="concept-request-method">method</dfn>. Unless stated otherwise it is
+<dfn id="concept-request-method" title="concept-request-method">method</dfn> (a
+<a href="#concept-method" title="concept-method">method</a>). Unless stated otherwise it is
 `<code title="">GET</code>`.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-url" title="concept-request-url">url</dfn> (a
 <a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>).
 
-<p>A <a href="#concept-request" title="concept-request">request</a> has associated
-<dfn id="concept-request-author-headers" title="concept-request-author-headers">author headers</dfn> and
-<dfn id="concept-request-headers" title="concept-request-headers">headers</dfn>. Unless stated otherwise
-<a href="#concept-request" title="concept-request">request</a>'s
-<a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>
-and <a href="#concept-request-headers" title="concept-request-headers">headers</a> are
-<a href="#concept-header-list" title="concept-header-list">header lists</a>.
-<!-- XXX merge author headers and headers? -->
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-header-list" title="concept-request-header-list">header list</dfn> (a
+<a href="#concept-header-list" title="concept-header-list">header list</a>). Unless stated otherwise it is empty.
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="unsafe-request-flag">unsafe request flag</dfn>. Unless stated otherwise it is unset.
+
+<p class="note no-backref">The <a href="#unsafe-request-flag">unsafe request flag</a> is set by APIs such as
+<code title="dom-global-fetch"><a href="#dom-global-fetch">fetch()</a></code>  and <code>XMLHttpRequest</code> to ensure a
+<span>CORS preflight</span> is done based on the supplied
+<a href="#concept-request-method" title="concept-request-method">method</a> and
+<a href="#concept-request-header-list" title="concept-request-header-list">header list</a>. It does not free an API from
+outlawing <a href="#forbidden-method" title="forbidden method">forbidden methods</a> and
+<a href="#forbidden-header-name" title="forbidden header name">forbidden header names</a>.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-body" title="concept-request-body">body</dfn>. Unless stated otherwise it is null.
@@ -483,16 +490,6 @@ it is <i title="">basic</i>.
 <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> are used as
 bookkeeping details by the <a href="#concept-fetch" title="concept-fetch">fetch</a> algorithm.
 
-<hr>
-
-<p>APIs that use <a href="#concept-fetch" title="concept-fetch">fetch</a> must enforce restrictions on a
-<a href="#concept-request" title="concept-request">request</a>'s
-<a href="#concept-request-method" title="concept-request-method">method</a> and
-<a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>.
-
-<p class="note no-backref">See e.g. <a href="#useful-method">useful method</a> and
-<a href="#forbidden-author-header-name">forbidden author header name</a>.
-
 
 <h4 id="responses"><span class="secno">2.1.4 </span>Responses</h4>
 
@@ -517,13 +514,13 @@ Unless stated otherwise, it is <i title="">default</i>.
 <dfn id="concept-response-url" title="concept-response-url">url</dfn>,
 <dfn id="concept-response-status" title="concept-response-status">status</dfn>,
 <dfn id="concept-response-status-message" title="concept-response-status-message">status message</dfn>,
-<dfn id="concept-response-headers" title="concept-response-headers">headers</dfn>, and a
+<dfn id="concept-response-header-list" title="concept-response-header-list">header list</dfn>, and a
 <dfn id="concept-response-body" title="concept-response-body">body</dfn>. Unless stated otherwise, a
 <a href="#concept-response" title="concept-response">response</a>'s
 <a href="#concept-response-url" title="concept-response-url">url</a> is null,
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">200</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is `<code title="">OK</code>`,
-<a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is an empty
 <a href="#concept-header-list" title="concept-header-list">header list</a>, and
 <a href="#concept-response-body" title="concept-response-body">body</a> is null.
 
@@ -537,7 +534,7 @@ Unless stated otherwise, it is <i title="">default</i>.
 <a href="#concept-response" title="concept-response">response</a> whose
 <a href="#concept-response-status" title="concept-response-status">status</a> is always <code title="">0</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is always the empty byte sequence,
-<a href="#concept-response-headers" title="concept-response-headers">headers</a> is aways an empty list, and
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is aways an empty list, and
 <a href="#concept-response-body" title="concept-response-body">body</a> is always null.
 
 <!-- XXX Introduce concept-redirect and concept-redirect-location for navigate algorithm? -->
@@ -559,30 +556,29 @@ required, e.g. to feed image data to a decoder, the associated
 <p>A <dfn id="concept-filtered-response-basic" title="concept-filtered-response-basic">basic filtered response</dfn> is a
 <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> whose
 <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">basic</i>,
-<a href="#concept-response-headers" title="concept-response-headers">response headers</a> exclude any
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> excludes any
 <a href="#concept-header" title="concept-header">headers</a> in
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
-<a href="#concept-response-headers" title="concept-response-headers">response headers</a> whose
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Set-Cookie</code>` or
 `<code title="">Set-Cookie2</code>`.
 
 <p>A <dfn id="concept-filtered-response-cors" title="concept-filtered-response-cors">CORS filtered response</dfn> is a
 <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> whose
 <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">CORS</i>,
-<a href="#concept-response-headers" title="concept-response-headers">response headers</a> exclude all
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> excludes all
 <a href="#concept-header" title="concept-header">headers</a> in
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
-<a href="#concept-response-headers" title="concept-response-headers">response headers</a>, except those whose
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a>, except those whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is either one of
 `<code title="">Cache-Control</code>`, `<code title="">Content-Language</code>`,
 `<code title="">Content-Type</code>`, `<code title="">Expires</code>`,
 `<code title="">Last-Modified</code>`, and `<code title="">Pragma</code>`, and except those
-whose <a href="#concept-header-name" title="concept-header-name">name</a> is one of the values of the
-<a href="#concept-header-parse" title="concept-header-parse">parsed</a>
-<a href="#concept-header-value" title="concept-header-value">value</a> of the
-<a href="#concept-header" title="concept-header">header</a> in
+whose <a href="#concept-header-name" title="concept-header-name">name</a> is one of the
+<a href="#concept-header-value" title="concept-header-value">values</a> of the
+<a href="#concept-header-parse" title="concept-header-parse">parsed</a> <a href="#concept-header" title="concept-header">headers</a> in
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
-<a href="#concept-response-headers" title="concept-response-headers">response headers</a> whose
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is
 `<code title="http-access-control-expose-headers"><a href="#http-access-control-expose-headers">Access-Control-Expose-Headers</a></code>`.
 
@@ -591,7 +587,7 @@ whose <a href="#concept-header-name" title="concept-header-name">name</a> is one
 <a href="#concept-response-type" title="concept-response-type">type</a> is <i title="">opaque</i>,
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">0</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
-<a href="#concept-response-headers" title="concept-response-headers">headers</a> is an empty list, and
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is an empty list, and
 <a href="#concept-response-body" title="concept-response-body">body</a> is null.
 
 <p class="note no-backref">In other words, an
@@ -808,6 +804,15 @@ redirects. Only use the <var title="">request</var> parameter in other standards
 
  <li><p class="XXX">Invoke CSP hook with <var title="">request</var>.
 
+ <li>
+  <p class="XXX">Invoke CSP referrer hook to update <var title="">request</var>'s
+  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>.
+
+  <p class="note no-backref">User agents are encouraged to provide the end user with
+  options to always set <var title="">request</var>'s
+  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to null or have it expose less
+  sensitive information.
+
  <li><p>Let <var title="">url</var> be <var title="">request</var>'s
  <a href="#concept-request-url" title="concept-request-url">url</a>.
 
@@ -852,10 +857,11 @@ redirects. Only use the <var title="">request</var> parameter in other standards
 
    <dt><var title="">request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    <i title="">CORS-with-forced-preflight</i>
-   <dt><var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is not
-   a <a href="#simple-method">simple method</a>
-   <dt>A <a href="#concept-header" title="concept-header">header</a> in <var title="">request</var>'s
-   <span title="concept-author-headers">author headers</span> is not a <a href="#simple-header">simple header</a>
+   <dt><var title="">request</var>'s <a href="#unsafe-request-flag">unsafe request flag</a> is set and either
+   <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is not
+   a <a href="#simple-method">simple method</a> or a <a href="#concept-header" title="concept-header">header</a> in
+   <var title="">request</var>'s <a href="#concept-header-list" title="concept-header-list">header list</a> is not a
+   <a href="#simple-header">simple header</a>
    <dd>
     <p>Set <var title="">request</var>'s
     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
@@ -969,7 +975,7 @@ steps:
   <p>If <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
   <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme-data" title="concept-url-scheme-data">scheme data</a> is
   "<code title="">blank</code>", return a <a href="#concept-response" title="concept-response">response</a> whose
-  <a href="#concept-response-headers" title="concept-response-headers">headers</a> consist of a single
+  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> consist of a single
   <a href="#concept-header" title="concept-header">header</a> whose
   <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Content-Type</code>` and
   <a href="#concept-header-value" title="concept-header-value">value</a> is
@@ -999,7 +1005,7 @@ steps:
   <a href="http://simonsapin.github.com/data-urls/">obtaining a resource</a> from
   <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> does not return
   failure, return a <a href="#concept-response" title="concept-response">response</a> whose
-  <a href="#concept-response-headers" title="concept-response-headers">headers</a> consist of a single
+  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> consist of a single
   <a href="#concept-header" title="concept-header">header</a> whose
   <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Content-Type</code>` and
   <a href="#concept-header-value" title="concept-header-value">value</a> is the MIME type and parameters returned
@@ -1044,80 +1050,6 @@ former indicates a <a href="#cors-preflight-request">CORS preflight request</a> 
 indicates an attempt to authenticate.
 
 <ol>
- <!-- Upgrading "request" -->
- <li>
-  <p class="XXX">Invoke CSP referrer hook to determine appropriate
-  <code title="">Referer</code>.
-
-  <p class="note no-backref">User agents are encouraged to provide the end user with
-  options to always exclude `<code title="">Referer</code>`
-  <a href="#concept-header" title="concept-header">headers</a> or have it expose less sensitive information.
-
- <li><p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a>
- is set, set `<code title="">Origin</code>` to <var title="">request</var>'s
- <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
- <span class="XXX">serialized to a byte sequence</span>, in
- <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
-
- <li>
-  <p>If <var title="">request</var>'s
-  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-  <i title="">include</i>, or <var title="">request</var>'s
-  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-  <i title="">same-origin</i> and the <i title="">CORS flag</i> is unset, run these substeps:
-
-  <ol>
-   <li><p>Set a `<code title="">Cookie</code>` <a href="#concept-header" title="concept-header">header</a> in
-   <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> for
-   <var title="">request</var> per HTTP State Management Mechanism.
-   <a href="#refsCOOKIES">[COOKIES]</a>
-
-   <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
-   <li><p>Let <var title="">authorizationValue</var> be null.
-
-   <li><p>If there's an <b title="">authentication entry</b> for <var title="">request</var> and
-   either <var title="">request</var>'s
-   <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a> is
-   unset or <var title="">url</var> does not
-   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
-   <var title="">authorizationValue</var> to <b title="">authentication entry</b>.
-   <!-- need to define the cache concept -->
-
-   <li><p>Otherwise, if <var title="">url</var> does
-   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a> and the
-   <i title="">authentication fetch flag</i> is set, set
-   <var title="">authorizationValue</var> to <var title="">url</var>,
-   <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
-
-   <li><p>If <var title="">authorizationValue</var> is non-null, set
-   `<code title="">Authorization</code>` to <var title="">authorizationValue</var> in
-   <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>
-  </ol>
-
- <li>
-  <p>If there's a <b title="">proxy authentication entry</b>, use it as appropriate.
-  <a href="#refsHTTP">[HTTP]</a>
-
-  <p class="note no-backref">This intentionally does not depend on
-  <var title="">request</var>'s
-  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
-
- <li><p>User agents may set additional <a href="#concept-header" title="concept-header">headers</a> in
- <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> at this
- point.
- <!-- weaksauce -->
-
- <li>
-  <p>Copy all of <var title="">request</var>'s
-  <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> to
-  <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a> as long as
-  their <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> already present in
-  <var title="">request</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
-
-  <p class="note no-backref">A <a href="#forbidden-author-header-name">Forbidden author header name</a> is not supposed
-  to reach this point.
-
- <!-- Making a "request" -->
  <li><p>Let <var title="">response</var> be null.
 
  <li><p>If <var title="">request</var>'s <a href="#skip-service-worker-flag">skip service worker flag</a>
@@ -1128,12 +1060,6 @@ indicates an attempt to authenticate.
  <var title="">request</var>.
  <a href="#refsHTML">[HTML]</a>
  <a href="#refsSERVICEWORKERS">[SERVICEWORKERS]</a>
-
- <li><p>Let <var title="">set cookies flag</var> be set if either <var title="">request</var>'s
- <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
- <i title="">include</i>, or <var title="">request</var>'s
- <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
- <i title="">same-origin</i> and the <i title="">CORS flag</i> is unset, and unset otherwise.
 
  <li>
   <p>If <var title="">response</var> is null, run these substeps:
@@ -1161,7 +1087,7 @@ indicates an attempt to authenticate.
 
      <li>there is at least one <a href="#concept-header" title="concept-header">header</a>
      <a href="#concept-header-name" title="concept-header-name">name</a> in <var title="">request</var>'s
-     <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> for which there is
+     <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> for which there is
      no <a href="#concept-cache-match-header" title="concept-cache-match-header">header name cache match</a> using
      <var title="">request</var> and for which the <a href="#concept-header" title="concept-header">header</a>
      is not a <a href="#simple-header">simple header</a>
@@ -1180,7 +1106,7 @@ indicates an attempt to authenticate.
 
    <li><p>Set <var title="">response</var> to the result of performing an
    <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</a>
-   using <var title="">request</var> and <var title="">set cookies flag</var>.
+   using <var title="">request</var>.
 
    <li>
     <p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
@@ -1200,9 +1126,9 @@ indicates an attempt to authenticate.
    <dd><p class="XXX">For responses that are a result of a user agent generated conditional request
    the user agent must act as if the server gave a <code>200 OK</code> response with the
    appropriate content. The user agent must allow a <var title="">request</var>'s
-   <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a> to
-   override automatic cache validation (e.g. <code>If-None-Match</code> or
-   <code>If-Modified-Since</code>), in which case <code>304 Not Modified</code> responses
+   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> to
+   override automatic cache validation (e.g. `<code>If-None-Match</code>` or
+   `<code>If-Modified-Since</code>`), in which case <code>304 Not Modified</code> responses
    must be passed through.
 
    <dt>301
@@ -1213,13 +1139,13 @@ indicates an attempt to authenticate.
    <dd>
     <ol>
      <li><p>If <var title="">response</var>'s
-     <a href="#concept-response-headers" title="concept-response-headers">headers</a> do not contain a
+     <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> do not contain a
      <a href="#concept-header" title="concept-header">header</a> whose
      <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>`, return
      <var title="">response</var>.
 
      <li><p>If <var title="">response</var>'s
-     <a href="#concept-response-headers" title="concept-response-headers">headers</a> contain more than one
+     <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> contain more than one
      <a href="#concept-header" title="concept-header">header</a> whose
      <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>`, return a
      <a href="#concept-network-error" title="concept-network-error">network error</a>.
@@ -1229,7 +1155,7 @@ indicates an attempt to authenticate.
      <a href="#concept-header-value" title="concept-header-value">value</a> of the
      <a href="#concept-header" title="concept-header">header</a> whose
      <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Location</code>` within
-     <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+     <var title="">response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
      <li><p>Let <var title="">locationURL</var> be the result of
      <a class="external" href="http://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
@@ -1355,9 +1281,66 @@ indicates an attempt to authenticate.
 
 <p>To perform a
 <dfn id="concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</dfn> using
-<var title="">request</var> and a <i title="">set cookies flag</i>, run these steps:
+<var title="">request</var>, run these steps:
 
 <ol>
+ <li><p class="XXX">Set `<code title="">Referer</code>`, `<code title="">Host</code>`, ...
+ <!-- XXX header list set -->
+
+ <li><p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a>
+ is set, set `<code title="">Origin</code>` to <var title="">request</var>'s
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
+ <span class="XXX">serialized to a byte sequence</span>, in
+ <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+ <!-- XXX header list set -->
+
+ <li><p>Let <var title="">credentials flag</var> be set if either <var title="">request</var>'s
+ <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
+ <i title="">include</i>, or <var title="">request</var>'s
+ <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
+ <i title="">same-origin</i> and the <i title="">CORS flag</i> is unset, and unset otherwise.
+
+ <li>
+  <p>If <var title="">credentials flag</var> is set, run these substeps:
+
+  <ol>
+   <li><p>Set a `<code title="">Cookie</code>` <a href="#concept-header" title="concept-header">header</a> in
+   <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
+   for <var title="">request</var> per HTTP State Management Mechanism.
+   <a href="#refsCOOKIES">[COOKIES]</a>
+   <!-- XXX header list set -->
+
+   <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
+   <li><p>Let <var title="">authorizationValue</var> be null.
+
+   <li><p>If there's an <b title="">authentication entry</b> for <var title="">request</var> and
+   either <var title="">request</var>'s
+   <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a> is
+   unset or <var title="">url</var> does not
+   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
+   <var title="">authorizationValue</var> to <b title="">authentication entry</b>.
+   <!-- need to define the cache concept -->
+
+   <li><p>Otherwise, if <var title="">url</var> does
+   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a> and the
+   <i title="">authentication fetch flag</i> is set, set
+   <var title="">authorizationValue</var> to <var title="">url</var>,
+   <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
+
+   <li><p>If <var title="">authorizationValue</var> is non-null, set
+   `<code title="">Authorization</code>` to <var title="">authorizationValue</var> in
+   <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+   <!-- XXX header list set -->
+  </ol>
+
+ <li>
+  <p>If there's a <b title="">proxy authentication entry</b>, use it as appropriate.
+  <a href="#refsHTTP">[HTTP]</a>
+
+  <p class="note no-backref">This intentionally does not depend on
+  <var title="">request</var>'s
+  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
+
  <li>
   <p>Let <var title="">response</var> be the result of making HTTP request using
   <var title="">request</var> following the requirements from HTTP as appropriate.
@@ -1381,9 +1364,9 @@ indicates an attempt to authenticate.
   <var title="">reason</var>.
 
  <li>
-  <p>If the <i title="">set cookies flag</i> is set and there are cookies to be set,
-  run these substeps:
-  <!-- XXX non-flag should be a simple Set-Cookie header check -->
+  <p>If <var title="">credentials flag</var> is set and there are cookies to be set, run
+  these substeps:
+  <!-- XXX non-flag part should be a simple Set-Cookie header check -->
 
   <ol>
    <li><p>Wait until ownership of the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#storage-mutex">storage mutex</a> can
@@ -1439,12 +1422,11 @@ steps:
  `<code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>`
  with <a href="#concept-header-value" title="concept-header-value">value</a> <var title="">request</var>'s
  <a href="#concept-request-method" title="concept-request-method">method</a> to <var title="">preflight</var>'s
- <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
  <li><p>Let <var title="">headers</var> be the <a href="#concept-header-name" title="concept-header-name">names</a>
- of <var title="">request</var>'s
- <a href="#concept-request-author-headers" title="concept-request-author-headers">author headers</a>, sorted
- lexicographically and <span class="XXX">byte lowercased</span>.
+ of <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>,
+ sorted lexicographically and <span class="XXX">byte lowercased</span>.
 
  <li><p>Let <var title="">header value</var> be the items in <var title="">headers</var>
  separated from each other by 0x2C 0x20.
@@ -1453,7 +1435,7 @@ steps:
  <a href="#concept-header-name" title="concept-header-name">named</a>
  `<code title="http-access-control-request-headers"><a href="#http-access-control-request-headers">Access-Control-Request-Headers</a></code>`
  with <a href="#concept-header-value" title="concept-header-value">value</a> <var title="">header value</var> to
- <var title="">preflight</var>'s <a href="#concept-request-headers" title="concept-request-headers">headers</a>.
+ <var title="">preflight</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
  <li><p>Set <var title="">preflight</var>'s
  <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a>.
@@ -1475,13 +1457,13 @@ steps:
   <ol>
    <li><p>Let <var title="">methods</var> be the result of
    <a href="#concept-header-parse" title="concept-header-parse">parsing</a> all <var title="">response</var>'s
-   <a href="#concept-response-headers" title="concept-response-headers">headers</a>'
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>'
    <a href="#concept-header-name" title="concept-header-name">named</a>
    `<code title="http-access-control-allow-methods"><a href="#http-access-control-allow-methods">Access-Control-Allow-Methods</a></code>`.
 
    <li><p>Let <var title="">header names</var> be the result of
    <a href="#concept-header-parse" title="concept-header-parse">parsing</a> all <var title="">response</var>'s
-   <a href="#concept-response-headers" title="concept-response-headers">headers</a>'
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>'
    <a href="#concept-header-name" title="concept-header-name">named</a>
    `<code title="http-access-control-allow-headers"><a href="#http-access-control-allow-headers">Access-Control-Allow-Headers</a></code>`.
 
@@ -1504,14 +1486,14 @@ steps:
    failure.
 
    <li><p>If one of <var title="">request</var>'s
-   <a href="#concept-request-headers" title="concept-request-headers">headers</a>'
+   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>'
    <a href="#concept-header-name" title="concept-header-name">names</a> is not in <var title="">header names</var> or
    its corresponding <a href="#concept-header" title="concept-header">header</a> is not a
    <a href="#simple-header">simple header</a>, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
    <li><p>Let <var title="">max-age</var> be the result of
    <a href="#concept-header-parse" title="concept-header-parse">parsing</a> all <var title="">response</var>'s
-   <a href="#concept-response-headers" title="concept-response-headers">headers</a>'
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>'
    <a href="#concept-header-name" title="concept-header-name">named</a>
    `<code title="http-access-control-max-age"><a href="#http-access-control-max-age">Access-Control-Max-Age</a></code>`.
 
@@ -1647,7 +1629,7 @@ and <var title="">request</var>'s
 <var title="">response</var>, run these steps:
 
 <ol>
- <li><p>If <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>
+ <li><p>If <var title="">response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>
  contains zero or more than one <a href="#concept-header" title="concept-header">header</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is
  `<code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>`, return
@@ -1657,7 +1639,7 @@ and <var title="">request</var>'s
  of the <a href="#concept-header" title="concept-header">header</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is
  `<code title="http-access-control-allow-origin"><a href="#http-access-control-allow-origin">Access-Control-Allow-Origin</a></code>` within
- <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+ <var title="">response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
  <li><p>If <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is not
@@ -1671,7 +1653,7 @@ and <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is not
  <i title="">include</i>, return success.
 
- <li><p>If <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a>
+ <li><p>If <var title="">response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>
  contains zero or more than one <a href="#concept-header" title="concept-header">header</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is
  `<code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>`,
@@ -1681,7 +1663,7 @@ and <var title="">request</var>'s
  of the <a href="#concept-header" title="concept-header">header</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is
  `<code title="http-access-control-allow-credentials"><a href="#http-access-control-allow-credentials">Access-Control-Allow-Credentials</a></code>`
- within <var title="">response</var>'s <a href="#concept-response-headers" title="concept-response-headers">headers</a> is
+ within <var title="">response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is
  `<code title="">true</code>`, return success.
 
  <li><p>Return failure.
@@ -1731,7 +1713,7 @@ method, when invoked, must run these steps:
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
- <var title="">name</var> is a <a href="#forbidden-author-header-name">forbidden author header name</a>, return.
+ <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
 
  <li><p>Append a new <a href="#concept-header" title="concept-header">header</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> and
@@ -1747,7 +1729,7 @@ method, when invoked, must run these steps:
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
- <var title="">name</var> is a <a href="#forbidden-author-header-name">forbidden author header name</a>, return.
+ <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
 
  <li><p>Remove all <a href="#concept-header" title="concept-header">headers</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> from
@@ -1804,7 +1786,7 @@ method, when invoked, must run these steps:
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
- <var title="">name</var> is a <a href="#forbidden-author-header-name">forbidden author header name</a>, return.
+ <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
 
  <li><p>If there are any <a href="#concept-header" title="concept-header">headers</a> in
  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
@@ -1979,7 +1961,7 @@ enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origi
 
 <p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#headers">Headers</a></code> object which
 is itself associated with <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-<a href="#concept-request-headers" title="concept-request-headers">headers</a> and whose
+<a href="#concept-request-header-list" title="concept-request-header-list">header list</a> and whose
 <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i>.
 
 <p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
@@ -2168,7 +2150,7 @@ enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "er
 
 <p>A <code><a href="#response">Response</a></code> object also has an associated <code><a href="#headers">Headers</a></code> object which
 is itself associated with <a href="#concept-response-response" title="concept-Response-response">response</a>'s
-<a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+<span title="concept-response-headers">headers</span>.
 
 <p>A <code><a href="#response">Response</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
 object which is itself associated with
@@ -2199,7 +2181,8 @@ constructor, when invoked, must run these steps:
 
  <li><p>Set `<code title="">Content-Type</code>` to <var title="">Content-Type</var> in
  <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
- <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+ <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+ <!-- XXX header list set -->
 
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">init</var>'s
@@ -2215,7 +2198,7 @@ constructor, when invoked, must run these steps:
  <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
  <span class="XXX" title="">extracting a MIME type</span> from <var title="">r</var>'s
  <a href="#concept-response-response" title="concept-Response-response">response</a>'s
- <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+ <span title="concept-response-header">header list</span>.
 
  <li><p>Return <var title="">r</var>.
 </ol>
@@ -2250,7 +2233,8 @@ method, when invoked, must run these steps:
 
  <li><p>Set `<code title="">Location</code>` to <var title="">parsedURL</var> in
  <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
- <a href="#concept-response-headers" title="concept-response-headers">headers</a>.
+ <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+ <!-- XXX header list set -->
 
  <li><p>Return <var title="">r</var>.
 </ol>
