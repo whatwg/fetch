@@ -283,7 +283,7 @@ return the <span title=concept-header-value>values</span> obtained for the given
 
 <p class="note no-backref">The <span>unsafe request flag</span> is set by APIs such as
 <code title=dom-global-fetch>fetch()</code>  and <code>XMLHttpRequest</code> to ensure a
-<span>CORS preflight</span> is done based on the supplied
+<span>CORS preflight fetch</span> is done based on the supplied
 <span title=concept-request-method>method</span> and
 <span title=concept-request-header-list>header list</span>. It does not free an API from
 outlawing <span title="forbidden method">forbidden methods</span> and
@@ -1409,48 +1409,34 @@ these steps:
 steps:
 
 <ol>
- <li><p>Let <var title>preflight</var> be a new <span title=concept-request>request</span>.
+ <li><p>Let <var title>preflight</var> be a copy of <var title>request</var>.
 
  <li><p>Set <var title>preflight</var>'s <span title=concept-request-method>method</span> to
  `<code title>OPTIONS</code>`.
 
- <li><p>Set <var title>preflight</var>'s <span title=concept-request-url>url</span> to
- <var title>request</var>'s <span title=concept-request-url>url</span>.
+ <li><p>Empty <var title>preflight</var>'s <span title=concept-request-header-list>header list</span>.
 
- <li><p>Set <var title>preflight</var>'s <span title=concept-request-client>client</span>
- to <var title>request</var>'s <span title=concept-request-client>client</span>.
-
- <li><p>Set <var title>preflight</var>'s <span>skip service worker flag</span>.
-
- <li><p>Set <var title>preflight</var>'s
- <span title=concept-request-context>context</span> to
- <var title>request</var>'s <span title=concept-request-context>context</span>.
-
- <li><p>Set <var title>preflight</var>'s <span title=concept-request-origin>origin</span> to
- <var title>request</var>'s <span title=concept-request-origin>origin</span>.
-
- <li><p>Set <var title>preflight</var>'s <span title=concept-request-referrer>referrer</span> to
- <var title>request</var>'s <span title=concept-request-referrer>referrer</span>.
-
- <li><p>Append a <span title=concept-header>header</span>
- <span title=concept-header-name>named</span>
- `<code title=http-access-control-request-method>Access-Control-Request-Method</code>`
- with <span title=concept-header-value>value</span> <var title>request</var>'s
- <span title=concept-request-method>method</span> to <var title>preflight</var>'s
- <span title=concept-request-header-list>header list</span>.
+ <li><p><span title=concept-header-list-set>Set</span>
+ `<code title=http-access-control-request-method>Access-Control-Request-Method</code>` to
+ <var title>request</var>'s <span title=concept-request-method>method</span> in
+ <var title>preflight</var>'s <span title=concept-request-header-list>header list</span>.
 
  <li><p>Let <var title>headers</var> be the <span title=concept-header-name>names</span>
- of <var title>request</var>'s <span title=concept-request-header-list>header list</span>,
- sorted lexicographically and <span class=XXX>byte lowercased</span>.
+ of <var title>request</var>'s
+ <span title=concept-request-header-list>header list</span>'s
+ <span title=concept-header>headers</span>, excluding duplicates,
+ sorted lexicographically, and <span class=XXX>byte lowercased</span>.
 
- <li><p>Let <var title>header value</var> be the items in <var title>headers</var>
- separated from each other by 0x2C 0x20.
+ <li><p>Let <var title>value</var> be the items in <var title>headers</var> separated from
+ each other by 0x2C 0x20.
 
- <li><p>Append a <span title=concept-header>header</span>
- <span title=concept-header-name>named</span>
+ <li><p><span title=concept-header-list-set>Set</span>
  `<code title=http-access-control-request-headers>Access-Control-Request-Headers</code>`
- with <span title=concept-header-value>value</span> <var title>header value</var> to
+ to <var title>value</var> in
  <var title>preflight</var>'s <span title=concept-request-header-list>header list</span>.
+
+ <li><p>Set <var title>preflight</var>'s <span title=concept-request-body>body</span> to
+ null.
 
  <li><p>Set <var title>preflight</var>'s
  <span title=concept-request-manual-redirect-flag>manual redirect flag</span>.
