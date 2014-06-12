@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-11-june-2014">Living Standard — Last Updated 11 June 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-12-june-2014">Living Standard — Last Updated 12 June 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-11 June 2014, the editor has made this specification available
+12 June 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -94,7 +94,6 @@ fetching.
    <li><a class="no-num" href="#atomic-http-redirect-handling">Atomic HTTP redirect handling</a></li>
    <li><a class="no-num" href="#basic-safe-cors-protocol-setup">Basic safe CORS protocol setup</a></li>
    <li><a class="no-num" href="#cors-protocol-and-http-caches">CORS protocol and HTTP caches</a></ol></li>
- <li><a class="no-num" href="#html-fetch">HTML fetch</a></li>
  <li><a class="no-num" href="#references">References</a></li>
  <li><a class="no-num" href="#acknowledgments">Acknowledgments</a></ol>
 <!--end-toc-->
@@ -106,9 +105,7 @@ fetching.
 <p>To unify fetching across the web platform this specification supplants a number of algorithms and specifications:
 
 <ul class="brief no-backref">
- <li>HTML Standard's <a href="#concept-legacy-fetch" title="concept-legacy-fetch">fetch</a> and
- <a href="#concept-legacy-potentially-cors-enabled-fetch" title="concept-legacy-potentially-cors-enabled-fetch">potentially CORS-enabled fetch</a>
- algorithms (now defined in terms of <a href="#concept-fetch" title="concept-fetch">fetch</a>)
+ <li>HTML Standard's fetch and potentially CORS-enabled fetch algorithms
  <a class="informative" href="#refsHTML">[HTML]</a>
  <li>CORS <a class="informative" href="#refsCORS">[CORS]</a>
  <li>HTTP `<code title="http-origin"><a href="#http-origin">Origin</a></code>` header semantics
@@ -118,12 +115,14 @@ fetching.
 <p>Unifying fetching provides consistent handling of:
 
 <ul class="brief">
- <li>Different URL schemes
- <li>HTTP redirects
- <li>Cross-origin requests
+ <li>URL schemes
+ <li>Redirects
+ <li>Cross-origin semantics
+ <li>CSP <a href="#refsCSP">[CSP]</a>
+ <li>Service Workers <a href="#refsSERVICEWORKERS">[SERVICEWORKERS]</a>
+ <li>Mixed Content <a href="#refsMIXEDCONTENT">[MIXEDCONTENT]</a>
+ <li>`<code title="">Referer</code>` <a href="#refsREFERRER">[REFERRER]</a>
 </ul>
-
-<p>In due course, it should also help clarify the semantics of CSP and provide a model to hook offline networking into.
 
 
 
@@ -446,9 +445,10 @@ not a <span>client request</span>.
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="same-origin-data-url-flag">same-origin data URL flag</dfn>. Unless stated otherwise it is unset.
 
-
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-referrer" title="concept-request-referrer">referrer</dfn>. Unless stated otherwise it is null.
+<dfn id="concept-request-referrer" title="concept-request-referrer">referrer</dfn>, which is <i title="">none</i>,
+<i title="">client</i>, or a <a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>. Unless
+stated otherwise it is <i title="">client</i>.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="authentication-flag">authentication flag</dfn>. Unless stated otherwise it is unset.
@@ -802,17 +802,22 @@ redirects. Only use the <var title="">request</var> parameter in other standards
  <a href="#refsHSTS">[HSTS]</a>
 
  <li><p class="XXX">Invoke Mixed Content hook with <var title="">request</var>.
+ <a href="#refsMIXEDCONTENT">[MIXEDCONTENT]</a>
 
  <li><p class="XXX">Invoke CSP hook with <var title="">request</var>.
+ <a href="#refsCSP">[CSP]</a>
 
  <li>
-  <p class="XXX">Invoke CSP referrer hook to update <var title="">request</var>'s
-  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>.
+  <p>If <var title="">request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>
+  is not <i title="">none</i>, set <var title="">request</var>'s
+  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to the result of invoking
+  <span class="XXX">determine referrer</span> with <var title="">request</var>.
+  <a href="#refsREFERRER">[REFERRER]</a>
 
-  <p class="note no-backref">User agents are encouraged to provide the end user with
-  options to always set <var title="">request</var>'s
-  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to null or have it expose less
-  sensitive information.
+  <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
+  provide the end user with options to always set <var title="">request</var>'s
+  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to <i title="">none</i> or have it
+  expose less sensitive information.
 
  <li><p>Let <var title="">url</var> be <var title="">request</var>'s
  <a href="#concept-request-url" title="concept-request-url">url</a>.
@@ -904,6 +909,7 @@ redirects. Only use the <var title="">request</var> parameter in other standards
   </dl>
 
  <li><p class="XXX">Invoke Mixed Content hook #2 with <var title="">request</var> and <var title="">response</var>.
+ <a href="#refsMIXEDCONTENT">[MIXEDCONTENT]</a>
 
  <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set, wait for
  either <var title="">response</var> to have been fully transmitted or
@@ -1994,7 +2000,7 @@ object which is itself associated with
  <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a>,
- <span class="XXX" title="">referrer</span>,
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <i title="">client</i>,
  <a href="#concept-request-context" title="concept-request-context">context</a> is <i title="">connect</i>,
  <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <var title="">request</var>'s
  <a href="#concept-request-mode" title="concept-request-mode">mode</a>,
@@ -2384,167 +2390,6 @@ used. <a href="#refsHTTP">[HTTP]</a>
 
 
 
-<h2 class="no-num" id="html-fetch">HTML fetch</h2>
-
-<p class="XXX">HTML defines two algorithms for obtaining resources. To ease transitioning
-towards this specification, a <em>temporary</em> mapping is defined between these "legacy"
-algorithms and <a href="#concept-fetch" title="concept-fetch">fetch</a>. <strong>Make no mistake, this
-section will go away.</strong>
-
-<p>When a user agent is to <dfn id="concept-legacy-fetch" title="concept-legacy-fetch">fetch</dfn> a resource or
-URL, optionally <strong>from</strong> an origin <i title="">origin</i>, optionally
-<strong>using</strong> a specific <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#referrer-source">referrer source</a>
-<var title="">referrer source</var>, and optionally with any of a
-<i title="">synchronous flag</i>, a <i>manual redirect flag</i>, a
-<i>force same-origin flag</i>, and a <i>block cookies flag</i>, the following
-steps must be run:
-
-<p class="note">The <i>block cookies flag</i> is obsolete now.
-
- <!-- if invoked with the synchronous flag, make sure to release the storage mutex first -->
-
- <!-- synchronous flag is only to be used in algorithms that are themselves asynchronous! Only
- sync-XHR is allowed to make the mistake of screwing that up. :-P -->
-
- <!-- the force same-origin flag is for use in places where we'll be moving to CORS one day; when
- used, the algorithm must be invoked with a URL (not something else, like a POST request) whose
- origin is the same as the /origin/, which must also be present, and the algorithm must not be
- invoked with the manual redirect flag. -->
-
-<ol>
-  <li><p>If the <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> with which any
-  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a>
-  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queued</a> by this
-  algorithm would be associated doesn't have an associated
-  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#browsing-context">browsing context</a>, then terminate these
-  steps.
-
-<!--(redundant with 'at a time convenient...' below)
-  <li><p>Optionally, wait until the <code>Document</code> with which any <span
-  title="concept-task">tasks</span> <span title="queue a task">queued</span> by this algorithm
-  would be associated is <span title="active document">active</span>.</p></li>
--->
-
- <li><p>Let <var title="">req</var> be a new <a href="#concept-request" title="concept-request">request</a>.
-
- <li><p>If this algorithm was invoked with "from an origin", set  <var title="">req</var>'s
- <a href="#concept-request-origin" title="concept-request-origin">origin</a> to <var title="">origin</var>.
-
- <li><p>Set <var title="">req</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to
- the result of <a href="#determine-referrer" title="determine referrer">determining referrer</a> using
- <var title="">referrer source</var> (if given).
-
- <li><p>Set <var title="">req</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> to
- <i title="">same-origin</i> if the <i>force same-origin flag</i> is set, and to
- <i title="">no CORS</i> otherwise.
-
- <li><p>Set <var title="">req</var>'s
- <a href="#concept-request-manual-redirect-flag" title="concept-request-manual-redirect-flag">manual redirect flag</a> if
- <i>manual redirect flag</i> is set.
-
- <li><p>Set <var title="">req</var>'s <a href="#synchronous-flag">synchronous flag</a> if
- <i title="">synchronous flag</i> is set.
-
- <li><p><a href="#concept-fetch" title="concept-fetch">fetch</a> <var title="">req</var>.
-</ol>
-
-
-<p>When the user agent is required to perform a
-<dfn id="concept-legacy-potentially-cors-enabled-fetch" title="concept-legacy-potentially-cors-enabled-fetch">potentially CORS-enabled fetch</dfn>
-of an <var title="">URL</var> with a mode <var title="">mode</var> that is either
-"No CORS", "Anonymous", or "Use Credentials", optionally using a
-<a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#referrer-source">referrer source</a>
-<var title="">referrer source</var>, with an
-<a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a> <var title="">origin</var>, and with a
-default origin behaviour <var title="">default</var> which is either "<i>taint</i>"
-or "<i>fail</i>", it must run these steps:
-
-<ol>
- <li><p>Let <var title="">req</var> be a new <a href="#concept-request" title="concept-request">request</a>.
-
- <li><p>Set <var title="">req</var>'s
- <a href="#concept-request-origin" title="concept-request-origin">origin</a> to <var title="">origin</var>.
-
- <li>
-  <p>Set <var title="">req</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> to the value
-  corresponding to the first matching statement:
-
-  <dl class="switch">
-   <dt><var title="">mode</var> is "No CORS" and <var title="">default</var> is "<i>fail</i>"
-   <dd><i title="">same-origin</i>
-
-   <dt><var title="">mode</var> is "No CORS" and <var title="">default</var> is "<i>taint</i>"
-   <dd><i title="">no CORS</i>
-
-   <dt>Otherwise
-   <dd><i title="">CORS</i>
-  </dl>
-
- <li>
-  <p>If <var title="">mode</var> is "Anonymous", set <var title="">req</var>'s
-  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
-  <i title="">omit</i>.
-  <!-- XXX unset by default? -->
-  <!-- nullify Origin / Referer too? -->
-
- <li><p>Set <var title="">req</var>'s
- <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to the result of
- <a href="#determine-referrer" title="determine referrer">determining referrer</a> using
- <var title="">referrer source</var> (if given).
-
- <li><p><a href="#concept-fetch" title="concept-fetch">fetch</a> <var title="">req</var>.
-</ol>
-
-<p>To <dfn id="determine-referrer">determine referrer</dfn> optionally using a
-<a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/fetching-resources.html#referrer-source">referrer source</a> <var title="">referrer source</var>,
-within the context of either <a href="#concept-legacy-fetch" title="concept-legacy-fetch">fetch</a> or
-<a href="#concept-legacy-potentially-cors-enabled-fetch" title="concept-legacy-potentially-cors-enabled-fetch">potentially CORS-enabled fetch</a>,
-run these steps:
-
-<ol>
- <li><p>If there is a specific <var title="">referrer source</var>, and it is a
- <a class="external" href="http://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>, return
- <var title="">referrer source</var>.
-
- <li>
-  <p>Let <var title="">document</var> be the appropriate
-  <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> as given by the following list:
-
-  <dl class="switch">
-   <dt>If there is a <var title="">referrer source</var>
-   <dd><var title="">referrer source</var>.
-
-   <dt>When <span title="navigate">navigating</span>
-   <dd>The <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#active-document">active document</a> of the
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/history.html#source-browsing-context">source browsing context</a>.
-
-   <dt>When fetching resources for an element
-   <dd>The element's <a class="external" href="http://dom.spec.whatwg.org/#concept-node-document" title="concept-node-document">node document</a>.
-  </dl>
-
- <li><p>While <var title="">document</var> is
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-iframe-element.html#an-iframe-srcdoc-document">an <code>iframe</code> <code>srcdoc</code> document</a>,
- set <var title="">document</var> to <var title="">document</var>'s
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#browsing-context">browsing context</a>'s
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#browsing-context-container">browsing context container</a>'s
- <code class="external"><a href="http://dom.spec.whatwg.org/#document">Document</a></code> instead.
-
- <li><p>If <var title="">document</var>'s
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/origin-0.html#origin">origin</a> is not a scheme/host/port tuple, let
- <var title="">referrer</var> be null.
-
- <li><p>Otherwise, let <var title="">referrer</var> be
- <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#the-document's-address">the document's address</a> of
- <var title="">document</var>.
-
- <li><p>If <var title="">referrer</var>'s
- <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
- about/data/javascript, set <var title="">referrer</var> to null.
-
- <li><p>Return <var title="">referrer</var>.
-</ol>
-
-
 
 <h2 class="no-num" id="references">References</h2>
 <div id="anolis-references"><dl><dt id="refsCOOKIES">[COOKIES]
@@ -2552,6 +2397,9 @@ run these steps:
 
 <dt id="refsCORS">[CORS]
 <dd>(Non-normative) <cite><a href="http://www.w3.org/TR/cors/">CORS (obsolete)</a></cite>, Anne van Kesteren. W3C.
+
+<dt id="refsCSP">[CSP]
+<dd><cite><a href="https://w3c.github.io/webappsec/specs/content-security-policy/">Content Security Policy</a></cite>, Mike West, Adam Barth and Dan Veditz. W3C.
 
 <dt id="refsDATAURL">[DATAURL]
 <dd><cite><a href="http://simonsapin.github.io/data-urls/">The data URL scheme</a></cite>, Simon Sapin.
@@ -2578,8 +2426,14 @@ run these steps:
 
 <dd><cite><a href="http://www.kb.cert.org/vuls/id/150227">HTTP proxy default configurations allow arbitrary TCP connections</a></cite>. US-CERT.
 
+<dt id="refsMIXEDCONTENT">[MIXEDCONTENT]
+<dd><cite><a href="https://w3c.github.io/webappsec/specs/mixedcontent/">Mixed Content</a></cite>, Mike West. W3C.
+
 <dt id="refsORIGIN">[ORIGIN]
 <dd><cite><a href="http://tools.ietf.org/html/rfc6454">The Web Origin Concept</a></cite>, Adam Barth. IETF.
+
+<dt id="refsREFERRER">[REFERRER]
+<dd><cite><a href="https://w3c.github.io/webappsec/specs/referrer-policy/">Referrer Policy</a></cite>, Jochen Eisinger and Mike West. W3C.
 
 <dt id="refsRFC2119">[RFC2119]
 <dd><cite><a href="http://tools.ietf.org/html/rfc2119">Key words for use in RFCs to Indicate Requirement Levels</a></cite>, Scott Bradner. IETF.
