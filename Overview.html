@@ -197,6 +197,35 @@ means (e.g. via <code title="">data</code> URL).
 <p>A <dfn id="concept-header-list" title="concept-header-list">header list</dfn> consists of zero or more
 <a href="#concept-header" title="concept-header">headers</a>.
 
+<p>To <dfn id="concept-header-list-append" title="concept-header-list-append">append</dfn> a
+<a href="#concept-header-name" title="concept-header-name">name</a>/<span tilte="concept-header-value">value</span>
+(<var title="">name</var>/<var title="">value</var>) pair to a
+<a href="#concept-header-list" title="concept-header-list">header list</a> (<var title="">list</var>), append a new
+<a href="#concept-header" title="concept-header">header</a> whose <a href="#concept-header-name" title="concept-header-name">name</a>
+is <var title="">name</var> and <a href="#concept-header-value" title="concept-header-value">value</a> is
+<var title="">value</var>, to <var title="">list</var>.
+
+<p>To <dfn id="concept-header-list-set" title="concept-header-list-set">set</dfn> a
+<a href="#concept-header-name" title="concept-header-name">name</a>/<span tilte="concept-header-value">value</span>
+(<var title="">name</var>/<var title="">value</var>) pair in a
+<a href="#concept-header-list" title="concept-header-list">header list</a> (<var title="">list</var>), run these
+steps:
+
+<ol>
+ <li><p>If there are any <a href="#concept-header" title="concept-header">headers</a> in
+ <var title="">list</var> whose <a href="#concept-header-name" title="concept-header-name">name</a> is
+ <var title="">name</var>, set the <a href="#concept-header-value" title="concept-header-value">value</a> of the first
+ such <a href="#concept-header" title="concept-header">header</a> to <var title="">value</var> and remove the
+ others.
+
+ <li><p>Otherwise, append a new <a href="#concept-header" title="concept-header">header</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> and
+ <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">value</var>, to
+ <var title="">list</var>.
+</ol>
+
+<hr>
+
 <p>A <dfn id="concept-header" title="concept-header">header</dfn> consists of a
 <dfn id="concept-header-name" title="concept-header-name">name</dfn> and <dfn id="concept-header-value" title="concept-header-value">value</dfn>.
 A <a href="#concept-header-name" title="concept-header-name">name</a> is a
@@ -207,6 +236,8 @@ A <a href="#concept-header-name" title="concept-header-name">name</a> is a
 0x0C bytes.
 
 <p class="note">Allowing 0x0A and 0x0C bytes can lead to reparsing issues.
+
+<hr>
 
 <p>A <dfn id="simple-header">simple header</dfn> is a <a href="#concept-header" title="concept-header">header</a> whose
 <a href="#concept-header-name" title="concept-header-name">name</a> is either one of `<code title="">Accept</code>`,
@@ -263,6 +294,7 @@ from APIs using <a href="#concept-fetch" title="concept-fetch">fetch</a> that al
 <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>.
 <a class="informative" href="#refsXHR">[XHR]</a>
 
+<hr>
 
 <p>To <dfn id="concept-header-parse" title="concept-header-parse">parse a header value</dfn> parse it per the ABNF and
 return the <a href="#concept-header-value" title="concept-header-value">values</a> obtained for the given
@@ -1300,15 +1332,22 @@ these steps:
 <p class="note">The <i title="">authentication fetch flag</i> is still a bookkeeping detail.
 
 <ol>
- <li><p class="XXX">Set `<code title="">Referer</code>`, `<code title="">Host</code>`, ...
- <!-- XXX header list set -->
+ <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a> `<code title="">Referer</code>` to the
+ empty byte sequence, if <var title="">request</var>'s
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <i title="">none</i>, and to
+ <var title="">request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>,
+ <a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> and
+ <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>, otherwise, in
+ <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+ <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes -->
+
+ <li><p class="XXX">Set `<code title="">Host</code>`, ...
 
  <li><p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a>
- is set, set `<code title="">Origin</code>` to <var title="">request</var>'s
- <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
+ is set, <a href="#concept-header-list-set" title="concept-header-list-set">set</a> `<code title="">Origin</code>` to
+ <var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
  <span class="XXX">serialized to a byte sequence</span>, in
  <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
- <!-- XXX header list set -->
 
  <li><p>Let <var title="">credentials flag</var> be set if either <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
@@ -1345,10 +1384,10 @@ these steps:
    <a href="#concept-request-url" title="concept-request-url">url</a>,
    <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
 
-   <li><p>If <var title="">authorizationValue</var> is non-null, set
+   <li><p>If <var title="">authorizationValue</var> is non-null,
+   <a href="#concept-header-list-set" title="concept-header-list-set">set</a>
    `<code title="">Authorization</code>` to <var title="">authorizationValue</var> in
    <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
-   <!-- XXX header list set -->
   </ol>
 
  <li>
@@ -1734,9 +1773,8 @@ method, when invoked, must run these steps:
  <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
  <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
 
- <li><p>Append a new <a href="#concept-header" title="concept-header">header</a> whose
- <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> and
- <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">value</var>, to
+ <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+ <var title="">name</var>/<var title="">value</var> to
  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 </ol>
 
@@ -1807,15 +1845,8 @@ method, when invoked, must run these steps:
  <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
  <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
 
- <li><p>If there are any <a href="#concept-header" title="concept-header">headers</a> in
- <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
- <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var>, set the
- <a href="#concept-header-value" title="concept-header-value">value</a> of the first such
- <a href="#concept-header" title="concept-header">header</a> to <var title="">value</var> and remove the others.
-
- <li><p>Otherwise, append a new <a href="#concept-header" title="concept-header">header</a> whose
- <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> and
- <a href="#concept-header-value" title="concept-header-value">value</a> is <var title="">value</var>, to
+ <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a>
+ <var title="">name</var>/<var title="">value</var> in
  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 </ol>
 
@@ -2198,10 +2229,10 @@ constructor, when invoked, must run these steps:
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-body" title="concept-response-body">body</a> to <var title="">stream</var>.
 
- <li><p>Set `<code title="">Content-Type</code>` to <var title="">Content-Type</var> in
- <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+ <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a> `<code title="">Content-Type</code>`
+ to <var title="">Content-Type</var> in <var title="">r</var>'s
+ <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
- <!-- XXX header list set -->
 
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">init</var>'s
@@ -2217,7 +2248,7 @@ constructor, when invoked, must run these steps:
  <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
  <span class="XXX" title="">extracting a MIME type</span> from <var title="">r</var>'s
  <a href="#concept-response-response" title="concept-Response-response">response</a>'s
- <span title="concept-response-header">header list</span>.
+ <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
  <li><p>Return <var title="">r</var>.
 </ol>
@@ -2250,10 +2281,12 @@ method, when invoked, must run these steps:
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">status</var>.
 
- <li><p>Set `<code title="">Location</code>` to <var title="">parsedURL</var> in
+ <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a> `<code title="">Location</code>` to
+ <var title="">parsedURL</var>,
+ <a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> and
+ <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>, in
  <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
- <!-- XXX header list set -->
 
  <li><p>Return <var title="">r</var>.
 </ol>
