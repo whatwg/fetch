@@ -801,12 +801,6 @@ redirects. Only use the <var title="">request</var> parameter in other standards
  <a href="http://tools.ietf.org/html/rfc6797#section-8.3">"URI [sic] Loading and Port Mapping" chapter of HTTP Strict Transport Security</a>.
  <a href="#refsHSTS">[HSTS]</a>
 
- <li><p class="XXX">Invoke Mixed Content hook with <var title="">request</var>.
- <a href="#refsMIX">[MIX]</a>
-
- <li><p class="XXX">Invoke CSP hook with <var title="">request</var>.
- <a href="#refsCSP">[CSP]</a>
-
  <li>
   <p>If <var title="">request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>
   is not <i title="">none</i>, set <var title="">request</var>'s
@@ -822,9 +816,23 @@ redirects. Only use the <var title="">request</var> parameter in other standards
  <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is unset and
  <a href="#concept-fetch" title="concept-fetch">fetch</a> is not invoked recursively, run the remaining steps asynchronously.
 
+ <li><p>Let <var title="">response</var> be null.
+
+ <li><p>If
+ <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-fetch">should fetching <var title="">request</var> be blocked as mixed content</a>
+ returns <b title="">blocked</b>, set <var title="">response</var> to a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
+ <a href="#refsMIX">[MIX]</a>
+
+ <li><p>If
+ <span class="XXX">should fetching <var title="">request</var> be blocked as content security</span>
+ returns <b title="">blocked</b>, set <var title="">response</var> to a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
+ <a href="#refsCSP">[CSP]</a>
+
  <li>
-  <p>Let <var title="">response</var> be the value corresponding to the first matching
-  statement:
+  <p>If <var title="">response</var> is null, set <var title="">response</var> to the value
+  corresponding to the first matching statement:
 
   <dl class="switch">
    <dt><var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
@@ -908,7 +916,10 @@ redirects. Only use the <var title="">request</var> parameter in other standards
    <dd><a href="#concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered response</a>
   </dl>
 
- <li><p class="XXX">Invoke Mixed Content hook #2 with <var title="">request</var> and <var title="">response</var>.
+ <li><p>If
+ <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var title="">response</var> to <var title="">request</var> be blocked as mixed content</a>
+ returns <b title="">blocked</b>, set <var title="">response</var> to a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
  <a href="#refsMIX">[MIX]</a>
 
  <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set, wait for

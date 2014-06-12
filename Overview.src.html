@@ -759,12 +759,6 @@ redirects. Only use the <var title>request</var> parameter in other standards.
  <a href="http://tools.ietf.org/html/rfc6797#section-8.3">"URI [sic] Loading and Port Mapping" chapter of HTTP Strict Transport Security</a>.
  <span data-anolis-ref>HSTS</span>
 
- <li><p class=XXX>Invoke Mixed Content hook with <var title>request</var>.
- <span data-anolis-ref>MIX</span>
-
- <li><p class=XXX>Invoke CSP hook with <var title>request</var>.
- <span data-anolis-ref>CSP</span>
-
  <li>
   <p>If <var title>request</var>'s <span title=concept-request-referrer>referrer</span>
   is not <i title>none</i>, set <var title>request</var>'s
@@ -780,9 +774,23 @@ redirects. Only use the <var title>request</var> parameter in other standards.
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is unset and
  <span title=concept-fetch>fetch</span> is not invoked recursively, run the remaining steps asynchronously.
 
+ <li><p>Let <var title>response</var> be null.
+
+ <li><p>If
+ <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-fetch">should fetching <var title>request</var> be blocked as mixed content</a>
+ returns <b title>blocked</b>, set <var title>response</var> to a
+ <span title=concept-network-error>network error</span>.
+ <span data-anolis-ref>MIX</span>
+
+ <li><p>If
+ <span class=XXX>should fetching <var title>request</var> be blocked as content security</span>
+ returns <b title>blocked</b>, set <var title>response</var> to a
+ <span title=concept-network-error>network error</span>.
+ <span data-anolis-ref>CSP</span>
+
  <li>
-  <p>Let <var title>response</var> be the value corresponding to the first matching
-  statement:
+  <p>If <var title>response</var> is null, set <var title>response</var> to the value
+  corresponding to the first matching statement:
 
   <dl class=switch>
    <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
@@ -866,7 +874,10 @@ redirects. Only use the <var title>request</var> parameter in other standards.
    <dd><span title=concept-filtered-response-opaque>opaque filtered response</span>
   </dl>
 
- <li><p class=XXX>Invoke Mixed Content hook #2 with <var title>request</var> and <var title>response</var>.
+ <li><p>If
+ <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var title>response</var> to <var title>request</var> be blocked as mixed content</a>
+ returns <b title>blocked</b>, set <var title>response</var> to a
+ <span title=concept-network-error>network error</span>.
  <span data-anolis-ref>MIX</span>
 
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
