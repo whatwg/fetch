@@ -78,7 +78,7 @@ fetching.
  <li>Cross-origin semantics
  <li>CSP <span data-anolis-ref>CSP</span>
  <li>Service Workers <span data-anolis-ref>SERVICEWORKERS</span>
- <li>Mixed Content <span data-anolis-ref>MIXEDCONTENT</span>
+ <li>Mixed Content <span data-anolis-ref>MIX</span>
  <li>`<code title>Referer</code>` <span data-anolis-ref>REFERRER</span>
 </ul>
 
@@ -760,7 +760,7 @@ redirects. Only use the <var title>request</var> parameter in other standards.
  <span data-anolis-ref>HSTS</span>
 
  <li><p class=XXX>Invoke Mixed Content hook with <var title>request</var>.
- <span data-anolis-ref>MIXEDCONTENT</span>
+ <span data-anolis-ref>MIX</span>
 
  <li><p class=XXX>Invoke CSP hook with <var title>request</var>.
  <span data-anolis-ref>CSP</span>
@@ -777,9 +777,6 @@ redirects. Only use the <var title>request</var> parameter in other standards.
   <span title=concept-request-referrer>referrer</span> to <i title>none</i> or have it
   expose less sensitive information.
 
- <li><p>Let <var title>url</var> be <var title>request</var>'s
- <span title=concept-request-url>url</span>.
-
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is unset and
  <span title=concept-fetch>fetch</span> is not invoked recursively, run the remaining steps asynchronously.
 
@@ -788,13 +785,16 @@ redirects. Only use the <var title>request</var> parameter in other standards.
   statement:
 
   <dl class=switch>
-   <dt><var title>url</var>'s <span>origin</span> is <var title>request</var>'s
+   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
+   <span>origin</span> is <var title>request</var>'s
    <span title=concept-request-origin>origin</span> and the <i title>CORS flag</i> is unset
-   <dt><var title>url</var>'s <span data-anolis-spec=url title=concept-url-scheme>scheme</span>
-   is "<code title>data</code>" and <var title>request</var>'s
+   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
+   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
+   "<code title>data</code>" and <var title>request</var>'s
    <span>same-origin data URL flag</span> is set
-   <dt><var title>url</var>'s <span data-anolis-spec=url title=concept-url-scheme>scheme</span>
-   is "<code title>about</code>"
+   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
+   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
+   "<code title>about</code>"
 
    <dd><p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using <var title>request</var>.
 
@@ -813,7 +813,7 @@ redirects. Only use the <var title>request</var> parameter in other standards.
     <var title>request</var>.
     <!-- file URLs end up here as they are not same-origin typically. -->
 
-   <dt><var title>url</var>'s
+   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is not one of
    "<code title>http</code>" and "<code title>https</code>"
 
@@ -867,7 +867,7 @@ redirects. Only use the <var title>request</var> parameter in other standards.
   </dl>
 
  <li><p class=XXX>Invoke Mixed Content hook #2 with <var title>request</var> and <var title>response</var>.
- <span data-anolis-ref>MIXEDCONTENT</span>
+ <span data-anolis-ref>MIX</span>
 
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
  either <var title>response</var> to have been fully transmitted or
@@ -880,7 +880,7 @@ redirects. Only use the <var title>request</var> parameter in other standards.
 
   <ol>
    <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
-   non-null and <var title>url</var>'s
+   non-null and <var title>request</var>'s <span title=concept-request-url>url</span>'s
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is one
    of "<code title>http</code>" and "<code title>https</code>",
    <span data-anolis-spec=html title="queue a task">queue</span> a
@@ -1286,15 +1286,17 @@ these steps:
    <li><p>If there's an <b title>authentication entry</b> for <var title>request</var> and
    either <var title>request</var>'s
    <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is
-   unset or <var title>url</var> does not
+   unset or <var title>request</var>'s <span title=concept-request-url>url</span> does not
    <span data-anolis-spec=url>include credentials</span>, set
    <var title>authorizationValue</var> to <b title>authentication entry</b>.
    <!-- need to define the cache concept -->
 
-   <li><p>Otherwise, if <var title>url</var> does
+   <li><p>Otherwise, if <var title>request</var>'s
+   <span title=concept-request-url>url</span> does
    <span data-anolis-spec=url>include credentials</span> and the
    <i title>authentication fetch flag</i> is set, set
-   <var title>authorizationValue</var> to <var title>url</var>,
+   <var title>authorizationValue</var> to <var title>request</var>'s
+   <span title=concept-request-url>url</span>,
    <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
 
    <li><p>If <var title>authorizationValue</var> is non-null, set
