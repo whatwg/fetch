@@ -1711,9 +1711,9 @@ service workers, but it is applicable elsewhere too.
 
 <h3>Headers class</h3>
 
-<pre class=idl>typedef (<span>Headers</span> or <span class=XXX>...</span>) <dfn>HeaderInit</dfn>;
+<pre class=idl>typedef (<span>Headers</span> or <span class=XXX>...</span>) <dfn>HeadersInit</dfn>;
 
-[<span title=dom-Headers>Constructor</span>(<span>HeaderInit</span> <var title>init</var>),
+[<span title=dom-Headers>Constructor</span>(<span>HeadersInit</span> <var title>init</var>),
  Exposed=Window,Worker]
 interface <dfn>Headers</dfn> {
   void <span title=dom-Headers-append>append</span>(ByteString <var title>name</var>, ByteString <var title>value</var>);
@@ -1729,8 +1729,11 @@ interface <dfn>Headers</dfn> {
 <span title=concept-header-list>header list</span>).
 
 <p>A <code>Headers</code> object also has an associated
-<dfn title=concept-Headers-guard>guard</dfn> which is one of <i title>request</i> or
-<i title>none</i> (initially <i title>none</i>).
+<dfn title=concept-Headers-guard>guard</dfn>, which is one of <i title>immutable</i>,
+<i title>request</i> and <i title>none</i> (initially <i title>none</i>).
+
+<p class="note no-backref"><i title>immutable</i> exists for service workers.
+<span data-anolis-ref>SW</span>
 
 <p>The
 <dfn title=dom-Headers-append><code>append(<var>name</var>, <var>value</var>)</code></dfn>
@@ -1741,8 +1744,12 @@ method, when invoked, must run these steps:
  <var title>value</var> is not a <span title=concept-header-value>value</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
- <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>request</i> and
- <var title>name</var> is a <span>forbidden header name</span>, return.
+ <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>immutable</i>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>request</i> and <var title>name</var> is a <span>forbidden header name</span>,
+ return.
 
  <li><p><span title=concept-header-list-append>Append</span>
  <var title>name</var>/<var title>value</var> to
@@ -1756,8 +1763,12 @@ method, when invoked, must run these steps:
  <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
- <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>request</i> and
- <var title>name</var> is a <span>forbidden header name</span>, return.
+ <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>immutable</i>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>request</i> and <var title>name</var> is a <span>forbidden header name</span>,
+ return.
 
  <li><p>Remove all <span title=concept-header>headers</span> whose
  <span title=concept-header-name>name</span> is <var title>name</var> from
@@ -1813,8 +1824,12 @@ method, when invoked, must run these steps:
  <var title>value</var> is not a <span title=concept-header-value>value</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
- <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>request</i> and
- <var title>name</var> is a <span>forbidden header name</span>, return.
+ <li><p>If <span title=concept-Headers-guard>guard</span> is <i title>immutable</i>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>request</i> and <var title>name</var> is a <span>forbidden header name</span>,
+ return.
 
  <li><p><span title=concept-header-list-set>Set</span>
  <var title>name</var>/<var title>value</var> in
@@ -1966,7 +1981,7 @@ interface <dfn>Request</dfn> {
 
 dictionary <dfn>RequestInit</dfn> {
   ByteString method;
-  <span>HeaderInit</span> headers;
+  <span>HeadersInit</span> headers;
   <span>FetchBodyInit</span>? body;
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
@@ -2153,14 +2168,14 @@ interface <dfn>Response</dfn> {
   readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Response-url>url</span>;
   readonly attribute unsigned short <span title=dom-Response-status>status</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
-  readonly attribute <span>HeaderInit</span> <span title=dom-Response-headers>headers</span>;
+  readonly attribute <span>HeadersInit</span> <span title=dom-Response-headers>headers</span>;
   readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
 };
 
 dictionary <dfn>ResponseInit</dfn> {
   unsigned short status = 200;
   ByteString statusText = "OK";
-  <span>HeaderInit</span> headers;
+  <span>HeadersInit</span> headers;
 };
 
 enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>

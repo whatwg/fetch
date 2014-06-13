@@ -1753,9 +1753,9 @@ service workers, but it is applicable elsewhere too.
 
 <h3 id="headers-class"><span class="secno">5.1 </span>Headers class</h3>
 
-<pre class="idl">typedef (<a href="#headers">Headers</a> or <span class="XXX">...</span>) <dfn id="headerinit">HeaderInit</dfn>;
+<pre class="idl">typedef (<a href="#headers">Headers</a> or <span class="XXX">...</span>) <dfn id="headersinit">HeadersInit</dfn>;
 
-[<span title="dom-Headers">Constructor</span>(<a href="#headerinit">HeaderInit</a> <var title="">init</var>),
+[<span title="dom-Headers">Constructor</span>(<a href="#headersinit">HeadersInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="headers">Headers</dfn> {
   void <a href="#dom-headers-append" title="dom-Headers-append">append</a>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
@@ -1771,8 +1771,11 @@ interface <dfn id="headers">Headers</dfn> {
 <a href="#concept-header-list" title="concept-header-list">header list</a>).
 
 <p>A <code><a href="#headers">Headers</a></code> object also has an associated
-<dfn id="concept-headers-guard" title="concept-Headers-guard">guard</dfn> which is one of <i title="">request</i> or
-<i title="">none</i> (initially <i title="">none</i>).
+<dfn id="concept-headers-guard" title="concept-Headers-guard">guard</dfn>, which is one of <i title="">immutable</i>,
+<i title="">request</i> and <i title="">none</i> (initially <i title="">none</i>).
+
+<p class="note no-backref"><i title="">immutable</i> exists for service workers.
+<a href="#refsSW">[SW]</a>
 
 <p>The
 <dfn id="dom-headers-append" title="dom-Headers-append"><code>append(<var>name</var>, <var>value</var>)</code></dfn>
@@ -1783,8 +1786,12 @@ method, when invoked, must run these steps:
  <var title="">value</var> is not a <a href="#concept-header-value" title="concept-header-value">value</a>,
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
- <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
+ <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">immutable</i>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ <i title="">request</i> and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
+ return.
 
  <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
  <var title="">name</var>/<var title="">value</var> to
@@ -1798,8 +1805,12 @@ method, when invoked, must run these steps:
  <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a>,
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
- <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
+ <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">immutable</i>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ <i title="">request</i> and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
+ return.
 
  <li><p>Remove all <a href="#concept-header" title="concept-header">headers</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> from
@@ -1855,8 +1866,12 @@ method, when invoked, must run these steps:
  <var title="">value</var> is not a <a href="#concept-header-value" title="concept-header-value">value</a>,
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i> and
- <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>, return.
+ <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">immutable</i>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ <i title="">request</i> and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
+ return.
 
  <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a>
  <var title="">name</var>/<var title="">value</var> in
@@ -2008,7 +2023,7 @@ interface <dfn id="request">Request</dfn> {
 
 dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
-  <a href="#headerinit">HeaderInit</a> headers;
+  <a href="#headersinit">HeadersInit</a> headers;
   <a href="#fetchbodyinit">FetchBodyInit</a>? body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
@@ -2195,14 +2210,14 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-response-url" title="dom-Response-url">url</a>;
   readonly attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
-  readonly attribute <a href="#headerinit">HeaderInit</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
+  readonly attribute <a href="#headersinit">HeadersInit</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
   readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <a href="#dom-request-body" title="dom-Request-body">body</a>;
 };
 
 dictionary <dfn id="responseinit">ResponseInit</dfn> {
   unsigned short status = 200;
   ByteString statusText = "OK";
-  <a href="#headerinit">HeaderInit</a> headers;
+  <a href="#headersinit">HeadersInit</a> headers;
 };
 
 enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>
