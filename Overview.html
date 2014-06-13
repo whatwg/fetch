@@ -1901,9 +1901,6 @@ typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.
   <p>Switch on <var title="">object</var>'s type:
 
   <dl class="switch">
-   <dt>null
-   <dd>Do nothing.
-
    <dt><code title="">ArrayBuffer</code>
    <dt><code title="">ArrayBufferView</code>
    <dd>
@@ -1951,13 +1948,16 @@ when invoked, must run these steps:
  <li><p>Let <var title="">stream</var> be <a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>'s
  byte stream.
 
- <li><p>If <var title="">stream</var> has been fully read, reject <var title="">p</var> with a
- <code title="">TypeError</code>.
+ <li><p>If <var title="">stream</var> is not null and has been fully read, reject
+ <var title="">p</var> with a  <code title="">TypeError</code>.
 
  <li>
   <p>Run these substeps asynchronously:
 
   <ol>
+   <li><p>If <var title="">stream</var> is null, set <var title="">stream</var> to an empty
+   byte sequence.
+
    <li><p>Let <var title="">bytes</var> be the result of reading from <var title="">stream</var>
    until it returns end-of-stream.
 
@@ -1995,6 +1995,7 @@ when invoked, must run these steps:
 
  <li><p>Return <var title="">p</var>.
 </ol>
+<!-- XXX stream -->
 
 
 <h3 id="request-class"><span class="secno">5.3 </span>Request class</h3>
@@ -2056,8 +2057,9 @@ object which is itself associated with
  <a href="#concept-request-url" title="concept-request-url">url</a>,
  <a href="#concept-request-method" title="concept-request-method">method</a> is <var title="">request</var>'s
  <a href="#concept-request-method" title="concept-request-method">method</a>,
- <span class="XXX" title="">headers</span>,
- <a href="#concept-request-body" title="concept-request-body">body</a> is <var title="">request</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> is a copy of
+ <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>,
+ <a href="#concept-request-body" title="concept-request-body">body</a> is a tee of <var title="">request</var>'s
  <a href="#concept-request-body" title="concept-request-body">body</a>,
  <a href="#concept-request-client" title="concept-request-client">client</a> is
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
@@ -2073,6 +2075,7 @@ object which is itself associated with
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
  <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
+ <!-- XXX stream -->
 
  <li><p>Return <var title="">r</var>.
 </ol>
@@ -2116,24 +2119,6 @@ constructor must run these steps:
    <li><p>Set <var title="">fallbackCredentials</var> to <i title="">omit</i>.
   </ol>
 
- <li>
-  <p>If <var title="">init</var>'s <code title="">method</code> member is present, let
-  <var title="">method</var> be it and run these substeps:
-
-  <ol>
-   <li><p>If <var title="">method</var> is not a <a href="#useful-method">useful method</a>,
-   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
-   <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
-
-   <li><p>Set <var title="">r</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> to
-   <var title="">method</var>.
-  </ol>
-
- <li><p class="XXX">Deal with headers.
-
- <li><p class="XXX">Deal with body.
-
  <li><p>Let <var title="">mode</var> be <var title="">init</var>'s
  <code title="">mode</code> member if it is present, and <var title="">fallbackMode</var>
  otherwise.
@@ -2148,6 +2133,61 @@ constructor must run these steps:
  <li><p>If <var title="">credentials</var> is non-null, set <var title="">r</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
  <var title="">credentials</var>.
+
+ <li>
+  <p>If <var title="">init</var>'s <code title="">method</code> member is present, let
+  <var title="">method</var> be it and run these substeps:
+
+  <ol>
+   <li><p>If <var title="">method</var> is not a <a href="#useful-method">useful method</a>,
+   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+
+   <li><p>Set <var title="">r</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> to
+   <var title="">method</var>.
+  </ol>
+
+ <li><p>If <var title="">r</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+ <i title="">no CORS</i> and <var title="">r</var>'s
+ <a href="#concept-request-method" title="concept-request-method">method</a> is not a <a href="#simple-method">simple method</a>,
+ <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p class="XXX">Deal with headers.
+
+ <li>
+  <p>If <var title="">body</var> is non-null, run these substeps:
+
+  <ol>
+   <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
+   <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">body</var>.
+
+   <li><p>Set <var title="">r</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> to
+   <var title="">stream</var>.
+
+   <li>
+    <p>If <var title="">r</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
+    contains no <a href="#concept-header" title="concept-header">header</a>
+    <a href="#concept-header-name" title="concept-header-name">named</a> `<code title="">Content-Type</code>`, run
+    these subsubsteps:
+
+    <ol>
+     <li><p>If <var title="">r</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+     <i title="">no CORS</i> and
+     `<code title="">Content-Type</code>`/<var title="">Content-Type</var> is not a
+     <a href="#simple-header">simple header</a>,
+     <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+     <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+     `<code title="">Content-Type</code>`/<var title="">Content-Type</var> to
+     <var title="">r</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+    </ol>
+  </ol>
+
+ <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
+ <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
+ <span class="XXX" title="">extracting a MIME type</span> from <var title="">r</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
  <li><p>Return a new <code><a href="#request">Request</a></code> object associated with <var title="">r</var>.
 </ol>
@@ -2228,7 +2268,7 @@ enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "er
 
 <p>A <code><a href="#response">Response</a></code> object also has an associated <code><a href="#headers">Headers</a></code> object which
 is itself associated with <a href="#concept-response-response" title="concept-Response-response">response</a>'s
-<span title="concept-response-headers">headers</span>.
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
 <p>A <code><a href="#response">Response</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
 object which is itself associated with
@@ -2251,17 +2291,6 @@ constructor, when invoked, must run these steps:
  new <a href="#concept-response" title="concept-response">response</a>, <code><a href="#headers">Headers</a></code> object, and
  <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
 
- <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
- <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">body</var>.
-
- <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
- <a href="#concept-response-body" title="concept-response-body">body</a> to <var title="">stream</var>.
-
- <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a> `<code title="">Content-Type</code>`
- to <var title="">Content-Type</var> in <var title="">r</var>'s
- <a href="#concept-response-response" title="concept-Response-response">response</a>'s
- <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
-
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">init</var>'s
  <code title="">status</code> member.
@@ -2271,6 +2300,25 @@ constructor, when invoked, must run these steps:
  <var title="">init</var>'s <code title="">statusText</code> member.
 
  <li><p class="XXX">headers
+
+ <li>
+  <p>If <var title="">body</var> is non-null, run these substeps:
+
+  <ol>
+   <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
+   <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">body</var>.
+
+   <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a> to <var title="">stream</var>.
+
+   <li><p>If <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> contains no
+   <a href="#concept-header" title="concept-header">header</a> <a href="#concept-header-name" title="concept-header-name">named</a>
+   `<code title="">Content-Type</code>`, <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
+   `<code title="">Content-Type</code>`/<var title="">Content-Type</var> to
+   <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+  </ol>
 
  <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
  <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of

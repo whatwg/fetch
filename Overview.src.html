@@ -1859,9 +1859,6 @@ typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</
   <p>Switch on <var title>object</var>'s type:
 
   <dl class=switch>
-   <dt>null
-   <dd>Do nothing.
-
    <dt><code title>ArrayBuffer</code>
    <dt><code title>ArrayBufferView</code>
    <dd>
@@ -1909,13 +1906,16 @@ when invoked, must run these steps:
  <li><p>Let <var title>stream</var> be <span data-anolis-spec=dom>context object</span>'s
  byte stream.
 
- <li><p>If <var title>stream</var> has been fully read, reject <var title>p</var> with a
- <code title>TypeError</code>.
+ <li><p>If <var title>stream</var> is not null and has been fully read, reject
+ <var title>p</var> with a  <code title>TypeError</code>.
 
  <li>
   <p>Run these substeps asynchronously:
 
   <ol>
+   <li><p>If <var title>stream</var> is null, set <var title>stream</var> to an empty
+   byte sequence.
+
    <li><p>Let <var title>bytes</var> be the result of reading from <var title>stream</var>
    until it returns end-of-stream.
 
@@ -1953,6 +1953,7 @@ when invoked, must run these steps:
 
  <li><p>Return <var title>p</var>.
 </ol>
+<!-- XXX stream -->
 
 
 <h3>Request class</h3>
@@ -2014,8 +2015,9 @@ object which is itself associated with
  <span title=concept-request-url>url</span>,
  <span title=concept-request-method>method</span> is <var title>request</var>'s
  <span title=concept-request-method>method</span>,
- <span title class=XXX>headers</span>,
- <span title=concept-request-body>body</span> is <var title>request</var>'s
+ <span title=concept-request-header-list>header list</span> is a copy of
+ <var title>request</var>'s <span title=concept-request-header-list>header list</span>,
+ <span title=concept-request-body>body</span> is a tee of <var title>request</var>'s
  <span title=concept-request-body>body</span>,
  <span title=concept-request-client>client</span> is
  <span data-anolis-spec=html>entry settings object</span>'s
@@ -2031,6 +2033,7 @@ object which is itself associated with
  <span title=concept-request-credentials-mode>credentials mode</span> is
  <var title>request</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span>.
+ <!-- XXX stream -->
 
  <li><p>Return <var title>r</var>.
 </ol>
@@ -2074,24 +2077,6 @@ constructor must run these steps:
    <li><p>Set <var title>fallbackCredentials</var> to <i title>omit</i>.
   </ol>
 
- <li>
-  <p>If <var title>init</var>'s <code title>method</code> member is present, let
-  <var title>method</var> be it and run these substeps:
-
-  <ol>
-   <li><p>If <var title>method</var> is not a <span>useful method</span>,
-   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
-
-   <li><p class=XXX>Add case correction as in XMLHttpRequest? Technically subsets HTTP.
-
-   <li><p>Set <var title>r</var>'s <span title=concept-request-method>method</span> to
-   <var title>method</var>.
-  </ol>
-
- <li><p class=XXX>Deal with headers.
-
- <li><p class=XXX>Deal with body.
-
  <li><p>Let <var title>mode</var> be <var title>init</var>'s
  <code title>mode</code> member if it is present, and <var title>fallbackMode</var>
  otherwise.
@@ -2106,6 +2091,61 @@ constructor must run these steps:
  <li><p>If <var title>credentials</var> is non-null, set <var title>r</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span> to
  <var title>credentials</var>.
+
+ <li>
+  <p>If <var title>init</var>'s <code title>method</code> member is present, let
+  <var title>method</var> be it and run these substeps:
+
+  <ol>
+   <li><p>If <var title>method</var> is not a <span>useful method</span>,
+   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p class=XXX>Add case correction as in XMLHttpRequest? Technically subsets HTTP.
+
+   <li><p>Set <var title>r</var>'s <span title=concept-request-method>method</span> to
+   <var title>method</var>.
+  </ol>
+
+ <li><p>If <var title>r</var>'s <span title=concept-request-mode>mode</span> is
+ <i title>no CORS</i> and <var title>r</var>'s
+ <span title=concept-request-method>method</span> is not a <span>simple method</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p class=XXX>Deal with headers.
+
+ <li>
+  <p>If <var title>body</var> is non-null, run these substeps:
+
+  <ol>
+   <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
+   <span title=concept-FetchBodyInit-extract>extracting</span> <var title>body</var>.
+
+   <li><p>Set <var title>r</var>'s <span title=concept-request-body>body</span> to
+   <var title>stream</var>.
+
+   <li>
+    <p>If <var title>r</var>'s <span title=concept-request-header-list>header list</span>
+    contains no <span title=concept-header>header</span>
+    <span title=concept-header-name>named</span> `<code title>Content-Type</code>`, run
+    these subsubsteps:
+
+    <ol>
+     <li><p>If <var title>r</var>'s <span title=concept-request-mode>mode</span> is
+     <i title>no CORS</i> and
+     `<code title>Content-Type</code>`/<var title>Content-Type</var> is not a
+     <span>simple header</span>,
+     <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+     <li><p><span title=concept-header-list-append>Append</span>
+     `<code title>Content-Type</code>`/<var title>Content-Type</var> to
+     <var title>r</var>'s <span title=concept-request-header-list>header list</span>.
+    </ol>
+  </ol>
+
+ <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
+ <span title=concept-FetchBodyStream-MIME-type>MIME type</span> to the result of
+ <span title class=XXX>extracting a MIME type</span> from <var title>r</var>'s
+ <span title=concept-request-header-list>header list</span>.
 
  <li><p>Return a new <code>Request</code> object associated with <var title>r</var>.
 </ol>
@@ -2186,7 +2226,7 @@ enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };<
 
 <p>A <code>Response</code> object also has an associated <code>Headers</code> object which
 is itself associated with <span title=concept-Response-response>response</span>'s
-<span title=concept-response-headers>headers</span>.
+<span title=concept-response-header-list>header list</span>.
 
 <p>A <code>Response</code> object also has an associated <code>FetchBodyStream</code>
 object which is itself associated with
@@ -2209,17 +2249,6 @@ constructor, when invoked, must run these steps:
  new <span title=concept-response>response</span>, <code>Headers</code> object, and
  <code>FetchBodyStream</code> object.
 
- <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
- <span title=concept-FetchBodyInit-extract>extracting</span> <var title>body</var>.
-
- <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
- <span title=concept-response-body>body</span> to <var title>stream</var>.
-
- <li><p><span title=concept-header-list-set>Set</span> `<code title>Content-Type</code>`
- to <var title>Content-Type</var> in <var title>r</var>'s
- <span title=concept-Response-response>response</span>'s
- <span title=concept-response-header-list>header list</span>.
-
  <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var title>init</var>'s
  <code title>status</code> member.
@@ -2229,6 +2258,25 @@ constructor, when invoked, must run these steps:
  <var title>init</var>'s <code title>statusText</code> member.
 
  <li><p class=XXX>headers
+
+ <li>
+  <p>If <var title>body</var> is non-null, run these substeps:
+
+  <ol>
+   <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
+   <span title=concept-FetchBodyInit-extract>extracting</span> <var title>body</var>.
+
+   <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
+   <span title=concept-response-body>body</span> to <var title>stream</var>.
+
+   <li><p>If <var title>r</var>'s <span title=concept-Response-response>response</span>'s
+   <span title=concept-response-header-list>header list</span> contains no
+   <span title=concept-header>header</span> <span title=concept-header-name>named</span>
+   `<code title>Content-Type</code>`, <span title=concept-header-list-append>append</span>
+   `<code title>Content-Type</code>`/<var title>Content-Type</var> to
+   <var title>r</var>'s <span title=concept-Response-response>response</span>'s
+   <span title=concept-response-header-list>header list</span>.
+  </ol>
 
  <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
  <span title=concept-FetchBodyStream-MIME-type>MIME type</span> to the result of
