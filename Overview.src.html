@@ -254,10 +254,32 @@ from APIs using <span title=concept-fetch>fetch</span> that allow control over
 
 <hr>
 
-<p>To <dfn title=concept-header-parse>parse a header value</dfn> parse it per the ABNF and
-return the <span title=concept-header-value>values</span> obtained for the given
-<span title=concept-header-name>name</span>, and return failure if the
-<span title=concept-header-value>value</span> did not match the ABNF.
+<p>To <dfn title=concept-header-parse>parse a header value</dfn> given a
+<span title=concept-header-name>name</span> (<var title>name</var>)  and either a
+<span title=concept-header>header</span> or a
+<span title=concept-header-list>header list</span> (<var title>headers</var>), run these
+steps:
+
+<ol>
+ <li><p>If <var title>name</var> is not in <var title>headers</var>, return null.
+
+ <li>
+  <p>If the ABNF for <var title>name</var> allows a single
+  <span title=concept-header>header</span> and <var title>headers</var> contains more than
+  one, return failure.
+
+  <p class="note no-backref">That if you require different error handling, you need to
+  extract the desired <span title=concept-header>header</span> first.
+
+ <li><p>If parsing all the <span title=concept-header>headers</span>
+ <span title=concept-header-name>named</span> <var title>name</var> in
+ <var title>headers</var>, per the ABNF for <var title>name</var>, failed, return failure.
+
+ <li><p>Return one or more <span title=concept-header-value>values</span> resulting from
+ parsing all the <span title=concept-header>headers</span>
+ <span title=concept-header-name>named</span> <var title>name</var> in
+ <var title>headers</var>, per the ABNF for <var title>name</var>.
+</ol>
 
 
 <h4>Requests</h4>
@@ -566,12 +588,11 @@ required, e.g. to feed image data to a decoder, the associated
 `<code title>Content-Type</code>`, `<code title>Expires</code>`,
 `<code title>Last-Modified</code>`, and `<code title>Pragma</code>`, and except those
 whose <span title=concept-header-name>name</span> is one of the
-<span title=concept-header-value>values</span> of the
-<span title=concept-header-parse>parsed</span> <span title=concept-header>headers</span> in
+<span title=concept-header-value>values</span> resulting from
+<span title=concept-header-parse>parsing</span>
+`<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>` in
 <span title=concept-internal-response>internal response</span>'s
-<span title=concept-response-header-list>header list</span> whose
-<span title=concept-header-name>name</span> is
-`<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>`.
+<span title=concept-response-header-list>header list</span>.
 
 <p>An <dfn title=concept-filtered-response-opaque>opaque filtered response</dfn> is a
 <span title=concept-filtered-response>filtered response</span> whose
@@ -1139,24 +1160,17 @@ indicates an attempt to authenticate.
    <dt>308
    <dd>
     <ol>
-     <li><p>If <var title>response</var>'s
-     <span title=concept-response-header-list>header list</span> do not contain a
-     <span title=concept-header>header</span> whose
-     <span title=concept-header-name>name</span> is `<code title>Location</code>`, return
-     <var title>response</var>.
+     <li>
+      <p>Let <var title>location</var> be the result of
+      <span title=concept-header-parse>parsing</span> `<code title>Location</code>` in
+      <var title>response</var>'s
+      <span title=concept-response-header-list>header list</span>.
 
-     <li><p>If <var title>response</var>'s
-     <span title=concept-response-header-list>header list</span> contain more than one
-     <span title=concept-header>header</span> whose
-     <span title=concept-header-name>name</span> is `<code title>Location</code>`, return a
+     <li><p>If <var title>location</var> is null, return <var title>response</var>.
+
+     <li><p>If <var title>location</var> is failure, return a
      <span title=concept-network-error>network error</span>.
-     <!-- only Gecko does this; if removed add "first" below -->
-
-     <li><p>Let <var title>location</var> be the
-     <span title=concept-header-value>value</span> of the
-     <span title=concept-header>header</span> whose
-     <span title=concept-header-name>name</span> is `<code title>Location</code>` within
-     <var title>response</var>'s <span title=concept-response-header-list>header list</span>.
+     <!-- only Gecko does this; and even that is currently more complicated -->
 
      <li><p>Let <var title>locationURL</var> be the result of
      <span data-anolis-spec=url title=concept-url-parser>parsing</span>
@@ -1473,25 +1487,25 @@ steps:
 
   <ol>
    <li><p>Let <var title>methods</var> be the result of
-   <span title=concept-header-parse>parsing</span> all <var title>response</var>'s
-   <span title=concept-response-header-list>header list</span>'
-   <span title=concept-header-name>named</span>
-   `<code title=http-access-control-allow-methods>Access-Control-Allow-Methods</code>`.
+   <span title=concept-header-parse>parsing</span>
+   `<code title=http-access-control-allow-methods>Access-Control-Allow-Methods</code>` in
+   <var title>response</var>'s
+   <span title=concept-response-header-list>header list</span>.
 
-   <li><p>Let <var title>header names</var> be the result of
-   <span title=concept-header-parse>parsing</span> all <var title>response</var>'s
-   <span title=concept-response-header-list>header list</span>'
-   <span title=concept-header-name>named</span>
-   `<code title=http-access-control-allow-headers>Access-Control-Allow-Headers</code>`.
+   <li><p>Let <var title>headerNames</var> be the result of
+   <span title=concept-header-parse>parsing</span>
+   `<code title=http-access-control-allow-headers>Access-Control-Allow-Headers</code>` in
+   <var title>response</var>'s
+   <span title=concept-response-header-list>header list</span>.
 
-   <li><p>If either <var title>methods</var> or <var title>header names</var> is failure,
+   <li><p>If either <var title>methods</var> or <var title>headerNames</var> is failure,
    return a <span title=concept-network-error>network error</span>.
 
    <li>
-    <p>If <var title>methods</var> is empty and <var title>request</var>'s
+    <p>If <var title>methods</var> is null and <var title>request</var>'s
     <span title=concept-request-mode>mode</span> is
-    <i title>CORS-with-forced-preflight</i>, append <var title>request</var>'s
-    <span title=concept-request-method>method</span> to <var title>methods</var>.
+    <i title>CORS-with-forced-preflight</i>, set <var title>methods</var> to
+    <var title>request</var>'s <span title=concept-request-method>method</span>.
 
     <p class="note no-backref">This ensures that a <span>CORS preflight fetch</span> that
     happened due to <var title>request</var>'s
@@ -1504,15 +1518,15 @@ steps:
 
    <li><p>If one of <var title>request</var>'s
    <span title=concept-request-header-list>header list</span>'
-   <span title=concept-header-name>names</span> is not in <var title>header names</var> or
+   <span title=concept-header-name>names</span> is not in <var title>headerNames</var> or
    its corresponding <span title=concept-header>header</span> is not a
    <span>simple header</span>, return a <span title=concept-network-error>network error</span>.
 
    <li><p>Let <var title>max-age</var> be the result of
-   <span title=concept-header-parse>parsing</span> all <var title>response</var>'s
-   <span title=concept-response-header-list>header list</span>'
-   <span title=concept-header-name>named</span>
-   `<code title=http-access-control-max-age>Access-Control-Max-Age</code>`.
+   <span title=concept-header-parse>parsing</span>
+   `<code title=http-access-control-max-age>Access-Control-Max-Age</code>` in
+   <var title>response</var>'s
+   <span title=concept-response-header-list>header list</span>.
 
    <li><p>If <var title>max-age</var> is failure, set <var title>max-age</var> to zero.
 
@@ -1520,11 +1534,11 @@ steps:
    <span title=concept-cache-max-age>max-age</span>, set <var title>max-age</var> to the imposed
    limit.
 
-   <li><p>If the user agent does not provide for a cache, return
-   <var title>response</var>.
+   <li><p>If the user agent does not provide for a <span title=concept-cache>cache</span>,
+   return <var title>response</var>.
 
-   <li><p>For each method in <var title>methods</var> for which there is a
-   <span title=concept-cache-match-method>method cache match</span> using
+   <li><p>For each <var title>method</var> in <var title>methods</var> for which there is
+   a <span title=concept-cache-match-method>method cache match</span> using
    <var title>request</var>, set matching entry's
    <span title=concept-cache-max-age>max-age</span> to <var title>max-age</var>.
 
@@ -1553,13 +1567,13 @@ steps:
      <dd><var title>method</var>
     </dl>
 
-   <li><p>For each header name in <var title>header names</var> for which there is a
-   <span title=concept-cache-match-header>header name cache match</span> using
+   <li><p>For each <var title>headerName</var> in <var title>headerNames</var> for which
+   there is a <span title=concept-cache-match-header>header name cache match</span> using
    <var title>request</var>, set matching entry's
    <span title=concept-cache-max-age>max-age</span> to <var title>max-age</var>.
 
    <li>
-    <p>For each <var title>header name</var> in <var title>header names</var> for which
+    <p>For each <var title>headerName</var> in <var title>headerNames</var> for which
     there is <em>no</em>
     <span title=concept-cache-match-header>header name cache match</span> using
     <var title>request</var>, create a new entry in
@@ -1581,7 +1595,7 @@ steps:
      <i title>include</i>, and true otherwise
 
      <dt><span title=concept-cache-header-name>header name</span></dt>
-     <dd><var title>header name</var>
+     <dd><var title>headerName</var>
     </dl>
 
    <li><p>Return <var title>response</var>.
@@ -1646,42 +1660,40 @@ and <var title>request</var>'s
 <var title>response</var>, run these steps:
 
 <ol>
- <li><p>If <var title>response</var>'s <span title=concept-response-header-list>header list</span>
- contains zero or more than one <span title=concept-header>header</span> whose
- <span title=concept-header-name>name</span> is
- `<code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>`, return
- failure.
-
- <li><p>Let <var title>result</var> be the <span title=concept-header-value>value</span>
- of the <span title=concept-header>header</span> whose
- <span title=concept-header-name>name</span> is
- `<code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>` within
+ <li><p>Let <var title>origin</var> be the result of
+ <span title=concept-header-parse>parsing</span>
+ `<code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>` in
  <var title>response</var>'s <span title=concept-response-header-list>header list</span>.
+
+ <li>
+  <p>If <var tilte>origin</var> is null or failure, return failure.
+
+  <p class=note>Null is not `<code title>null</code>`.
 
  <li><p>If <var title>request</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span> is not
- <i title>include</i> and <var title>result</var> is `<code title>*</code>`, return success.
+ <i title>include</i> and <var title>origin</var> is `<code title>*</code>`, return success.
 
- <li><p>If <var title>request</var>'s <span title=concept-request-origin>origin</span>
- serialized to a byte sequence is not <var title>result</var>, return failure.
- <!-- XXX serialized to a byte sequence -->
+ <li><p>If <var title>request</var>'s <span title=concept-request-origin>origin</span>,
+ <span class=XXX>serialized to a byte sequence</span>, is not <var title>origin</var>,
+ return failure.
 
  <li><p>If <var title>request</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span> is not
  <i title>include</i>, return success.
 
- <li><p>If <var title>response</var>'s <span title=concept-response-header-list>header list</span>
- contains zero or more than one <span title=concept-header>header</span> whose
- <span title=concept-header-name>name</span> is
- `<code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>`,
- return failure.
-
- <li><p>If the <span title=concept-header-value>value</span>
- of the <span title=concept-header>header</span> whose
- <span title=concept-header-name>name</span> is
+ <li><p>Let <var title>credentials</var> be the result of
+ <span title=concept-header-parse>parsing</span>
  `<code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>`
- within <var title>response</var>'s <span title=concept-response-header-list>header list</span> is
- `<code title>true</code>`, return success.
+ in <var title>response</var>'s
+ <span title=concept-response-header-list>header list</span>.
+
+ <li>
+  <p>If <var title>credentials</var> is `<code title>true</code>`, return success.
+
+  <p class=XXX>It has been suggested to check for <var title>origin</var> not being
+  `<code title>null</code>` here as that would be equal to allowing credentials and
+  `<code title>*</code>` which is also forbidden.
 
  <li><p>Return failure.
 </ol>
