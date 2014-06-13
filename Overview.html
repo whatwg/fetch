@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-12-june-2014">Living Standard — Last Updated 12 June 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-13-june-2014">Living Standard — Last Updated 13 June 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-12 June 2014, the editor has made this specification available
+13 June 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -1332,26 +1332,39 @@ these steps:
 <p class="note">The <i title="">authentication fetch flag</i> is still a bookkeeping detail.
 
 <ol>
- <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a> `<code title="">Referer</code>` to the
- empty byte sequence, if <var title="">request</var>'s
- <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <i title="">none</i>, and to
- <var title="">request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>,
+ <li>
+  <p>Let <var title="">HTTPRequest</var> be a copy of <var title="">request</var>.
+
+  <p class="note no-backref"><a href="#concept-header" title="concept-header">Headers</a> need to be added
+  without affecting <var title="">request</var>. Due to redirects or authentication failure,
+  it can get reused.
+
+ <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+ `<code title="">Referer</code>`/empty byte sequence, if <var title="">HTTPRequest</var>'s
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <i title="">none</i>, and
+ `<code title="">Referer</code>`/<var title="">HTTPRequest</var>'s
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>,
  <a class="external" href="http://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> and
- <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>, otherwise, in
- <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+ <a class="external" href="http://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>, otherwise, to
+ <var title="">HTTPRequest</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
  <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes -->
 
- <li><p class="XXX">Set `<code title="">Host</code>`, ...
+ <li><p class="XXX">Append `<code title="">Host</code>`, ...
 
- <li><p>If <var title="">request</var>'s <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a>
- is set, <a href="#concept-header-list-set" title="concept-header-list-set">set</a> `<code title="">Origin</code>` to
- <var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
- <span class="XXX">serialized to a byte sequence</span>, in
- <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+ <li><p>If <var title="">HTTPRequest</var>'s
+ <a href="#force-origin-header-flag">force <code>Origin</code> header flag</a> is set,
+ <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
+ `<code title="">Origin</code>`/<var title="">HTTPRequest</var>'s
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
+ <span class="XXX">serialized to a byte sequence</span>, to
+ <var title="">HTTPRequest</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
- <li><p>Let <var title="">credentials flag</var> be set if either <var title="">request</var>'s
+ <li><p>Let <var title="">credentials flag</var> be set if either
+ <var title="">HTTPRequest</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
- <i title="">include</i>, or <var title="">request</var>'s
+ <i title="">include</i>, or <var title="">HTTPRequest</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
  <i title="">same-origin</i> and the <i title="">CORS flag</i> is unset, and unset otherwise.
 
@@ -1359,35 +1372,36 @@ these steps:
   <p>If <var title="">credentials flag</var> is set, run these substeps:
 
   <ol>
-   <li><p>Set a `<code title="">Cookie</code>` <a href="#concept-header" title="concept-header">header</a> in
-   <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
-   for <var title="">request</var> per HTTP State Management Mechanism.
+   <li><p>Modify <var title="">HTTPRequest</var>'s
+   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
+   per HTTP State Management Mechanism.
    <a href="#refsCOOKIES">[COOKIES]</a>
-   <!-- XXX header list set -->
+   <!-- XXX proper hook? -->
 
    <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
    <li><p>Let <var title="">authorizationValue</var> be null.
 
-   <li><p>If there's an <b title="">authentication entry</b> for <var title="">request</var> and
-   either <var title="">request</var>'s
+   <li><p>If there's an <b title="">authentication entry</b> for <var title="">HTTPRequest</var>
+   and either <var title="">HTTPRequest</var>'s
    <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use URL credentials flag</a> is
-   unset or <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> does not
-   <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
+   unset or <var title="">HTTPRequest</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> does
+   not <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
    <var title="">authorizationValue</var> to <b title="">authentication entry</b>.
    <!-- need to define the cache concept -->
 
-   <li><p>Otherwise, if <var title="">request</var>'s
+   <li><p>Otherwise, if <var title="">HTTPRequest</var>'s
    <a href="#concept-request-url" title="concept-request-url">url</a> does
    <a class="external" href="http://url.spec.whatwg.org/#include-credentials">include credentials</a> and the
    <i title="">authentication fetch flag</i> is set, set
-   <var title="">authorizationValue</var> to <var title="">request</var>'s
+   <var title="">authorizationValue</var> to <var title="">HTTPRequest</var>'s
    <a href="#concept-request-url" title="concept-request-url">url</a>,
    <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
 
    <li><p>If <var title="">authorizationValue</var> is non-null,
-   <a href="#concept-header-list-set" title="concept-header-list-set">set</a>
-   `<code title="">Authorization</code>` to <var title="">authorizationValue</var> in
-   <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+   <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
+   `<code title="">Authorization</code>`/<var title="">authorizationValue</var> to
+   <var title="">HTTPRequest</var>'s
+   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
   </ol>
 
  <li>
@@ -1395,20 +1409,20 @@ these steps:
   <a href="#refsHTTP">[HTTP]</a>
 
   <p class="note no-backref">This intentionally does not depend on
-  <var title="">request</var>'s
+  <var title="">HTTPRequest</var>'s
   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
 
  <li>
   <p>Let <var title="">response</var> be the result of making HTTP request using
-  <var title="">request</var> following the requirements from HTTP as appropriate.
+  <var title="">HTTPRequest</var> following the requirements from HTTP as appropriate.
   <a href="#refsHTTP">[HTTP]</a>
 
-  <p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+  <p>If <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
   non-null, <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
   a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> every 50ms or for each
-  byte of <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
+  byte of <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
   transmitted, whichever is <em>least</em> request, to <dfn id="process-request-body">process request body</dfn>
-  for <var title="">request</var>.
+  for <var title="">HTTPRequest</var>.
 
   <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
 
@@ -1421,9 +1435,10 @@ these steps:
   <var title="">reason</var>.
 
  <li>
-  <p>If <var title="">credentials flag</var> is set and there are cookies to be set, run
-  these substeps:
-  <!-- XXX non-flag part should be a simple Set-Cookie header check -->
+  <p>If <var title="">credentials flag</var> is set and <var title="">response</var>'s
+  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> contains one or more
+  <a href="#concept-header" title="concept-header">headers</a> <a href="#concept-header-name" title="concept-header-name">named</a>
+  `<code title="">Set-Cookie</code>`, run these substeps:
 
   <ol>
    <li><p>Wait until ownership of the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#storage-mutex">storage mutex</a> can
@@ -1433,7 +1448,7 @@ these steps:
 
    <li>
     <p>Update the cookies. <a href="#refsCOOKIES">[COOKIES]</a>
-    <!-- XXX ideally references something -->
+    <!-- XXX proper hook? -->
 
     <p class="note">This is a fingerprinting vector.
 

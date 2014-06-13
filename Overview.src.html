@@ -1290,26 +1290,39 @@ these steps:
 <p class=note>The <i title>authentication fetch flag</i> is still a bookkeeping detail.
 
 <ol>
- <li><p><span title=concept-header-list-set>Set</span> `<code title>Referer</code>` to the
- empty byte sequence, if <var title>request</var>'s
- <span title=concept-request-referrer>referrer</span> is <i title>none</i>, and to
- <var title>request</var>'s <span title=concept-request-referrer>referrer</span>,
+ <li>
+  <p>Let <var title>HTTPRequest</var> be a copy of <var title>request</var>.
+
+  <p class="note no-backref"><span title=concept-header>Headers</span> need to be added
+  without affecting <var title>request</var>. Due to redirects or authentication failure,
+  it can get reused.
+
+ <li><p><span title=concept-header-list-append>Append</span>
+ `<code title>Referer</code>`/empty byte sequence, if <var title>HTTPRequest</var>'s
+ <span title=concept-request-referrer>referrer</span> is <i title>none</i>, and
+ `<code title>Referer</code>`/<var title>HTTPRequest</var>'s
+ <span title=concept-request-referrer>referrer</span>,
  <span data-anolis-spec=url title=concept-url-serializer>serialized</span> and
- <span data-anolis-spec=encoding title="utf-8 encode">utf-8 encoded</span>, otherwise, in
- <var title>request</var>'s <span title=concept-request-header-list>header list</span>.
+ <span data-anolis-spec=encoding title="utf-8 encode">utf-8 encoded</span>, otherwise, to
+ <var title>HTTPRequest</var>'s
+ <span title=concept-request-header-list>header list</span>.
  <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes -->
 
- <li><p class=XXX>Set `<code title>Host</code>`, ...
+ <li><p class=XXX>Append `<code title>Host</code>`, ...
 
- <li><p>If <var title>request</var>'s <span>force <code>Origin</code> header flag</span>
- is set, <span title=concept-header-list-set>set</span> `<code title>Origin</code>` to
- <var title>request</var>'s <span title=concept-request-origin>origin</span>,
- <span class=XXX>serialized to a byte sequence</span>, in
- <var title>request</var>'s <span title=concept-request-header-list>header list</span>.
+ <li><p>If <var title>HTTPRequest</var>'s
+ <span>force <code>Origin</code> header flag</span> is set,
+ <span title=concept-header-list-append>append</span>
+ `<code title>Origin</code>`/<var title>HTTPRequest</var>'s
+ <span title=concept-request-origin>origin</span>,
+ <span class=XXX>serialized to a byte sequence</span>, to
+ <var title>HTTPRequest</var>'s
+ <span title=concept-request-header-list>header list</span>.
 
- <li><p>Let <var title>credentials flag</var> be set if either <var title>request</var>'s
+ <li><p>Let <var title>credentials flag</var> be set if either
+ <var title>HTTPRequest</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span> is
- <i title>include</i>, or <var title>request</var>'s
+ <i title>include</i>, or <var title>HTTPRequest</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span> is
  <i title>same-origin</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
 
@@ -1317,35 +1330,36 @@ these steps:
   <p>If <var title>credentials flag</var> is set, run these substeps:
 
   <ol>
-   <li><p>Set a `<code title>Cookie</code>` <span title=concept-header>header</span> in
-   <var title>request</var>'s <span title=concept-request-header-list>header list</span>
-   for <var title>request</var> per HTTP State Management Mechanism.
+   <li><p>Modify <var title>HTTPRequest</var>'s
+   <span title=concept-request-header-list>header list</span>
+   per HTTP State Management Mechanism.
    <span data-anolis-ref>COOKIES</span>
-   <!-- XXX header list set -->
+   <!-- XXX proper hook? -->
 
    <!-- http://wiki.whatwg.org/wiki/HTTP_Authentication -->
    <li><p>Let <var title>authorizationValue</var> be null.
 
-   <li><p>If there's an <b title>authentication entry</b> for <var title>request</var> and
-   either <var title>request</var>'s
+   <li><p>If there's an <b title>authentication entry</b> for <var title>HTTPRequest</var>
+   and either <var title>HTTPRequest</var>'s
    <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is
-   unset or <var title>request</var>'s <span title=concept-request-url>url</span> does not
-   <span data-anolis-spec=url>include credentials</span>, set
+   unset or <var title>HTTPRequest</var>'s <span title=concept-request-url>url</span> does
+   not <span data-anolis-spec=url>include credentials</span>, set
    <var title>authorizationValue</var> to <b title>authentication entry</b>.
    <!-- need to define the cache concept -->
 
-   <li><p>Otherwise, if <var title>request</var>'s
+   <li><p>Otherwise, if <var title>HTTPRequest</var>'s
    <span title=concept-request-url>url</span> does
    <span data-anolis-spec=url>include credentials</span> and the
    <i title>authentication fetch flag</i> is set, set
-   <var title>authorizationValue</var> to <var title>request</var>'s
+   <var title>authorizationValue</var> to <var title>HTTPRequest</var>'s
    <span title=concept-request-url>url</span>,
    <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
 
    <li><p>If <var title>authorizationValue</var> is non-null,
-   <span title=concept-header-list-set>set</span>
-   `<code title>Authorization</code>` to <var title>authorizationValue</var> in
-   <var title>request</var>'s <span title=concept-request-header-list>header list</span>.
+   <span title=concept-header-list-append>append</span>
+   `<code title>Authorization</code>`/<var title>authorizationValue</var> to
+   <var title>HTTPRequest</var>'s
+   <span title=concept-request-header-list>header list</span>.
   </ol>
 
  <li>
@@ -1353,20 +1367,20 @@ these steps:
   <span data-anolis-ref>HTTP</span>
 
   <p class="note no-backref">This intentionally does not depend on
-  <var title>request</var>'s
+  <var title>HTTPRequest</var>'s
   <span title=concept-request-credentials-mode>credentials mode</span>.
 
  <li>
   <p>Let <var title>response</var> be the result of making HTTP request using
-  <var title>request</var> following the requirements from HTTP as appropriate.
+  <var title>HTTPRequest</var> following the requirements from HTTP as appropriate.
   <span data-anolis-ref>HTTP</span>
 
-  <p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+  <p>If <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span> is
   non-null, <span data-anolis-spec=html title="queue a task">queue</span>
   a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
-  byte of <var title>request</var>'s <span title=concept-request-body>body</span>
+  byte of <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span>
   transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
-  for <var title>request</var>.
+  for <var title>HTTPRequest</var>.
 
   <p>Use the <span data-anolis-spec=html>networking task source</span>.
 
@@ -1379,9 +1393,10 @@ these steps:
   <var title>reason</var>.
 
  <li>
-  <p>If <var title>credentials flag</var> is set and there are cookies to be set, run
-  these substeps:
-  <!-- XXX non-flag part should be a simple Set-Cookie header check -->
+  <p>If <var title>credentials flag</var> is set and <var title>response</var>'s
+  <span title=concept-response-header-list>header list</span> contains one or more
+  <span title=concept-header>headers</span> <span title=concept-header-name>named</span>
+  `<code title>Set-Cookie</code>`, run these substeps:
 
   <ol>
    <li><p>Wait until ownership of the <span data-anolis-spec=html>storage mutex</span> can
@@ -1391,7 +1406,7 @@ these steps:
 
    <li>
     <p>Update the cookies. <span data-anolis-ref>COOKIES</span>
-    <!-- XXX ideally references something -->
+    <!-- XXX proper hook? -->
 
     <p class=note>This is a fingerprinting vector.
 
