@@ -1794,7 +1794,7 @@ when invoked, must run these steps:
  <li><p>Let <var title>headers</var> be a new <code>Headers</code> object.
 
  <li><p>If <var title>init</var> is given, <span title=concept-Headers-fill>fill</span>
- <var title>headers</var> with <var title>init</var>.
+ <var title>headers</var> with <var title>init</var>. Rethrow any exception.
 
  <li><p>Return <var title>headers</var>.
 </ol>
@@ -1829,7 +1829,7 @@ when invoked, must run these steps:
 <dfn title=dom-Headers-append><code>append(<var>name</var>, <var>value</var>)</code></dfn>
 method, when invoked, must <span title=concept-Headers-append>append</span>
 <var title>name</var>/<var title>value</var> to the
-<span data-anolis-spec=dom>context object</span>.
+<span data-anolis-spec=dom>context object</span> and rethrow any exception.
 
 <p>The <dfn title=dom-Headers-delete><code>delete(<var>name</var>)</code></dfn>
 method, when invoked, must run these steps:
@@ -2128,13 +2128,12 @@ object which is itself associated with
 constructor must run these steps:
 
 <ol>
- <li>
-  <p>Let <var title>r</var> be <var title>input</var>'s associated
-  <span title=concept-request>request</span>, if <var title>input</var> is a
-  <code>Request</code> object, and a new <span title=concept-request>request</span>
-  otherwise.
+ <li><p>Let <var title>request</var> be <var title>input</var>'s associated
+ <span title=concept-request>request</span>, if <var title>input</var> is a
+ <code>Request</code> object, and a new <span title=concept-request>request</span>
+ otherwise.
 
- <li><p>Set <var title>r</var> to a <span>restricted copy</span> of itself.
+ <li><p>Set <var title>request</var> to a <span>restricted copy</span> of itself.
 
  <li><p>Let <var title>fallbackMode</var> be null.
 
@@ -2152,7 +2151,7 @@ constructor must run these steps:
    <li><p>If <var title>parsedURL</var> is failure,
    <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
-   <li><p>Set <var title>r</var>'s <span title=concept-request-url>url</span> to
+   <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
    <var title>parsedURL</var>.
 
    <li><p>Set <var title>fallbackMode</var> to <i title>CORS</i>.
@@ -2164,14 +2163,14 @@ constructor must run these steps:
  <code title>mode</code> member if it is present, and <var title>fallbackMode</var>
  otherwise.
 
- <li><p>If <var title>mode</var> is non-null, set <var title>r</var>'s
+ <li><p>If <var title>mode</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-mode>mode</span> to <var title>mode</var>.
 
  <li><p>Let <var title>credentials</var> be <var title>init</var>'s
  <code title>credentials</code> member if it is present, and
  <var title>fallbackCredentials</var> otherwise.
 
- <li><p>If <var title>credentials</var> is non-null, set <var title>r</var>'s
+ <li><p>If <var title>credentials</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span> to
  <var title>credentials</var>.
 
@@ -2185,14 +2184,27 @@ constructor must run these steps:
 
    <li><p class=XXX>Add case correction as in XMLHttpRequest? Technically subsets HTTP.
 
-   <li><p>Set <var title>r</var>'s <span title=concept-request-method>method</span> to
-   <var title>method</var>.
+   <li><p>Set <var title>request</var>'s <span title=concept-request-method>method</span>
+   to <var title>method</var>.
   </ol>
 
- <li><p>If <var title>r</var>'s <span title=concept-request-mode>mode</span> is
- <i title>no CORS</i> and <var title>r</var>'s
- <span title=concept-request-method>method</span> is not a <span>simple method</span>,
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+ <li><p>Let <var title>r</var> be a new <code>Request</code> object associated with
+ <var title>request</var>, <code>Headers</code> object, and
+ <code>FetchBodyStream</code> object.
+
+ <li>
+  <p>If <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+  <span title=concept-request-mode>mode</span> is <i title>no CORS</i>, run these
+  substeps:
+
+  <ol>
+   <li><p>If <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+   <span title=concept-request-method>method</span> is not a <span>simple method</span>,
+   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p>Set <var title>r</var>'s <code>Headers</code> object's
+   <span title=concept-Headers-guard>guard</span> to <i title>request-no-CORS</i>.
+  </ol>
 
  <li><p class=XXX>Deal with headers.
 
@@ -2205,34 +2217,36 @@ constructor must run these steps:
    <span title=concept-FetchBodyInit-extract>extracting</span> <var title>init</var>'s
    <code title>body</code> member.
 
-   <li><p>Set <var title>r</var>'s <span title=concept-request-body>body</span> to
-   <var title>stream</var>.
+   <li><p>Set <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+   <span title=concept-request-body>body</span> to <var title>stream</var>.
 
    <li>
-    <p>If <var title>r</var>'s <span title=concept-request-header-list>header list</span>
-    contains no <span title=concept-header>header</span>
-    <span title=concept-header-name>named</span> `<code title>Content-Type</code>`, run
-    these subsubsteps:
+    <p>If <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+    <span title=concept-request-header-list>header list</span> contains no
+    <span title=concept-header>header</span> <span title=concept-header-name>named</span>
+    `<code title>Content-Type</code>`, run these subsubsteps:
 
     <ol>
-     <li><p>If <var title>r</var>'s <span title=concept-request-mode>mode</span> is
-     <i title>no CORS</i> and
+     <li><p>If <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+     <span title=concept-request-mode>mode</span> is <i title>no CORS</i> and
      `<code title>Content-Type</code>`/<var title>Content-Type</var> is not a
      <span>simple header</span>,
      <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
      <li><p><span title=concept-header-list-append>Append</span>
      `<code title>Content-Type</code>`/<var title>Content-Type</var> to
-     <var title>r</var>'s <span title=concept-request-header-list>header list</span>.
+     <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+     <span title=concept-request-header-list>header list</span>.
     </ol>
   </ol>
 
  <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
  <span title=concept-FetchBodyStream-MIME-type>MIME type</span> to the result of
  <span title class=XXX>extracting a MIME type</span> from <var title>r</var>'s
+ <span title=concept-Request-request>request</span>'s
  <span title=concept-request-header-list>header list</span>.
 
- <li><p>Return a new <code>Request</code> object associated with <var title>r</var>.
+ <li><p>Return <var title>r</var>.
 </ol>
 
 <p>The <dfn title=dom-Request-method><code>method</code></dfn> attribute's getter must

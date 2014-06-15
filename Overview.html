@@ -1836,7 +1836,7 @@ when invoked, must run these steps:
  <li><p>Let <var title="">headers</var> be a new <code><a href="#headers">Headers</a></code> object.
 
  <li><p>If <var title="">init</var> is given, <a href="#concept-headers-fill" title="concept-Headers-fill">fill</a>
- <var title="">headers</var> with <var title="">init</var>.
+ <var title="">headers</var> with <var title="">init</var>. Rethrow any exception.
 
  <li><p>Return <var title="">headers</var>.
 </ol>
@@ -1871,7 +1871,7 @@ when invoked, must run these steps:
 <dfn id="dom-headers-append" title="dom-Headers-append"><code>append(<var>name</var>, <var>value</var>)</code></dfn>
 method, when invoked, must <a href="#concept-headers-append" title="concept-Headers-append">append</a>
 <var title="">name</var>/<var title="">value</var> to the
-<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>.
+<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a> and rethrow any exception.
 
 <p>The <dfn id="dom-headers-delete" title="dom-Headers-delete"><code>delete(<var>name</var>)</code></dfn>
 method, when invoked, must run these steps:
@@ -2170,13 +2170,12 @@ object which is itself associated with
 constructor must run these steps:
 
 <ol>
- <li>
-  <p>Let <var title="">r</var> be <var title="">input</var>'s associated
-  <a href="#concept-request" title="concept-request">request</a>, if <var title="">input</var> is a
-  <code><a href="#request">Request</a></code> object, and a new <a href="#concept-request" title="concept-request">request</a>
-  otherwise.
+ <li><p>Let <var title="">request</var> be <var title="">input</var>'s associated
+ <a href="#concept-request" title="concept-request">request</a>, if <var title="">input</var> is a
+ <code><a href="#request">Request</a></code> object, and a new <a href="#concept-request" title="concept-request">request</a>
+ otherwise.
 
- <li><p>Set <var title="">r</var> to a <a href="#restricted-copy">restricted copy</a> of itself.
+ <li><p>Set <var title="">request</var> to a <a href="#restricted-copy">restricted copy</a> of itself.
 
  <li><p>Let <var title="">fallbackMode</var> be null.
 
@@ -2194,7 +2193,7 @@ constructor must run these steps:
    <li><p>If <var title="">parsedURL</var> is failure,
    <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
-   <li><p>Set <var title="">r</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
+   <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
    <var title="">parsedURL</var>.
 
    <li><p>Set <var title="">fallbackMode</var> to <i title="">CORS</i>.
@@ -2206,14 +2205,14 @@ constructor must run these steps:
  <code title="">mode</code> member if it is present, and <var title="">fallbackMode</var>
  otherwise.
 
- <li><p>If <var title="">mode</var> is non-null, set <var title="">r</var>'s
+ <li><p>If <var title="">mode</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-mode" title="concept-request-mode">mode</a> to <var title="">mode</var>.
 
  <li><p>Let <var title="">credentials</var> be <var title="">init</var>'s
  <code title="">credentials</code> member if it is present, and
  <var title="">fallbackCredentials</var> otherwise.
 
- <li><p>If <var title="">credentials</var> is non-null, set <var title="">r</var>'s
+ <li><p>If <var title="">credentials</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
  <var title="">credentials</var>.
 
@@ -2227,14 +2226,26 @@ constructor must run these steps:
 
    <li><p class="XXX">Add case correction as in XMLHttpRequest? Technically subsets HTTP.
 
-   <li><p>Set <var title="">r</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> to
-   <var title="">method</var>.
+   <li><p>Set <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
+   to <var title="">method</var>.
   </ol>
 
- <li><p>If <var title="">r</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
- <i title="">no CORS</i> and <var title="">r</var>'s
- <a href="#concept-request-method" title="concept-request-method">method</a> is not a <a href="#simple-method">simple method</a>,
- <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+ <li><p>Let <var title="">r</var> be a new <code><a href="#request">Request</a></code> object associated with
+ <var title="">request</var>, <code><a href="#headers">Headers</a></code> object, and <code><a href="#fetchbodystream">FetchBodyStream</a></code>.
+
+ <li>
+  <p>If <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+  <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <i title="">no CORS</i>, run these
+  substeps:
+
+  <ol>
+   <li><p>If <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+   <a href="#concept-request-method" title="concept-request-method">method</a> is not a <a href="#simple-method">simple method</a>,
+   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p>Set <var title="">r</var>'s <code><a href="#headers">Headers</a></code> object's
+   <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> to <i title="">request-no-CORS</i>.
+  </ol>
 
  <li><p class="XXX">Deal with headers.
 
@@ -2247,34 +2258,36 @@ constructor must run these steps:
    <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">init</var>'s
    <code title="">body</code> member.
 
-   <li><p>Set <var title="">r</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> to
-   <var title="">stream</var>.
+   <li><p>Set <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+   <a href="#concept-request-body" title="concept-request-body">body</a> to <var title="">stream</var>.
 
    <li>
-    <p>If <var title="">r</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
-    contains no <a href="#concept-header" title="concept-header">header</a>
-    <a href="#concept-header-name" title="concept-header-name">named</a> `<code title="">Content-Type</code>`, run
-    these subsubsteps:
+    <p>If <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+    <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> contains no
+    <a href="#concept-header" title="concept-header">header</a> <a href="#concept-header-name" title="concept-header-name">named</a>
+    `<code title="">Content-Type</code>`, run these subsubsteps:
 
     <ol>
-     <li><p>If <var title="">r</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-     <i title="">no CORS</i> and
+     <li><p>If <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+     <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <i title="">no CORS</i> and
      `<code title="">Content-Type</code>`/<var title="">Content-Type</var> is not a
      <a href="#simple-header">simple header</a>,
      <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
      <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
      `<code title="">Content-Type</code>`/<var title="">Content-Type</var> to
-     <var title="">r</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+     <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+     <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
     </ol>
   </ol>
 
  <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
  <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
  <span class="XXX" title="">extracting a MIME type</span> from <var title="">r</var>'s
+ <a href="#concept-request-request" title="concept-Request-request">request</a>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
- <li><p>Return a new <code><a href="#request">Request</a></code> object associated with <var title="">r</var>.
+ <li><p>Return <var title="">r</var>.
 </ol>
 
 <p>The <dfn id="dom-request-method" title="dom-Request-method"><code>method</code></dfn> attribute's getter must
