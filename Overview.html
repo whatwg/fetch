@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-13-june-2014">Living Standard — Last Updated 13 June 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-15-june-2014">Living Standard — Last Updated 15 June 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -33,7 +33,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-13 June 2014, the editor has made this specification available
+15 June 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -1753,9 +1753,16 @@ service workers, but it is applicable elsewhere too.
 
 <h3 id="headers-class"><span class="secno">5.1 </span>Headers class</h3>
 
-<pre class="idl">typedef (<a href="#headers">Headers</a> or <span class="XXX">...</span>) <dfn id="headersinit">HeadersInit</dfn>;
+<pre class="idl">typedef (<a href="#headers">Headers</a> or sequence&lt;sequence&lt;ByteString&gt;&gt; or OpenEndedDictionary&lt;ByteString&gt;) <dfn id="headersinit">HeadersInit</dfn>;</pre>
 
-[<span title="dom-Headers">Constructor</span>(<a href="#headersinit">HeadersInit</a> <var title="">init</var>),
+<div class="XXX">
+ <p>OpenEndedDictionary&lt;T&gt; is a future IDL construct. Expect it to be used as such:
+
+ <pre>var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
+new Headers(meta)</pre>
+</div>
+
+<pre class="idl">[<a href="#dom-headers" title="dom-Headers">Constructor</a>(optional <a href="#headersinit">HeadersInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="headers">Headers</dfn> {
   void <a href="#dom-headers-append" title="dom-Headers-append">append</a>(ByteString <var title="">name</var>, ByteString <var title="">value</var>);
@@ -1772,14 +1779,72 @@ interface <dfn id="headers">Headers</dfn> {
 
 <p>A <code><a href="#headers">Headers</a></code> object also has an associated
 <dfn id="concept-headers-guard" title="concept-Headers-guard">guard</dfn>, which is one of <i title="">immutable</i>,
-<i title="">request</i> and <i title="">none</i> (initially <i title="">none</i>).
+<i title="">request</i>, <i title="">request-no-CORS</i>, and <i title="">none</i>
+(initially <i title="">none</i>).
 
 <p class="note no-backref"><i title="">immutable</i> exists for service workers.
 <a href="#refsSW">[SW]</a>
 
-<p>The
-<dfn id="dom-headers-append" title="dom-Headers-append"><code>append(<var>name</var>, <var>value</var>)</code></dfn>
-method, when invoked, must run these steps:
+<p>To <dfn id="concept-headers-fill" title="concept-Headers-fill">fill</dfn> a <code><a href="#headers">Headers</a></code> object
+(<var title="">headers</var>) with a given object (<var title="">object</var>), run these steps:
+
+<ol>
+ <li>
+  <p>If <var title="">object</var> is a <code><a href="#headers">Headers</a></code> object, copy its
+  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> as
+  <var title="">headerListCopy</var> and then for each <var title="">header</var> in
+  <var title="">headerListCopy</var>, retaining order,
+  <a href="#concept-headers-append" title="concept-Headers-append">append</a>
+  <var title="">header</var>'s <a href="#concept-header-name" title="concept-header-name">name</a>/<var title="">header</var>'s <a href="#concept-header-value" title="concept-header-value">value</a>
+  to <var title="">headers</var>. Rethrow any exception.
+
+  <p class="note">Once <code title="">Headers.prototype[Symbol.iterator]</code> is defined this
+  special casing will no longer be needed.
+
+ <li>
+  <p>Otherwise, if <var title="">object</var> is a sequence, then for each
+  <var title="">header</var> in <var title="">object</var>, run these substeps:
+
+  <ol>
+   <li><p>If <var title="">header</var> does not contain two items,
+   <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p><a href="#concept-headers-append" title="concept-Headers-append">Append</a>
+   <var title="">header</var>'s first item/<var title="">header</var>'s second time to
+   <var title="">headers</var>. Rethrow any exception.
+  </ol>
+
+ <li>
+  <p>Otherwise, if <var title="">object</var> is an open-ended dictionary, then for each
+  <var title="">header</var> in <var title="">object</var>, run these substeps:
+
+  <ol>
+   <li><p>Set <var title="">header</var>'s key to <var title="">header</var>'s key,
+   <a class="external" href="http://heycam.github.io/webidl/#es-bytestring" title="es-ByteString">converted to ByteString</a>.
+   Rethrow any exception.
+
+   <li><p><a href="#concept-headers-append" title="concept-Headers-append">Append</a>
+   <var title="">header</var>'s key/<var title="">header</var>'s value to
+   <var title="">headers</var>. Rethrow any exception.
+  </ol>
+</ol>
+
+<p>The <dfn id="dom-headers" title="dom-Headers"><code>Headers(<var>init</var>)</code></dfn> constructor,
+when invoked, must run these steps:
+
+<ol>
+ <li><p>Let <var title="">headers</var> be a new <code><a href="#headers">Headers</a></code> object.
+
+ <li><p>If <var title="">init</var> is given, <a href="#concept-headers-fill" title="concept-Headers-fill">fill</a>
+ <var title="">headers</var> with <var title="">init</var>.
+
+ <li><p>Return <var title="">headers</var>.
+</ol>
+
+<p>To <dfn id="concept-headers-append" title="concept-Headers-append">append</dfn> a
+<a href="#concept-header-name" title="concept-header-name">name</a>/<a href="#concept-header-value" title="concept-header-value">value</a>
+(<var title="">name</var>/<var title="">value</var>) pair to a
+<code><a href="#headers">Headers</a></code> object (<var title="">headers</var>), run these steps:
 
 <ol>
  <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a> or
@@ -1793,10 +1858,20 @@ method, when invoked, must run these steps:
  <i title="">request</i> and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
  return.
 
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ <i title="">request-no-CORS</i> and <var title="">name</var>/<var title="">value</var> is not a
+ <a href="#simple-header">simple header</a>, return.
+
  <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
  <var title="">name</var>/<var title="">value</var> to
  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 </ol>
+
+<p>The
+<dfn id="dom-headers-append" title="dom-Headers-append"><code>append(<var>name</var>, <var>value</var>)</code></dfn>
+method, when invoked, must <a href="#concept-headers-append" title="concept-Headers-append">append</a>
+<var title="">name</var>/<var title="">value</var> to the
+<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a>.
 
 <p>The <dfn id="dom-headers-delete" title="dom-Headers-delete"><code>delete(<var>name</var>)</code></dfn>
 method, when invoked, must run these steps:
@@ -1811,6 +1886,10 @@ method, when invoked, must run these steps:
  <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
  <i title="">request</i> and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
  return.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ <i title="">request-no-CORS</i> and <var title="">name</var>/`<code title="">invalid</code>` is
+ not a <a href="#simple-header">simple header</a>, return.
 
  <li><p>Remove all <a href="#concept-header" title="concept-header">headers</a> whose
  <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> from
@@ -1872,6 +1951,10 @@ method, when invoked, must run these steps:
  <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
  <i title="">request</i> and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
  return.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ <i title="">request-no-CORS</i> and <var title="">name</var>/<var title="">value</var> is not a
+ <a href="#simple-header">simple header</a>, return.
 
  <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a>
  <var title="">name</var>/<var title="">value</var> in
@@ -2025,7 +2108,7 @@ interface <dfn id="request">Request</dfn> {
 dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
   <a href="#headersinit">HeadersInit</a> headers;
-  <a href="#fetchbodyinit">FetchBodyInit</a>? body;
+  <a href="#fetchbodyinit">FetchBodyInit</a> body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
 };
@@ -2156,11 +2239,13 @@ constructor must run these steps:
  <li><p class="XXX">Deal with headers.
 
  <li>
-  <p>If <var title="">body</var> is non-null, run these substeps:
+  <p>If <var title="">init</var>'s <code title="">body</code> member is present, run these
+  substeps:
 
   <ol>
    <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
-   <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">body</var>.
+   <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">init</var>'s
+   <code title="">body</code> member.
 
    <li><p>Set <var title="">r</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> to
    <var title="">stream</var>.
@@ -2240,7 +2325,7 @@ getter must return the value corresponding to the first matching statement, swit
 
 <h3 id="response-class"><span class="secno">5.4 </span>Response class</h3>
 
-<pre class="idl">[<a href="#dom-response" title="dom-Response">Constructor</a>(<a href="#fetchbodyinit">FetchBodyInit</a>? <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
+<pre class="idl">[<a href="#dom-response" title="dom-Response">Constructor</a>(optional <a href="#fetchbodyinit">FetchBodyInit</a> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
  Exposed=Window,Worker]
 interface <dfn id="response">Response</dfn> {
   static <a href="#response">Response</a> <a href="#dom-response-redirect" title="dom-Response-redirect">redirect</a>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
@@ -2250,7 +2335,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-response-url" title="dom-Response-url">url</a>;
   readonly attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
-  readonly attribute <a href="#headersinit">HeadersInit</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
+  readonly attribute <a href="#headers">Headers</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
   readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <a href="#dom-request-body" title="dom-Request-body">body</a>;
 };
 
@@ -2302,7 +2387,7 @@ constructor, when invoked, must run these steps:
  <li><p class="XXX">headers
 
  <li>
-  <p>If <var title="">body</var> is non-null, run these substeps:
+  <p>If <var title="">body</var> is given, run these substeps:
 
   <ol>
    <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of

@@ -1711,9 +1711,16 @@ service workers, but it is applicable elsewhere too.
 
 <h3>Headers class</h3>
 
-<pre class=idl>typedef (<span>Headers</span> or <span class=XXX>...</span>) <dfn>HeadersInit</dfn>;
+<pre class=idl>typedef (<span>Headers</span> or sequence&lt;sequence&lt;ByteString>> or OpenEndedDictionary&lt;ByteString>) <dfn>HeadersInit</dfn>;</pre>
 
-[<span title=dom-Headers>Constructor</span>(<span>HeadersInit</span> <var title>init</var>),
+<div class=XXX>
+ <p>OpenEndedDictionary&lt;T> is a future IDL construct. Expect it to be used as such:
+
+ <pre>var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
+new Headers(meta)</pre>
+</div>
+
+<pre class=idl>[<span title=dom-Headers>Constructor</span>(optional <span>HeadersInit</span> <var title>init</var>),
  Exposed=Window,Worker]
 interface <dfn>Headers</dfn> {
   void <span title=dom-Headers-append>append</span>(ByteString <var title>name</var>, ByteString <var title>value</var>);
@@ -1730,14 +1737,72 @@ interface <dfn>Headers</dfn> {
 
 <p>A <code>Headers</code> object also has an associated
 <dfn title=concept-Headers-guard>guard</dfn>, which is one of <i title>immutable</i>,
-<i title>request</i> and <i title>none</i> (initially <i title>none</i>).
+<i title>request</i>, <i title>request-no-CORS</i>, and <i title>none</i>
+(initially <i title>none</i>).
 
 <p class="note no-backref"><i title>immutable</i> exists for service workers.
 <span data-anolis-ref>SW</span>
 
-<p>The
-<dfn title=dom-Headers-append><code>append(<var>name</var>, <var>value</var>)</code></dfn>
-method, when invoked, must run these steps:
+<p>To <dfn title=concept-Headers-fill>fill</dfn> a <code>Headers</code> object
+(<var title>headers</var>) with a given object (<var title>object</var>), run these steps:
+
+<ol>
+ <li>
+  <p>If <var title>object</var> is a <code>Headers</code> object, copy its
+  <span title=concept-Headers-header-list>header list</span> as
+  <var title>headerListCopy</var> and then for each <var title>header</var> in
+  <var title>headerListCopy</var>, retaining order,
+  <span title=concept-Headers-append>append</span>
+  <var title>header</var>'s <span title=concept-header-name>name</span>/<var title>header</var>'s <span title=concept-header-value>value</span>
+  to <var title>headers</var>. Rethrow any exception.
+
+  <p class=note>Once <code title>Headers.prototype[Symbol.iterator]</code> is defined this
+  special casing will no longer be needed.
+
+ <li>
+  <p>Otherwise, if <var title>object</var> is a sequence, then for each
+  <var title>header</var> in <var title>object</var>, run these substeps:
+
+  <ol>
+   <li><p>If <var title>header</var> does not contain two items,
+   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p><span title=concept-Headers-append>Append</span>
+   <var title>header</var>'s first item/<var title>header</var>'s second time to
+   <var title>headers</var>. Rethrow any exception.
+  </ol>
+
+ <li>
+  <p>Otherwise, if <var title>object</var> is an open-ended dictionary, then for each
+  <var title>header</var> in <var title>object</var>, run these substeps:
+
+  <ol>
+   <li><p>Set <var title>header</var>'s key to <var title>header</var>'s key,
+   <span data-anolis-spec=webidl title=es-ByteString>converted to ByteString</span>.
+   Rethrow any exception.
+
+   <li><p><span title=concept-Headers-append>Append</span>
+   <var title>header</var>'s key/<var title>header</var>'s value to
+   <var title>headers</var>. Rethrow any exception.
+  </ol>
+</ol>
+
+<p>The <dfn title=dom-Headers><code>Headers(<var>init</var>)</code></dfn> constructor,
+when invoked, must run these steps:
+
+<ol>
+ <li><p>Let <var title>headers</var> be a new <code>Headers</code> object.
+
+ <li><p>If <var title>init</var> is given, <span title=concept-Headers-fill>fill</span>
+ <var title>headers</var> with <var title>init</var>.
+
+ <li><p>Return <var title>headers</var>.
+</ol>
+
+<p>To <dfn title=concept-Headers-append>append</dfn> a
+<span title=concept-header-name>name</span>/<span title=concept-header-value>value</span>
+(<var title>name</var>/<var title>value</var>) pair to a
+<code>Headers</code> object (<var title>headers</var>), run these steps:
 
 <ol>
  <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span> or
@@ -1751,10 +1816,20 @@ method, when invoked, must run these steps:
  <i title>request</i> and <var title>name</var> is a <span>forbidden header name</span>,
  return.
 
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>request-no-CORS</i> and <var title>name</var>/<var title>value</var> is not a
+ <span>simple header</span>, return.
+
  <li><p><span title=concept-header-list-append>Append</span>
  <var title>name</var>/<var title>value</var> to
  <span title=concept-Headers-header-list>header list</span>.
 </ol>
+
+<p>The
+<dfn title=dom-Headers-append><code>append(<var>name</var>, <var>value</var>)</code></dfn>
+method, when invoked, must <span title=concept-Headers-append>append</span>
+<var title>name</var>/<var title>value</var> to the
+<span data-anolis-spec=dom>context object</span>.
 
 <p>The <dfn title=dom-Headers-delete><code>delete(<var>name</var>)</code></dfn>
 method, when invoked, must run these steps:
@@ -1769,6 +1844,10 @@ method, when invoked, must run these steps:
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  <i title>request</i> and <var title>name</var> is a <span>forbidden header name</span>,
  return.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>request-no-CORS</i> and <var title>name</var>/`<code title>invalid</code>` is
+ not a <span>simple header</span>, return.
 
  <li><p>Remove all <span title=concept-header>headers</span> whose
  <span title=concept-header-name>name</span> is <var title>name</var> from
@@ -1830,6 +1909,10 @@ method, when invoked, must run these steps:
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  <i title>request</i> and <var title>name</var> is a <span>forbidden header name</span>,
  return.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>request-no-CORS</i> and <var title>name</var>/<var title>value</var> is not a
+ <span>simple header</span>, return.
 
  <li><p><span title=concept-header-list-set>Set</span>
  <var title>name</var>/<var title>value</var> in
@@ -1983,7 +2066,7 @@ interface <dfn>Request</dfn> {
 dictionary <dfn>RequestInit</dfn> {
   ByteString method;
   <span>HeadersInit</span> headers;
-  <span>FetchBodyInit</span>? body;
+  <span>FetchBodyInit</span> body;
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
 };
@@ -2114,11 +2197,13 @@ constructor must run these steps:
  <li><p class=XXX>Deal with headers.
 
  <li>
-  <p>If <var title>body</var> is non-null, run these substeps:
+  <p>If <var title>init</var>'s <code title>body</code> member is present, run these
+  substeps:
 
   <ol>
    <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
-   <span title=concept-FetchBodyInit-extract>extracting</span> <var title>body</var>.
+   <span title=concept-FetchBodyInit-extract>extracting</span> <var title>init</var>'s
+   <code title>body</code> member.
 
    <li><p>Set <var title>r</var>'s <span title=concept-request-body>body</span> to
    <var title>stream</var>.
@@ -2198,7 +2283,7 @@ getter must return the value corresponding to the first matching statement, swit
 
 <h3>Response class</h3>
 
-<pre class=idl>[<span title=dom-Response>Constructor</span>(<span>FetchBodyInit</span>? <var title>body</var>, optional <span>ResponseInit</span> <var title>init</var>),
+<pre class=idl>[<span title=dom-Response>Constructor</span>(optional <span>FetchBodyInit</span> <var title>body</var>, optional <span>ResponseInit</span> <var title>init</var>),
  Exposed=Window,Worker]
 interface <dfn>Response</dfn> {
   static <span>Response</span> <span title=dom-Response-redirect>redirect</span>(<span data-anolis-spec=encoding>ScalarValueString</span> <var title>url</var>, optional unsigned short <var title>status</var> = 302);
@@ -2208,7 +2293,7 @@ interface <dfn>Response</dfn> {
   readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Response-url>url</span>;
   readonly attribute unsigned short <span title=dom-Response-status>status</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
-  readonly attribute <span>HeadersInit</span> <span title=dom-Response-headers>headers</span>;
+  readonly attribute <span>Headers</span> <span title=dom-Response-headers>headers</span>;
   readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
 };
 
@@ -2260,7 +2345,7 @@ constructor, when invoked, must run these steps:
  <li><p class=XXX>headers
 
  <li>
-  <p>If <var title>body</var> is non-null, run these substeps:
+  <p>If <var title>body</var> is given, run these substeps:
 
   <ol>
    <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
