@@ -1985,59 +1985,65 @@ typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</
 </ol>
 
 
-<pre class=idl>typedef (<span>JSON</span> or <span>FetchBodyInit</span>) <dfn>FetchBody</dfn>;
-
-[NoInterfaceObject]
+<pre class=idl>[NoInterfaceObject]
 interface <dfn>FetchBodyStream</dfn> {
-  Promise&lt;<span>FetchBody</span>> <span title=dom-FetchBodyStream-to>to</span>(<span>FetchBodyType</span> <var title>type</var>);
-};
-
-enum <dfn>FetchBodyType</dfn> { "arraybuffer", "blob", "json", "text" };</pre>
+  Promise&lt;ArrayBuffer> <span title=dom-FetchBodyStream-asArrayBuffer>asArrayBuffer</span>();
+  Promise&lt;<span data-anolis-spec=fileapi>Blob</span>> <span title=dom-FetchBodyStream-asBlob>asBlob</span>();
+  Promise&lt;<span>JSON</span>> <span title=dom-FetchBodyStream-asJSON>asJSON</span>();
+  Promise&lt;<span data-anolis-spec=encoding>ScalarValueString</span>> <span title=dom-FetchBodyStream-asText>asText</span>();
+};</pre>
 
 <p>A <code>FetchBodyStream</code> object has an associated byte stream.
+
+<p>A <code>FetchBodyStream</code> object also has an associated
+<dfn title=concept-FetchBodyStream-read-flag>read flag</dfn> (initially unset).
 
 <p>A <code>FetchBodyStream</code> object also has an associated
 <dfn title=concept-FetchBodyStream-MIME-type>MIME type</dfn>
 (initially the empty byte sequence).
 
-<p>The <dfn title=dom-FetchBodyStream-to><code>to(<var>type</var>)</code></dfn> method,
-when invoked, must run these steps:
+<p>The <dfn title=concept-FetchBodyStream-as-generic>as generic</dfn> algorithm, given a
+<var title>object</var> and <var title>type</var>, runs these steps:
 
 <ol>
  <li><p>Let <var title>p</var> be a new promise.
 
- <li><p>Let <var title>stream</var> be <span data-anolis-spec=dom>context object</span>'s
- byte stream.
+ <li><p>If <var title>object</var>'s
+ <span title=concept-FetchBodyStream-read-flag>read flag</span> is set, reject
+ <var title>p</var> with a <code title>TypeError</code>.
 
- <li><p>If <var title>stream</var> is not null and has been fully read, reject
- <var title>p</var> with a  <code title>TypeError</code>.
+ <li><p>Set <var title>object</var>'s
+ <span title=concept-FetchBodyStream-read-flag>read flag</span>.
 
  <li>
   <p>Run these substeps asynchronously:
 
   <ol>
-   <li><p>If <var title>stream</var> is null, set <var title>stream</var> to an empty
-   byte sequence.
+   <li><p>Let <var title>stream</var> be <var title>object</var>'s byte stream.
+
+   <li><p>If <var title>stream</var> is null, set <var title>stream</var> to an empty byte
+   sequence.
 
    <li><p>Let <var title>bytes</var> be the result of reading from <var title>stream</var>
    until it returns end-of-stream.
+   <!-- XXX stream -->
 
    <li>
     <p>Switch on <var title>type</var>:
 
     <dl class=switch>
-     <dt>"<code title>arraybuffer</code>"
+     <dt><i title>ArrayBuffer</i>
      <dd><p>Resolve <var title>p</var> with an <code>ArrayBuffer</code> whose contents are
      <var title>bytes</var>.
 
-     <dt>"<code title>blob</code>"
+     <dt><i title>Blob</i>
      <dd><p>Resolve <var title>p</var> with a <code data-anolis-spec=fileapi>Blob</code>
      whose contents are <var title>bytes</var> and
      <code data-anolis-spec=fileapi title=dom-Blob-type>type</code> is
-     <span data-anolis-spec=dom>context object</span>'s
+     <var title>object</var>'s
      <span title=concept-FetchBodyStream-MIME-type>MIME type</span>.
 
-     <dt>"<code title>json</code>"
+     <dt><i title>JSON</i>
      <dd>
       <p>Let <var title>JSON</var> be the result of invoking the initial value of the
       <code title>parse</code> property of the <code title>JSON</code> object with the
@@ -2048,7 +2054,7 @@ when invoked, must run these steps:
 
       <p>Otherwise, resolve <var title>p</var> with <var title>JSON</var>.
 
-     <dt>"<code title>text</code>"
+     <dt><i title>text</i>
      <dd><p>Resolve <var title>p</var> with the result of running
      <span data-anolis-spec=encoding>utf-8 decode</span> on <var title>bytes</var>.
     </dl>
@@ -2056,7 +2062,26 @@ when invoked, must run these steps:
 
  <li><p>Return <var title>p</var>.
 </ol>
-<!-- XXX stream -->
+
+<p>The <dfn title=dom-FetchBodyStream-asArrayBuffer><code>asArrayBuffer()</code></dfn>
+method, when invoked, must return the result of running
+<span title=concept-FetchBodyStream-as-generic>as generic</span> with
+<span data-anolis-spec=dom>context object</span> and <i title>ArrayBuffer</i>.
+
+<p>The <dfn title=dom-FetchBodyStream-asBlob><code>asBlob()</code></dfn> method, when
+invoked, must return the result of running
+<span title=concept-FetchBodyStream-as-generic>as generic</span> with
+<span data-anolis-spec=dom>context object</span> and <i title>Blob</i>.
+
+<p>The <dfn title=dom-FetchBodyStream-asJSON><code>asJSON()</code></dfn> method, when
+invoked, must return the result of running
+<span title=concept-FetchBodyStream-as-generic>as generic</span> with
+<span data-anolis-spec=dom>context object</span> and <i title>JSON</i>.
+
+<p>The <dfn title=dom-FetchBodyStream-asText><code>asText()</code></dfn> method, when
+invoked, must return the result of running
+<span title=concept-FetchBodyStream-as-generic>as generic</span> with
+<span data-anolis-spec=dom>context object</span> and <i title>text</i>.
 
 
 <h3>Request class</h3>
@@ -2649,6 +2674,7 @@ Jeff Hodges,
 Jesse M. Heines,
 Jonas Sicking,
 Julian Reschke,
+Jussi Kalliokoski,
 Lachlan Hunt,
 Lucas Gonze,
 呂康豪 (Kang-Hao Lu),
