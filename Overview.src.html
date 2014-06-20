@@ -235,7 +235,7 @@ solve this.
 <!-- example if people ask: "Content-Type: text/html;" -->
 
 <p>A <dfn>forbidden header name</dfn> is a <span title=concept-header>header</span>
-<span title=concept-header-name>names</span> that is one of:
+<span title=concept-header-name>name</span> that either is one of
 
 <ul class=brief>
  <li>`<code title>Accept-Charset</code>`
@@ -261,10 +261,8 @@ solve this.
  <li>`<code title>Via</code>`
 </ul>
 
-<p>&hellip; and a <span title=concept-header>header</span>
-<span title=concept-header-name>name</span> that starts with `<code title>Proxy-</code>`
-or `<code title>Sec-</code>` (including when it is just `<code title>Proxy-</code>` or
-`<code title>Sec-</code>`).
+<p>or starts with `<code title>Proxy-</code>` or `<code title>Sec-</code>`
+(including when it is just `<code title>Proxy-</code>` or `<code title>Sec-</code>`).
 
 <p class=note>These are forbidden so the user agent remains in full control over them.
 <span title=concept-header-name>Names</span> starting with `<code title>Sec-</code>` are
@@ -273,6 +271,14 @@ from APIs using <span title=concept-fetch>fetch</span> that allow control over
 <span title=concept-header>headers</span> by authors, such as
 <code data-anolis-spec=xhr>XMLHttpRequest</code>.
 <span data-anolis-ref class=informative>XHR</span>
+
+<p>A <dfn>forbidden response header name</dfn> is a <span title=concept-header>header</span>
+<span title=concept-header-name>name</span> that is one of:
+
+<ul class=brief>
+ <li>`<code title>Set-Cookie</code>`
+ <li>`<code title>Set-Cookie2</code>`
+</ul>
 
 <hr>
 
@@ -1859,6 +1865,10 @@ when invoked, must run these steps:
  <i title>request-no-CORS</i> and <var title>name</var>/<var title>value</var> is not a
  <span>simple header</span>, return.
 
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>response</i> and <var title>name</var> is a
+ <span>forbidden response header name</span>, return.
+
  <li><p><span title=concept-header-list-append>Append</span>
  <var title>name</var>/<var title>value</var> to
  <span title=concept-Headers-header-list>header list</span>.
@@ -1887,6 +1897,10 @@ method, when invoked, must run these steps:
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  <i title>request-no-CORS</i> and <var title>name</var>/`<code title>invalid</code>` is
  not a <span>simple header</span>, return.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>response</i> and <var title>name</var> is a
+ <span>forbidden response header name</span>, return.
 
  <li><p>Remove all <span title=concept-header>headers</span> whose
  <span title=concept-header-name>name</span> is <var title>name</var> from
@@ -1952,6 +1966,10 @@ method, when invoked, must run these steps:
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  <i title>request-no-CORS</i> and <var title>name</var>/<var title>value</var> is not a
  <span>simple header</span>, return.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ <i title>response</i> and <var title>name</var> is a
+ <span>forbidden response header name</span>, return.
 
  <li><p><span title=concept-header-list-set>Set</span>
  <var title>name</var>/<var title>value</var> in
@@ -2402,7 +2420,8 @@ enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };<
 
 <p>A <code>Response</code> object also has an associated <code>Headers</code> object which
 is itself associated with <span title=concept-Response-response>response</span>'s
-<span title=concept-response-header-list>header list</span>.
+<span title=concept-response-header-list>header list</span> and whose
+<span title=concept-Headers-guard>guard</span> is <i title>response</i>.
 
 <p>A <code>Response</code> object also has an associated <code>FetchBodyStream</code>
 object which is itself associated with
