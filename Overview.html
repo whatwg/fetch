@@ -62,8 +62,9 @@ fetching.
     <ol class="toc">
      <li><a href="#methods"><span class="secno">2.1.1 </span>Methods</a></li>
      <li><a href="#terminology-headers"><span class="secno">2.1.2 </span>Headers</a></li>
-     <li><a href="#requests"><span class="secno">2.1.3 </span>Requests</a></li>
-     <li><a href="#responses"><span class="secno">2.1.4 </span>Responses</a></ol></ol></li>
+     <li><a href="#body"><span class="secno">2.1.3 </span>Body</a></li>
+     <li><a href="#requests"><span class="secno">2.1.4 </span>Requests</a></li>
+     <li><a href="#responses"><span class="secno">2.1.5 </span>Responses</a></ol></ol></li>
  <li><a href="#http-extensions"><span class="secno">3 </span>HTTP extensions</a>
   <ol class="toc">
    <li><a href="#origin-header"><span class="secno">3.1 </span>`<code title="">Origin</code>` header</a></li>
@@ -204,6 +205,13 @@ means (e.g. via <code title="">data</code> URL).
 <a href="#concept-header" title="concept-header">header</a> whose <a href="#concept-header-name" title="concept-header-name">name</a>
 is <var title="">name</var> and <a href="#concept-header-value" title="concept-header-value">value</a> is
 <var title="">value</var>, to <var title="">list</var>.
+
+<p>To <dfn id="concept-header-list-delete" title="concept-header-list-delete">delete</dfn> a
+<a href="#concept-header-name" title="concept-header-name">name</a> (<var title="">name</var>) from a
+<a href="#concept-header-list" title="concept-header-list">header list</a> (<var title="">list</var>), remove all
+<a href="#concept-header" title="concept-header">headers</a> whose
+<a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> from
+<var title="">list</var>.
 
 <p>To <dfn id="concept-header-list-set" title="concept-header-list-set">set</dfn> a
 <a href="#concept-header-name" title="concept-header-name">name</a>/<a href="#concept-header-value" title="concept-header-value">value</a>
@@ -368,8 +376,24 @@ steps:
  <!-- XXX MIME type xref, byte lowercase xref -->
 </ol>
 
+<h4 id="body"><span class="secno">2.1.3 </span>Body</h4>
 
-<h4 id="requests"><span class="secno">2.1.3 </span>Requests</h4>
+<p>A <dfn id="concept-body" title="concept-body">body</dfn> is a byte stream. It has an associated
+<dfn id="concept-body-transmitted" title="concept-body-transmitted">transmitted</dfn> and
+<dfn id="concept-body-length" title="concept-body-length">length</dfn>. Unless stated otherwise these are 0.
+
+<p>To <dfn id="handle-content-codings">handle content codings</dfn> given a <var title="">codec</var> and
+<var title="">bytes</var>, run these substeps:
+
+<ol>
+ <li><p>If <var title="">codec</var> is not supported, return <var title="">bytes</var>.
+
+ <li><p>Return the result of decoding bytes with the given
+ <var title="">codec</var> as explained in HTTP. <a href="#refsHTTP">[HTTP]</a>
+</ol>
+<!-- XXX no hook in HTTP -->
+
+<h4 id="requests"><span class="secno">2.1.4 </span>Requests</h4>
 
 <p>The input to <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-request" title="concept-request">request</dfn>.
@@ -399,7 +423,11 @@ outlawing <a href="#forbidden-method" title="forbidden method">forbidden methods
 <a href="#forbidden-header-name" title="forbidden header name">forbidden header names</a>.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-body" title="concept-request-body">body</dfn>. Unless stated otherwise it is null.
+<dfn id="concept-request-body" title="concept-request-body">body</dfn> (null or a
+<a href="#concept-body" title="concept-body">body</a>). Unless stated otherwise it is null.
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="preserve-content-codings-flag">preserve content codings flag</dfn>. Unless stated otherwise it is unset.
 
 <hr>
 
@@ -591,7 +619,7 @@ it is <i title="">basic</i>.
 bookkeeping details by the <a href="#concept-fetch" title="concept-fetch">fetch</a> algorithm.
 
 
-<h4 id="responses"><span class="secno">2.1.4 </span>Responses</h4>
+<h4 id="responses"><span class="secno">2.1.5 </span>Responses</h4>
 
 <p>The result of <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-response" title="concept-response">response</dfn>. A <a href="#concept-response" title="concept-response">response</a>
@@ -1013,56 +1041,66 @@ redirects. Only use the <var title="">request</var> parameter in other standards
    <dd><a href="#concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered response</a>
   </dl>
 
- <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set, wait for
- either <var title="">response</var> to have been fully transmitted or
- <var title="">response</var> to have a
- <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>, and then
- return it.
+ <li>
+  <p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set, wait for
+  either end-of-file to have been pushed to
+  <var title="">response</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> or for
+  <var title="">response</var> to have a
+  <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>, and then
+  return <var title="">response</var>.
+
+  <p class="note no-backref">This terminates <a href="#concept-fetch" title="concept-fetch">fetch</a>.
+
+ <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+ non-null and <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
+ <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
+ "<code title="">http</code>" or "<code title="">https</code>",
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+ <dfn id="process-request-end-of-file">process request end-of-file</dfn> for <var title="">request</var>.
+
+ <li><p><a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">Queue</a> a
+ <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+ <dfn id="process-response">process response</dfn> for <var title="">response</var>.
 
  <li>
-  <p>Otherwise, run these substeps:
+  <p>If <var title="">response</var>'s
+  <a href="#concept-response-body" title="concept-response-body">body</a> is null, run these substeps:
 
   <ol>
-   <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
-   non-null and <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a>'s
-   <a class="external" href="http://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is one
-   of "<code title="">http</code>" and "<code title="">https</code>",
+   <li><a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+   <dfn id="process-response-body">process response body</dfn> for <var title="">response</var>.
+
+   <li><p><a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
+   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
+   <dfn id="process-response-end-of-file">process response end-of-file</dfn> for <var title="">response</var>.
+  </ol>
+
+ <li>
+  <p>Otherwise, if <var title="">response</var>'s
+  <a href="#concept-response-body" title="concept-response-body">body</a> is non-null, run these substeps:
+
+  <ol>
+   <li><p>Every 50ms or whenever <var title="">response</var>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a>'s is pushed to, whichever is
+   <em>least</em> frequent and as long as <var title="">response</var> has no
+   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> and
+   end-of-file has not been pushed,
    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
-   <dfn id="process-request-end-of-file">process request end-of-file</dfn> for <var title="">request</var>.
-
-   <li><p><a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">Queue</a> a
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
-   <dfn id="process-response">process response</dfn> for <var title="">response</var>.
-
-   <li><p>If <var title="">response</var> is a
-   <a href="#concept-network-error" title="concept-network-error">network error</a>, terminate this algorithm.
-   <span class="note">No point in continuing.</span>
-
-   <li><p>Then, either once <var title="">response</var>'s
-   <a href="#concept-response-body" title="concept-response-body">body</a> is at least one byte long or there is no
-   <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>,
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
-   <dfn id="process-response-body">process response body</dfn> for <var title="">response</var>. Keep
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queuing</a>
-   <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">tasks</a> to
-   <a href="#process-response-body">process response body</a> for <var title="">response</var> every 50ms or for each
-   byte of <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>
-   transmitted, whichever is <em>least</em> frequent, while <var title="">response</var> has
-   no <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>.
+   <a href="#process-response-body">process response body</a> for <var title="">response</var>.
 
    <li>
-    <p>Then, once <var title="">response</var>'s
-    <a href="#concept-response-body" title="concept-response-body">body</a> is fully transmitted or has a
+    <p>Once end-of-file has been pushed to <var title="">response</var>'s
+    <a href="#concept-response-body" title="concept-response-body">body</a> or <var title="">response</var> has a
     <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>,
     <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
     <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> to
-    <dfn id="process-response-end-of-file">process response end-of-file</dfn> for <var title="">response</var>.
+    <a href="#process-response-end-of-file">process response end-of-file</a> for <var title="">response</var>.
 
-    <p class="note">This specification does not define what "fully transmitted" means.
-    Ideally FTP/HTTP define this in detail, including when e.g.
-    `<code title="">Content-Length</code>` is not supplied or is deemed faulty.
+    <p class="note">Ideally FTP/HTTP define this in more detail and this becomes a set of
+    simple hooks.
   </ol>
 
   <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a> for these
@@ -1369,15 +1407,9 @@ indicates an attempt to authenticate.
  <a href="#concept-cache-clear" title="concept-cache-clear">clear cache entries</a> using
  <var title="">request</var>.
 
- <li><p>Return <var title="">response</var>, but continue with the request and growing
- <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>. If at any
- point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
- <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
- <var title="">reason</var>, set <var title="">response</var>'s
- <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
- <var title="">reason</var>. <span class="note no-backref">This modifies
- <var title="">response</var> after it has been returned. Logic in
- <a href="#concept-fetch" title="concept-fetch">fetch</a> takes care of the rest.</span>
+ <li><p>Return <var title="">response</var>. <span class="note no-backref">Typically
+ <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being
+ pushed to after returning.</span>
 </ol>
 
 
@@ -1472,26 +1504,118 @@ these steps:
   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
 
  <li>
-  <p>Let <var title="">response</var> be the result of making HTTP request using
-  <var title="">HTTPRequest</var> following the requirements from HTTP as appropriate.
+  <p>Let <var title="">response</var> be the result of making an HTTP request, using
+  <var title="">HTTPRequest</var>, following the requirements from HTTP as appropriate, and
+  waiting until either all the <a href="#concept-header" title="concept-header">headers</a> are transmitted
+  or a <a href="#concept-network-error" title="concept-network-error">network error</a> was returned. If a
+  <a href="#concept-network-error" title="concept-network-error">network error</a> was returned due to
+  <a href="#concept-fetch" title="concept-fetch">fetch</a> being
+  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
+  <var title="">reason</var>, set <var title="">response</var>'s
+  <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
+  <var title="">reason</var>.
   <a href="#refsHTTP">[HTTP]</a>
 
   <p>If <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
-  non-null, <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a>
-  a <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> every 50ms or for each
-  byte of <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
-  transmitted, whichever is <em>least</em> request, to <dfn id="process-request-body">process request body</dfn>
-  for <var title="">HTTPRequest</var>.
+  non-null, run these substeps:
 
-  <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
+  <ol>
+   <li><p>If <var title="">HTTPRequest</var>'s
+   <a href="#concept-request-body" title="concept-request-body">body</a>'s payload body length is known, set
+   <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>'s
+   <a href="#concept-body-length" title="concept-body-length">length</a> to <var title="">HTTPRequest</var>'s
+   <a href="#concept-request-body" title="concept-request-body">body</a>'s payload body length.
+   <!-- XXX xref payload body -->
 
-  <p>If the HTTP request is terminated before all headers from the resource are obtained,
-  return a <a href="#concept-network-error" title="concept-network-error">network error</a>. If this is due to
-  <a href="#concept-fetch" title="concept-fetch">fetch</a> being
-  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
-  <var title="">reason</var>, set the return value's
-  <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
-  <var title="">reason</var>.
+   <li>
+    <p><a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#queue-a-task" title="queue a task">queue</a> a
+    <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#concept-task" title="concept-task">task</a> every 50ms or for each byte
+    of <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
+    transmitted, whichever is <em>least</em> request, to increase
+    <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>'s
+    <a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted</a> with the amount of
+    payload body bytes transmitted and <dfn id="process-request-body">process request body</dfn> for
+    <var title="">HTTPRequest</var>.
+    <!-- XXX xref payload body -->
+
+    <p>Use the <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#networking-task-source">networking task source</a>.
+  </ol>
+
+  <p>Run these substeps asynchronously when the outer set of steps has returned:
+
+  <ol>
+   <li><p>If <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is
+   non-null, set <var title="">response</var>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a>'s
+   <a href="#concept-body-length" title="concept-body-length">length</a> to <var title="">response</var>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a>'s payload body length.
+   <!-- XXX xref payload body -->
+
+   <li>
+    <p>Whenever one or more bytes are transmitted, let <var title="">bytes</var> be the
+    transmitted bytes and run these subsubsteps:
+
+    <ol>
+     <li><p>Increase <var title="">response</var>'s
+     <a href="#concept-response-body" title="concept-response-body">body</a>'s
+     <a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted</a> with <var title="">bytes</var>'
+     length.
+
+     <li><p>Let <var title="">codec</var> be the result of
+     <a href="#concept-header-parse" title="concept-header-parse">parsing</a> `<code title="">Content-Encoding</code>`
+     in <var title="">response</var>'s
+     <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+
+     <li><p>If <var title="">HTTPRequest</var>'s <a href="#preserve-content-codings-flag">preserve content codings flag</a>
+     is unset and <var title="">codec</var> is neither null nor failure, set
+     <var title="">bytes</var> to the result of
+     <a href="#handle-content-codings" title="handle content codings">handling content codings</a> given
+     <var title="">codec</var> and <var title="">bytes</var>.
+
+     <li><p>Push <var title="">bytes</var> to <var title="">response</var>'s
+     <a href="#concept-response-body" title="concept-response-body">body</a>.
+     <!-- XXX xref payload body / streams -->
+    </ol>
+
+   <li>If at any point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
+   <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
+   <var title="">reason</var>, set <var title="">response</var>'s
+   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
+   <var title="">reason</var>.
+  </ol>
+
+  <p class="note no-backref">These are run asynchronously as at this point it is unclear
+  whether <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is
+  relevant (<var title="">response</var> might be a redirect).
+
+ <li>
+  <p><a href="#concept-header-list-delete" title="concept-header-list-delete">Delete</a>
+  `<code title="">Content-Encoding</code>` from <var title="">response</var>'s
+  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> if one of the following
+  conditions is true:
+
+  <ul class="brief">
+   <li><a href="#concept-header-parse" title="concept-header-parse">Parsing</a>
+   `<code title="">Content-Encoding</code>` in <var title="">response</var>'s
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> returns
+   `<code title="">gzip</code>` and <a href="#concept-header-parse" title="concept-header-parse">parsing</a>
+   `<code title="">Content-Type</code> in <var title="">response</var>'s
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> returns
+   `<code title="">application/gzip</code>`, `<code title="">application/x-gunzip</code>`, or
+   `<code title="">application/x-gzip</code>`.
+   <li><a href="#concept-header-parse" title="concept-header-parse">Parsing</a>
+   `<code title="">Content-Encoding</code>` in <var title="">response</var>'s
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> returns
+   `<code title="">compress</code>` and <a href="#concept-header-parse" title="concept-header-parse">parsing</a>
+   `<code title="">Content-Type</code> in <var title="">response</var>'s
+   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> returns
+   `<code title="">application/compress</code>` or
+   `<code title="">application/x-compress</code>.
+  </ul>
+
+  <p class="note">This deals with broken Apache configurations. Ideally HTTP would define
+  this.
+  <!-- http://wiki.whatwg.org/wiki/HTTP -->
 
  <li>
   <p>If <var title="">credentials flag</var> is set and <var title="">response</var>'s
@@ -1515,7 +1639,9 @@ these steps:
    again free.
   </ol>
 
- <li><p>Return <var title="">response</var>.
+ <li><p>Return <var title="">response</var>. <span class="note no-backref">Typically
+ <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being
+ pushed to after returning.</span>
 </ol>
 
 
@@ -1945,8 +2071,7 @@ method, when invoked, must run these steps:
  <i title="">response</i> and <var title="">name</var> is a
  <a href="#forbidden-response-header-name">forbidden response header name</a>, return.
 
- <li><p>Remove all <a href="#concept-header" title="concept-header">headers</a> whose
- <a href="#concept-header-name" title="concept-header-name">name</a> is <var title="">name</var> from
+ <li><p><a href="#concept-header-list-delete" title="concept-header-list-delete">Delete</a> <var title="">name</var> from
  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 </ol>
 
@@ -2082,6 +2207,9 @@ interface <dfn id="fetchbodystream">FetchBodyStream</dfn> {
 <dfn id="concept-fetchbodystream-read-flag" title="concept-FetchBodyStream-read-flag">read flag</dfn> (initially unset).
 
 <p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object also has an associated
+<dfn id="concept-fetchbodystream-codec" title="concept-FetchBodyStream-codec">codec</dfn> (initially null).
+
+<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object also has an associated
 <dfn id="concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</dfn>
 (initially the empty byte sequence).
 
@@ -2110,6 +2238,11 @@ interface <dfn id="fetchbodystream">FetchBodyStream</dfn> {
    <li><p>Let <var title="">bytes</var> be the result of reading from <var title="">stream</var>
    until it returns end-of-stream.
    <!-- XXX stream -->
+
+   <li><p>If <a href="#concept-fetchbodystream-codec" title="concept-FetchBodyStream-codec">codec</a> is non-null, set
+   <var title="">bytes</var> to the result of
+   <a href="#handle-content-codings" title="handle content codings">handling content codings</a> given
+   <a href="#concept-fetchbodystream-codec" title="concept-FetchBodyStream-codec">codec</a> and <var title="">bytes</var>.
 
    <li>
     <p>Switch on <var title="">type</var>:
@@ -2233,6 +2366,7 @@ object which is itself associated with
  <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>,
  <a href="#concept-request-body" title="concept-request-body">body</a> is a tee of <var title="">request</var>'s
  <a href="#concept-request-body" title="concept-request-body">body</a>,
+ <a href="#preserve-content-codings-flag">preserve content codings flag</a> is set,
  <a href="#concept-request-client" title="concept-request-client">client</a> is
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#global-object">global object</a>,
@@ -2376,6 +2510,12 @@ constructor must run these steps:
  <a href="#concept-header-extract-mime-type" title="concept-header-extract-MIME-type">extracting a MIME type</a> from
  <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+
+ <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
+ <a href="#concept-fetchbodystream-codec" title="concept-FetchBodyStream-codec">codec</a> to the result of
+ <a href="#concept-header-parse" title="concept-header-parse">parsing</a> `<code title="">Content-Encoding</code>` in
+ <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> if that result is not failure.
 
  <li><p>Return <var title="">r</var>.
 </ol>
@@ -2538,6 +2678,12 @@ constructor, when invoked, must run these steps:
  <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
+ <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
+ <a href="#concept-fetchbodystream-codec" title="concept-FetchBodyStream-codec">codec</a> to the result of
+ <a href="#concept-header-parse" title="concept-header-parse">parsing</a> `<code title="">Content-Encoding</code>` in
+ <var title="">r</var>'s <span title="concept-Response-request">response</span>'s
+ <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> if that result is not failure.
+
  <li><p>Return <var title="">r</var>.
 </ol>
 
@@ -2649,11 +2795,10 @@ method, must run these steps:
    <var title="">response</var>.
   </ol>
 
-  <p>To <a href="#process-response-body">process response body</a> for <var title="">response</var>,
-  <span class="XXX">...</span>.
+  <p>To <a href="#process-response-body">process response body</a> for <var title="">response</var>, do nothing.
 
   <p>To <a href="#process-response-end-of-file">process response end-of-file</a> for <var title="">response</var>,
-  <span class="XXX">...</span>.
+  do nothing.
 
  <li><p>Return <var title="">p</var>.
 </ol>

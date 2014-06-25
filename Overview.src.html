@@ -163,6 +163,13 @@ means (e.g. via <code title>data</code> URL).
 is <var title>name</var> and <span title=concept-header-value>value</span> is
 <var title>value</var>, to <var title>list</var>.
 
+<p>To <dfn title=concept-header-list-delete>delete</dfn> a
+<span title=concept-header-name>name</span> (<var title>name</var>) from a
+<span title=concept-header-list>header list</span> (<var title>list</var>), remove all
+<span title=concept-header>headers</span> whose
+<span title=concept-header-name>name</span> is <var title>name</var> from
+<var title>list</var>.
+
 <p>To <dfn title=concept-header-list-set>set</dfn> a
 <span title=concept-header-name>name</span>/<span title=concept-header-value>value</span>
 (<var title>name</var>/<var title>value</var>) pair in a
@@ -326,6 +333,22 @@ steps:
  <!-- XXX MIME type xref, byte lowercase xref -->
 </ol>
 
+<h4>Body</h4>
+
+<p>A <dfn title=concept-body>body</dfn> is a byte stream. It has an associated
+<dfn title=concept-body-transmitted>transmitted</dfn> and
+<dfn title=concept-body-length>length</dfn>. Unless stated otherwise these are 0.
+
+<p>To <dfn>handle content codings</dfn> given a <var title>codec</var> and
+<var title>bytes</var>, run these substeps:
+
+<ol>
+ <li><p>If <var title>codec</var> is not supported, return <var title>bytes</var>.
+
+ <li><p>Return the result of decoding bytes with the given
+ <var title>codec</var> as explained in HTTP. <span data-anolis-ref>HTTP</span>
+</ol>
+<!-- XXX no hook in HTTP -->
 
 <h4>Requests</h4>
 
@@ -357,7 +380,11 @@ outlawing <span title="forbidden method">forbidden methods</span> and
 <span title="forbidden header name">forbidden header names</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-body>body</dfn>. Unless stated otherwise it is null.
+<dfn title=concept-request-body>body</dfn> (null or a
+<span title=concept-body>body</span>). Unless stated otherwise it is null.
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn>preserve content codings flag</dfn>. Unless stated otherwise it is unset.
 
 <hr>
 
@@ -971,56 +998,66 @@ redirects. Only use the <var title>request</var> parameter in other standards.
    <dd><span title=concept-filtered-response-opaque>opaque filtered response</span>
   </dl>
 
- <li><p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
- either <var title>response</var> to have been fully transmitted or
- <var title>response</var> to have a
- <span title=concept-response-termination-reason>termination reason</span>, and then
- return it.
+ <li>
+  <p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
+  either end-of-file to have been pushed to
+  <var title>response</var>'s <span title=concept-request-body>body</span> or for
+  <var title>response</var> to have a
+  <span title=concept-response-termination-reason>termination reason</span>, and then
+  return <var title>response</var>.
+
+  <p class="note no-backref">This terminates <span title=concept-fetch>fetch</span>.
+
+ <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+ non-null and <var title>request</var>'s <span title=concept-request-url>url</span>'s
+ <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
+ "<code title>http</code>" or "<code title>https</code>",
+ <span data-anolis-spec=html title="queue a task">queue</span> a
+ <span data-anolis-spec=html title=concept-task>task</span> to
+ <dfn>process request end-of-file</dfn> for <var title>request</var>.
+
+ <li><p><span data-anolis-spec=html title="queue a task">Queue</span> a
+ <span data-anolis-spec=html title=concept-task>task</span> to
+ <dfn>process response</dfn> for <var title>response</var>.
 
  <li>
-  <p>Otherwise, run these substeps:
+  <p>If <var title>response</var>'s
+  <span title=concept-response-body>body</span> is null, run these substeps:
 
   <ol>
-   <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
-   non-null and <var title>request</var>'s <span title=concept-request-url>url</span>'s
-   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is one
-   of "<code title>http</code>" and "<code title>https</code>",
+   <li><span data-anolis-spec=html title="queue a task">queue</span> a
+   <span data-anolis-spec=html title=concept-task>task</span> to
+   <dfn>process response body</dfn> for <var title>response</var>.
+
+   <li><p><span data-anolis-spec=html title="queue a task">queue</span> a
+   <span data-anolis-spec=html title=concept-task>task</span> to
+   <dfn>process response end-of-file</dfn> for <var title>response</var>.
+  </ol>
+
+ <li>
+  <p>Otherwise, if <var title>response</var>'s
+  <span title=concept-response-body>body</span> is non-null, run these substeps:
+
+  <ol>
+   <li><p>Every 50ms or whenever <var title>response</var>'s
+   <span title=concept-response-body>body</span>'s is pushed to, whichever is
+   <em>least</em> frequent and as long as <var title>response</var> has no
+   <span title=concept-response-termination-reason>termination reason</span> and
+   end-of-file has not been pushed,
    <span data-anolis-spec=html title="queue a task">queue</span> a
    <span data-anolis-spec=html title=concept-task>task</span> to
-   <dfn>process request end-of-file</dfn> for <var title>request</var>.
-
-   <li><p><span data-anolis-spec=html title="queue a task">Queue</span> a
-   <span data-anolis-spec=html title=concept-task>task</span> to
-   <dfn>process response</dfn> for <var title>response</var>.
-
-   <li><p>If <var title>response</var> is a
-   <span title=concept-network-error>network error</span>, terminate this algorithm.
-   <span class=note>No point in continuing.</span>
-
-   <li><p>Then, either once <var title>response</var>'s
-   <span title=concept-response-body>body</span> is at least one byte long or there is no
-   <var title>response</var>'s <span title=concept-response-body>body</span>,
-   <span data-anolis-spec=html title="queue a task">queue</span> a
-   <span data-anolis-spec=html title=concept-task>task</span> to
-   <dfn>process response body</dfn> for <var title>response</var>. Keep
-   <span data-anolis-spec=html title="queue a task">queuing</span>
-   <span data-anolis-spec=html title=concept-task>tasks</span> to
-   <span>process response body</span> for <var title>response</var> every 50ms or for each
-   byte of <var title>response</var>'s <span title=concept-response-body>body</span>
-   transmitted, whichever is <em>least</em> frequent, while <var title>response</var> has
-   no <span title=concept-response-termination-reason>termination reason</span>.
+   <span>process response body</span> for <var title>response</var>.
 
    <li>
-    <p>Then, once <var title>response</var>'s
-    <span title=concept-response-body>body</span> is fully transmitted or has a
+    <p>Once end-of-file has been pushed to <var title>response</var>'s
+    <span title=concept-response-body>body</span> or <var title>response</var> has a
     <span title=concept-response-termination-reason>termination reason</span>,
     <span data-anolis-spec=html title="queue a task">queue</span> a
     <span data-anolis-spec=html title=concept-task>task</span> to
-    <dfn>process response end-of-file</dfn> for <var title>response</var>.
+    <span>process response end-of-file</span> for <var title>response</var>.
 
-    <p class=note>This specification does not define what "fully transmitted" means.
-    Ideally FTP/HTTP define this in detail, including when e.g.
-    `<code title>Content-Length</code>` is not supplied or is deemed faulty.
+    <p class=note>Ideally FTP/HTTP define this in more detail and this becomes a set of
+    simple hooks.
   </ol>
 
   <p>Use the <span data-anolis-spec=html>networking task source</span> for these
@@ -1327,15 +1364,9 @@ indicates an attempt to authenticate.
  <span title=concept-cache-clear>clear cache entries</span> using
  <var title>request</var>.
 
- <li><p>Return <var title>response</var>, but continue with the request and growing
- <var title>response</var>'s <span title=concept-response-body>body</span>. If at any
- point <span title=concept-fetch>fetch</span> is
- <span title=concept-fetch-terminate>terminated</span> with reason
- <var title>reason</var>, set <var title>response</var>'s
- <span title=concept-response-termination-reason>termination reason</span> to
- <var title>reason</var>. <span class="note no-backref">This modifies
- <var title>response</var> after it has been returned. Logic in
- <span title=concept-fetch>fetch</span> takes care of the rest.</span>
+ <li><p>Return <var title>response</var>. <span class="note no-backref">Typically
+ <var title>response</var>'s <span title=concept-response-body>body</span> is still being
+ pushed to after returning.</span>
 </ol>
 
 
@@ -1430,26 +1461,118 @@ these steps:
   <span title=concept-request-credentials-mode>credentials mode</span>.
 
  <li>
-  <p>Let <var title>response</var> be the result of making HTTP request using
-  <var title>HTTPRequest</var> following the requirements from HTTP as appropriate.
+  <p>Let <var title>response</var> be the result of making an HTTP request, using
+  <var title>HTTPRequest</var>, following the requirements from HTTP as appropriate, and
+  waiting until either all the <span title=concept-header>headers</span> are transmitted
+  or a <span title=concept-network-error>network error</span> was returned. If a
+  <span title=concept-network-error>network error</span> was returned due to
+  <span title=concept-fetch>fetch</span> being
+  <span title=concept-fetch-terminate>terminated</span> with reason
+  <var title>reason</var>, set <var title>response</var>'s
+  <span title=concept-response-termination-reason>termination reason</span> to
+  <var title>reason</var>.
   <span data-anolis-ref>HTTP</span>
 
   <p>If <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span> is
-  non-null, <span data-anolis-spec=html title="queue a task">queue</span>
-  a <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each
-  byte of <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span>
-  transmitted, whichever is <em>least</em> request, to <dfn>process request body</dfn>
-  for <var title>HTTPRequest</var>.
+  non-null, run these substeps:
 
-  <p>Use the <span data-anolis-spec=html>networking task source</span>.
+  <ol>
+   <li><p>If <var title>HTTPRequest</var>'s
+   <span title=concept-request-body>body</span>'s payload body length is known, set
+   <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span>'s
+   <span title=concept-body-length>length</span> to <var title>HTTPRequest</var>'s
+   <span title=concept-request-body>body</span>'s payload body length.
+   <!-- XXX xref payload body -->
 
-  <p>If the HTTP request is terminated before all headers from the resource are obtained,
-  return a <span title=concept-network-error>network error</span>. If this is due to
-  <span title=concept-fetch>fetch</span> being
-  <span title=concept-fetch-terminate>terminated</span> with reason
-  <var title>reason</var>, set the return value's
-  <span title=concept-response-termination-reason>termination reason</span> to
-  <var title>reason</var>.
+   <li>
+    <p><span data-anolis-spec=html title="queue a task">queue</span> a
+    <span data-anolis-spec=html title=concept-task>task</span> every 50ms or for each byte
+    of <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span>
+    transmitted, whichever is <em>least</em> request, to increase
+    <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span>'s
+    <span title=concept-body-transmitted>transmitted</span> with the amount of
+    payload body bytes transmitted and <dfn>process request body</dfn> for
+    <var title>HTTPRequest</var>.
+    <!-- XXX xref payload body -->
+
+    <p>Use the <span data-anolis-spec=html>networking task source</span>.
+  </ol>
+
+  <p>Run these substeps asynchronously when the outer set of steps has returned:
+
+  <ol>
+   <li><p>If <var title>response</var>'s <span title=concept-response-body>body</span> is
+   non-null, set <var title>response</var>'s
+   <span title=concept-response-body>body</span>'s
+   <span title=concept-body-length>length</span> to <var title>response</var>'s
+   <span title=concept-response-body>body</span>'s payload body length.
+   <!-- XXX xref payload body -->
+
+   <li>
+    <p>Whenever one or more bytes are transmitted, let <var title>bytes</var> be the
+    transmitted bytes and run these subsubsteps:
+
+    <ol>
+     <li><p>Increase <var title>response</var>'s
+     <span title=concept-response-body>body</span>'s
+     <span title=concept-body-transmitted>transmitted</span> with <var title>bytes</var>'
+     length.
+
+     <li><p>Let <var title>codec</var> be the result of
+     <span title=concept-header-parse>parsing</span> `<code title>Content-Encoding</code>`
+     in <var title>response</var>'s
+     <span title=concept-response-header-list>header list</span>.
+
+     <li><p>If <var title>HTTPRequest</var>'s <span>preserve content codings flag</span>
+     is unset and <var title>codec</var> is neither null nor failure, set
+     <var title>bytes</var> to the result of
+     <span title="handle content codings">handling content codings</span> given
+     <var title>codec</var> and <var title>bytes</var>.
+
+     <li><p>Push <var title>bytes</var> to <var title>response</var>'s
+     <span title=concept-response-body>body</span>.
+     <!-- XXX xref payload body / streams -->
+    </ol>
+
+   <li>If at any point <span title=concept-fetch>fetch</span> is
+   <span title=concept-fetch-terminate>terminated</span> with reason
+   <var title>reason</var>, set <var title>response</var>'s
+   <span title=concept-response-termination-reason>termination reason</span> to
+   <var title>reason</var>.
+  </ol>
+
+  <p class="note no-backref">These are run asynchronously as at this point it is unclear
+  whether <var title>response</var>'s <span title=concept-response-body>body</span> is
+  relevant (<var title>response</var> might be a redirect).
+
+ <li>
+  <p><span title=concept-header-list-delete>Delete</span>
+  `<code title>Content-Encoding</code>` from <var title>response</var>'s
+  <span title=concept-response-header-list>header list</span> if one of the following
+  conditions is true:
+
+  <ul class=brief>
+   <li><span title=concept-header-parse>Parsing</span>
+   `<code title>Content-Encoding</code>` in <var title>response</var>'s
+   <span title=concept-response-header-list>header list</span> returns
+   `<code title>gzip</code>` and <span title=concept-header-parse>parsing</span>
+   `<code title>Content-Type</code> in <var title>response</var>'s
+   <span title=concept-response-header-list>header list</span> returns
+   `<code title>application/gzip</code>`, `<code title>application/x-gunzip</code>`, or
+   `<code title>application/x-gzip</code>`.
+   <li><span title=concept-header-parse>Parsing</span>
+   `<code title>Content-Encoding</code>` in <var title>response</var>'s
+   <span title=concept-response-header-list>header list</span> returns
+   `<code title>compress</code>` and <span title=concept-header-parse>parsing</span>
+   `<code title>Content-Type</code> in <var title>response</var>'s
+   <span title=concept-response-header-list>header list</span> returns
+   `<code title>application/compress</code>` or
+   `<code title>application/x-compress</code>.
+  </ul>
+
+  <p class=note>This deals with broken Apache configurations. Ideally HTTP would define
+  this.
+  <!-- http://wiki.whatwg.org/wiki/HTTP -->
 
  <li>
   <p>If <var title>credentials flag</var> is set and <var title>response</var>'s
@@ -1473,7 +1596,9 @@ these steps:
    again free.
   </ol>
 
- <li><p>Return <var title>response</var>.
+ <li><p>Return <var title>response</var>. <span class="note no-backref">Typically
+ <var title>response</var>'s <span title=concept-response-body>body</span> is still being
+ pushed to after returning.</span>
 </ol>
 
 
@@ -1903,8 +2028,7 @@ method, when invoked, must run these steps:
  <i title>response</i> and <var title>name</var> is a
  <span>forbidden response header name</span>, return.
 
- <li><p>Remove all <span title=concept-header>headers</span> whose
- <span title=concept-header-name>name</span> is <var title>name</var> from
+ <li><p><span title=concept-header-list-delete>Delete</span> <var title>name</var> from
  <span title=concept-Headers-header-list>header list</span>.
 </ol>
 
@@ -2040,6 +2164,9 @@ interface <dfn>FetchBodyStream</dfn> {
 <dfn title=concept-FetchBodyStream-read-flag>read flag</dfn> (initially unset).
 
 <p>A <code>FetchBodyStream</code> object also has an associated
+<dfn title=concept-FetchBodyStream-codec>codec</dfn> (initially null).
+
+<p>A <code>FetchBodyStream</code> object also has an associated
 <dfn title=concept-FetchBodyStream-MIME-type>MIME type</dfn>
 (initially the empty byte sequence).
 
@@ -2068,6 +2195,11 @@ interface <dfn>FetchBodyStream</dfn> {
    <li><p>Let <var title>bytes</var> be the result of reading from <var title>stream</var>
    until it returns end-of-stream.
    <!-- XXX stream -->
+
+   <li><p>If <span title=concept-FetchBodyStream-codec>codec</span> is non-null, set
+   <var title>bytes</var> to the result of
+   <span title="handle content codings">handling content codings</span> given
+   <span title=concept-FetchBodyStream-codec>codec</span> and <var title>bytes</var>.
 
    <li>
     <p>Switch on <var title>type</var>:
@@ -2191,6 +2323,7 @@ object which is itself associated with
  <var title>request</var>'s <span title=concept-request-header-list>header list</span>,
  <span title=concept-request-body>body</span> is a tee of <var title>request</var>'s
  <span title=concept-request-body>body</span>,
+ <span>preserve content codings flag</span> is set,
  <span title=concept-request-client>client</span> is
  <span data-anolis-spec=html>entry settings object</span>'s
  <span data-anolis-spec=html>global object</span>,
@@ -2334,6 +2467,12 @@ constructor must run these steps:
  <span title=concept-header-extract-MIME-type>extracting a MIME type</span> from
  <var title>r</var>'s <span title=concept-Request-request>request</span>'s
  <span title=concept-request-header-list>header list</span>.
+
+ <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
+ <span title=concept-FetchBodyStream-codec>codec</span> to the result of
+ <span title=concept-header-parse>parsing</span> `<code title>Content-Encoding</code>` in
+ <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+ <span title=concept-request-header-list>header list</span> if that result is not failure.
 
  <li><p>Return <var title>r</var>.
 </ol>
@@ -2496,6 +2635,12 @@ constructor, when invoked, must run these steps:
  <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-header-list>header list</span>.
 
+ <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
+ <span title=concept-FetchBodyStream-codec>codec</span> to the result of
+ <span title=concept-header-parse>parsing</span> `<code title>Content-Encoding</code>` in
+ <var title>r</var>'s <span title=concept-Response-request>response</span>'s
+ <span title=concept-response-header-list>header list</span> if that result is not failure.
+
  <li><p>Return <var title>r</var>.
 </ol>
 
@@ -2607,11 +2752,10 @@ method, must run these steps:
    <var title>response</var>.
   </ol>
 
-  <p>To <span>process response body</span> for <var title>response</var>,
-  <span class=XXX>...</span>.
+  <p>To <span>process response body</span> for <var title>response</var>, do nothing.
 
   <p>To <span>process response end-of-file</span> for <var title>response</var>,
-  <span class=XXX>...</span>.
+  do nothing.
 
  <li><p>Return <var title>p</var>.
 </ol>
