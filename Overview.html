@@ -417,7 +417,8 @@ steps:
 <dfn id="unsafe-request-flag">unsafe request flag</dfn>. Unless stated otherwise it is unset.
 
 <p class="note no-backref">The <a href="#unsafe-request-flag">unsafe request flag</a> is set by APIs such as
-<code title="dom-global-fetch"><a href="#dom-global-fetch">fetch()</a></code>  and <code>XMLHttpRequest</code> to ensure a
+<code title="dom-global-fetch"><a href="#dom-global-fetch">fetch()</a></code>  and
+<code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code> to ensure a
 <a href="#cors-preflight-fetch-0">CORS preflight fetch</a> is done based on the supplied
 <a href="#concept-request-method" title="concept-request-method">method</a> and
 <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>. It does not free an API from
@@ -442,24 +443,36 @@ outlawing <a href="#forbidden-method" title="forbidden method">forbidden methods
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-context" title="concept-request-context">context</dfn>, which is one of
-<i title="">child</i>,
-<i title="">connect</i>,
+<i title="">audio</i>,
+<i title="">beacon</i>,
+<i title="">cspreport</i>,
 <i title="">download</i>,
+<i title="">embed</i>,
+<i title="">eventsource</i>,
+<i title="">favicon</i>,
+<i title="">fetch</i>,
 <i title="">font</i>,
 <i title="">form</i>,
+<i title="">frame</i>,
+<i title="">hyperlink</i>,
+<i title="">iframe</i>,
 <i title="">image</i>,
+<i title="">location</i>,
 <i title="">manifest</i>,
-<i title="">media</i>,
-<i title="">navigate</i>,
 <i title="">object</i>,
 <i title="">ping</i>,
-<i title="">popup</i>,
+<i title="">plugin</i>,
 <i title="">prefetch</i>,
 <i title="">script</i>,
 <i title="">serviceworker</i>,
 <i title="">sharedworker</i>,
-<i title="">style</i>, and
-<i title="">worker</i>.
+<i title="">subresource</i>,
+<i title="">style</i>,
+<i title="">track</i>,
+<i title="">video</i>,
+<i title="">worker</i>,
+<i title="">xmlhttprequest</i>, and
+<i title="">xslt</i>.
 <!--
 http://wiki.whatwg.org/wiki/Contexts
 https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsIContentPolicy
@@ -474,92 +487,180 @@ https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/
 not a <span>client request</span>.
 -->
 
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-context-frame-type" title="concept-request-context-frame-type">context frame type</dfn>, which is one of
+<i title="">auxiliary</i>, <i title="">top-level</i>, <i title="">nested</i>, and
+<i title="">none</i>. Unless stated otherwise it is <i title="">none</i>.
+
+<p class="XXX">Remove <i title="">auxiliary</i>? Not sure it is distinctive enough.
+
 <div class="note">
- <p>The following table illustrates the relationship between
- <a href="#concept-request" title="concept-request">request</a>
- <a href="#concept-request-context" title="concept-request-context">contexts</a> and CSP directives:
+ <p>The following table illustrates the relationship between a
+ <a href="#concept-request" title="concept-request">request</a>'s
+ <a href="#concept-request-context" title="concept-request-context">context</a>, its
+ <a href="#concept-request-context-frame-type" title="concept-request-context-frame-type">context frame type</a>, and
+ CSP directives:
 
  <table>
   <tr>
-   <th><a href="#concept-request" title="concept-request">request</a>
-   <a href="#concept-request-context" title="concept-request-context">contexts</a>
+   <th><a href="#concept-request-context" title="concept-request-context">context</a>
+   <th><a href="#concept-request-context-frame-type" title="concept-request-context-frame-type">context frame type</a>
    <th>CSP directive
    <th>Platform feature example
   <tr>
-   <td><i title="">child</i>
-   <td><code title="">child-src</code>
-   <td>HTML's <code>iframe</code> element
+   <td><i title="">audio</i>
+   <td><i title="">none</i>
+   <td><code title="">media-src</code>
+   <td>HTML's <code>audio</code> element
   <tr>
-   <td><i title="">connect</i>
+   <td><i title="">beacon</i>
+   <td><i title="">none</i>
    <td><code title="">connect-src</code>
-   <td><code>XMLHttpRequest</code>
+   <td><code>navigator.sendBeacon()</code>
+  <tr>
+   <td><i title="">cspreport</i>
+   <td><i title="">none</i>
+   <td><code title="">connect-src</code>
+   <td>CSP's report feature
   <tr>
    <td><i title="">download</i>
+   <td><i title="">none</i>
    <td>—
    <td>HTML's <code>a</code> element when its <code>download</code> attribute is set
   <tr>
+   <td><i title="">embed</i>
+   <td><i title="">none</i>
+   <td><code title="">object-src</code>
+   <td>HTML's <code>embed</code> element
+  <tr>
+   <td><i title="">eventsource</i>
+   <td><i title="">none</i>
+   <td><code title="">connect-src</code>
+   <td><code>EventSource</code>
+  <tr>
+   <td><i title="">favicon</i>
+   <td><i title="">none</i>
+   <td>—
+   <td><code title="">/favicon.ico</code> resource
+  <tr>
+   <td><i title="">fetch</i>
+   <td><i title="">none</i>
+   <td><code title="">connect-src</code>
+   <td><code title="dom-global-fetch"><a href="#dom-global-fetch">fetch()</a></code>
+  <tr>
    <td><i title="">font</i>
+   <td><i title="">none</i>
    <td><code title="">font-src</code>
    <td>CSS' <code>@font-face</code>
   <tr>
    <td><i title="">form</i>
-   <td><code title="">form-action</code>
+   <td>any but <i title="">none</i>
+   <td><code title="">form-action</code>, potentially <code title="">child-src</code>
    <td>HTML's <code>form</code> element
   <tr>
+   <td><i title="">frame</i>
+   <td><i title="">nested</i>
+   <td><code title="">child-src</code>
+   <td>HTML's <code>frame</code> element
+  <tr>
+   <td><i title="">hyperlink</i>
+   <td>any but <i title="">none</i>
+   <td>potentially <code title="">child-src</code>
+   <td>HTML's <code>a</code> element
+  <tr>
+   <td><i title="">iframe</i>
+   <td><i title="">nested</i>
+   <td><code title="">child-src</code>
+   <td>HTML's <code>iframe</code> element
+  <tr>
    <td><i title="">image</i>
+   <td><i title="">none</i>
    <td><code title="">img-src</code>
    <td>SVG's <code>image</code> element
   <tr>
+   <td><i title="">location</i>
+   <td>any but <code title="">none</code>
+   <td>potentially <code title="">child-src</code>
+   <td><code title="">window.location</code>
+  <tr>
    <td><i title="">manifest</i>
+   <td><i title="">none</i>
    <td>—
    <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
    "<code>manifest</code>"
   <tr>
-   <td><i title="">media</i>
-   <td><code title="">media-src</code>
-   <td>HTML's <code>track</code> element
-  <tr>
-   <td><i title="">navigate</i>
-   <td>—
-   <td>The result of clicking HTML's <code>a</code> element
-  <tr>
    <td><i title="">object</i>
+   <td><i title="">none</i>
    <td><code title="">object-src</code>
-   <td>HTML's <code>embed</code> element
+   <td>HTML's <code>object</code> element
   <tr>
    <td><i title="">ping</i>
+   <td><i title="">none</i>
    <td><code title="">connect-src</code>
-   <td><code>navigator.sendBeacon()</code>, HTML's <code>ping</code> attribute
+   <td>HTML's <code>ping</code> attribute
   <tr>
-   <td><i title="">popup</i>
+   <td><i title="">plugin</i>
+   <td><i title="">none</i>
    <td>—
-   <td><code>window.open()</code>
+   <td>A <a href="#concept-fetch" title="concept-fetch">fetch</a> from a plugin
   <tr>
    <td><i title="">prefetch</i>
+   <td><i title="">none</i>
    <td>—
    <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
    "<code>prefetch</code>"
   <tr>
    <td><i title="">script</i>
+   <td><i title="">none</i>
    <td><code title="">script-src</code>
    <td>HTML's <code>script</code> element
   <tr>
    <td><i title="">serviceworker</i>
+   <td><i title="">none</i>
    <td>—
    <td><code title="">navigator.serviceWorker.register()</code>
   <tr>
    <td><i title="">sharedworker</i>
+   <td><i title="">none</i>
    <td><code title="">child-src</code>
    <td><code>SharedWorker</code>
   <tr>
+   <td><i title="">subresource</i>
+   <td><i title="">none</i>
+   <td>—
+   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
+   "<code>subresource</code>"
+  <tr>
    <td><i title="">style</i>
+   <td><i title="">none</i>
    <td><code title="">style-src</code>
    <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
    "<code>stylesheet</code>"
   <tr>
+   <td><i title="">track</i>
+   <td><i title="">none</i>
+   <td><code title="">media-src</code>
+   <td>HTML's <code>track</code> element
+  <tr>
+   <td><i title="">video</i>
+   <td><i title="">none</i>
+   <td><code title="">media-src</code>
+   <td>HTML's <code>video</code> element
+  <tr>
    <td><i title="">worker</i>
+   <td><i title="">none</i>
    <td><code title="">child-src</code>
    <td><code>Worker</code>
+  <tr>
+   <td><i title="">xmlhttprequest</i>
+   <td><i title="">none</i>
+   <td><code title="">connect-src</code>
+   <td><code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>
+  <tr>
+   <td><i title="">xslt</i>
+   <td><i title="">none</i>
+   <td><code title="">script-src</code>
+   <td><code>&lt;?xml-stylesheet&gt;</code>
  </table>
 </div>
 
