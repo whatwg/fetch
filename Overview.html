@@ -92,6 +92,7 @@ fetching.
    <li><a href="#fetch-method"><span class="secno">5.6 </span>Fetch method</a></ol></li>
  <li><a class="no-num" href="#background-reading">Background reading</a>
   <ol class="toc">
+   <li><a class="no-num" href="#http-header-layer-division">HTTP header layer division</a></li>
    <li><a class="no-num" href="#atomic-http-redirect-handling">Atomic HTTP redirect handling</a></li>
    <li><a class="no-num" href="#basic-safe-cors-protocol-setup">Basic safe CORS protocol setup</a></li>
    <li><a class="no-num" href="#cors-protocol-and-http-caches">CORS protocol and HTTP caches</a></ol></li>
@@ -322,7 +323,7 @@ that is one of `<code title="">application/x-www-form-urlencoded</code>`,
 <a href="#concept-header-name" title="concept-header-name">Names</a> starting with `<code title="">Sec-</code>` are
 reserved to allow new <a href="#concept-header" title="concept-header">headers</a> to be minted that are safe
 from APIs using <a href="#concept-fetch" title="concept-fetch">fetch</a> that allow control over
-<a href="#concept-header" title="concept-header">headers</a> by authors, such as
+<a href="#concept-header" title="concept-header">headers</a> by developers, such as
 <code class="external"><a href="http://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>.
 <a class="informative" href="#refsXHR">[XHR]</a>
 
@@ -3040,6 +3041,23 @@ method, must run these steps:
 <h2 class="no-num" id="background-reading">Background reading</h2>
 
 <p><em>This section and its subsections are informative only.</em>
+
+<h3 class="no-num" id="http-header-layer-division">HTTP header layer division</h3>
+
+<p>For the purposes of fetching, the platform has an API layer (HTML's
+<code title="">img</code>, CSS' <code title="">background-image</code>), service worker layer,
+and network &amp; cache layer. `<code title="http-accept">Accept</code>` and
+`<code title="http-accept-language">Accept-Language</code>` are set at the API layer
+(typically by the user agent). Most other headers controlled by the user agent, such as
+`<code title="http-accept-encoding">Accept-Encoding</code>`,
+`<code title="http-host">Host</code>`, and `<code title="http-referer">Referer</code>`, are
+set in the network &amp; cache layer. Developers can set headers either at the API layer
+or in the service worker layer (typically through a <code><a href="#request">Request</a></code> object).
+Developers have almost no control over
+<a href="#forbidden-header-name" title="forbidden header name">forbidden headers</a>, but can control
+`<code title="http-accept">Accept</code>` and have the means to constrain and disable
+`<code title="http-referer">Referer</code>` for instance.
+
 
 <h3 class="no-num" id="atomic-http-redirect-handling">Atomic HTTP redirect handling</h3>
 
