@@ -172,6 +172,10 @@ another byte sequence does so in a <a href="#byte-case-insensitive">byte case-in
 <p>To <dfn id="byte-lowercase">byte lowercase</dfn> a byte sequence, increase each byte it contains, in the
 range 0x41 to 0x5A, by 0x20.
 
+<p>To <dfn id="byte-uppercase">byte uppercase</dfn> a byte sequence, subtract each byte it contains, in the
+range 0x61 to 0x7A, by 0x20.
+
+
 <h3 id="http"><span class="secno">2.1 </span>HTTP</h3>
 
 <p>While <a href="#concept-fetch" title="concept-fetch">fetching</a> encompasses more than just HTTP, it
@@ -192,8 +196,11 @@ means (e.g. via <code title="">data</code> URL).
 `<code title="">TRACE</code>`, and `<code title="">TRACK</code>`.
 <a href="#refsHTTPVERBSEC">[HTTPVERBSEC]</a>
 
-<p>A <dfn id="useful-method">useful method</dfn> is a <a href="#concept-method" title="concept-method">method</a> that is not a
-<a href="#forbidden-method">forbidden method</a>.
+<p>To <dfn id="concept-method-normalize" title="concept-method-normalize">normalize</dfn> a
+<a href="#concept-method" title="concept-method">method</a>, if it is a <a href="#byte-case-insensitive">byte case-insensitive</a>
+match for `<code title="">DELETE</code>`, `<code title="">GET</code>`,
+`<code title="">HEAD</code>`, `<code title="">OPTIONS</code>`, `<code title="">POST</code>`, or
+`<code title="">PUT</code>`, <a href="#byte-uppercase">byte uppercase</a> it.
 
 
 <h4 id="terminology-headers"><span class="secno">2.1.2 </span>Headers</h4>
@@ -2713,11 +2720,11 @@ constructor must run these steps:
   <var title="">method</var> be it and run these substeps:
 
   <ol>
-   <li><p>If <var title="">method</var> is not a <a href="#useful-method">useful method</a>,
+   <li><p>If <var title="">method</var> is not a <a href="#concept-method" title="concept-method">method</a> or
+   <var title="">method</var> is a <a href="#forbidden-method">forbidden method</a>,
    <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
-   <li><p class="XXX">Add case correction as in XMLHttpRequest? See
-   <a href="https://github.com/slightlyoff/ServiceWorker/issues/120">SW #120</a>.
+   <li><p><a href="#concept-method-normalize" title="concept-method-normalize">Normalize</a> <var title="">method</var>.
 
    <li><p>Set <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
    to <var title="">method</var>.

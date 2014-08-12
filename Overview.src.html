@@ -128,6 +128,10 @@ another byte sequence does so in a <span>byte case-insensitive</span> manner.
 <p>To <dfn>byte lowercase</dfn> a byte sequence, increase each byte it contains, in the
 range 0x41 to 0x5A, by 0x20.
 
+<p>To <dfn>byte uppercase</dfn> a byte sequence, subtract each byte it contains, in the
+range 0x61 to 0x7A, by 0x20.
+
+
 <h3>HTTP</h3>
 
 <p>While <span title=concept-fetch>fetching</span> encompasses more than just HTTP, it
@@ -148,8 +152,11 @@ means (e.g. via <code title>data</code> URL).
 `<code title>TRACE</code>`, and `<code title>TRACK</code>`.
 <span data-anolis-ref>HTTPVERBSEC</span>
 
-<p>A <dfn>useful method</dfn> is a <span title=concept-method>method</span> that is not a
-<span>forbidden method</span>.
+<p>To <dfn title=concept-method-normalize>normalize</dfn> a
+<span title=concept-method>method</span>, if it is a <span>byte case-insensitive</span>
+match for `<code title>DELETE</code>`, `<code title>GET</code>`,
+`<code title>HEAD</code>`, `<code title>OPTIONS</code>`, `<code title>POST</code>`, or
+`<code title>PUT</code>`, <span>byte uppercase</span> it.
 
 
 <h4 id=terminology-headers>Headers</h4>
@@ -2669,11 +2676,11 @@ constructor must run these steps:
   <var title>method</var> be it and run these substeps:
 
   <ol>
-   <li><p>If <var title>method</var> is not a <span>useful method</span>,
+   <li><p>If <var title>method</var> is not a <span title=concept-method>method</span> or
+   <var title>method</var> is a <span>forbidden method</span>,
    <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
-   <li><p class=XXX>Add case correction as in XMLHttpRequest? See
-   <a href="https://github.com/slightlyoff/ServiceWorker/issues/120">SW #120</a>.
+   <li><p><span title=concept-method-normalize>Normalize</span> <var title>method</var>.
 
    <li><p>Set <var title>request</var>'s <span title=concept-request-method>method</span>
    to <var title>method</var>.
