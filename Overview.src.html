@@ -343,7 +343,7 @@ steps:
  <span title="byte lowercase">byte lowercased</span>.
 </ol>
 
-<h4>Body</h4>
+<h4>Bodies</h4>
 
 <p>A <dfn title=concept-body>body</dfn> is a byte stream. It has an associated
 <dfn title=concept-body-transmitted>transmitted</dfn> and
@@ -2303,16 +2303,12 @@ method, when invoked, must run these steps:
 <a href="https://www.w3.org/Bugs/Public/show_bug.cgi?id=26102">bug 26102</a>.
 
 
-<h3>Body stream concept</h3>
-
-<p class=note>The interface in this section is to become a subclass of a future native
-JavaScript IO stream class. For now all it offers is a single method for getting all the
-data out of the underlying stream in a chosen representation.
+<h3>Body mixin</h3>
 
 <pre class=idl>typedef object <dfn>JSON</dfn>;
-typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</span> or <span data-anolis-spec=xhr>FormData</span> or <span data-anolis-spec=encoding>ScalarValueString</span> or <span data-anolis-spec=url>URLSearchParams</span>) <dfn>FetchBodyInit</dfn>;</pre>
+typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</span> or <span data-anolis-spec=xhr>FormData</span> or <span data-anolis-spec=encoding>ScalarValueString</span> or <span data-anolis-spec=url>URLSearchParams</span>) <dfn>BodyInit</dfn>;</pre>
 
-<p>To <dfn title=concept-FetchBodyInit-extract>extract</dfn> a byte stream and a
+<p>To <dfn title=concept-BodyInit-extract>extract</dfn> a byte stream and a
 `<code title>Content-Type</code>` <span title=concept-header-value>value</span> from
 <var title>object</var>, run these steps:
 
@@ -2376,46 +2372,46 @@ typedef (ArrayBuffer or ArrayBufferView or <span data-anolis-spec=fileapi>Blob</
 </ol>
 
 
-<pre class=idl>[NoInterfaceObject,
- Exposed=(Window,Worker)]
-interface <dfn>FetchBodyStream</dfn> {
-  Promise&lt;ArrayBuffer> <span title=dom-FetchBodyStream-asArrayBuffer>asArrayBuffer</span>();
-  Promise&lt;<span data-anolis-spec=fileapi>Blob</span>> <span title=dom-FetchBodyStream-asBlob>asBlob</span>();
-  Promise&lt;<span data-anolis-spec=xhr>FormData</span>> <span title=dom-FetchBodyStream-asFormData>asFormData</span>();
-  Promise&lt;<span>JSON</span>> <span title=dom-FetchBodyStream-asJSON>asJSON</span>();
-  Promise&lt;<span data-anolis-spec=encoding>ScalarValueString</span>> <span title=dom-FetchBodyStream-asText>asText</span>();
+<pre class=idl>[NoInterfaceObject]
+interface <dfn>Body</dfn> {
+  readonly attribute boolean <span title=dom-Body-bodyUsed>bodyUsed</span>;
+  Promise&lt;ArrayBuffer> <span title=dom-Body-arrayBuffer>arrayBuffer</span>();
+  Promise&lt;<span data-anolis-spec=fileapi>Blob</span>> <span title=dom-Body-blob>blob</span>();
+  Promise&lt;<span data-anolis-spec=xhr>FormData</span>> <span title=dom-Body-formData>formData</span>();
+  Promise&lt;<span>JSON</span>> <span title=dom-Body-json>json</span>();
+  Promise&lt;<span data-anolis-spec=encoding>ScalarValueString</span>> <span title=dom-Body-text>text</span>();
 };</pre>
 
 <p class=note>Formats you would not want a network layer to be dependent upon, such as
 HTML, will likely not be exposed here. Rather, an HTML parser API might accept a stream in
 due course.
+<!-- http://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>A <code>FetchBodyStream</code> object has an associated byte stream.
+<p>Objects implementing the <code>Body</code> mixin gain an associated
+<dfn title=concept-Body-body>body</dfn> (a byte stream), a
+<dfn title=concept-Body-used-flag>used flag</dfn> (initially unset), and a
+<dfn title=concept-Body-MIME-type>MIME type</dfn> (initially the empty byte sequence).
 
-<p>A <code>FetchBodyStream</code> object also has an associated
-<dfn title=concept-FetchBodyStream-read-flag>read flag</dfn> (initially unset).
+<p>The <dfn title=dom-Body-bodyUsed><code>bodyUsed</code></dfn> attribute's getter must
+return true if the <span title=concept-Body-used-flag>used flag</span> is set, and false
+otherwise.
 
-<p>A <code>FetchBodyStream</code> object also has an associated
-<dfn title=concept-FetchBodyStream-MIME-type>MIME type</dfn>
-(initially the empty byte sequence).
-
-<p>The <dfn title=concept-FetchBodyStream-as-generic>as generic</dfn> algorithm, given an
-<var title>object</var> and <var title>type</var>, runs these steps:
+<p>Objects implementing the <code>Body</code> mixin also have an associated
+<dfn title=concept-Body-consume-body>consume body</dfn> algorithm, which given a
+<var title>type</var>, runs these steps:
 
 <ol>
  <li><p>Let <var title>p</var> be a new promise.
 
- <li><p>If <var title>object</var>'s
- <span title=concept-FetchBodyStream-read-flag>read flag</span> is set, reject
+ <li><p>If <span title=concept-Body-used-flag>used flag</span> is set, reject
  <var title>p</var> with a <code title>TypeError</code>.
 
  <li>
-  <p>Otherwise, set <var title>object</var>'s
-  <span title=concept-FetchBodyStream-read-flag>read flag</span> and then run these
+  <p>Otherwise, set <span title=concept-Body-used-flag>used flag</span> and then run these
   substeps asynchronously:
 
   <ol>
-   <li><p>Let <var title>stream</var> be <var title>object</var>'s byte stream.
+   <li><p>Let <var title>stream</var> be <span title=concept-Body-body>body</span>.
 
    <li><p>If <var title>stream</var> is null, set <var title>stream</var> to an empty byte
    sequence.
@@ -2436,19 +2432,17 @@ due course.
      <dd><p>Resolve <var title>p</var> with a <code data-anolis-spec=fileapi>Blob</code>
      whose contents are <var title>bytes</var> and
      <code data-anolis-spec=fileapi title=dom-Blob-type>type</code> is
-     <var title>object</var>'s
-     <span title=concept-FetchBodyStream-MIME-type>MIME type</span>.
+     <span title=concept-Body-MIME-type>MIME type</span>.
 
      <dt><i title>FormData</i>
      <dd>
-      <p>If <var title>object</var>'s
-      <span title=concept-FetchBodyStream-MIME-type>MIME type</span> (ignoring parameters)
+      <p>If <span title=concept-Body-MIME-type>MIME type</span> (ignoring parameters)
       is `<code>multipart/form-data</code>`, run these subsubsteps:
 
       <ol>
        <li><p>Parse <var title>bytes</var>, using the value of the
-       `<code title>boundary</code>` parameter from <var title>object</var>'s
-       <span title=concept-FetchBodyStream-MIME-type>MIME type</span> and
+       `<code title>boundary</code>` parameter from
+       <span title=concept-Body-MIME-type>MIME type</span> and
        <span data-anolis-spec=encoding>utf-8</span> as encoding, per the rules set forth
        in <cite>Returning Values from Forms: multipart/form-data</cite>.
        <span data-anolis-ref>RFC2388</span>
@@ -2467,9 +2461,9 @@ due course.
       `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
       written. Volunteers welcome.
 
-      <p>Otherwise, if <var title>object</var>'s
-      <span title=concept-FetchBodyStream-MIME-type>MIME type</span> (ignoring parameters)
-      is `<code>application/x-www-form-urlencoded</code>`, run these subsubsteps:
+      <p>Otherwise, if <span title=concept-Body-MIME-type>MIME type</span>
+      (ignoring parameters) is `<code>application/x-www-form-urlencoded</code>`, run these
+      subsubsteps:
 
       <ol>
        <li><p>Let <var title>entries</var> be the result of
@@ -2507,30 +2501,25 @@ due course.
  <li><p>Return <var title>p</var>.
 </ol>
 
-<p>The <dfn title=dom-FetchBodyStream-asArrayBuffer><code>asArrayBuffer()</code></dfn>
+<p>The <dfn title=dom-Body-arrayBuffer><code>arrayBuffer()</code></dfn>
 method, when invoked, must return the result of running
-<span title=concept-FetchBodyStream-as-generic>as generic</span> with
-<span data-anolis-spec=dom>context object</span> and <i title>ArrayBuffer</i>.
+<span title=concept-Body-consume-body>consume body</span> with <i title>ArrayBuffer</i>.
 
-<p>The <dfn title=dom-FetchBodyStream-asBlob><code>asBlob()</code></dfn> method, when
+<p>The <dfn title=dom-Body-blob><code>blob()</code></dfn> method, when
 invoked, must return the result of running
-<span title=concept-FetchBodyStream-as-generic>as generic</span> with
-<span data-anolis-spec=dom>context object</span> and <i title>Blob</i>.
+<span title=concept-Body-consume-body>consume body</span> with <i title>Blob</i>.
 
-<p>The <dfn title=dom-FetchBodyStream-asFormData><code>asFormData()</code></dfn> method,
+<p>The <dfn title=dom-Body-formData><code>formData()</code></dfn> method,
 when invoked, must return the result of running
-<span title=concept-FetchBodyStream-as-generic>as generic</span> with
-<span data-anolis-spec=dom>context object</span> and <i title>FormData</i>.
+<span title=concept-Body-consume-body>consume body</span> with <i title>FormData</i>.
 
-<p>The <dfn title=dom-FetchBodyStream-asJSON><code>asJSON()</code></dfn> method, when
+<p>The <dfn title=dom-Body-json><code>json()</code></dfn> method, when
 invoked, must return the result of running
-<span title=concept-FetchBodyStream-as-generic>as generic</span> with
-<span data-anolis-spec=dom>context object</span> and <i title>JSON</i>.
+<span title=concept-Body-consume-body>consume body</span> with <i title>JSON</i>.
 
-<p>The <dfn title=dom-FetchBodyStream-asText><code>asText()</code></dfn> method, when
+<p>The <dfn title=dom-Body-text><code>text()</code></dfn> method, when
 invoked, must return the result of running
-<span title=concept-FetchBodyStream-as-generic>as generic</span> with
-<span data-anolis-spec=dom>context object</span> and <i title>text</i>.
+<span title=concept-Body-consume-body>consume body</span> with <i title>text</i>.
 
 
 <h3>Request class</h3>
@@ -2546,7 +2535,6 @@ interface <dfn>Request</dfn> {
   readonly attribute ByteString <span title=dom-Request-method>method</span>;
   readonly attribute <span data-anolis-spec=encoding>ScalarValueString</span> <span title=dom-Request-url>url</span>;
   readonly attribute <span>Headers</span> <span title=dom-Request-headers>headers</span>;
-  readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
 <!--
   readonly attribute XXX <span title=dom-Request-client>client</span>
   readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;
@@ -2558,12 +2546,15 @@ interface <dfn>Request</dfn> {
   readonly attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;<!--
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
+
+  <span>Request</span> <span title=dom-Request-clone>clone()</span>;
 };
+<span>Request</span> implements <span>Body</span>;
 
 dictionary <dfn>RequestInit</dfn> {
   ByteString method;
   <span>HeadersInit</span> headers;
-  <span>FetchBodyInit</span> body;
+  <span>BodyInit</span> body;
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
 };
@@ -2581,23 +2572,41 @@ is itself associated with <span title=concept-Request-request>request</span>'s
 <span title=concept-request-header-list>header list</span> and whose
 <span title=concept-Headers-guard>guard</span> is <i title>request</i>.
 
-<p>A <code>Request</code> object also has an associated <code>FetchBodyStream</code>
-object which is itself associated with
+<p>A <code>Request</code> object's <span title=concept-Body-body>body</span> is its
 <span title=concept-Request-request>request</span>'s
-<span title=concept-response-body>body</span>.
+<span title=concept-request-body>body</span>.
 
-<p>To make a <dfn>restricted copy</dfn> of a <span title=concept-request>request</span>
-<var title>request</var>, run these steps:
+<hr>
+
+<p>The
+<dfn title=dom-Request><code>Request(<var>input</var>, <var>init</var>)</code></dfn>
+constructor must run these steps:
 
 <ol>
- <li><p>Let <var title>r</var> be a new <span title=concept-request>request</span> whose
- <span title=concept-request-url>url</span> is <var title>request</var>'s
+ <li>
+  <p>If <var title>input</var> is a <code>Request</code> object, run these substeps:
+
+  <ol>
+   <li><p>If <var title>input</var>'s <span title=concept-Body-used-flag>used flag</span>
+   is set, <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p>Set <var title>input</var>'s
+   <span title=concept-Body-used-flag>used flag</span>.
+  </ol>
+
+ <li><p>Let <var title>request</var> be <var title>input</var>'s associated
+ <span title=concept-request>request</span>, if <var title>input</var> is a
+ <code>Request</code> object, and a new <span title=concept-request>request</span>
+ otherwise.
+
+ <li><p>Set <var title>request</var> to a new <span title=concept-request>request</span>
+ whose <span title=concept-request-url>url</span> is <var title>request</var>'s
  <span title=concept-request-url>url</span>,
  <span title=concept-request-method>method</span> is <var title>request</var>'s
  <span title=concept-request-method>method</span>,
  <span title=concept-request-header-list>header list</span> is a copy of
  <var title>request</var>'s <span title=concept-request-header-list>header list</span>,
- <span title=concept-request-body>body</span> is a tee of <var title>request</var>'s
+ <span title=concept-request-body>body</span> is <var title>request</var>'s
  <span title=concept-request-body>body</span>,
  <span title=concept-request-client>client</span> is
  <span data-anolis-spec=html>entry settings object</span>'s
@@ -2613,24 +2622,6 @@ object which is itself associated with
  <span title=concept-request-credentials-mode>credentials mode</span> is
  <var title>request</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span>.
- <!-- XXX stream -->
-
- <li><p>Return <var title>r</var>.
-</ol>
-
-<hr>
-
-<p>The
-<dfn title=dom-Request><code>Request(<var>input</var>, <var>init</var>)</code></dfn>
-constructor must run these steps:
-
-<ol>
- <li><p>Let <var title>request</var> be <var title>input</var>'s associated
- <span title=concept-request>request</span>, if <var title>input</var> is a
- <code>Request</code> object, and a new <span title=concept-request>request</span>
- otherwise.
-
- <li><p>Set <var title>request</var> to a <span>restricted copy</span> of itself.
 
  <li><p>Let <var title>fallbackMode</var> be null.
 
@@ -2687,8 +2678,7 @@ constructor must run these steps:
   </ol>
 
  <li><p>Let <var title>r</var> be a new <code>Request</code> object associated with
- <var title>request</var>, <code>Headers</code> object, and
- <code>FetchBodyStream</code> object.
+ <var title>request</var> and <code>Headers</code> object.
 
  <li><p>Let <var title>headers</var> be a copy of <var title>r</var>'s
  <code>Headers</code> object.
@@ -2723,7 +2713,7 @@ constructor must run these steps:
 
   <ol>
    <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
-   <span title=concept-FetchBodyInit-extract>extracting</span> <var title>init</var>'s
+   <span title=concept-BodyInit-extract>extracting</span> <var title>init</var>'s
    <code title>body</code> member.
 
    <li><p>Set <var title>r</var>'s <span title=concept-Request-request>request</span>'s
@@ -2738,10 +2728,9 @@ constructor must run these steps:
    <code>Headers</code> object. Rethrow any exception.
   </ol>
 
- <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
- <span title=concept-FetchBodyStream-MIME-type>MIME type</span> to the result of
- <span title=concept-header-extract-MIME-type>extracting a MIME type</span> from
- <var title>r</var>'s <span title=concept-Request-request>request</span>'s
+ <li><p>Set <var title>r</var>'s <span title=concept-Body-MIME-type>MIME type</span> to
+ the result of <span title=concept-header-extract-MIME-type>extracting a MIME type</span>
+ from <var title>r</var>'s <span title=concept-Request-request>request</span>'s
  <span title=concept-request-header-list>header list</span>.
 
  <li><p>Return <var title>r</var>.
@@ -2759,9 +2748,6 @@ return <span title=concept-Request-request>request</span>'s
 
 <p>The <dfn title=dom-Request-headers><code>headers</code></dfn> attribute's getter must
 return the associated <code>Headers</code> object.
-
-<p>The <dfn title=dom-Request-body><code>body</code></dfn> attribute's getter must return
-the associated <code>FetchBodyStream</code> object.
 
 <p>The <dfn title=dom-Request-context><code>context</code></dfn> attribute's getter must
 return <span title=concept-Request-request>request</span>'s
@@ -2806,7 +2792,7 @@ getter must return the value corresponding to the first matching statement, swit
 
 <h3>Response class</h3>
 
-<pre class=idl>[<span title=dom-Response>Constructor</span>(optional <span>FetchBodyInit</span> <var title>body</var>, optional <span>ResponseInit</span> <var title>init</var>),
+<pre class=idl>[<span title=dom-Response>Constructor</span>(optional <span>BodyInit</span> <var title>body</var>, optional <span>ResponseInit</span> <var title>init</var>),
  Exposed=(Window,Worker)]
 interface <dfn>Response</dfn> {
   static <span>Response</span> <span title=dom-Response-redirect>redirect</span>(<span data-anolis-spec=encoding>ScalarValueString</span> <var title>url</var>, optional unsigned short <var title>status</var> = 302);
@@ -2817,8 +2803,10 @@ interface <dfn>Response</dfn> {
   readonly attribute unsigned short <span title=dom-Response-status>status</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
   readonly attribute <span>Headers</span> <span title=dom-Response-headers>headers</span>;
-  readonly attribute <span>FetchBodyStream</span> <span title=dom-Request-body>body</span>;
+
+  <span>Response</span> <span title=dom-Response-clone>clone()</span>;
 };
+<span>Response</span> implements <span>Body</span>;
 
 dictionary <dfn>ResponseInit</dfn> {
   unsigned short status = 200;
@@ -2837,8 +2825,7 @@ is itself associated with <span title=concept-Response-response>response</span>'
 <span title=concept-response-header-list>header list</span> and whose
 <span title=concept-Headers-guard>guard</span> is <i title>response</i>.
 
-<p>A <code>Response</code> object also has an associated <code>FetchBodyStream</code>
-object which is itself associated with
+<p>A <code>Response</code> object's <span title=concept-Body-body>body</span> is its
 <span title=concept-Response-response>response</span>'s
 <span title=concept-response-body>body</span>.
 
@@ -2856,7 +2843,7 @@ constructor, when invoked, must run these steps:
 
  <li><p>Let <var title>r</var> be a new <code>Response</code> object, associated with a
  new <span title=concept-response>response</span>, <code>Headers</code> object, and
- <code>FetchBodyStream</code> object.
+ <code>Body</code> object.
 
  <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var title>init</var>'s
@@ -2885,7 +2872,7 @@ constructor, when invoked, must run these steps:
 
   <ol>
    <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
-   <span title=concept-FetchBodyInit-extract>extracting</span> <var title>body</var>.
+   <span title=concept-BodyInit-extract>extracting</span> <var title>body</var>.
 
    <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
    <span title=concept-response-body>body</span> to <var title>stream</var>.
@@ -2900,10 +2887,9 @@ constructor, when invoked, must run these steps:
    <span title=concept-response-header-list>header list</span>.
   </ol>
 
- <li><p>Set <var title>r</var>'s <code>FetchBodyStream</code> object's
- <span title=concept-FetchBodyStream-MIME-type>MIME type</span> to the result of
- <span title=concept-header-extract-MIME-type>extracting a MIME type</span> from
- <var title>r</var>'s <span title=concept-Response-response>response</span>'s
+ <li><p>Set <var title>r</var>'s <span title=concept-Body-MIME-type>MIME type</span> to
+ the result of <span title=concept-header-extract-MIME-type>extracting a MIME type</span>
+ from <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-header-list>header list</span>.
 
  <li><p>Return <var title>r</var>.
@@ -2932,7 +2918,7 @@ method, when invoked, must run these steps:
 
  <li><p>Let <var title>r</var> be a new <code>Response</code> object, associated with a
  new <span title=concept-response>response</span>, <code>Headers</code> object, and
- <code>FetchBodyStream</code> object.
+ <code>Body</code> object.
 
  <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var title>status</var>.
@@ -2971,11 +2957,12 @@ must return <span title=concept-Response-response>response</span>'s
 <p>The <dfn title=dom-Response-headers><code>headers</code></dfn> attribute's getter must
 return the associated <code>Headers</code> object.
 
-<p>The <dfn title=dom-Response-body><code>body</code></dfn> attribute's getter must return
-the associated <code>FetchBodyStream</code> object.
+<hr>
+
+<p class=XXX>The <dfn title=dom-Response-clone><code>clone()</code></dfn> method ...
 
 
-<h3>Structured cloning of <code>Headers</code>, <code>FetchBodyStream</code>, <code>Request</code>, and <code>Response</code> objects</h3>
+<h3>Structured cloning of <code>Headers</code>, <code>Request</code>, and <code>Response</code> objects</h3>
 
 <p class=XXX>See <a href="https://github.com/slightlyoff/ServiceWorker/issues/313">SW #313</a>.
 

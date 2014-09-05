@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-22-august-2014">Living Standard — Last Updated 22 August 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-september-2014">Living Standard — Last Updated 5 September 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -34,7 +34,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-22 August 2014, the editor has made this specification available
+5 September 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -63,7 +63,7 @@ fetching.
     <ol class="toc">
      <li><a href="#methods"><span class="secno">2.1.1 </span>Methods</a></li>
      <li><a href="#terminology-headers"><span class="secno">2.1.2 </span>Headers</a></li>
-     <li><a href="#body"><span class="secno">2.1.3 </span>Body</a></li>
+     <li><a href="#bodies"><span class="secno">2.1.3 </span>Bodies</a></li>
      <li><a href="#requests"><span class="secno">2.1.4 </span>Requests</a></li>
      <li><a href="#responses"><span class="secno">2.1.5 </span>Responses</a></ol></ol></li>
  <li><a href="#http-extensions"><span class="secno">3 </span>HTTP extensions</a>
@@ -86,10 +86,10 @@ fetching.
  <li><a href="#fetch-api"><span class="secno">5 </span>Fetch API</a>
   <ol class="toc">
    <li><a href="#headers-class"><span class="secno">5.1 </span>Headers class</a></li>
-   <li><a href="#body-stream-concept"><span class="secno">5.2 </span>Body stream concept</a></li>
+   <li><a href="#body-mixin"><span class="secno">5.2 </span>Body mixin</a></li>
    <li><a href="#request-class"><span class="secno">5.3 </span>Request class</a></li>
    <li><a href="#response-class"><span class="secno">5.4 </span>Response class</a></li>
-   <li><a href="#structured-cloning-of-headers,-fetchbodystream,-request,-and-response-objects"><span class="secno">5.5 </span>Structured cloning of <code>Headers</code>, <code>FetchBodyStream</code>, <code>Request</code>, and <code>Response</code> objects</a></li>
+   <li><a href="#structured-cloning-of-headers,-request,-and-response-objects"><span class="secno">5.5 </span>Structured cloning of <code>Headers</code>, <code>Request</code>, and <code>Response</code> objects</a></li>
    <li><a href="#fetch-method"><span class="secno">5.6 </span>Fetch method</a></ol></li>
  <li><a class="no-num" href="#background-reading">Background reading</a>
   <ol class="toc">
@@ -387,7 +387,7 @@ steps:
  <a href="#byte-lowercase" title="byte lowercase">byte lowercased</a>.
 </ol>
 
-<h4 id="body"><span class="secno">2.1.3 </span>Body</h4>
+<h4 id="bodies"><span class="secno">2.1.3 </span>Bodies</h4>
 
 <p>A <dfn id="concept-body" title="concept-body">body</dfn> is a byte stream. It has an associated
 <dfn id="concept-body-transmitted" title="concept-body-transmitted">transmitted</dfn> and
@@ -2347,16 +2347,12 @@ method, when invoked, must run these steps:
 <a href="https://www.w3.org/Bugs/Public/show_bug.cgi?id=26102">bug 26102</a>.
 
 
-<h3 id="body-stream-concept"><span class="secno">5.2 </span>Body stream concept</h3>
-
-<p class="note">The interface in this section is to become a subclass of a future native
-JavaScript IO stream class. For now all it offers is a single method for getting all the
-data out of the underlying stream in a chosen representation.
+<h3 id="body-mixin"><span class="secno">5.2 </span>Body mixin</h3>
 
 <pre class="idl">typedef object <dfn id="json">JSON</dfn>;
-typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a> or <a class="external" href="http://xhr.spec.whatwg.org/#formdata">FormData</a> or <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> or <a class="external" href="http://url.spec.whatwg.org/#urlsearchparams">URLSearchParams</a>) <dfn id="fetchbodyinit">FetchBodyInit</dfn>;</pre>
+typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a> or <a class="external" href="http://xhr.spec.whatwg.org/#formdata">FormData</a> or <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> or <a class="external" href="http://url.spec.whatwg.org/#urlsearchparams">URLSearchParams</a>) <dfn id="bodyinit">BodyInit</dfn>;</pre>
 
-<p>To <dfn id="concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extract</dfn> a byte stream and a
+<p>To <dfn id="concept-bodyinit-extract" title="concept-BodyInit-extract">extract</dfn> a byte stream and a
 `<code title="">Content-Type</code>` <a href="#concept-header-value" title="concept-header-value">value</a> from
 <var title="">object</var>, run these steps:
 
@@ -2420,46 +2416,46 @@ typedef (ArrayBuffer or ArrayBufferView or <a class="external" href="http://dev.
 </ol>
 
 
-<pre class="idl">[NoInterfaceObject,
- Exposed=(Window,Worker)]
-interface <dfn id="fetchbodystream">FetchBodyStream</dfn> {
-  Promise&lt;ArrayBuffer&gt; <a href="#dom-fetchbodystream-asarraybuffer" title="dom-FetchBodyStream-asArrayBuffer">asArrayBuffer</a>();
-  Promise&lt;<a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a>&gt; <a href="#dom-fetchbodystream-asblob" title="dom-FetchBodyStream-asBlob">asBlob</a>();
-  Promise&lt;<a class="external" href="http://xhr.spec.whatwg.org/#formdata">FormData</a>&gt; <a href="#dom-fetchbodystream-asformdata" title="dom-FetchBodyStream-asFormData">asFormData</a>();
-  Promise&lt;<a href="#json">JSON</a>&gt; <a href="#dom-fetchbodystream-asjson" title="dom-FetchBodyStream-asJSON">asJSON</a>();
-  Promise&lt;<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>&gt; <a href="#dom-fetchbodystream-astext" title="dom-FetchBodyStream-asText">asText</a>();
+<pre class="idl">[NoInterfaceObject]
+interface <dfn id="body">Body</dfn> {
+  readonly attribute boolean <a href="#dom-body-bodyused" title="dom-Body-bodyUsed">bodyUsed</a>;
+  Promise&lt;ArrayBuffer&gt; <a href="#dom-body-arraybuffer" title="dom-Body-arrayBuffer">arrayBuffer</a>();
+  Promise&lt;<a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a>&gt; <a href="#dom-body-blob" title="dom-Body-blob">blob</a>();
+  Promise&lt;<a class="external" href="http://xhr.spec.whatwg.org/#formdata">FormData</a>&gt; <a href="#dom-body-formdata" title="dom-Body-formData">formData</a>();
+  Promise&lt;<a href="#json">JSON</a>&gt; <a href="#dom-body-json" title="dom-Body-json">json</a>();
+  Promise&lt;<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a>&gt; <a href="#dom-body-text" title="dom-Body-text">text</a>();
 };</pre>
 
 <p class="note">Formats you would not want a network layer to be dependent upon, such as
 HTML, will likely not be exposed here. Rather, an HTML parser API might accept a stream in
 due course.
+<!-- http://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object has an associated byte stream.
+<p>Objects implementing the <code><a href="#body">Body</a></code> mixin gain an associated
+<dfn id="concept-body-body" title="concept-Body-body">body</dfn> (a byte stream), a
+<dfn id="concept-body-used-flag" title="concept-Body-used-flag">used flag</dfn> (initially unset), and a
+<dfn id="concept-body-mime-type" title="concept-Body-MIME-type">MIME type</dfn> (initially the empty byte sequence).
 
-<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object also has an associated
-<dfn id="concept-fetchbodystream-read-flag" title="concept-FetchBodyStream-read-flag">read flag</dfn> (initially unset).
+<p>The <dfn id="dom-body-bodyused" title="dom-Body-bodyUsed"><code>bodyUsed</code></dfn> attribute's getter must
+return true if the <a href="#concept-body-used-flag" title="concept-Body-used-flag">used flag</a> is set, and false
+otherwise.
 
-<p>A <code><a href="#fetchbodystream">FetchBodyStream</a></code> object also has an associated
-<dfn id="concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</dfn>
-(initially the empty byte sequence).
-
-<p>The <dfn id="concept-fetchbodystream-as-generic" title="concept-FetchBodyStream-as-generic">as generic</dfn> algorithm, given an
-<var title="">object</var> and <var title="">type</var>, runs these steps:
+<p>Objects implementing the <code><a href="#body">Body</a></code> mixin also have an associated
+<dfn id="concept-body-consume-body" title="concept-Body-consume-body">consume body</dfn> algorithm, which given a
+<var title="">type</var>, runs these steps:
 
 <ol>
  <li><p>Let <var title="">p</var> be a new promise.
 
- <li><p>If <var title="">object</var>'s
- <a href="#concept-fetchbodystream-read-flag" title="concept-FetchBodyStream-read-flag">read flag</a> is set, reject
+ <li><p>If <a href="#concept-body-used-flag" title="concept-Body-used-flag">used flag</a> is set, reject
  <var title="">p</var> with a <code title="">TypeError</code>.
 
  <li>
-  <p>Otherwise, set <var title="">object</var>'s
-  <a href="#concept-fetchbodystream-read-flag" title="concept-FetchBodyStream-read-flag">read flag</a> and then run these
+  <p>Otherwise, set <a href="#concept-body-used-flag" title="concept-Body-used-flag">used flag</a> and then run these
   substeps asynchronously:
 
   <ol>
-   <li><p>Let <var title="">stream</var> be <var title="">object</var>'s byte stream.
+   <li><p>Let <var title="">stream</var> be <a href="#concept-body-body" title="concept-Body-body">body</a>.
 
    <li><p>If <var title="">stream</var> is null, set <var title="">stream</var> to an empty byte
    sequence.
@@ -2480,19 +2476,17 @@ due course.
      <dd><p>Resolve <var title="">p</var> with a <code class="external"><a href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a></code>
      whose contents are <var title="">bytes</var> and
      <code class="external" title="dom-Blob-type"><a href="http://dev.w3.org/2006/webapi/FileAPI/#dfn-type">type</a></code> is
-     <var title="">object</var>'s
-     <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a>.
+     <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a>.
 
      <dt><i title="">FormData</i>
      <dd>
-      <p>If <var title="">object</var>'s
-      <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> (ignoring parameters)
+      <p>If <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a> (ignoring parameters)
       is `<code>multipart/form-data</code>`, run these subsubsteps:
 
       <ol>
        <li><p>Parse <var title="">bytes</var>, using the value of the
-       `<code title="">boundary</code>` parameter from <var title="">object</var>'s
-       <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> and
+       `<code title="">boundary</code>` parameter from
+       <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a> and
        <a class="external" href="http://encoding.spec.whatwg.org/#utf-8">utf-8</a> as encoding, per the rules set forth
        in <cite>Returning Values from Forms: multipart/form-data</cite>.
        <a href="#refsRFC2388">[RFC2388]</a>
@@ -2511,9 +2505,9 @@ due course.
       `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
       written. Volunteers welcome.
 
-      <p>Otherwise, if <var title="">object</var>'s
-      <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> (ignoring parameters)
-      is `<code>application/x-www-form-urlencoded</code>`, run these subsubsteps:
+      <p>Otherwise, if <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a>
+      (ignoring parameters) is `<code>application/x-www-form-urlencoded</code>`, run these
+      subsubsteps:
 
       <ol>
        <li><p>Let <var title="">entries</var> be the result of
@@ -2551,30 +2545,25 @@ due course.
  <li><p>Return <var title="">p</var>.
 </ol>
 
-<p>The <dfn id="dom-fetchbodystream-asarraybuffer" title="dom-FetchBodyStream-asArrayBuffer"><code>asArrayBuffer()</code></dfn>
+<p>The <dfn id="dom-body-arraybuffer" title="dom-Body-arrayBuffer"><code>arrayBuffer()</code></dfn>
 method, when invoked, must return the result of running
-<a href="#concept-fetchbodystream-as-generic" title="concept-FetchBodyStream-as-generic">as generic</a> with
-<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a> and <i title="">ArrayBuffer</i>.
+<a href="#concept-body-consume-body" title="concept-Body-consume-body">consume body</a> with <i title="">ArrayBuffer</i>.
 
-<p>The <dfn id="dom-fetchbodystream-asblob" title="dom-FetchBodyStream-asBlob"><code>asBlob()</code></dfn> method, when
+<p>The <dfn id="dom-body-blob" title="dom-Body-blob"><code>blob()</code></dfn> method, when
 invoked, must return the result of running
-<a href="#concept-fetchbodystream-as-generic" title="concept-FetchBodyStream-as-generic">as generic</a> with
-<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a> and <i title="">Blob</i>.
+<a href="#concept-body-consume-body" title="concept-Body-consume-body">consume body</a> with <i title="">Blob</i>.
 
-<p>The <dfn id="dom-fetchbodystream-asformdata" title="dom-FetchBodyStream-asFormData"><code>asFormData()</code></dfn> method,
+<p>The <dfn id="dom-body-formdata" title="dom-Body-formData"><code>formData()</code></dfn> method,
 when invoked, must return the result of running
-<a href="#concept-fetchbodystream-as-generic" title="concept-FetchBodyStream-as-generic">as generic</a> with
-<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a> and <i title="">FormData</i>.
+<a href="#concept-body-consume-body" title="concept-Body-consume-body">consume body</a> with <i title="">FormData</i>.
 
-<p>The <dfn id="dom-fetchbodystream-asjson" title="dom-FetchBodyStream-asJSON"><code>asJSON()</code></dfn> method, when
+<p>The <dfn id="dom-body-json" title="dom-Body-json"><code>json()</code></dfn> method, when
 invoked, must return the result of running
-<a href="#concept-fetchbodystream-as-generic" title="concept-FetchBodyStream-as-generic">as generic</a> with
-<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a> and <i title="">JSON</i>.
+<a href="#concept-body-consume-body" title="concept-Body-consume-body">consume body</a> with <i title="">JSON</i>.
 
-<p>The <dfn id="dom-fetchbodystream-astext" title="dom-FetchBodyStream-asText"><code>asText()</code></dfn> method, when
+<p>The <dfn id="dom-body-text" title="dom-Body-text"><code>text()</code></dfn> method, when
 invoked, must return the result of running
-<a href="#concept-fetchbodystream-as-generic" title="concept-FetchBodyStream-as-generic">as generic</a> with
-<a class="external" href="http://dom.spec.whatwg.org/#context-object">context object</a> and <i title="">text</i>.
+<a href="#concept-body-consume-body" title="concept-Body-consume-body">consume body</a> with <i title="">text</i>.
 
 
 <h3 id="request-class"><span class="secno">5.3 </span>Request class</h3>
@@ -2590,7 +2579,6 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute ByteString <a href="#dom-request-method" title="dom-Request-method">method</a>;
   readonly attribute <a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <a href="#dom-request-url" title="dom-Request-url">url</a>;
   readonly attribute <a href="#headers">Headers</a> <a href="#dom-request-headers" title="dom-Request-headers">headers</a>;
-  readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <a href="#dom-request-body" title="dom-Request-body">body</a>;
 <!--
   readonly attribute XXX <span title=dom-Request-client>client</span>
   readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;
@@ -2602,12 +2590,15 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute <a href="#requestcredentials">RequestCredentials</a> <a href="#dom-request-credentials" title="dom-Request-credentials">credentials</a>;<!--
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
+
+  <a href="#request">Request</a> <span title="dom-Request-clone">clone()</span>;
 };
+<a href="#request">Request</a> implements <a href="#body">Body</a>;
 
 dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
   <a href="#headersinit">HeadersInit</a> headers;
-  <a href="#fetchbodyinit">FetchBodyInit</a> body;
+  <a href="#bodyinit">BodyInit</a> body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
 };
@@ -2625,23 +2616,41 @@ is itself associated with <a href="#concept-request-request" title="concept-Requ
 <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> and whose
 <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">request</i>.
 
-<p>A <code><a href="#request">Request</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
-object which is itself associated with
+<p>A <code><a href="#request">Request</a></code> object's <a href="#concept-body-body" title="concept-Body-body">body</a> is its
 <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-<a href="#concept-response-body" title="concept-response-body">body</a>.
+<a href="#concept-request-body" title="concept-request-body">body</a>.
 
-<p>To make a <dfn id="restricted-copy">restricted copy</dfn> of a <a href="#concept-request" title="concept-request">request</a>
-<var title="">request</var>, run these steps:
+<hr>
+
+<p>The
+<dfn id="dom-request" title="dom-Request"><code>Request(<var>input</var>, <var>init</var>)</code></dfn>
+constructor must run these steps:
 
 <ol>
- <li><p>Let <var title="">r</var> be a new <a href="#concept-request" title="concept-request">request</a> whose
- <a href="#concept-request-url" title="concept-request-url">url</a> is <var title="">request</var>'s
+ <li>
+  <p>If <var title="">input</var> is a <code><a href="#request">Request</a></code> object, run these substeps:
+
+  <ol>
+   <li><p>If <var title="">input</var>'s <a href="#concept-body-used-flag" title="concept-Body-used-flag">used flag</a>
+   is set, <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p>Set <var title="">input</var>'s
+   <a href="#concept-body-used-flag" title="concept-Body-used-flag">used flag</a>.
+  </ol>
+
+ <li><p>Let <var title="">request</var> be <var title="">input</var>'s associated
+ <a href="#concept-request" title="concept-request">request</a>, if <var title="">input</var> is a
+ <code><a href="#request">Request</a></code> object, and a new <a href="#concept-request" title="concept-request">request</a>
+ otherwise.
+
+ <li><p>Set <var title="">request</var> to a new <a href="#concept-request" title="concept-request">request</a>
+ whose <a href="#concept-request-url" title="concept-request-url">url</a> is <var title="">request</var>'s
  <a href="#concept-request-url" title="concept-request-url">url</a>,
  <a href="#concept-request-method" title="concept-request-method">method</a> is <var title="">request</var>'s
  <a href="#concept-request-method" title="concept-request-method">method</a>,
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> is a copy of
  <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>,
- <a href="#concept-request-body" title="concept-request-body">body</a> is a tee of <var title="">request</var>'s
+ <a href="#concept-request-body" title="concept-request-body">body</a> is <var title="">request</var>'s
  <a href="#concept-request-body" title="concept-request-body">body</a>,
  <a href="#concept-request-client" title="concept-request-client">client</a> is
  <a class="external" href="http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
@@ -2657,24 +2666,6 @@ object which is itself associated with
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
  <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
- <!-- XXX stream -->
-
- <li><p>Return <var title="">r</var>.
-</ol>
-
-<hr>
-
-<p>The
-<dfn id="dom-request" title="dom-Request"><code>Request(<var>input</var>, <var>init</var>)</code></dfn>
-constructor must run these steps:
-
-<ol>
- <li><p>Let <var title="">request</var> be <var title="">input</var>'s associated
- <a href="#concept-request" title="concept-request">request</a>, if <var title="">input</var> is a
- <code><a href="#request">Request</a></code> object, and a new <a href="#concept-request" title="concept-request">request</a>
- otherwise.
-
- <li><p>Set <var title="">request</var> to a <a href="#restricted-copy">restricted copy</a> of itself.
 
  <li><p>Let <var title="">fallbackMode</var> be null.
 
@@ -2731,8 +2722,7 @@ constructor must run these steps:
   </ol>
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#request">Request</a></code> object associated with
- <var title="">request</var>, <code><a href="#headers">Headers</a></code> object, and
- <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+ <var title="">request</var> and <code><a href="#headers">Headers</a></code> object.
 
  <li><p>Let <var title="">headers</var> be a copy of <var title="">r</var>'s
  <code><a href="#headers">Headers</a></code> object.
@@ -2767,7 +2757,7 @@ constructor must run these steps:
 
   <ol>
    <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
-   <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">init</var>'s
+   <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var title="">init</var>'s
    <code title="">body</code> member.
 
    <li><p>Set <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
@@ -2782,10 +2772,9 @@ constructor must run these steps:
    <code><a href="#headers">Headers</a></code> object. Rethrow any exception.
   </ol>
 
- <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
- <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
- <a href="#concept-header-extract-mime-type" title="concept-header-extract-MIME-type">extracting a MIME type</a> from
- <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+ <li><p>Set <var title="">r</var>'s <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a> to
+ the result of <a href="#concept-header-extract-mime-type" title="concept-header-extract-MIME-type">extracting a MIME type</a>
+ from <var title="">r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
  <li><p>Return <var title="">r</var>.
@@ -2803,9 +2792,6 @@ return <a href="#concept-request-request" title="concept-Request-request">reques
 
 <p>The <dfn id="dom-request-headers" title="dom-Request-headers"><code>headers</code></dfn> attribute's getter must
 return the associated <code><a href="#headers">Headers</a></code> object.
-
-<p>The <dfn id="dom-request-body" title="dom-Request-body"><code>body</code></dfn> attribute's getter must return
-the associated <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
 
 <p>The <dfn id="dom-request-context" title="dom-Request-context"><code>context</code></dfn> attribute's getter must
 return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
@@ -2850,7 +2836,7 @@ getter must return the value corresponding to the first matching statement, swit
 
 <h3 id="response-class"><span class="secno">5.4 </span>Response class</h3>
 
-<pre class="idl">[<a href="#dom-response" title="dom-Response">Constructor</a>(optional <a href="#fetchbodyinit">FetchBodyInit</a> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
+<pre class="idl">[<a href="#dom-response" title="dom-Response">Constructor</a>(optional <a href="#bodyinit">BodyInit</a> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
  Exposed=(Window,Worker)]
 interface <dfn id="response">Response</dfn> {
   static <a href="#response">Response</a> <a href="#dom-response-redirect" title="dom-Response-redirect">redirect</a>(<a class="external" href="http://encoding.spec.whatwg.org/#scalarvaluestring">ScalarValueString</a> <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
@@ -2861,8 +2847,10 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
   readonly attribute <a href="#headers">Headers</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
-  readonly attribute <a href="#fetchbodystream">FetchBodyStream</a> <a href="#dom-request-body" title="dom-Request-body">body</a>;
+
+  <a href="#response">Response</a> <a href="#dom-response-clone" title="dom-Response-clone">clone()</a>;
 };
+<a href="#response">Response</a> implements <a href="#body">Body</a>;
 
 dictionary <dfn id="responseinit">ResponseInit</dfn> {
   unsigned short status = 200;
@@ -2881,8 +2869,7 @@ is itself associated with <a href="#concept-response-response" title="concept-Re
 <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> and whose
 <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is <i title="">response</i>.
 
-<p>A <code><a href="#response">Response</a></code> object also has an associated <code><a href="#fetchbodystream">FetchBodyStream</a></code>
-object which is itself associated with
+<p>A <code><a href="#response">Response</a></code> object's <a href="#concept-body-body" title="concept-Body-body">body</a> is its
 <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-body" title="concept-response-body">body</a>.
 
@@ -2900,7 +2887,7 @@ constructor, when invoked, must run these steps:
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
  new <a href="#concept-response" title="concept-response">response</a>, <code><a href="#headers">Headers</a></code> object, and
- <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+ <code><a href="#body">Body</a></code> object.
 
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">init</var>'s
@@ -2929,7 +2916,7 @@ constructor, when invoked, must run these steps:
 
   <ol>
    <li><p>Let <var title="">stream</var> and <var title="">Content-Type</var> be the result of
-   <a href="#concept-fetchbodyinit-extract" title="concept-FetchBodyInit-extract">extracting</a> <var title="">body</var>.
+   <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var title="">body</var>.
 
    <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
    <a href="#concept-response-body" title="concept-response-body">body</a> to <var title="">stream</var>.
@@ -2944,10 +2931,9 @@ constructor, when invoked, must run these steps:
    <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
   </ol>
 
- <li><p>Set <var title="">r</var>'s <code><a href="#fetchbodystream">FetchBodyStream</a></code> object's
- <a href="#concept-fetchbodystream-mime-type" title="concept-FetchBodyStream-MIME-type">MIME type</a> to the result of
- <a href="#concept-header-extract-mime-type" title="concept-header-extract-MIME-type">extracting a MIME type</a> from
- <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+ <li><p>Set <var title="">r</var>'s <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a> to
+ the result of <a href="#concept-header-extract-mime-type" title="concept-header-extract-MIME-type">extracting a MIME type</a>
+ from <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
  <li><p>Return <var title="">r</var>.
@@ -2976,7 +2962,7 @@ method, when invoked, must run these steps:
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
  new <a href="#concept-response" title="concept-response">response</a>, <code><a href="#headers">Headers</a></code> object, and
- <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+ <code><a href="#body">Body</a></code> object.
 
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">status</var>.
@@ -3015,11 +3001,12 @@ must return <a href="#concept-response-response" title="concept-Response-respons
 <p>The <dfn id="dom-response-headers" title="dom-Response-headers"><code>headers</code></dfn> attribute's getter must
 return the associated <code><a href="#headers">Headers</a></code> object.
 
-<p>The <dfn id="dom-response-body" title="dom-Response-body"><code>body</code></dfn> attribute's getter must return
-the associated <code><a href="#fetchbodystream">FetchBodyStream</a></code> object.
+<hr>
+
+<p class="XXX">The <dfn id="dom-response-clone" title="dom-Response-clone"><code>clone()</code></dfn> method ...
 
 
-<h3 id="structured-cloning-of-headers,-fetchbodystream,-request,-and-response-objects"><span class="secno">5.5 </span>Structured cloning of <code><a href="#headers">Headers</a></code>, <code><a href="#fetchbodystream">FetchBodyStream</a></code>, <code><a href="#request">Request</a></code>, and <code><a href="#response">Response</a></code> objects</h3>
+<h3 id="structured-cloning-of-headers,-request,-and-response-objects"><span class="secno">5.5 </span>Structured cloning of <code><a href="#headers">Headers</a></code>, <code><a href="#request">Request</a></code>, and <code><a href="#response">Response</a></code> objects</h3>
 
 <p class="XXX">See <a href="https://github.com/slightlyoff/ServiceWorker/issues/313">SW #313</a>.
 
