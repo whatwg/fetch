@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//www.whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-september-2014">Living Standard — Last Updated 5 September 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-september-2014">Living Standard — Last Updated 9 September 2014</h2>
 
 <dl>
  <dt>This Version:
@@ -34,7 +34,7 @@
 <p class="copyright"><a href="http://creativecommons.org/publicdomain/zero/1.0/" rel="license"><img alt="CC0" src="http://i.creativecommons.org/p/zero/1.0/80x15.png"></a>
 To the extent possible under law, the editor has waived all copyright and
 related or neighboring rights to this work. In addition, as of
-5 September 2014, the editor has made this specification available
+9 September 2014, the editor has made this specification available
 under the
 <a href="http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0" rel="license">Open Web Foundation Agreement Version 1.0</a>,
 which is available at
@@ -1427,8 +1427,9 @@ indicates an attempt to authenticate.
    using <var title="">request</var> with <i title="">authentication fetch flag</i> if set.
 
    <li>
-    <p>If the <i title="">CORS flag</i> is set and a <a href="#cors-check-0">CORS check</a> for
-    <var title="">request</var> and <var title="">response</var> returns failure, return a
+    <p>If the <i title="">CORS flag</i> is set and a
+    <a href="#concept-cors-check" title="concept-cors-check">CORS check</a> for <var title="">request</var> and
+    <var title="">response</var> returns failure, return a
     <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
     <p class="note">There is no need to apply this to a
@@ -1885,15 +1886,20 @@ steps:
  <i title="">omit</i>.
 
  <li><p>Let <var title="">response</var> be the result of performing an
- <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using <var title="">preflight</var> with
- the <i title="">CORS flag</i> set.
- <!-- cannot invoke >HTTP network or cache fetch< as that would not perform a CORS check -->
+ <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</a> using
+ <var title="">preflight</var>.
 
  <li>
-  <p>If <var title="">response</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
+  <p>If a <a href="#concept-cors-check" title="concept-cors-check">CORS check</a> for <var title="">request</var>
+  and <var title="">response</var> returns success and <var title="">response</var>'s
+  <a href="#concept-response-status" title="concept-response-status">status</a> is
   in the range 200 to 299, run these substeps:
   <!-- CORS said 200 here but nobody implemented that:
        http://lists.w3.org/Archives/Public/public-webappsec/2013Feb/0078.html -->
+
+  <p class="note no-backref">The <a href="#concept-cors-check" title="concept-cors-check">CORS check</a> is done
+  on <var title="">request</var> rather than <var title="">preflight</var> to ensure the correct
+  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is used.
 
   <ol>
    <li><p>Let <var title="">methods</var> be the result of
@@ -2047,10 +2053,7 @@ Entries may be removed before that moment arrives.
 <a href="#concept-cache-credentials" title="concept-cache-credentials">credentials</a> is false and
 <var title="">request</var>'s
 <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is not
-<i title="">include</i> or <a href="#concept-cache-credentials" title="concept-cache-credentials">credentials</a> is true
-and <var title="">request</var>'s
-<a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-<i title="">include</i>.
+<i title="">include</i> or <a href="#concept-cache-credentials" title="concept-cache-credentials">credentials</a> is true.
 
 <p>There is a <dfn id="concept-cache-match-method" title="concept-cache-match-method">method cache match</dfn> for
 <var title="">method</var> using <var title="">request</var> when there is an entry in
@@ -2067,8 +2070,8 @@ and <var title="">request</var>'s
 
 <h3 id="cors-check"><span class="secno">4.6 </span>CORS check</h3>
 
-<p>To perform a <dfn id="cors-check-0">CORS check</dfn> for a <var title="">request</var> and
-<var title="">response</var>, run these steps:
+<p>To perform a <dfn id="concept-cors-check" title="concept-cors-check">CORS check</dfn> for a
+<var title="">request</var> and <var title="">response</var>, run these steps:
 
 <ol>
  <li><p>Let <var title="">origin</var> be the result of

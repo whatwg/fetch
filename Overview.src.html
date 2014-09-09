@@ -1383,8 +1383,9 @@ indicates an attempt to authenticate.
    using <var title>request</var> with <i title>authentication fetch flag</i> if set.
 
    <li>
-    <p>If the <i title>CORS flag</i> is set and a <span>CORS check</span> for
-    <var title>request</var> and <var title>response</var> returns failure, return a
+    <p>If the <i title>CORS flag</i> is set and a
+    <span title=concept-cors-check>CORS check</span> for <var title>request</var> and
+    <var title>response</var> returns failure, return a
     <span title=concept-network-error>network error</span>.
 
     <p class=note>There is no need to apply this to a
@@ -1841,15 +1842,20 @@ steps:
  <i title>omit</i>.
 
  <li><p>Let <var title>response</var> be the result of performing an
- <span title=concept-http-fetch>HTTP fetch</span> using <var title>preflight</var> with
- the <i title>CORS flag</i> set.
- <!-- cannot invoke >HTTP network or cache fetch< as that would not perform a CORS check -->
+ <span title=concept-http-network-or-cache-fetch>HTTP network or cache fetch</span> using
+ <var title>preflight</var>.
 
  <li>
-  <p>If <var title>response</var>'s <span title=concept-response-status>status</span> is
+  <p>If a <span title=concept-cors-check>CORS check</span> for <var title>request</var>
+  and <var title>response</var> returns success and <var title>response</var>'s
+  <span title=concept-response-status>status</span> is
   in the range 200 to 299, run these substeps:
   <!-- CORS said 200 here but nobody implemented that:
        http://lists.w3.org/Archives/Public/public-webappsec/2013Feb/0078.html -->
+
+  <p class="note no-backref">The <span title=concept-cors-check>CORS check</span> is done
+  on <var title>request</var> rather than <var title>preflight</var> to ensure the correct
+  <span title=concept-request-credentials-mode>credentials mode</span> is used.
 
   <ol>
    <li><p>Let <var title>methods</var> be the result of
@@ -2003,10 +2009,7 @@ Entries may be removed before that moment arrives.
 <span title=concept-cache-credentials>credentials</span> is false and
 <var title>request</var>'s
 <span title=concept-request-credentials-mode>credentials mode</span> is not
-<i title>include</i> or <span title=concept-cache-credentials>credentials</span> is true
-and <var title>request</var>'s
-<span title=concept-request-credentials-mode>credentials mode</span> is
-<i title>include</i>.
+<i title>include</i> or <span title=concept-cache-credentials>credentials</span> is true.
 
 <p>There is a <dfn title=concept-cache-match-method>method cache match</dfn> for
 <var title>method</var> using <var title>request</var> when there is an entry in
@@ -2023,8 +2026,8 @@ and <var title>request</var>'s
 
 <h3>CORS check</h3>
 
-<p>To perform a <dfn>CORS check</dfn> for a <var title>request</var> and
-<var title>response</var>, run these steps:
+<p>To perform a <dfn title=concept-cors-check>CORS check</dfn> for a
+<var title>request</var> and <var title>response</var>, run these steps:
 
 <ol>
  <li><p>Let <var title>origin</var> be the result of
