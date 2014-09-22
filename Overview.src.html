@@ -688,6 +688,22 @@ stated otherwise, it is <i title>omit</i>.
 Unless stated otherwise, it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-cache-mode>cache mode</dfn>, which is one of
+<i title>default</i>, <i title>local</i>, and <i title>skip</i>. Unless stated
+otherwise, it is <i title>default</i>.
+
+<p class="note no-backref">If <span title=concept-request-header-list>header list</span>
+contains a <span title=concept-header>header</span> whose
+<span title=concept-header-name>name</span> is one of
+`<code title>If-Modified-Since</code>`,
+`<code title>If-None-Match</code>`,
+`<code title>If-Unmodified-Since</code>`,
+`<code title>If-Match</code>`, and
+`<code title>If-Range</code>`, <span tilte=concept-fetch>fetch</span> will set
+<span title=concept-request-cache-mode>cache mode</span> to <i title>local</i> if it is
+<i title>default</i>.
+
+<p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-manual-redirect-flag>manual redirect flag</dfn>. Unless stated
 otherwise, it is unset.
 
@@ -1395,6 +1411,18 @@ indicates an attempt to authenticate.
    <span title=concept-request-credentials-mode>credentials mode</span> is
    <i title>same-origin</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
 
+   <li><p>If <var title>request</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is <i title>default</i> and
+   <var title>request</var>'s <span title=concept-request-header-list>header list</span>
+   contains a <span title=concept-header>header</span>
+   <span title=concept-header-named>named</span>
+   `<code title>If-Modified-Since</code>`,
+   `<code title>If-None-Match</code>`,
+   `<code title>If-Unmodified-Since</code>`,
+   `<code title>If-Match</code>`, or
+   `<code title>If-Range</code>`, set <var title>request</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> to <i title>local</i>.
+
    <li><p>Set <var title>response</var> to the result of performing an
    <span title=concept-http-network-or-cache-fetch>HTTP network or cache fetch</span>
    using <var title>request</var> with <var title>credentials flag</var> if set and
@@ -1415,20 +1443,43 @@ indicates an attempt to authenticate.
   <span title=concept-response-status>status</span>:
 
   <dl class=switch>
-   <dt>304
-   <dd><p class=XXX>For responses that are a result of a user agent generated conditional request
-   the user agent must act as if the server gave a <code>200 OK</code> response with the
-   appropriate content. The user agent must allow a <var title>request</var>'s
-   <span title=concept-request-header-list>header list</span> to
-   override automatic cache validation (e.g. `<code>If-None-Match</code>` or
-   `<code>If-Modified-Since</code>`), in which case <code>304 Not Modified</code> responses
-   must be passed through.
+   <dt><code title>304</code>
+   <dd>
+    <ol>
+     <li><p>If <var title>request</var>'s
+     <span title=concept-request-cache-mode>cache mode</span> is not <i title>default</i>,
+     do nothing.
 
-   <dt>301
-   <dt>302
-   <dt>303
-   <dt>307
-   <dt>308
+     <li>
+      <p>Otherwise, run these subsubsteps:
+
+      <ol>
+       <li><p>If there is no entry in the HTTP cache for <var title>request</var> and
+       <var title>response</var>, return a
+       <span title=concept-network-error>network error</span>.
+       <!-- XXX xref "HTTP cache" -->
+
+       <li><p>Update the entry in the HTTP cache for <var title>request</var> and
+       <var title>response</var>, using <var title>response</var>.
+       <!-- XXX xref "HTTP cache" -->
+
+       <li>
+        <p>Set <var title>response</var> to the result of obtaining a
+        <span title=concept-response>response</span> from the HTTP cache using
+        <var title>request</var> and <var title>response</var>.
+        <!-- XXX xref "HTTP cache" -->
+
+        <p class="note no-backref">This changes <var title>response</var> entirely,
+        including its <span title=concept-response-status>status</span> which is most
+        likely <code title>200</code> now.
+      </ol>
+    </ol>
+
+   <dt><code title>301</code>
+   <dt><code title>302</code>
+   <dt><code title>303</code>
+   <dt><code title>307</code>
+   <dt><code title>308</code>
    <dd>
     <ol>
      <li>
@@ -1493,7 +1544,7 @@ indicates an attempt to authenticate.
       </ol>
     </ol>
 
-   <dt>401
+   <dt><code title>401</code>
    <dd>
     <ol>
      <li><p>If <var title>request</var>'s <span>authentication flag</span> is unset or the
@@ -1523,7 +1574,7 @@ indicates an attempt to authenticate.
      <!-- cannot invoke >HTTP network or cache fetch< as that would not come back here -->
     </ol>
 
-   <dt>407
+   <dt><code title>407</code>
    <dd>
     <ol>
      <li class=XXX><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers,
@@ -1647,8 +1698,32 @@ The <i title>credentials flag</i> is one too.
   <var title>HTTPRequest</var>'s
   <span title=concept-request-credentials-mode>credentials mode</span>.
 
+ <li><p>Let <var title>response</var> be null.
+
  <li>
-  <p>Modify <var title>HTTPRequest</var>'s
+  <p>If <var title>request</var>'s
+  <span title=concept-request-cache-mode>cache mode</span> is not <i title>skip</i> and
+  there is a <span title=concept-response>response</span> in the HTTP cache for
+  <var title>request</var> run these substeps:
+  <!-- XXX xref "HTTP cache" -->
+
+  <ol>
+   <li><p>If the <span title=concept-response>response</span> in the HTTP cache for
+   <var title>request</var> does not require revalidation, set <var title>response</var>
+   to that <span title=concept-response>response</span>.
+   <!-- XXX xref "HTTP cache", "revalidation" -->
+
+   <li><p>Otherwise, if the <span title=concept-response>response</span> in the HTTP cache
+   for <var title>request</var> does require revalidation, and <var title>request</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is <i title>default</i>,
+   modify <var title>HTTPRequest</var>'s
+   <span title=concept-request-header-list>header list</span> with revalidation
+   <span title=concept-header>headers</span>.
+   <!-- XXX xref "HTTP cache", "revalidation" -->
+  </ol>
+
+ <li>
+  <p>If <var title>response</var> is null, modify <var title>HTTPRequest</var>'s
   <span title=concept-request-header-list>header list</span> per HTTP.
 
   <p class="note no-backref">It would be great if we could make this more normative
@@ -1665,15 +1740,12 @@ The <i title>credentials flag</i> is one too.
   point. <span class=note>See <span>HTTP header layer division</span>.</span>
 
  <li>
-  <p class=XXX><a href=https://github.com/slightlyoff/ServiceWorker/issues/398>Handle caches</a>.
-
- <li>
-  <p>Let <var title>response</var> be the result of making an HTTP request, using
-  <var title>HTTPRequest</var>, following the requirements from HTTP as appropriate, and
-  waiting until either all the <span title=concept-header>headers</span> are transmitted
-  or a <span title=concept-network-error>network error</span> was returned. If a
-  <span title=concept-network-error>network error</span> was returned due to
-  <span title=concept-fetch>fetch</span> being
+  <p>If <var title>response</var> is null, set <var title>response</var> to the result of
+  making an HTTP request, using <var title>HTTPRequest</var>, following the requirements
+  from HTTP, and waiting until either all the <span title=concept-header>headers</span>
+  are transmitted or a <span title=concept-network-error>network error</span> was
+  returned. If a <span title=concept-network-error>network error</span> was returned due
+  to <span title=concept-fetch>fetch</span> being
   <span title=concept-fetch-terminate>terminated</span> with reason
   <var title>reason</var>, set <var title>response</var>'s
   <span title=concept-response-termination-reason>termination reason</span> to
