@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-6-october-2014">Living Standard — Last Updated 6 October 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-october-2014">Living Standard — Last Updated 9 October 2014</h2>
 
 <dl>
  <dt>Participate:
@@ -2186,11 +2186,36 @@ Entries may be removed before that moment arrives.
 
 <h2 id="fetch-api"><span class="secno">5 </span>Fetch API</h2>
 
-<p class="XXX">This is a work-in-progress section covering a new API that handles slightly
-more <a href="#concept-request-mode" title="concept-request-mode">modes</a> of
-<a href="#concept-fetch" title="concept-fetch">fetching</a> than
-<code class="external"><a href="https://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>. The main driver behind this API is
-service workers, but it is applicable elsewhere too.
+<p class="no-backref">The <code title="dom-global-fetch"><a href="#dom-global-fetch">fetch()</a></code> method is relatively
+low-level API for <a href="#concept-fetch" title="concept-fetch">fetching</a> resources. It covers slightly
+more ground than <code class="external"><a href="https://xhr.spec.whatwg.org/#xmlhttprequest">XMLHttpRequest</a></code>, although it is
+currently lacking when it comes to reporting progression.
+
+<div class="example no-backref">
+ <p>The <code title="dom-global-fetch"><a href="#dom-global-fetch">fetch()</a></code> method makes it quite straightforward
+ to <a href="#concept-fetch" title="concept-fetch">fetch</a> a resource and extract its contents as a
+ <code class="external"><a href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a></code>:
+
+ <pre>fetch("/music/pk/altes-kamuffel.flac")
+  .then(res =&gt; res.blob()).then(playBlob)</pre>
+
+ <p>If you just care to log a particular response header:
+
+ <pre>fetch("/", {method:"HEAD"})
+  .then(res =&gt; log(res.headers.get("strict-transport-security")))</pre>
+
+ <p>If you want to check a particular response header and then process the response of a
+ cross-origin resources:
+
+ <pre>fetch("https://pk.example/berlin-calling.json", {mode:"cors"})
+  .then(res =&gt; {
+    if(res.headers.get("content-type") == "application/json") {
+      res.json()
+    } else {
+      throw new TypeError()
+    }
+  }).then(processJSON)</pre>
+</div>
 
 
 <h3 id="headers-class"><span class="secno">5.1 </span>Headers class</h3>

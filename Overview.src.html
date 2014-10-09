@@ -2141,11 +2141,36 @@ Entries may be removed before that moment arrives.
 
 <h2>Fetch API</h2>
 
-<p class=XXX>This is a work-in-progress section covering a new API that handles slightly
-more <span title=concept-request-mode>modes</span> of
-<span title=concept-fetch>fetching</span> than
-<code data-anolis-spec=xhr>XMLHttpRequest</code>. The main driver behind this API is
-service workers, but it is applicable elsewhere too.
+<p class=no-backref>The <code title=dom-global-fetch>fetch()</code> method is relatively
+low-level API for <span title=concept-fetch>fetching</span> resources. It covers slightly
+more ground than <code data-anolis-spec=xhr>XMLHttpRequest</code>, although it is
+currently lacking when it comes to reporting progression.
+
+<div class="example no-backref">
+ <p>The <code title=dom-global-fetch>fetch()</code> method makes it quite straightforward
+ to <span title=concept-fetch>fetch</span> a resource and extract its contents as a
+ <code data-anolis-spec=fileapi>Blob</code>:
+
+ <pre>fetch("/music/pk/altes-kamuffel.flac")
+  .then(res => res.blob()).then(playBlob)</pre>
+
+ <p>If you just care to log a particular response header:
+
+ <pre>fetch("/", {method:"HEAD"})
+  .then(res => log(res.headers.get("strict-transport-security")))</pre>
+
+ <p>If you want to check a particular response header and then process the response of a
+ cross-origin resources:
+
+ <pre>fetch("https://pk.example/berlin-calling.json", {mode:"cors"})
+  .then(res => {
+    if(res.headers.get("content-type") == "application/json") {
+      res.json()
+    } else {
+      throw new TypeError()
+    }
+  }).then(processJSON)</pre>
+</div>
 
 
 <h3>Headers class</h3>
