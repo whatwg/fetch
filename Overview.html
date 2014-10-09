@@ -1438,9 +1438,9 @@ indicates an attempt to authenticate.
     <i title="">CORS flag</i> is unset.
 
    <li><p>Let <var title="">credentials flag</var> be set if either
-   <var title="">HTTPRequest</var>'s
+   <var title="">request</var>'s
    <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-   <i title="">include</i>, or <var title="">HTTPRequest</var>'s
+   <i title="">include</i>, or <var title="">request</var>'s
    <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
    <i title="">same-origin</i> and the <i title="">CORS flag</i> is unset, and unset otherwise.
 
@@ -2692,7 +2692,7 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
 
-  <a href="#request">Request</a> <span title="dom-Request-clone">clone()</span>;
+  <a href="#request">Request</a> <a href="#dom-request-clone" title="dom-Request-clone">clone</a>();
 };
 <a href="#request">Request</a> implements <a href="#body">Body</a>;
 
@@ -2823,7 +2823,7 @@ constructor must run these steps:
   </ol>
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#request">Request</a></code> object associated with
- <var title="">request</var> and <code><a href="#headers">Headers</a></code> object.
+ <var title="">request</var> and a new <code><a href="#headers">Headers</a></code> object.
 
  <li><p>Let <var title="">headers</var> be a copy of <var title="">r</var>'s
  <code><a href="#headers">Headers</a></code> object.
@@ -2934,6 +2934,25 @@ getter must return the value corresponding to the first matching statement, swit
  <dd>"<code title="">include</code>"
 </dl>
 
+<hr>
+
+<p>The <dfn id="dom-request-clone" title="dom-Request-clone"><code>clone()</code></dfn> method, when invoked, must
+run these steps:
+
+<ol>
+ <li><p>Let <var title="">newRequest</var> be a copy of
+ <a href="#concept-request-request" title="concept-Request-request">request</a>, except that
+ <var title="">newRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is a tee of
+ <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+ <a href="#concept-request-body" title="concept-request-body">body</a>.
+ <!-- Similar text in: HTTP network or cache fetch -->
+
+ <li><p>Let <var title="">r</var> be a new <code><a href="#request">Request</a></code> object associated with
+ <var title="">newRequest</var> and a new <code><a href="#headers">Headers</a></code> object.
+
+ <li><p>Return <var title="">r</var>.
+</ol>
+
 
 <h3 id="response-class"><span class="secno">5.4 </span>Response class</h3>
 
@@ -2950,7 +2969,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
   readonly attribute <a href="#headers">Headers</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
 
-  <a href="#response">Response</a> <a href="#dom-response-clone" title="dom-Response-clone">clone()</a>;
+  <a href="#response">Response</a> <a href="#dom-response-clone" title="dom-Response-clone">clone</a>();
 };
 <a href="#response">Response</a> implements <a href="#body">Body</a>;
 
@@ -2988,7 +3007,7 @@ constructor, when invoked, must run these steps:
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
- new <a href="#concept-response" title="concept-response">response</a> and <code><a href="#headers">Headers</a></code> object.
+ new <a href="#concept-response" title="concept-response">response</a> and a new <code><a href="#headers">Headers</a></code> object.
 
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">init</var>'s
@@ -3042,7 +3061,8 @@ constructor, when invoked, must run these steps:
 
 <p>The static <dfn id="dom-response-error" title="dom-Response-error"><code>error()</code></dfn> method, when
 invoked, must run return a new <code><a href="#response">Response</a></code> object, associated with a new
-<a href="#concept-network-error" title="concept-network-error">network error</a> and <code><a href="#headers">Headers</a></code> object.
+<a href="#concept-network-error" title="concept-network-error">network error</a> and a new <code><a href="#headers">Headers</a></code>
+object.
 
 <p>The static
 <dfn id="dom-response-redirect" title="dom-Response-redirect"><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
@@ -3066,7 +3086,7 @@ method, when invoked, must run these steps:
  <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
- new <a href="#concept-response" title="concept-response">response</a> and <code><a href="#headers">Headers</a></code> object.
+ new <a href="#concept-response" title="concept-response">response</a> and a new <code><a href="#headers">Headers</a></code> object.
 
  <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var title="">status</var>.
@@ -3107,12 +3127,29 @@ return the associated <code><a href="#headers">Headers</a></code> object.
 
 <hr>
 
-<p class="XXX">The <dfn id="dom-response-clone" title="dom-Response-clone"><code>clone()</code></dfn> method ...
+<p>The <dfn id="dom-response-clone" title="dom-Response-clone"><code>clone()</code></dfn> method, when invoked, must
+run these steps:
+
+<ol>
+ <li><p>Let <var title="">newResponse</var> be a copy of
+ <a href="#concept-response-response" title="concept-Response-response">response</a>, except that
+ <var title="">newResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is a tee of
+ <a href="#concept-response-response" title="concept-Response-response">request</a>'s
+ <a href="#concept-response-body" title="concept-response-body">body</a>.
+ <!-- Similar text in: HTTP network or cache fetch -->
+
+ <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object associated with
+ <var title="">newResponse</var> and a new <code><a href="#headers">Headers</a></code> object.
+
+ <li><p>Return <var title="">r</var>.
+</ol>
 
 
 <h3 id="structured-cloning-of-headers,-request,-and-response-objects"><span class="secno">5.5 </span>Structured cloning of <code><a href="#headers">Headers</a></code>, <code><a href="#request">Request</a></code>, and <code><a href="#response">Response</a></code> objects</h3>
 
-<p class="XXX">See <a href="https://github.com/slightlyoff/ServiceWorker/issues/313">SW #313</a>.
+<p class="note">Unlikely to happen anytime soon due to difficulty of cloning promises and
+streams. See <a href="https://github.com/slightlyoff/ServiceWorker/issues/313">SW #313</a>
+for details.
 
 
 <h3 id="fetch-method"><span class="secno">5.6 </span>Fetch method</h3>

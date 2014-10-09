@@ -1393,9 +1393,9 @@ indicates an attempt to authenticate.
     <i title>CORS flag</i> is unset.</span>
 
    <li><p>Let <var title>credentials flag</var> be set if either
-   <var title>HTTPRequest</var>'s
+   <var title>request</var>'s
    <span title=concept-request-credentials-mode>credentials mode</span> is
-   <i title>include</i>, or <var title>HTTPRequest</var>'s
+   <i title>include</i>, or <var title>request</var>'s
    <span title=concept-request-credentials-mode>credentials mode</span> is
    <i title>same-origin</i> and the <i title>CORS flag</i> is unset, and unset otherwise.
 
@@ -2647,7 +2647,7 @@ interface <dfn>Request</dfn> {
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
 
-  <span>Request</span> <span title=dom-Request-clone>clone()</span>;
+  <span>Request</span> <span title=dom-Request-clone>clone</span>();
 };
 <span>Request</span> implements <span>Body</span>;
 
@@ -2778,7 +2778,7 @@ constructor must run these steps:
   </ol>
 
  <li><p>Let <var title>r</var> be a new <code>Request</code> object associated with
- <var title>request</var> and <code>Headers</code> object.
+ <var title>request</var> and a new <code>Headers</code> object.
 
  <li><p>Let <var title>headers</var> be a copy of <var title>r</var>'s
  <code>Headers</code> object.
@@ -2889,6 +2889,25 @@ getter must return the value corresponding to the first matching statement, swit
  <dd>"<code title>include</code>"
 </dl>
 
+<hr>
+
+<p>The <dfn title=dom-Request-clone><code>clone()</code></dfn> method, when invoked, must
+run these steps:
+
+<ol>
+ <li><p>Let <var title>newRequest</var> be a copy of
+ <span title=concept-Request-request>request</span>, except that
+ <var title>newRequest</var>'s <span title=concept-request-body>body</span> is a tee of
+ <span title=concept-Request-request>request</span>'s
+ <span title=concept-request-body>body</span>.
+ <!-- Similar text in: HTTP network or cache fetch -->
+
+ <li><p>Let <var title>r</var> be a new <code>Request</code> object associated with
+ <var title>newRequest</var> and a new <code>Headers</code> object.
+
+ <li><p>Return <var title>r</var>.
+</ol>
+
 
 <h3>Response class</h3>
 
@@ -2905,7 +2924,7 @@ interface <dfn>Response</dfn> {
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
   readonly attribute <span>Headers</span> <span title=dom-Response-headers>headers</span>;
 
-  <span>Response</span> <span title=dom-Response-clone>clone()</span>;
+  <span>Response</span> <span title=dom-Response-clone>clone</span>();
 };
 <span>Response</span> implements <span>Body</span>;
 
@@ -2943,7 +2962,7 @@ constructor, when invoked, must run these steps:
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
  <li><p>Let <var title>r</var> be a new <code>Response</code> object, associated with a
- new <span title=concept-response>response</span> and <code>Headers</code> object.
+ new <span title=concept-response>response</span> and a new <code>Headers</code> object.
 
  <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var title>init</var>'s
@@ -2997,7 +3016,8 @@ constructor, when invoked, must run these steps:
 
 <p>The static <dfn title=dom-Response-error><code>error()</code></dfn> method, when
 invoked, must run return a new <code>Response</code> object, associated with a new
-<span title=concept-network-error>network error</span> and <code>Headers</code> object.
+<span title=concept-network-error>network error</span> and a new <code>Headers</code>
+object.
 
 <p>The static
 <dfn title=dom-Response-redirect><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
@@ -3021,7 +3041,7 @@ method, when invoked, must run these steps:
  <span data-anolis-spec=webidl>throw</span> a <code title>RangeError</code>.
 
  <li><p>Let <var title>r</var> be a new <code>Response</code> object, associated with a
- new <span title=concept-response>response</span> and <code>Headers</code> object.
+ new <span title=concept-response>response</span> and a new <code>Headers</code> object.
 
  <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var title>status</var>.
@@ -3062,12 +3082,29 @@ return the associated <code>Headers</code> object.
 
 <hr>
 
-<p class=XXX>The <dfn title=dom-Response-clone><code>clone()</code></dfn> method ...
+<p>The <dfn title=dom-Response-clone><code>clone()</code></dfn> method, when invoked, must
+run these steps:
+
+<ol>
+ <li><p>Let <var title>newResponse</var> be a copy of
+ <span title=concept-Response-response>response</span>, except that
+ <var title>newResponse</var>'s <span title=concept-response-body>body</span> is a tee of
+ <span title=concept-Response-response>request</span>'s
+ <span title=concept-response-body>body</span>.
+ <!-- Similar text in: HTTP network or cache fetch -->
+
+ <li><p>Let <var title>r</var> be a new <code>Response</code> object associated with
+ <var title>newResponse</var> and a new <code>Headers</code> object.
+
+ <li><p>Return <var title>r</var>.
+</ol>
 
 
 <h3>Structured cloning of <code>Headers</code>, <code>Request</code>, and <code>Response</code> objects</h3>
 
-<p class=XXX>See <a href="https://github.com/slightlyoff/ServiceWorker/issues/313">SW #313</a>.
+<p class=note>Unlikely to happen anytime soon due to difficulty of cloning promises and
+streams. See <a href="https://github.com/slightlyoff/ServiceWorker/issues/313">SW #313</a>
+for details.
 
 
 <h3>Fetch method</h3>
