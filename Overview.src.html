@@ -676,8 +676,9 @@ Unless stated otherwise, it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-cache-mode>cache mode</dfn>, which is one of
-<i title>default</i>, <i title>local</i>, and <i title>skip</i>. Unless stated
-otherwise, it is <i title>default</i>.
+<i title>default</i>, <i title>bypass</i>, <i title>reload</i>, <i title>revalidate</i>,
+<i title>force cache</i>, and <i title>offline</i>. Unless stated otherwise, it is
+<i title>default</i>.
 
 <p class="note no-backref">If <span title=concept-request-header-list>header list</span>
 contains a <span title=concept-header>header</span> whose
@@ -687,7 +688,7 @@ contains a <span title=concept-header>header</span> whose
 `<code title>If-Unmodified-Since</code>`,
 `<code title>If-Match</code>`, and
 `<code title>If-Range</code>`, <span tilte=concept-fetch>fetch</span> will set
-<span title=concept-request-cache-mode>cache mode</span> to <i title>local</i> if it is
+<span title=concept-request-cache-mode>cache mode</span> to <i title>bypass</i> if it is
 <i title>default</i>.
 
 <p>A <span title=concept-request>request</span> has an associated
@@ -1409,7 +1410,7 @@ indicates an attempt to authenticate.
    `<code title>If-Unmodified-Since</code>`,
    `<code title>If-Match</code>`, or
    `<code title>If-Range</code>`, set <var title>request</var>'s
-   <span title=concept-request-cache-mode>cache mode</span> to <i title>local</i>.
+   <span title=concept-request-cache-mode>cache mode</span> to <i title>bypass</i>.
 
    <li><p>Set <var title>response</var> to the result of performing an
    <span title=concept-http-network-or-cache-fetch>HTTP network or cache fetch</span>
@@ -1435,8 +1436,8 @@ indicates an attempt to authenticate.
    <dd>
     <ol>
      <li><p>If <var title>request</var>'s
-     <span title=concept-request-cache-mode>cache mode</span> is not <i title>default</i>,
-     do nothing.
+     <span title=concept-request-cache-mode>cache mode</span> is neither
+     <i title>default</i> nor <i title>revalidate</i>, do nothing.
 
      <li>
       <p>Otherwise, run these subsubsteps:
@@ -1445,10 +1446,6 @@ indicates an attempt to authenticate.
        <li><p>If there is no entry in the HTTP cache for <var title>request</var> and
        <var title>response</var>, return a
        <span title=concept-network-error>network error</span>.
-       <!-- XXX xref "HTTP cache" -->
-
-       <li><p>Update the entry in the HTTP cache for <var title>request</var> and
-       <var title>response</var>, using <var title>response</var>.
        <!-- XXX xref "HTTP cache" -->
 
        <li>
@@ -1690,25 +1687,38 @@ The <i title>credentials flag</i> is one too.
 
  <li>
   <p>If <var title>request</var>'s
-  <span title=concept-request-cache-mode>cache mode</span> is not <i title>skip</i> and
-  there is a <span title=concept-response>response</span> in the HTTP cache for
-  <var title>request</var> run these substeps:
+  <span title=concept-request-cache-mode>cache mode</span> is neither <i title>bypass</i>
+  nor <i title>reload</i>, and there is a <span title=concept-response>response</span> in
+  the HTTP cache for <var title>request</var> run these substeps:
   <!-- XXX xref "HTTP cache" -->
 
   <ol>
-   <li><p>If the <span title=concept-response>response</span> in the HTTP cache for
+   <li><p>If <var title>request</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is either
+   <i title>force cache</i> or <i title>offline</i>, set <var title>response</var>
+   to the <span title=concept-response>response</span> in the HTTP cache for
+   <var title>request</var>.
+
+   <li><p>Otherwise, if <var title>request</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is <i title>default</i> and
+   the <span title=concept-response>response</span> in the HTTP cache for
    <var title>request</var> does not require revalidation, set <var title>response</var>
    to that <span title=concept-response>response</span>.
-   <!-- XXX xref "HTTP cache", "revalidation" -->
+   <!-- XXX xref "revalidation" -->
 
-   <li><p>Otherwise, if the <span title=concept-response>response</span> in the HTTP cache
-   for <var title>request</var> does require revalidation, and <var title>request</var>'s
-   <span title=concept-request-cache-mode>cache mode</span> is <i title>default</i>,
-   modify <var title>HTTPRequest</var>'s
+   <li><p>Otherwise, if <var title>request</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is either <i title>default</i>
+   or <i title>revalidate</i>, and the <span title=concept-response>response</span> in the
+   HTTP cache for <var title>request</var> does require revalidation, modify
+   <var title>HTTPRequest</var>'s
    <span title=concept-request-header-list>header list</span> with revalidation
    <span title=concept-header>headers</span>.
-   <!-- XXX xref "HTTP cache", "revalidation" -->
+   <!-- XXX modify, revalidation headers -->
   </ol>
+
+ <li>If <var title>response</var> is null and <var title>request</var>'s
+ <span title=concept-request-cache-mode>cache mode</span> is <i title>offline</i>, return
+ a <span title=concept-network-error>network error</span>.
 
  <li>
   <p>If <var title>response</var> is null, modify <var title>HTTPRequest</var>'s
@@ -1739,6 +1749,13 @@ The <i title>credentials flag</i> is one too.
   <span title=concept-response-termination-reason>termination reason</span> to
   <var title>reason</var>.
   <span data-anolis-ref>HTTP</span>
+
+  <p>If <var title>response</var> is not a
+  <span title=concept-network-error>network error</span> and <var title>request</var>'s
+  <span title=concept-request-cache-mode>cache mode</span> is not <i title>bypass</i>,
+  update <var title>response</var> in the HTTP cache for <var title>request</var>.
+  <!-- XXX xref HTTP cache -->
+  <!-- Note: at this point cache mode cannot be /offline/ -->
 
   <p>If <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span> is
   non-null, run these substeps:
@@ -3269,6 +3286,7 @@ Graham Klyne,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Henri Sivonen,
+Honza Bambas,
 Ian Hickson,
 Jake Archibald<!-- technically B.J. Archibald -->,
 James Graham,

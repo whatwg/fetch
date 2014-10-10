@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-october-2014">Living Standard — Last Updated 9 October 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-october-2014">Living Standard — Last Updated 10 October 2014</h2>
 
 <dl>
  <dt>Participate:
@@ -721,8 +721,9 @@ Unless stated otherwise, it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-cache-mode" title="concept-request-cache-mode">cache mode</dfn>, which is one of
-<i title="">default</i>, <i title="">local</i>, and <i title="">skip</i>. Unless stated
-otherwise, it is <i title="">default</i>.
+<i title="">default</i>, <i title="">bypass</i>, <i title="">reload</i>, <i title="">revalidate</i>,
+<i title="">force cache</i>, and <i title="">offline</i>. Unless stated otherwise, it is
+<i title="">default</i>.
 
 <p class="note no-backref">If <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
 contains a <a href="#concept-header" title="concept-header">header</a> whose
@@ -732,7 +733,7 @@ contains a <a href="#concept-header" title="concept-header">header</a> whose
 `<code title="">If-Unmodified-Since</code>`,
 `<code title="">If-Match</code>`, and
 `<code title="">If-Range</code>`, <span tilte="concept-fetch">fetch</span> will set
-<a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to <i title="">local</i> if it is
+<a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to <i title="">bypass</i> if it is
 <i title="">default</i>.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
@@ -1454,7 +1455,7 @@ indicates an attempt to authenticate.
    `<code title="">If-Unmodified-Since</code>`,
    `<code title="">If-Match</code>`, or
    `<code title="">If-Range</code>`, set <var title="">request</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to <i title="">local</i>.
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to <i title="">bypass</i>.
 
    <li><p>Set <var title="">response</var> to the result of performing an
    <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</a>
@@ -1480,8 +1481,8 @@ indicates an attempt to authenticate.
    <dd>
     <ol>
      <li><p>If <var title="">request</var>'s
-     <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is not <i title="">default</i>,
-     do nothing.
+     <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is neither
+     <i title="">default</i> nor <i title="">revalidate</i>, do nothing.
 
      <li>
       <p>Otherwise, run these subsubsteps:
@@ -1490,10 +1491,6 @@ indicates an attempt to authenticate.
        <li><p>If there is no entry in the HTTP cache for <var title="">request</var> and
        <var title="">response</var>, return a
        <a href="#concept-network-error" title="concept-network-error">network error</a>.
-       <!-- XXX xref "HTTP cache" -->
-
-       <li><p>Update the entry in the HTTP cache for <var title="">request</var> and
-       <var title="">response</var>, using <var title="">response</var>.
        <!-- XXX xref "HTTP cache" -->
 
        <li>
@@ -1735,25 +1732,38 @@ The <i title="">credentials flag</i> is one too.
 
  <li>
   <p>If <var title="">request</var>'s
-  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is not <i title="">skip</i> and
-  there is a <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
-  <var title="">request</var> run these substeps:
+  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is neither <i title="">bypass</i>
+  nor <i title="">reload</i>, and there is a <a href="#concept-response" title="concept-response">response</a> in
+  the HTTP cache for <var title="">request</var> run these substeps:
   <!-- XXX xref "HTTP cache" -->
 
   <ol>
-   <li><p>If the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+   <li><p>If <var title="">request</var>'s
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either
+   <i title="">force cache</i> or <i title="">offline</i>, set <var title="">response</var>
+   to the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+   <var title="">request</var>.
+
+   <li><p>Otherwise, if <var title="">request</var>'s
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is <i title="">default</i> and
+   the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
    <var title="">request</var> does not require revalidation, set <var title="">response</var>
    to that <a href="#concept-response" title="concept-response">response</a>.
-   <!-- XXX xref "HTTP cache", "revalidation" -->
+   <!-- XXX xref "revalidation" -->
 
-   <li><p>Otherwise, if the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache
-   for <var title="">request</var> does require revalidation, and <var title="">request</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is <i title="">default</i>,
-   modify <var title="">HTTPRequest</var>'s
+   <li><p>Otherwise, if <var title="">request</var>'s
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either <i title="">default</i>
+   or <i title="">revalidate</i>, and the <a href="#concept-response" title="concept-response">response</a> in the
+   HTTP cache for <var title="">request</var> does require revalidation, modify
+   <var title="">HTTPRequest</var>'s
    <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with revalidation
    <a href="#concept-header" title="concept-header">headers</a>.
-   <!-- XXX xref "HTTP cache", "revalidation" -->
+   <!-- XXX modify, revalidation headers -->
   </ol>
+
+ <li>If <var title="">response</var> is null and <var title="">request</var>'s
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is <i title="">offline</i>, return
+ a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
  <li>
   <p>If <var title="">response</var> is null, modify <var title="">HTTPRequest</var>'s
@@ -1784,6 +1794,13 @@ The <i title="">credentials flag</i> is one too.
   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
   <var title="">reason</var>.
   <a href="#refsHTTP">[HTTP]</a>
+
+  <p>If <var title="">response</var> is not a
+  <a href="#concept-network-error" title="concept-network-error">network error</a> and <var title="">request</var>'s
+  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is not <i title="">bypass</i>,
+  update <var title="">response</var> in the HTTP cache for <var title="">request</var>.
+  <!-- XXX xref HTTP cache -->
+  <!-- Note: at this point cache mode cannot be /offline/ -->
 
   <p>If <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
   non-null, run these substeps:
@@ -3372,6 +3389,7 @@ Graham Klyne,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Henri Sivonen,
+Honza Bambas,
 Ian Hickson,
 Jake Archibald<!-- technically B.J. Archibald -->,
 James Graham,
