@@ -2716,7 +2716,8 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;-->
   readonly attribute <a href="#requestmode">RequestMode</a> <a href="#dom-request-mode" title="dom-Request-mode">mode</a>;
   readonly attribute <a href="#requestcredentials">RequestCredentials</a> <a href="#dom-request-credentials" title="dom-Request-credentials">credentials</a>;<!--
-  readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
+  readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;-->
+  readonly attribute <a href="#requestcache">RequestCache</a> <a href="#dom-request-cache" title="dom-Request-cache">cache</a>;<!--
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
 
   <a href="#request">Request</a> <a href="#dom-request-clone" title="dom-Request-clone">clone</a>();
@@ -2729,6 +2730,7 @@ dictionary <dfn id="requestinit">RequestInit</dfn> {
   <a href="#bodyinit">BodyInit</a> body;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
+  <a href="#requestcache">RequestCache</a> cache;
 };
 
 enum <dfn id="requestcontext">RequestContext</dfn> {
@@ -2739,7 +2741,8 @@ enum <dfn id="requestcontext">RequestContext</dfn> {
   "xmlhttprequest", "xslt"
 };
 enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "no-cors", "cors" };
-enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
+enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };
+enum <dfn id="requestcache">RequestCache</dfn> { "default", "bypass", "reload", "revalidate", "force-cache", "offline" };</pre>
 
 <p>A <code><a href="#request">Request</a></code> object has an associated
 <dfn id="concept-request-request" title="concept-Request-request">request</dfn> (a
@@ -2796,14 +2799,19 @@ constructor must run these steps:
  <a href="#concept-request-context" title="concept-request-context">context</a> is <i title="">fetch</i>,
  <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <var title="">request</var>'s
  <a href="#concept-request-mode" title="concept-request-mode">mode</a>,
- and
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
  <var title="">request</var>'s
- <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
+ <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>,
+ and
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
+ <var title="">request</var>'s
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>.
 
  <li><p>Let <var title="">fallbackMode</var> be null.
 
  <li><p>Let <var title="">fallbackCredentials</var> be null.
+
+ <li><p>Let <var title="">fallbackCache</var> be null.
 
  <li>
   <p>If <var title="">input</var> is a string, run these substeps:
@@ -2823,11 +2831,12 @@ constructor must run these steps:
    <li><p>Set <var title="">fallbackMode</var> to <i title="">CORS</i>.
 
    <li><p>Set <var title="">fallbackCredentials</var> to <i title="">omit</i>.
+
+   <li><p>Set <var title="">fallbackCache</var> to <i title="">default</i>.
   </ol>
 
- <li><p>Let <var title="">mode</var> be <var title="">init</var>'s
- <code title="">mode</code> member if it is present, and <var title="">fallbackMode</var>
- otherwise.
+ <li><p>Let <var title="">mode</var> be <var title="">init</var>'s <code title="">mode</code>
+ member if it is present, and <var title="">fallbackMode</var> otherwise.
 
  <li><p>If <var title="">mode</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-mode" title="concept-request-mode">mode</a> to <var title="">mode</var>.
@@ -2839,6 +2848,12 @@ constructor must run these steps:
  <li><p>If <var title="">credentials</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
  <var title="">credentials</var>.
+
+ <li><p>Let <var title="">cache</var> be <var title="">init</var>'s <code title="">cache</code>
+ member if it is present, and <var title="">fallbackCache</var> otherwise.
+
+ <li><p>If <var title="">cache</var> is non-null, set <var title="">request</var>'s
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to <var title="">cache</var>.
 
  <li>
   <p>If <var title="">init</var>'s <code title="">method</code> member is present, let
@@ -2954,8 +2969,20 @@ return the value corresponding to the first matching statement, switching on
 </dl>
 
 <p>The <dfn id="dom-request-credentials" title="dom-Request-credentials"><code>credentials</code></dfn> attribute's
-getter must <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+getter must return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
+
+<p>The <dfn id="dom-request-cache" title="dom-Request-cache"><code>cache</code></dfn> attribute's getter must
+return the value corresponding to the first matching statement, switching on
+<a href="#concept-request-request" title="concept-Request-request">request</a>'s
+<a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>:
+
+<dl class="switch">
+ <dt><i title="">force offline</i>
+ <dd>"<code title="">force-offline</code>"
+ <dt>Otherwise
+ <dd>Value as is.
+</dl>
 
 <hr>
 

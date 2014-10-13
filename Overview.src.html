@@ -2671,7 +2671,8 @@ interface <dfn>Request</dfn> {
   readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;-->
   readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
   readonly attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;<!--
-  readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;
+  readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;-->
+  readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;<!--
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
 
   <span>Request</span> <span title=dom-Request-clone>clone</span>();
@@ -2684,6 +2685,7 @@ dictionary <dfn>RequestInit</dfn> {
   <span>BodyInit</span> body;
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
+  <span>RequestCache</span> cache;
 };
 
 enum <dfn>RequestContext</dfn> {
@@ -2694,7 +2696,8 @@ enum <dfn>RequestContext</dfn> {
   "xmlhttprequest", "xslt"
 };
 enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors" };
-enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };</pre>
+enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };
+enum <dfn>RequestCache</dfn> { "default", "bypass", "reload", "revalidate", "force-cache", "offline" };</pre>
 
 <p>A <code>Request</code> object has an associated
 <dfn title=concept-Request-request>request</dfn> (a
@@ -2751,14 +2754,19 @@ constructor must run these steps:
  <span title=concept-request-context>context</span> is <i title>fetch</i>,
  <span title=concept-request-mode>mode</span> is <var title>request</var>'s
  <span title=concept-request-mode>mode</span>,
- and
  <span title=concept-request-credentials-mode>credentials mode</span> is
  <var title>request</var>'s
- <span title=concept-request-credentials-mode>credentials mode</span>.
+ <span title=concept-request-credentials-mode>credentials mode</span>,
+ and
+ <span title=concept-request-cache-mode>cache mode</span> is
+ <var title>request</var>'s
+ <span title=concept-request-cache-mode>cache mode</span>.
 
  <li><p>Let <var title>fallbackMode</var> be null.
 
  <li><p>Let <var title>fallbackCredentials</var> be null.
+
+ <li><p>Let <var title>fallbackCache</var> be null.
 
  <li>
   <p>If <var title>input</var> is a string, run these substeps:
@@ -2778,11 +2786,12 @@ constructor must run these steps:
    <li><p>Set <var title>fallbackMode</var> to <i title>CORS</i>.
 
    <li><p>Set <var title>fallbackCredentials</var> to <i title>omit</i>.
+
+   <li><p>Set <var title>fallbackCache</var> to <i title>default</i>.
   </ol>
 
- <li><p>Let <var title>mode</var> be <var title>init</var>'s
- <code title>mode</code> member if it is present, and <var title>fallbackMode</var>
- otherwise.
+ <li><p>Let <var title>mode</var> be <var title>init</var>'s <code title>mode</code>
+ member if it is present, and <var title>fallbackMode</var> otherwise.
 
  <li><p>If <var title>mode</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-mode>mode</span> to <var title>mode</var>.
@@ -2794,6 +2803,12 @@ constructor must run these steps:
  <li><p>If <var title>credentials</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span> to
  <var title>credentials</var>.
+
+ <li><p>Let <var title>cache</var> be <var title>init</var>'s <code title>cache</code>
+ member if it is present, and <var title>fallbackCache</var> otherwise.
+
+ <li><p>If <var title>cache</var> is non-null, set <var title>request</var>'s
+ <span title=concept-request-cache-mode>cache mode</span> to <var title>cache</var>.
 
  <li>
   <p>If <var title>init</var>'s <code title>method</code> member is present, let
@@ -2909,8 +2924,20 @@ return the value corresponding to the first matching statement, switching on
 </dl>
 
 <p>The <dfn title=dom-Request-credentials><code>credentials</code></dfn> attribute's
-getter must <span title=concept-Request-request>request</span>'s
+getter must return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-credentials-mode>credentials mode</span>.
+
+<p>The <dfn title=dom-Request-cache><code>cache</code></dfn> attribute's getter must
+return the value corresponding to the first matching statement, switching on
+<span title=concept-Request-request>request</span>'s
+<span title=concept-request-cache-mode>cache mode</span>:
+
+<dl class=switch>
+ <dt><i title>force offline</i>
+ <dd>"<code title>force-offline</code>"
+ <dt>Otherwise
+ <dd>Value as is.
+</dl>
 
 <hr>
 
