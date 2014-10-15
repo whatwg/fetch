@@ -86,8 +86,9 @@ not appear in all uppercase letters in this specification.
 
 <h2>Terminology</h2>
 
-<p>This specification uses terminology from the Encoding and URL Standards.
+<p>This specification uses terminology from the Encoding, HTML, and URL Standards.
 <span data-anolis-ref>ENCODING</span>
+<span data-anolis-ref>HTML</span>
 <span data-anolis-ref>URL</span>
 
 <p>A <span data-anolis-spec=encoding>byte</span> sequence with bytes in the range 0x00 to
@@ -115,6 +116,15 @@ range 0x41 to 0x5A, by 0x20.
 
 <p>To <dfn>byte uppercase</dfn> a byte sequence, subtract each byte it contains, in the
 range 0x61 to 0x7A, by 0x20.
+
+<hr>
+
+<p>To <dfn>queue a fetch task</dfn> on <span title=concept-request>request</span>
+<var title>request</var> to <var title>run an operation</var>,
+<span data-anolis-spec=html>queue a task</span> to <var title>run an operation</var> on
+<var title>request</var>'s <span title=concept-request-client>client</span>'s
+<span data-anolis-spec=html>responsible event loop</span> using the
+<span data-anolis-spec=html>networking task source</span>.
 
 
 <h3>HTTP</h3>
@@ -1005,20 +1015,17 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
 
  <p>That is, it either returns a <span title=concept-response>response</span> if
  <span title=concept-request>request</span>'s <span>synchronous flag</span> is set, or it
- <span data-anolis-spec=html title="queue a task">queues</span>
- <span data-anolis-spec=html title=concept-task>tasks</span> annotated
+ <span title="queue a fetch task">queues tasks</span> annotated
  <span>process response</span>, <span>process response body</span>, and
  <span>process response end-of-file</span> for the
- <span title=concept-response>response</span> on the
- <span data-anolis-spec=html>networking task source</span>.
+ <span title=concept-response>response</span>.
 
  <p>To capture uploads, if <span title=concept-request>request</span>'s
  <span>synchronous flag</span> is unset,
  <span data-anolis-spec=html title=concept-task>tasks</span> annotated
  <span>process request body</span> and <span>process request end-of-file</span> for the
  <span title=concept-request>request</span> can be
- <span data-anolis-spec=html title="queue a task">queued</span> on the
- <span data-anolis-spec=html>networking task source</span>.
+ <span title="queue a fetch task">queued</span>.
 </div>
 
 <p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>,
@@ -1167,12 +1174,10 @@ redirects. Only use the <var title>request</var> parameter in other standards.
  non-null and <var title>request</var>'s <span title=concept-request-url>url</span>'s
  <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
  "<code title>http</code>" or "<code title>https</code>",
- <span data-anolis-spec=html title="queue a task">queue</span> a
- <span data-anolis-spec=html title=concept-task>task</span> to
+ <span>queue a fetch task</span> on <var title>request</var> to
  <dfn>process request end-of-file</dfn> for <var title>request</var>.
 
- <li><p><span data-anolis-spec=html title="queue a task">Queue</span> a
- <span data-anolis-spec=html title=concept-task>task</span> to
+ <li><p><span>Queue a fetch task</span> on <var title>request</var> to
  <dfn>process response</dfn> for <var title>response</var>.
 
  <li>
@@ -1180,12 +1185,10 @@ redirects. Only use the <var title>request</var> parameter in other standards.
   <span title=concept-response-body>body</span> is null, run these substeps:
 
   <ol>
-   <li><span data-anolis-spec=html title="queue a task">queue</span> a
-   <span data-anolis-spec=html title=concept-task>task</span> to
+   <li><span>Queue a fetch task</span> on <var title>request</var> to
    <dfn>process response body</dfn> for <var title>response</var>.
 
-   <li><p><span data-anolis-spec=html title="queue a task">queue</span> a
-   <span data-anolis-spec=html title=concept-task>task</span> to
+   <li><p><span>Queue a fetch task</span> on <var title>request</var> to
    <dfn>process response end-of-file</dfn> for <var title>response</var>.
   </ol>
 
@@ -1199,16 +1202,14 @@ redirects. Only use the <var title>request</var> parameter in other standards.
    <var title>response</var> has no
    <span title=concept-response-termination-reason>termination reason</span> and
    end-of-file has not been pushed,
-   <span data-anolis-spec=html title="queue a task">queue</span> a
-   <span data-anolis-spec=html title=concept-task>task</span> to
+   <span>queue a fetch task</span> on <var title>request</var> to
    <span>process response body</span> for <var title>response</var>.
 
    <li>
     <p>Once end-of-file has been pushed to <var title>response</var>'s
     <span title=concept-response-body>body</span> or <var title>response</var> has a
     <span title=concept-response-termination-reason>termination reason</span>,
-    <span data-anolis-spec=html title="queue a task">queue</span> a
-    <span data-anolis-spec=html title=concept-task>task</span> to
+    <span>queue a fetch task</span> on <var title>request</var> to
     <span>process response end-of-file</span> for <var title>response</var>.
 
     <p class=note>Ideally FTP/HTTP define this in more detail and this becomes a set of
@@ -1809,10 +1810,9 @@ The <i title>credentials flag</i> is one too.
     <span title=concept-request-body>body</span> is read from (i.e. is transmitted),
     increase <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span>'s
     <span title=concept-body-transmitted>transmitted</span> with the amount of
-    payload body bytes transmitted and then
-    <span data-anolis-spec=html title="queue a task">queue</span> a
-    <span data-anolis-spec=html title=concept-task>task</span> to
-    <dfn>process request body</dfn> for <var title>HTTPRequest</var>.
+    payload body bytes transmitted and then <span>queue a fetch task</span> on
+    <var title>request</var> to <dfn>process request body</dfn> for
+    <var title>HTTPRequest</var>.
     <!-- XXX xref "read", "payload body" -->
 
     <p>Use the <span data-anolis-spec=html>networking task source</span>.
