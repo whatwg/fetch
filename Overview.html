@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-28-october-2014">Living Standard — Last Updated 28 October 2014</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-29-october-2014">Living Standard — Last Updated 29 October 2014</h2>
 
 <dl>
  <dt>Participate:
@@ -815,6 +815,17 @@ is empty.
 <i title="">validated</i>, and
 <i title="">partial</i>. Unless stated otherwise, it is <i title="">none</i>.
 
+<p>A <a href="#concept-response" title="concept-response">response</a> has an associated
+<dfn id="concept-response-authentication-state" title="concept-response-authentication-state">authentication state</dfn> which is one
+of <i title="">unauthenticated</i>,
+<i title="">deprecated authentication</i>, and
+<i title="">authenticated</i>. Unless stated otherwise, it is <i title="">unauthenticated</i>.
+
+<p class="note no-backref">This is unrelated to HTTP authentication. A
+<a href="#concept-response" title="concept-response">response</a> delivered over TLS will typically have its
+<a href="#concept-response-authentication-state" title="concept-response-authentication-state">authentication state</a> set to
+<i title="">authenticated</i>.
+
 <hr>
 
 <p>A <a href="#concept-response" title="concept-response">response</a> whose
@@ -1284,8 +1295,11 @@ steps:
   <a href="#concept-header" title="concept-header">header</a> whose
   <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Content-Type</code>` and
   <a href="#concept-header-value" title="concept-header-value">value</a> is
-  `<code title="">text/html;charset=utf-8</code>`, and
-  <a href="#concept-response-body" title="concept-response-body">body</a> is the empty byte sequence.
+  `<code title="">text/html;charset=utf-8</code>`,
+  <a href="#concept-response-body" title="concept-response-body">body</a> is the empty byte sequence, and
+  <a href="#concept-response-authentication-state" title="concept-response-authentication-state">authentication state</a> is
+  <var title="">request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a>'s
+  <span>authentication state</span>.
 
   <!-- introduce about:unicorn
        https://html5.org/temp/unicorn.svg -->
@@ -1331,6 +1345,11 @@ steps:
 
    <li><p class="XXX"><a href="http://lists.w3.org/Archives/Public/public-webapps/2014JulSep/0037.html">Read the blob somehow</a>.
 
+   <li><p>Set <var title="">response</var>'s
+   <a href="#concept-response-authentication-state" title="concept-response-authentication-state">authentication state</a> to
+   <var title="">request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a>'s
+   <span>authentication state</span>.
+
    <li><p>Return <var title="">response</var>.
   </ol>
 
@@ -1345,9 +1364,12 @@ steps:
   <a href="#concept-header" title="concept-header">header</a> whose
   <a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Content-Type</code>` and
   <a href="#concept-header-value" title="concept-header-value">value</a> is the MIME type and parameters returned
-  from <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>, and
+  from <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>,
   <a href="#concept-response-body" title="concept-response-body">body</a> is the data returned from
-  <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>.
+  <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>, and
+  <a href="#concept-response-authentication-state" title="concept-response-authentication-state">authentication state</a> is
+  <var title="">request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a>'s
+  <span>authentication state</span>.
   <a href="#refsDATAURL">[DATAURL]</a>
   <!-- XXX "obtaining a resource" needs a better reference -->
 
@@ -1840,6 +1862,15 @@ The <i title="">credentials flag</i> is one too.
   update <var title="">response</var> in the HTTP cache for <var title="">request</var>.
   <!-- XXX xref HTTP cache -->
   <!-- Note: at this point cache mode cannot be /offline/ -->
+
+  <p>If <var title="">response</var> was retrieved over TLS set its
+  <a href="#concept-response-authentication-state" title="concept-response-authentication-state">authentication state</a> to either
+  <i title="">deprecated authentication</i> or <i title="">authenticated</i>.
+  <a href="#refsTLS">[TLS]</a>
+
+  <p class="note">The exact determination here is up to user agents for the time being.
+  User agents are strongly encouraged to only succeed TLS connections with strong security
+  properties and return <a href="#concept-network-error" title="concept-network-error">network errors</a> otherwise.
 
   <p>If <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
   non-null, run these substeps:
@@ -3134,6 +3165,11 @@ constructor, when invoked, must run these steps:
  from <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
+ <li><p>Set <var title="">r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+ <a href="#concept-response-authentication-state" title="concept-response-authentication-state">authentication state</a> to
+ <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <span>authentication state</span>.
+
  <li><p>Return <var title="">r</var>.
 </ol>
 
@@ -3406,6 +3442,9 @@ however, it is perfectly fine to do so.
 
 <dt id="refsSW">[SW]
 <dd><cite><a href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/">Service Workers</a></cite>, Alex Russell and Jungkee Song. W3C.
+
+<dt id="refsTLS">[TLS]
+<dd><cite><a href="http://tools.ietf.org/html/rfc5246">The Transport Layer Security (TLS) Protocol Version 1.2</a></cite>, T. Dierks and E. Rescorla. IETF.
 
 <dt id="refsURL">[URL]
 <dd><cite><a href="https://url.spec.whatwg.org/">URL</a></cite>, Anne van Kesteren. WHATWG.

@@ -770,6 +770,17 @@ is empty.
 <i title>validated</i>, and
 <i title>partial</i>. Unless stated otherwise, it is <i title>none</i>.
 
+<p>A <span title=concept-response>response</span> has an associated
+<dfn title=concept-response-authentication-state>authentication state</dfn> which is one
+of <i title>unauthenticated</i>,
+<i title>deprecated authentication</i>, and
+<i title>authenticated</i>. Unless stated otherwise, it is <i title>unauthenticated</i>.
+
+<p class="note no-backref">This is unrelated to HTTP authentication. A
+<span title=concept-response>response</span> delivered over TLS will typically have its
+<span title=concept-response-authentication-state>authentication state</span> set to
+<i title>authenticated</i>.
+
 <hr>
 
 <p>A <span title=concept-response>response</span> whose
@@ -1239,8 +1250,11 @@ steps:
   <span title=concept-header>header</span> whose
   <span title=concept-header-name>name</span> is `<code title>Content-Type</code>` and
   <span title=concept-header-value>value</span> is
-  `<code title>text/html;charset=utf-8</code>`, and
-  <span title=concept-response-body>body</span> is the empty byte sequence.
+  `<code title>text/html;charset=utf-8</code>`,
+  <span title=concept-response-body>body</span> is the empty byte sequence, and
+  <span title=concept-response-authentication-state>authentication state</span> is
+  <var title>request</var>'s <span title=concept-request-client>client</span>'s
+  <span>authentication state</span>.
 
   <!-- introduce about:unicorn
        https://html5.org/temp/unicorn.svg -->
@@ -1286,6 +1300,11 @@ steps:
 
    <li><p class=XXX><a href="http://lists.w3.org/Archives/Public/public-webapps/2014JulSep/0037.html">Read the blob somehow</a>.
 
+   <li><p>Set <var title>response</var>'s
+   <span title=concept-response-authentication-state>authentication state</span> to
+   <var title>request</var>'s <span title=concept-request-client>client</span>'s
+   <span>authentication state</span>.
+
    <li><p>Return <var title>response</var>.
   </ol>
 
@@ -1300,9 +1319,12 @@ steps:
   <span title=concept-header>header</span> whose
   <span title=concept-header-name>name</span> is `<code title>Content-Type</code>` and
   <span title=concept-header-value>value</span> is the MIME type and parameters returned
-  from <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>, and
+  from <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>,
   <span title=concept-response-body>body</span> is the data returned from
-  <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>.
+  <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>, and
+  <span title=concept-response-authentication-state>authentication state</span> is
+  <var title>request</var>'s <span title=concept-request-client>client</span>'s
+  <span>authentication state</span>.
   <span data-anolis-ref>DATAURL</span>
   <!-- XXX "obtaining a resource" needs a better reference -->
 
@@ -1795,6 +1817,15 @@ The <i title>credentials flag</i> is one too.
   update <var title>response</var> in the HTTP cache for <var title>request</var>.
   <!-- XXX xref HTTP cache -->
   <!-- Note: at this point cache mode cannot be /offline/ -->
+
+  <p>If <var title>response</var> was retrieved over TLS set its
+  <span title=concept-response-authentication-state>authentication state</span> to either
+  <i title>deprecated authentication</i> or <i title>authenticated</i>.
+  <span data-anolis-ref>TLS</span>
+
+  <p class=note>The exact determination here is up to user agents for the time being.
+  User agents are strongly encouraged to only succeed TLS connections with strong security
+  properties and return <span title=concept-network-error>network errors</span> otherwise.
 
   <p>If <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span> is
   non-null, run these substeps:
@@ -3088,6 +3119,11 @@ constructor, when invoked, must run these steps:
  the result of <span title=concept-header-extract-MIME-type>extracting a MIME type</span>
  from <var title>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-header-list>header list</span>.
+
+ <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
+ <span title=concept-response-authentication-state>authentication state</span> to
+ <span data-anolis-spec=html>entry settings object</span>'s
+ <span>authentication state</span>.
 
  <li><p>Return <var title>r</var>.
 </ol>
