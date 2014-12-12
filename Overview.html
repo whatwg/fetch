@@ -2640,14 +2640,15 @@ typedef (<a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">
 </ol>
 
 
-<pre class="idl">[NoInterfaceObject]
+<pre class="idl">[NoInterfaceObject,
+ Exposed=(Window,Worker)]
 interface <dfn id="body">Body</dfn> {
   readonly attribute boolean <a href="#dom-body-bodyused" title="dom-Body-bodyUsed">bodyUsed</a>;
-  Promise&lt;ArrayBuffer&gt; <a href="#dom-body-arraybuffer" title="dom-Body-arrayBuffer">arrayBuffer</a>();
-  Promise&lt;<a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a>&gt; <a href="#dom-body-blob" title="dom-Body-blob">blob</a>();
-  Promise&lt;<a class="external" href="https://xhr.spec.whatwg.org/#formdata">FormData</a>&gt; <a href="#dom-body-formdata" title="dom-Body-formData">formData</a>();
-  Promise&lt;<a href="#json">JSON</a>&gt; <a href="#dom-body-json" title="dom-Body-json">json</a>();
-  Promise&lt;USVString&gt; <a href="#dom-body-text" title="dom-Body-text">text</a>();
+  [NewObject] Promise&lt;ArrayBuffer&gt; <a href="#dom-body-arraybuffer" title="dom-Body-arrayBuffer">arrayBuffer</a>();
+  [NewObject] Promise&lt;<a class="external" href="http://dev.w3.org/2006/webapi/FileAPI/#blob">Blob</a>&gt; <a href="#dom-body-blob" title="dom-Body-blob">blob</a>();
+  [NewObject] Promise&lt;<a class="external" href="https://xhr.spec.whatwg.org/#formdata">FormData</a>&gt; <a href="#dom-body-formdata" title="dom-Body-formData">formData</a>();
+  [NewObject] Promise&lt;<a href="#json">JSON</a>&gt; <a href="#dom-body-json" title="dom-Body-json">json</a>();
+  [NewObject] Promise&lt;USVString&gt; <a href="#dom-body-text" title="dom-Body-text">text</a>();
 };</pre>
 
 <p class="note">Formats you would not want a network layer to be dependent upon, such as
@@ -2794,8 +2795,9 @@ invoked, must return the result of running
 
 <h3 id="request-class"><span class="secno">5.3 </span>Request class</h3>
 
-<p class="XXX">Expose <code title="">client</code> member? See
-<a href="https://github.com/slightlyoff/ServiceWorker/issues/318">SW #318</a>.
+<!-- No client member, see
+  https://github.com/slightlyoff/ServiceWorker/issues/318
+  https://github.com/slightlyoff/ServiceWorker/issues/575 -->
 
 <pre class="idl">typedef (<a href="#request">Request</a> or USVString) <dfn id="requestinfo">RequestInfo</dfn>;
 
@@ -2804,7 +2806,7 @@ invoked, must return the result of running
 interface <dfn id="request">Request</dfn> {
   readonly attribute ByteString <a href="#dom-request-method" title="dom-Request-method">method</a>;
   readonly attribute USVString <a href="#dom-request-url" title="dom-Request-url">url</a>;
-  readonly attribute <a href="#headers">Headers</a> <a href="#dom-request-headers" title="dom-Request-headers">headers</a>;
+  [SameObject] readonly attribute <a href="#headers">Headers</a> <a href="#dom-request-headers" title="dom-Request-headers">headers</a>;
 
   readonly attribute <a href="#requestcontext">RequestContext</a> <a href="#dom-request-context" title="dom-Request-context">context</a>;<!--
   readonly attribute DOMString <span title=dom-Request-origin>origin</span>;-->
@@ -2817,7 +2819,7 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute <a href="#requestcache">RequestCache</a> <a href="#dom-request-cache" title="dom-Request-cache">cache</a>;<!--
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
 
-  <a href="#request">Request</a> <a href="#dom-request-clone" title="dom-Request-clone">clone</a>();
+  [NewObject] <a href="#request">Request</a> <a href="#dom-request-clone" title="dom-Request-clone">clone</a>();
 };
 <a href="#request">Request</a> implements <a href="#body">Body</a>;
 
@@ -3135,17 +3137,17 @@ run these steps:
 <pre class="idl">[<a href="#dom-response" title="dom-Response">Constructor</a>(optional <a href="#bodyinit">BodyInit</a> <var title="">body</var>, optional <a href="#responseinit">ResponseInit</a> <var title="">init</var>),
  Exposed=(Window,Worker)]
 interface <dfn id="response">Response</dfn> {
-  static <a href="#response">Response</a> <a href="#dom-response-error" title="dom-Response-error">error</a>();
-  static <a href="#response">Response</a> <a href="#dom-response-redirect" title="dom-Response-redirect">redirect</a>(USVString <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
+  [NewObject] static <a href="#response">Response</a> <a href="#dom-response-error" title="dom-Response-error">error</a>();
+  [NewObject] static <a href="#response">Response</a> <a href="#dom-response-redirect" title="dom-Response-redirect">redirect</a>(USVString <var title="">url</var>, optional unsigned short <var title="">status</var> = 302);
 
   readonly attribute <a href="#responsetype">ResponseType</a> <a href="#dom-response-type" title="dom-Response-type">type</a>;
 
   readonly attribute USVString <a href="#dom-response-url" title="dom-Response-url">url</a>;
   readonly attribute unsigned short <a href="#dom-response-status" title="dom-Response-status">status</a>;
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
-  readonly attribute <a href="#headers">Headers</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
+  [SameObject] readonly attribute <a href="#headers">Headers</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
 
-  <a href="#response">Response</a> <a href="#dom-response-clone" title="dom-Response-clone">clone</a>();
+  [NewObject] <a href="#response">Response</a> <a href="#dom-response-clone" title="dom-Response-clone">clone</a>();
 };
 <a href="#response">Response</a> implements <a href="#body">Body</a>;
 
@@ -3339,9 +3341,10 @@ for details.
 
 <h3 id="fetch-method"><span class="secno">5.6 </span>Fetch method</h3>
 
-<pre class="idl">[NoInterfaceObject]
+<pre class="idl">[NoInterfaceObject,
+ Exposed=(Window,Worker)]
 interface <dfn id="globalfetch">GlobalFetch</dfn> {
-  Promise&lt;<a href="#response">Response</a>&gt; <a href="#dom-global-fetch" title="dom-global-fetch">fetch</a>(<a href="#requestinfo">RequestInfo</a> <var title="">input</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>);
+  [NewObject] Promise&lt;<a href="#response">Response</a>&gt; <a href="#dom-global-fetch" title="dom-global-fetch">fetch</a>(<a href="#requestinfo">RequestInfo</a> <var title="">input</var>, optional <a href="#requestinit">RequestInit</a> <var title="">init</var>);
 };
 <a class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#window">Window</a> implements <a href="#globalfetch">GlobalFetch</a>;
 <a class="external" href="https://html.spec.whatwg.org/multipage/workers.html#workerglobalscope">WorkerGlobalScope</a> implements <a href="#globalfetch">GlobalFetch</a>;</pre>
@@ -3534,6 +3537,7 @@ Adam Barth,
 Alexey Proskuryakov,
 Ángel González,
 Anssi Kostiainen,
+Arkadiusz Michalski,
 Arne Johannessen,
 Arthur Barstow,
 Axel Rauschmayer,

@@ -2594,14 +2594,15 @@ typedef (<span data-anolis-spec=fileapi>Blob</span> or BufferSource or <span dat
 </ol>
 
 
-<pre class=idl>[NoInterfaceObject]
+<pre class=idl>[NoInterfaceObject,
+ Exposed=(Window,Worker)]
 interface <dfn>Body</dfn> {
   readonly attribute boolean <span title=dom-Body-bodyUsed>bodyUsed</span>;
-  Promise&lt;ArrayBuffer> <span title=dom-Body-arrayBuffer>arrayBuffer</span>();
-  Promise&lt;<span data-anolis-spec=fileapi>Blob</span>> <span title=dom-Body-blob>blob</span>();
-  Promise&lt;<span data-anolis-spec=xhr>FormData</span>> <span title=dom-Body-formData>formData</span>();
-  Promise&lt;<span>JSON</span>> <span title=dom-Body-json>json</span>();
-  Promise&lt;USVString> <span title=dom-Body-text>text</span>();
+  [NewObject] Promise&lt;ArrayBuffer> <span title=dom-Body-arrayBuffer>arrayBuffer</span>();
+  [NewObject] Promise&lt;<span data-anolis-spec=fileapi>Blob</span>> <span title=dom-Body-blob>blob</span>();
+  [NewObject] Promise&lt;<span data-anolis-spec=xhr>FormData</span>> <span title=dom-Body-formData>formData</span>();
+  [NewObject] Promise&lt;<span>JSON</span>> <span title=dom-Body-json>json</span>();
+  [NewObject] Promise&lt;USVString> <span title=dom-Body-text>text</span>();
 };</pre>
 
 <p class=note>Formats you would not want a network layer to be dependent upon, such as
@@ -2748,8 +2749,9 @@ invoked, must return the result of running
 
 <h3>Request class</h3>
 
-<p class=XXX>Expose <code title>client</code> member? See
-<a href="https://github.com/slightlyoff/ServiceWorker/issues/318">SW #318</a>.
+<!-- No client member, see
+  https://github.com/slightlyoff/ServiceWorker/issues/318
+  https://github.com/slightlyoff/ServiceWorker/issues/575 -->
 
 <pre class=idl>typedef (<span>Request</span> or USVString) <dfn>RequestInfo</dfn>;
 
@@ -2758,7 +2760,7 @@ invoked, must return the result of running
 interface <dfn>Request</dfn> {
   readonly attribute ByteString <span title=dom-Request-method>method</span>;
   readonly attribute USVString <span title=dom-Request-url>url</span>;
-  readonly attribute <span>Headers</span> <span title=dom-Request-headers>headers</span>;
+  [SameObject] readonly attribute <span>Headers</span> <span title=dom-Request-headers>headers</span>;
 
   readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;<!--
   readonly attribute DOMString <span title=dom-Request-origin>origin</span>;-->
@@ -2771,7 +2773,7 @@ interface <dfn>Request</dfn> {
   readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;<!--
   readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
 
-  <span>Request</span> <span title=dom-Request-clone>clone</span>();
+  [NewObject] <span>Request</span> <span title=dom-Request-clone>clone</span>();
 };
 <span>Request</span> implements <span>Body</span>;
 
@@ -3089,17 +3091,17 @@ run these steps:
 <pre class=idl>[<span title=dom-Response>Constructor</span>(optional <span>BodyInit</span> <var title>body</var>, optional <span>ResponseInit</span> <var title>init</var>),
  Exposed=(Window,Worker)]
 interface <dfn>Response</dfn> {
-  static <span>Response</span> <span title=dom-Response-error>error</span>();
-  static <span>Response</span> <span title=dom-Response-redirect>redirect</span>(USVString <var title>url</var>, optional unsigned short <var title>status</var> = 302);
+  [NewObject] static <span>Response</span> <span title=dom-Response-error>error</span>();
+  [NewObject] static <span>Response</span> <span title=dom-Response-redirect>redirect</span>(USVString <var title>url</var>, optional unsigned short <var title>status</var> = 302);
 
   readonly attribute <span>ResponseType</span> <span title=dom-Response-type>type</span>;
 
   readonly attribute USVString <span title=dom-Response-url>url</span>;
   readonly attribute unsigned short <span title=dom-Response-status>status</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
-  readonly attribute <span>Headers</span> <span title=dom-Response-headers>headers</span>;
+  [SameObject] readonly attribute <span>Headers</span> <span title=dom-Response-headers>headers</span>;
 
-  <span>Response</span> <span title=dom-Response-clone>clone</span>();
+  [NewObject] <span>Response</span> <span title=dom-Response-clone>clone</span>();
 };
 <span>Response</span> implements <span>Body</span>;
 
@@ -3293,9 +3295,10 @@ for details.
 
 <h3>Fetch method</h3>
 
-<pre class=idl>[NoInterfaceObject]
+<pre class=idl>[NoInterfaceObject,
+ Exposed=(Window,Worker)]
 interface <dfn>GlobalFetch</dfn> {
-  Promise&lt;<span>Response</span>> <span title=dom-global-fetch>fetch</span>(<span>RequestInfo</span> <var title>input</var>, optional <span>RequestInit</span> <var title>init</var>);
+  [NewObject] Promise&lt;<span>Response</span>> <span title=dom-global-fetch>fetch</span>(<span>RequestInfo</span> <var title>input</var>, optional <span>RequestInit</span> <var title>init</var>);
 };
 <span data-anolis-spec=html>Window</span> implements <span>GlobalFetch</span>;
 <span data-anolis-spec=html>WorkerGlobalScope</span> implements <span>GlobalFetch</span>;</pre>
@@ -3427,6 +3430,7 @@ Adam Barth,
 Alexey Proskuryakov,
 Ángel González,
 Anssi Kostiainen,
+Arkadiusz Michalski,
 Arne Johannessen,
 Arthur Barstow,
 Axel Rauschmayer,
