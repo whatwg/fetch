@@ -767,6 +767,10 @@ Unless stated otherwise, it is <i title>default</i>.
 null.
 
 <p>A <span title=concept-response>response</span> has an associated
+<dfn title=concept-response-final-url-flag>final url flag</dfn>. Unless stated otherwise
+it is unset.
+
+<p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-status>status</dfn>. Unless stated otherwise it is
 <code title>200</code>.
 
@@ -1176,7 +1180,9 @@ redirects. Only use the <var title>request</var> parameter in other standards.
 
  <li><p>If <span title=concept-fetch>fetch</span> is invoked recursively, return <var title>response</var>.
 
- <li><p>Set <var title>response</var>'s <span title=concept-response-url>url</span> to
+ <li><p>If <var title>response</var>'s
+ <span title=concept-response-final-url-flag>final url flag</span> is unset, set
+ <var title>response</var>'s <span title=concept-response-url>url</span> to
  <var title>request</var>'s <span title=concept-request-url>url</span>.
 
  <li><p>If
@@ -3098,6 +3104,7 @@ interface <dfn>Response</dfn> {
   readonly attribute <span>ResponseType</span> <span title=dom-Response-type>type</span>;
 
   readonly attribute USVString <span title=dom-Response-url>url</span>;
+           attribute boolean <span title=dom-Response-finalURL>finalURL</span>;
   readonly attribute unsigned short <span title=dom-Response-status>status</span>;
   readonly attribute boolean <span title=dom-Response-ok>ok</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
@@ -3253,6 +3260,25 @@ the empty string if <span title=concept-Response-response>response</span>'s
 <span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
 <i title>exclude fragment flag</i> set, otherwise.
 <span data-anolis-ref>URL</span>
+
+<p>The <dfn title=dom-Response-finalURL><code>finalURL</code></dfn> attribute's setter
+must run these steps:
+
+<ol>
+ <li><p>If <span title=concept-Response-response>response</span>'s
+ <span title=concept-response-url>url</span> is null,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If the given value is true, set
+ <span title=concept-Response-response>response</span>'s
+ <span title=concept-response-final-url-flag>final url flag</span>, and unset it
+ otherwise.
+</ol>
+
+<p>The <code title=dom-Response-finalURL>finalURL</code> attribute's getter must return
+true if <span title=concept-Response-response>response</span>'s
+<span title=concept-response-final-url-flag>final url flag</span> is set, and false
+otherwise.
 
 <p>The <dfn title=dom-Response-status><code>status</code></dfn> attribute's getter must
 return <span title=concept-Response-response>response</span>'s
