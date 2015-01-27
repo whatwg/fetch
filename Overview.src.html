@@ -1086,10 +1086,16 @@ which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
 redirects. Only use the <var title>request</var> parameter in other standards.
 
 <ol>
- <li><p>If <var title>request</var>'s <span title=concept-request-url>url</span> contains
- a Known HSTS Host, modify it per the requirements of the
- <a href="http://tools.ietf.org/html/rfc6797#section-8.3">"URI [sic] Loading and Port Mapping" chapter of HTTP Strict Transport Security</a>.
- <span data-anolis-ref>HSTS</span>
+ <li><p>Let <var title>response</var> be null.
+
+ <li><p>If
+ <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-fetch">should fetching <var title>request</var> be blocked as mixed content</a>
+ or
+ <span class=XXX>should fetching <var title>request</var> be blocked as content security</span>
+ returns <b title>blocked</b>, set <var title>response</var> to a
+ <span title=concept-network-error>network error</span>.
+ <span data-anolis-ref>MIX</span>
+ <span data-anolis-ref>CSP</span>
 
  <li>
   <p>If <var title>request</var>'s <span title=concept-request-referrer>referrer</span>
@@ -1103,22 +1109,21 @@ redirects. Only use the <var title>request</var> parameter in other standards.
   <span title=concept-request-referrer>referrer</span> to <i title>no referrer</i> or have
   it expose less sensitive information.
 
+ <li><p>If <var title>request</var>'s <span title=concept-request-url>url</span> contains
+ a Known HSTS Host, modify it per the requirements of the
+ <a href="http://tools.ietf.org/html/rfc6797#section-8.3">"URI [sic] Loading and Port Mapping" chapter of HTTP Strict Transport Security</a>.
+ <span data-anolis-ref>HSTS</span>
+ <!-- Per Mike West HSTS happens "probably after" Referrer -->
+
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is unset and
  <span title=concept-fetch>fetch</span> is not invoked recursively, run the remaining
  steps <span data-anolis-spec=html>in parallel</span>.
 
  <li>
-  <p>Let <var title>response</var> be the value corresponding to the first matching
-  statement:
+  <p>If <var title>response</var> is null, set <var title>response</var> to the value
+  corresponding to the first matching statement:
 
   <dl class=switch>
-   <dt><a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-fetch">should fetching <var title>request</var> be blocked as mixed content</a>
-   returns <b title>blocked</b> <span data-anolis-ref>MIX</span>
-   <dt><span class=XXX>should fetching <var title>request</var> be blocked as content security</span>
-   returns <b title>blocked</b> <span data-anolis-ref>CSP</span>
-
-   <dd><p>A <span title=concept-network-error>network error</span>.
-
    <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
    <span data-anolis-spec=url title=concept-url-origin>origin</span> is
    <var title>request</var>'s <span title=concept-request-origin>origin</span> and the
