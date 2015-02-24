@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//whatwg.org/"><img height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100" alt="WHATWG"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-19-february-2015">Living Standard — Last Updated 19 February 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-24-february-2015">Living Standard — Last Updated 24 February 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -110,7 +110,7 @@ fetching.
  <li>Redirects
  <li>Cross-origin semantics
  <li>CSP <a href="#refsCSP">[CSP]</a>
- <li>Service Workers <a href="#refsSW">[SW]</a>
+ <li>Service workers <a href="#refsSW">[SW]</a>
  <li>Mixed Content <a href="#refsMIX">[MIX]</a>
  <li>`<code title="">Referer</code>` <a href="#refsREFERRER">[REFERRER]</a>
 </ul>
@@ -168,11 +168,18 @@ range 0x61 to 0x7A, by 0x20.
 <hr>
 
 <p>To <dfn id="queue-a-fetch-task">queue a fetch task</dfn> on <a title="concept-request" href="#concept-request">request</a>
-<var title="">request</var> to <var title="">run an operation</var>,
-<a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#queue-a-task">queue a task</a> to <var title="">run an operation</var> on
-<var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a>'s
-<a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#responsible-event-loop">responsible event loop</a> using the
-<a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#networking-task-source">networking task source</a>.
+<var title="">request</var> to <var title="">run an operation</var>, run these steps:
+
+<ol>
+ <li><p>If <var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a> is
+ null, terminate these steps.
+
+ <li><p><a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#queue-a-task">Queue a task</a> to
+ <var title="">run an operation</var> on <var title="">request</var>'s
+ <a title="concept-request-client" href="#concept-request-client">client</a>'s
+ <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#responsible-event-loop">responsible event loop</a> using the
+ <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#networking-task-source">networking task source</a>.
+</ol>
 
 
 <h3 id="http"><span class="secno">2.1 </span>HTTP</h3>
@@ -453,8 +460,10 @@ outlawing <a title="forbidden method" href="#forbidden-method">forbidden methods
 <hr>
 
 <p>A <a title="concept-request" href="#concept-request">request</a> has an associated
-<dfn title="concept-request-client" id="concept-request-client">client</dfn> (an
-<a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>).
+<dfn title="concept-request-client" id="concept-request-client">client</dfn> (null or an
+<a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>). <span class="note">It is
+null when <a title="navigate" class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#navigate">navigating</a>, service worker
+script updates, etc.</span>
 
 <p>A <a title="concept-request" href="#concept-request">request</a> has an associated
 <dfn id="skip-service-worker-flag">skip service worker flag</dfn>. Unless stated otherwise it is unset.
@@ -504,6 +513,8 @@ https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/
 "<code title="">auxiliary</code>", "<code title="">top-level</code>",
 "<code title="">nested</code>", and "<code title="">none</code>". Unless stated otherwise it is
 "<code title="">none</code>".
+<!-- I think it's "none" for workers, and perhaps if the client closed somehow, e.g. with
+     ping="". -->
 
 <p class="XXX">Remove "<code title="">auxiliary</code>"? Not sure it is distinctive enough.
 
@@ -1354,7 +1365,8 @@ steps:
   `<code title="">text/html;charset=utf-8</code>`,
   <a title="concept-response-body" href="#concept-response-body">body</a> is the empty byte sequence, and
   <a title="concept-response-tls-state" href="#concept-response-tls-state">TLS state</a> is <var title="">request</var>'s
-  <a title="concept-request-client" href="#concept-request-client">client</a>'s <span>TLS state</span>.
+  <a title="concept-request-client" href="#concept-request-client">client</a>'s <span>TLS state</span> if
+  <var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a> is non-null.
   <!-- XXX xref TLS state -->
 
   <!-- introduce about:unicorn
@@ -1395,7 +1407,9 @@ steps:
 
    <li><p>Set <var title="">response</var>'s
    <a title="concept-response-tls-state" href="#concept-response-tls-state">TLS state</a> to <var title="">request</var>'s
-   <a title="concept-request-client" href="#concept-request-client">client</a>'s <span>TLS state</span>.
+   <a title="concept-request-client" href="#concept-request-client">client</a>'s <span>TLS state</span> if
+   <var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a> is
+   non-null.
    <!-- XXX xref TLS state -->
 
    <li><p>Set <var title="">response</var>'s <a title="concept-response-body" href="#concept-response-body">body</a> to
@@ -1421,7 +1435,8 @@ steps:
   <a title="concept-response-body" href="#concept-response-body">body</a> is the data returned from
   <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>, and
   <a title="concept-response-tls-state" href="#concept-response-tls-state">TLS state</a> is <var title="">request</var>'s
-  <a title="concept-request-client" href="#concept-request-client">client</a>'s <span>TLS state</span>.
+  <a title="concept-request-client" href="#concept-request-client">client</a>'s <span>TLS state</span> if
+  <var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a> is non-null.
   <!-- XXX xref TLS state -->
   <a href="#refsDATAURL">[DATAURL]</a>
   <!-- XXX "obtaining a resource" needs a better reference -->
@@ -1472,7 +1487,8 @@ indicates an attempt to authenticate.
 
  <li>
   <p>If <var title="">request</var>'s <a href="#skip-service-worker-flag">skip service worker flag</a> is unset and
-  <var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a>'s
+  either <var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a> is
+  null or <var title="">request</var>'s <a title="concept-request-client" href="#concept-request-client">client</a>'s
   <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#global-object">global object</a> is not a
   <code class="external"><a href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/#service-worker-global-scope-interface">ServiceWorkerGlobalScope</a></code> object, run these substeps:
   <a href="#refsHTML">[HTML]</a>

@@ -63,7 +63,7 @@ fetching.
  <li>Redirects
  <li>Cross-origin semantics
  <li>CSP <span data-anolis-ref>CSP</span>
- <li>Service Workers <span data-anolis-ref>SW</span>
+ <li>Service workers <span data-anolis-ref>SW</span>
  <li>Mixed Content <span data-anolis-ref>MIX</span>
  <li>`<code title>Referer</code>` <span data-anolis-ref>REFERRER</span>
 </ul>
@@ -121,11 +121,18 @@ range 0x61 to 0x7A, by 0x20.
 <hr>
 
 <p>To <dfn>queue a fetch task</dfn> on <span title=concept-request>request</span>
-<var title>request</var> to <var title>run an operation</var>,
-<span data-anolis-spec=html>queue a task</span> to <var title>run an operation</var> on
-<var title>request</var>'s <span title=concept-request-client>client</span>'s
-<span data-anolis-spec=html>responsible event loop</span> using the
-<span data-anolis-spec=html>networking task source</span>.
+<var title>request</var> to <var title>run an operation</var>, run these steps:
+
+<ol>
+ <li><p>If <var title>request</var>'s <span title=concept-request-client>client</span> is
+ null, terminate these steps.
+
+ <li><p><span data-anolis-spec=html>Queue a task</span> to
+ <var title>run an operation</var> on <var title>request</var>'s
+ <span title=concept-request-client>client</span>'s
+ <span data-anolis-spec=html>responsible event loop</span> using the
+ <span data-anolis-spec=html>networking task source</span>.
+</ol>
 
 
 <h3>HTTP</h3>
@@ -406,8 +413,10 @@ outlawing <span title="forbidden method">forbidden methods</span> and
 <hr>
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-client>client</dfn> (an
-<span data-anolis-spec=html>environment settings object</span>).
+<dfn title=concept-request-client>client</dfn> (null or an
+<span data-anolis-spec=html>environment settings object</span>). <span class=note>It is
+null when <span data-anolis-spec=html title=navigate>navigating</span>, service worker
+script updates, etc.</span>
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>skip service worker flag</dfn>. Unless stated otherwise it is unset.
@@ -457,6 +466,8 @@ https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/
 "<code title>auxiliary</code>", "<code title>top-level</code>",
 "<code title>nested</code>", and "<code title>none</code>". Unless stated otherwise it is
 "<code title>none</code>".
+<!-- I think it's "none" for workers, and perhaps if the client closed somehow, e.g. with
+     ping="". -->
 
 <p class=XXX>Remove "<code title>auxiliary</code>"? Not sure it is distinctive enough.
 
@@ -1307,7 +1318,8 @@ steps:
   `<code title>text/html;charset=utf-8</code>`,
   <span title=concept-response-body>body</span> is the empty byte sequence, and
   <span title=concept-response-tls-state>TLS state</span> is <var title>request</var>'s
-  <span title=concept-request-client>client</span>'s <span>TLS state</span>.
+  <span title=concept-request-client>client</span>'s <span>TLS state</span> if
+  <var title>request</var>'s <span title=concept-request-client>client</span> is non-null.
   <!-- XXX xref TLS state -->
 
   <!-- introduce about:unicorn
@@ -1348,7 +1360,9 @@ steps:
 
    <li><p>Set <var title>response</var>'s
    <span title=concept-response-tls-state>TLS state</span> to <var title>request</var>'s
-   <span title=concept-request-client>client</span>'s <span>TLS state</span>.
+   <span title=concept-request-client>client</span>'s <span>TLS state</span> if
+   <var title>request</var>'s <span title=concept-request-client>client</span> is
+   non-null.
    <!-- XXX xref TLS state -->
 
    <li><p>Set <var title>response</var>'s <span title=concept-response-body>body</span> to
@@ -1374,7 +1388,8 @@ steps:
   <span title=concept-response-body>body</span> is the data returned from
   <a href="http://simonsapin.github.io/data-urls/">obtaining a resource</a>, and
   <span title=concept-response-tls-state>TLS state</span> is <var title>request</var>'s
-  <span title=concept-request-client>client</span>'s <span>TLS state</span>.
+  <span title=concept-request-client>client</span>'s <span>TLS state</span> if
+  <var title>request</var>'s <span title=concept-request-client>client</span> is non-null.
   <!-- XXX xref TLS state -->
   <span data-anolis-ref>DATAURL</span>
   <!-- XXX "obtaining a resource" needs a better reference -->
@@ -1425,7 +1440,8 @@ indicates an attempt to authenticate.
 
  <li>
   <p>If <var title>request</var>'s <span>skip service worker flag</span> is unset and
-  <var title>request</var>'s <span title=concept-request-client>client</span>'s
+  either <var title>request</var>'s <span title=concept-request-client>client</span> is
+  null or <var title>request</var>'s <span title=concept-request-client>client</span>'s
   <span data-anolis-spec=html>global object</span> is not a
   <code data-anolis-spec=sw>ServiceWorkerGlobalScope</code> object, run these substeps:
   <span data-anolis-ref>HTML</span>
