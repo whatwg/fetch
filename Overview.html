@@ -2892,8 +2892,8 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute <a href="#requestmode">RequestMode</a> <a href="#dom-request-mode" title="dom-Request-mode">mode</a>;
   readonly attribute <a href="#requestcredentials">RequestCredentials</a> <a href="#dom-request-credentials" title="dom-Request-credentials">credentials</a>;<!--
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;-->
-  readonly attribute <a href="#requestcache">RequestCache</a> <a href="#dom-request-cache" title="dom-Request-cache">cache</a>;<!--
-  readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
+  readonly attribute <a href="#requestcache">RequestCache</a> <a href="#dom-request-cache" title="dom-Request-cache">cache</a>;
+  readonly attribute <a href="#requestredirect">RequestRedirect</a> <a href="#dom-request-redirect" title="dom-Request-redirect">redirect</a>;
 
   [NewObject] <a href="#request">Request</a> <a href="#dom-request-clone" title="dom-Request-clone">clone</a>();
 };
@@ -2906,6 +2906,7 @@ dictionary <dfn id="requestinit">RequestInit</dfn> {
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
   <a href="#requestcache">RequestCache</a> cache;
+  <a href="#requestredirect">RequestRedirect</a> redirect; // "manual" cannot be set
 };
 
 enum <dfn id="requestcontext">RequestContext</dfn> {
@@ -2917,7 +2918,8 @@ enum <dfn id="requestcontext">RequestContext</dfn> {
 };
 enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };
-enum <dfn id="requestcache">RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };</pre>
+enum <dfn id="requestcache">RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
+enum <dfn id="requestredirect">RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
 <p>A <code><a href="#request">Request</a></code> object has an associated
 <dfn id="concept-request-request" title="concept-Request-request">request</dfn> (a
@@ -2979,16 +2981,20 @@ constructor must run these steps:
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
  <var title="">request</var>'s
  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>,
- and
  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
  <var title="">request</var>'s
- <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>.
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>, and
+ <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
+ <var title="">request</var>'s
+ <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>.
 
  <li><p>Let <var title="">fallbackMode</var> be null.
 
  <li><p>Let <var title="">fallbackCredentials</var> be null.
 
  <li><p>Let <var title="">fallbackCache</var> be null.
+
+ <li><p>Let <var title="">fallbackRedirect</var> be null.
 
  <li>
   <p>If <var title="">input</var> is a string, run these substeps:
@@ -3010,6 +3016,8 @@ constructor must run these steps:
    <li><p>Set <var title="">fallbackCredentials</var> to "<code title="">omit</code>".
 
    <li><p>Set <var title="">fallbackCache</var> to "<code title="">default</code>".
+
+   <li><p>Set <var title="">fallbackRedirect</var> to "<code title="">follow</code>".
   </ol>
 
  <li><p>Let <var title="">mode</var> be <var title="">init</var>'s <code title="">mode</code>
@@ -3031,6 +3039,22 @@ constructor must run these steps:
 
  <li><p>If <var title="">cache</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to <var title="">cache</var>.
+
+ <li><p>If <var title="">init</var>'s <code title="">redirect</code> member is present and it is
+ "<code title="">manual</code>", <a class="external" href="http://heycam.github.io/webidl/#dfn-throw">throw</a> a
+ <code title="">TypeError</code>.
+
+ <li><p>Let <var title="">redirect</var> be <var title="">init</var>'s
+ <code title="">redirect</code> member if it is present, and
+ <var title="">fallbackRedirect</var> otherwise.
+
+ <li><p>If <var title="">redirect</var> is non-null, set <var title="">request</var>'s
+ <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> to
+ <var title="">redirect</var>.
+
+ <li><p>If <var title="">request</var>'s
+ <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
+ "<code title="">manual</code>", set it to "<code title="">follow</code>".
 
  <li>
   <p>If <var title="">init</var>'s <code title="">method</code> member is present, let
@@ -3171,6 +3195,10 @@ getter must return <a href="#concept-request-request" title="concept-Request-req
 <p>The <dfn id="dom-request-cache" title="dom-Request-cache"><code>cache</code></dfn> attribute's getter must
 return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>.
+
+<p>The <dfn id="dom-request-redirect" title="dom-Request-redirect"><code>redirect</code></dfn> attribute's getter must
+return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+<a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>.
 
 <hr>
 
@@ -3653,6 +3681,7 @@ Jeff Hodges,
 Jeffrey Yasskin,
 Jesse M. Heines,
 Jonas Sicking,
+Jonathan Kingston,
 Julian Reschke,
 송정기 (Jungkee Song),
 Jussi Kalliokoski,

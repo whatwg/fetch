@@ -2845,8 +2845,8 @@ interface <dfn>Request</dfn> {
   readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
   readonly attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;<!--
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;-->
-  readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;<!--
-  readonly attribute boolean <span title=dom-Request-handlesRedirects>handlesRedirects</span>;-->
+  readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;
+  readonly attribute <span>RequestRedirect</span> <span title=dom-Request-redirect>redirect</span>;
 
   [NewObject] <span>Request</span> <span title=dom-Request-clone>clone</span>();
 };
@@ -2859,6 +2859,7 @@ dictionary <dfn>RequestInit</dfn> {
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
   <span>RequestCache</span> cache;
+  <span>RequestRedirect</span> redirect; // "manual" cannot be set
 };
 
 enum <dfn>RequestContext</dfn> {
@@ -2870,7 +2871,8 @@ enum <dfn>RequestContext</dfn> {
 };
 enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };
-enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };</pre>
+enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
+enum <dfn>RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
 <p>A <code>Request</code> object has an associated
 <dfn title=concept-Request-request>request</dfn> (a
@@ -2932,16 +2934,20 @@ constructor must run these steps:
  <span title=concept-request-credentials-mode>credentials mode</span> is
  <var title>request</var>'s
  <span title=concept-request-credentials-mode>credentials mode</span>,
- and
  <span title=concept-request-cache-mode>cache mode</span> is
  <var title>request</var>'s
- <span title=concept-request-cache-mode>cache mode</span>.
+ <span title=concept-request-cache-mode>cache mode</span>, and
+ <span title=concept-request-redirect-mode>redirect mode</span> is
+ <var title>request</var>'s
+ <span title=concept-request-redirect-mode>redirect mode</span>.
 
  <li><p>Let <var title>fallbackMode</var> be null.
 
  <li><p>Let <var title>fallbackCredentials</var> be null.
 
  <li><p>Let <var title>fallbackCache</var> be null.
+
+ <li><p>Let <var title>fallbackRedirect</var> be null.
 
  <li>
   <p>If <var title>input</var> is a string, run these substeps:
@@ -2963,6 +2969,8 @@ constructor must run these steps:
    <li><p>Set <var title>fallbackCredentials</var> to "<code title>omit</code>".
 
    <li><p>Set <var title>fallbackCache</var> to "<code title>default</code>".
+
+   <li><p>Set <var title>fallbackRedirect</var> to "<code title>follow</code>".
   </ol>
 
  <li><p>Let <var title>mode</var> be <var title>init</var>'s <code title>mode</code>
@@ -2984,6 +2992,22 @@ constructor must run these steps:
 
  <li><p>If <var title>cache</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-cache-mode>cache mode</span> to <var title>cache</var>.
+
+ <li><p>If <var title>init</var>'s <code title>redirect</code> member is present and it is
+ "<code title>manual</code>", <span data-anolis-spec=webidl>throw</span> a
+ <code title>TypeError</code>.
+
+ <li><p>Let <var title>redirect</var> be <var title>init</var>'s
+ <code title>redirect</code> member if it is present, and
+ <var title>fallbackRedirect</var> otherwise.
+
+ <li><p>If <var title>redirect</var> is non-null, set <var title>request</var>'s
+ <span title=concept-request-redirect-mode>redirect mode</span> to
+ <var title>redirect</var>.
+
+ <li><p>If <var title>request</var>'s
+ <span title=concept-request-redirect-mode>redirect mode</span> is
+ "<code title>manual</code>", set it to "<code title>follow</code>".
 
  <li>
   <p>If <var title>init</var>'s <code title>method</code> member is present, let
@@ -3124,6 +3148,10 @@ getter must return <span title=concept-Request-request>request</span>'s
 <p>The <dfn title=dom-Request-cache><code>cache</code></dfn> attribute's getter must
 return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-cache-mode>cache mode</span>.
+
+<p>The <dfn title=dom-Request-redirect><code>redirect</code></dfn> attribute's getter must
+return <span title=concept-Request-request>request</span>'s
+<span title=concept-request-redirect-mode>redirect mode</span>.
 
 <hr>
 
@@ -3545,6 +3573,7 @@ Jeff Hodges,
 Jeffrey Yasskin,
 Jesse M. Heines,
 Jonas Sicking,
+Jonathan Kingston,
 Julian Reschke,
 송정기 (Jungkee Song),
 Jussi Kalliokoski,
