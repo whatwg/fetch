@@ -722,8 +722,9 @@ contains a <span title=concept-header>header</span> whose
 if it is "<code title>default</code>".
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-manual-redirect-flag>manual redirect flag</dfn>. Unless stated
-otherwise, it is unset.
+<dfn title=concept-request-redirect-mode>redirect mode</dfn>, which is one of
+"<code title>follow</code>", "<code title>error</code>", and "<code title>manual</code>".
+Unless stated otherwise, it is "<code title>follow</code>".
 
 <hr>
 
@@ -1201,10 +1202,15 @@ redirects. Only use the <var title>request</var> parameter in other standards.
    <dd>
     <p>Set <var title>request</var>'s
     <span title=concept-request-response-tainting>response tainting</span> to
-    "<code title>cors</code>".
+    "<code title>cors</code>" and <var title>request</var>'s
+    <span title=concept-request-redirect-mode>redirect mode</span> to
+    "<code title>error</code>".
     <p>The result of performing an <span title=concept-http-fetch>HTTP fetch</span> using
     <var title>request</var> with the <i title>CORS flag</i> and
-    <i title>CORS preflight flag</i> set.
+    <i title>CORS preflight flag</i> set. If the result is a
+    <span title=concept-network-error>network error</span>,
+    <span title=concept-cache-clear>clear cache entries</span> using
+    <var title>request</var>.
 
    <dt>Otherwise
    <dd>
@@ -1591,6 +1597,11 @@ indicates an attempt to authenticate.
    <dt><code title>308</code>
    <dd>
     <ol>
+     <li><p>If <var title>request</var>'s
+     <span title=concept-request-redirect-mode>redirect mode</span> is
+     "<code title>error</code>", return a
+     <span title=concept-network-error>network error</span>.
+
      <li>
       <p>Let <var title>location</var> be the result of
       <span title=concept-header-parse>parsing</span> `<code title>Location</code>` in
@@ -1620,16 +1631,10 @@ indicates an attempt to authenticate.
 
      <li><p>Unset <var title>request</var>'s <span>same-origin data URL flag</span>.
 
-     <li><p>If the <i title>CORS preflight flag</i> is set, set
-     <var title>response</var>'s <span title=concept-response-type>type</span> to
-     <i title>error</i> and set <var title>request</var>'s
-     <span title=concept-request-manual-redirect-flag>manual redirect flag</span>.
-     <span class=note>This way we avoid running the substeps below.</span>
-
      <li>
       <p>If <var title>request</var>'s
-      <span title=concept-request-manual-redirect-flag>manual redirect flag</span> is unset,
-      run these substeps:
+      <span title=concept-request-redirect-mode>redirect mode</span> is
+      "<code title>follow</code>", run these substeps:
 
       <ol>
        <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
@@ -1713,11 +1718,6 @@ indicates an attempt to authenticate.
  <li><p>If the <i title>authentication fetch flag</i> is set, create an
  <span>authentication entry</span> for <var title>request</var> and the given realm.
  <span data-anolis-ref>HTTPAUTH</span>
-
- <li><p>If the <i title>CORS preflight flag</i> is set and <var title>response</var> is a
- <span title=concept-network-error>network error</span>,
- <span title=concept-cache-clear>clear cache entries</span> using
- <var title>request</var>.
 
  <li><p>Return <var title>response</var>. <span class="note no-backref">Typically
  <var title>response</var>'s <span title=concept-response-body>body</span> is still being
