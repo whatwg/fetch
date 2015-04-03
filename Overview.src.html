@@ -321,8 +321,8 @@ steps:
   <span title=concept-header>header</span> and <var title>headers</var> contains more than
   one, return failure.
 
-  <p class="note no-backref">That if you require different error handling, you need to
-  extract the desired <span title=concept-header>header</span> first.
+  <p class="note no-backref">If different error handling is required, extract the desired
+  <span title=concept-header>header</span> first.
 
  <li><p>If parsing all the <span title=concept-header>headers</span>
  <span title=concept-header-name>named</span> <var title>name</var> in
@@ -1089,6 +1089,80 @@ Access-Control-Allow-Methods     = #<span data-anolis-spec=http>Method</span>
 Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span></pre>
 
 
+<h3>`<code title>X-Content-Type-Options</code>` header</h3>
+
+<p>The
+`<dfn title="http-x-content-type-options"><code>X-Content-Type-Options</code></dfn>`
+response <span title=concept-header>header</span> can be used to require checking of a
+<span title=concept-response>response</span>'s
+`<code title=http-content-type>Content-Type</code>`
+<span title=concept-header>header</span> against the
+<span title=concept-request-context>context</span> of a
+<span title=concept-request>request</span>.
+
+<p>Its <span title=concept-header-value>value</span> ABNF:
+
+<pre>X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
+
+<h4><dfn>Should <var title>response</var> to <var title>request</var> be blocked due to nosniff?</dfn></h4>
+
+<p>Run these steps:
+
+<ol>
+ <li><p>If <var title>response</var>'s
+ <span title=concept-response-header-list>header list</span> has no
+ <span title=concept-header>header</span> whose
+ <span title=concept-header-name>name</span> is
+ `<code title=http-x-content-type-options>X-Content-Type-Options</code>`, return
+ <b title>allowed</b>.
+
+ <li><p>Let <var title>nosniff</var> be the result of
+ <span title=concept-header-parse>parsing</span> the <em>first</em>
+ <span title=concept-header>header</span> whose
+ <span title=concept-header-name>name</span>
+ `<code title=http-x-content-type-options>X-Content-Type-Options</code>` in
+ <var title>response</var>'s <span title=concept-response-header-list>header list</span>.
+
+ <li><p>If <var title>nosniff</var> is failure, return <b title>allowed</b>.
+
+ <li><p>Let <var title>MIMEType</var> be the result of
+ <span title=concept-header-extract-mime-type>extracting a MIME type</span> from
+ <var title>response</var>'s <span title=concept-response-header-list>header list</span>.
+
+ <li><p>Let <var title>context</var> be <var title>request</var>'s
+ <span title=concept-request-context>context</span>.
+
+ <li><p class=XXX>"<code title>audio</code>", "<code title>video</code>" ...
+
+ <!-- "eventsource" is already strict -->
+
+ <li><p>If <var title>context</var> is "<code title>favicon</code>",
+ "<code title>image</code>", or "<code title>imageset</code>", and
+ <var title>MIMEType</var> (ignoring parameters) is <em>not</em> an
+ <a class=XXX href=https://www.w3.org/Bugs/Public/show_bug.cgi?id=28398>image MIME type</a>,
+ return <b title>blocked</b>.
+
+ <li><p>If <var title>context</var> is "<code title>font</code>" and
+ <var title>MIMEType</var> (ignoring parameters) is <em>not</em> a
+ <a class=XXX href=https://lists.w3.org/Archives/Public/www-style/2015Apr/0027.html>font MIME type</a>,
+ return <b title>blocked</b>.
+
+ <li><p>If <var title>context</var> is "<code title>script</code>",
+ "<code title>serviceworker</code>", "<code  title>sharedworker</code>", or
+ "<code title>worker</code>", and <var title>MIMEType</var> (ignoring parameters) is
+ <em>not</em> a
+ <a class=XXX href=https://www.w3.org/Bugs/Public/show_bug.cgi?id=28397>JavaScript MIME type</a>,
+ return <b title>blocked</b>.
+
+ <li><p>If <var title>context</var> is "<code title>style</code>" and
+ <var title>MIMEType</var> (ignoring parameters) is <em>not</em>
+ `<code title>text/css</code>`, return <b title>blocked</b>.
+
+ <li><p class=XXX>"<code title>track</code>" ...
+
+ <li><p>Return <b title>allowed</b>.
+</ol>
+
 
 <h2>Fetching</h2>
 
@@ -1242,6 +1316,8 @@ redirects. Only use the <var title>request</var> parameter in other standards.
 
  <li><p>If
  <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var title>response</var> to <var title>request</var> be blocked as mixed content</a>
+ or
+ <span>should <var title>response</var> to <var title>request</var> be blocked due to nosniff</span>
  returns <b title>blocked</b>, set <var title>response</var> to a
  <span title=concept-network-error>network error</span>.
  <span data-anolis-ref>MIX</span>
