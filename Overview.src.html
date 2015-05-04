@@ -1199,15 +1199,25 @@ response <span title=concept-header>header</span> can be used to require checkin
  <span title="queue a fetch task">queued</span>.
 </div>
 
-<p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>,
-optionally with a <i title>CORS flag</i>, run the steps below. An ongoing
-<span title=concept-fetch>fetch</span> can be
+<p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>, run
+the steps below. An ongoing <span title=concept-fetch>fetch</span> can be
 <dfn title=concept-fetch-terminate>terminated</dfn> with reason <var title>reason</var>,
 which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
 <i title>timeout</i>.
 
+<ol>
+ <li><p>Return the result of performing a <span title=concept-main-fetch>main fetch</span>
+ using <var title>request</var>.
+</ol>
+
+
+<h3>Main fetch</h3>
+
+<p>To perform a <dfn title=concept-main-fetch>main fetch</dfn> using
+<var title>request</var>, optionally with a <i title>CORS flag</i>, run these steps:
+
 <p class="note no-backref">The <i title>CORS flag</i> is a bookkeeping detail for handling
-redirects. Only use the <var title>request</var> parameter in other standards.
+redirects.
 
 <ol>
  <li><p>Let <var title>response</var> be null.
@@ -1248,8 +1258,8 @@ redirects. Only use the <var title>request</var> parameter in other standards.
  <!-- Per Mike West HSTS happens "probably after" Referrer -->
 
  <li><p>If <var title>request</var>'s <span>synchronous flag</span> is unset and
- <span title=concept-fetch>fetch</span> is not invoked recursively, run the remaining
- steps <span data-anolis-spec=html>in parallel</span>.
+ <span title=concept-main-fetch>main fetch</span> is not invoked recursively, run the
+ remaining steps <span data-anolis-spec=html>in parallel</span>.
 
  <li>
   <p>If <var title>response</var> is null, set <var title>response</var> to the value
@@ -1320,7 +1330,8 @@ redirects. Only use the <var title>request</var> parameter in other standards.
     <var title>request</var> with the <i title>CORS flag</i> set.
   </dl>
 
- <li><p>If <span title=concept-fetch>fetch</span> is invoked recursively, return <var title>response</var>.
+ <li><p>If <span title=concept-main-fetch>main fetch</span> is invoked recursively, return
+ <var title>response</var>.
 
  <li><p>If
  <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var title>response</var> to <var title>request</var> be blocked as mixed content</a>
@@ -1799,9 +1810,14 @@ indicates an attempt to authenticate.
        <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
        <var title>locationURL</var>.
 
-       <li><p>Return the result of performing a <span title=concept-fetch>fetch</span> using
-       <var title>request</var>, with the <i title>CORS flag</i> set if set.
-       <!-- Unfortunately this has to invoke fetch to get response tainting correct -->
+       <li>
+        <p>Return the result of performing a
+        <span title=concept-main-fetch>main fetch</span> using <var title>request</var>,
+        with the <i title>CORS flag</i> set if set.
+
+        <p class="note no-backref">This has to invoke
+        <span title=concept-main-fetch>main fetch</span> to get
+        <span title=concept-request-response-tainting>response tainting</span> correct.
       </ol>
     </ol>
 

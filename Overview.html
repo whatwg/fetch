@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="//whatwg.org/"><img alt="WHATWG" height="100" src="//resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-22-april-2015">Living Standard — Last Updated 22 April 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-4-may-2015">Living Standard — Last Updated 4 May 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -69,13 +69,14 @@ fetching.
      <li><a href="#should-response-to-request-be-blocked-due-to-nosniff?"><span class="secno">3.3.1 </span>Should <var title="">response</var> to <var title="">request</var> be blocked due to nosniff?</a></ul></ul></li>
  <li><a href="#fetching"><span class="secno">4 </span>Fetching</a>
   <ul class="toc">
-   <li><a href="#basic-fetch"><span class="secno">4.1 </span>Basic fetch</a></li>
-   <li><a href="#http-fetch"><span class="secno">4.2 </span>HTTP fetch</a></li>
-   <li><a href="#http-network-or-cache-fetch"><span class="secno">4.3 </span>HTTP network or cache fetch</a></li>
-   <li><a href="#http-network-fetch"><span class="secno">4.4 </span>HTTP network fetch</a></li>
-   <li><a href="#cors-preflight-fetch"><span class="secno">4.5 </span>CORS preflight fetch</a></li>
-   <li><a href="#cors-preflight-cache"><span class="secno">4.6 </span>CORS preflight cache</a></li>
-   <li><a href="#cors-check"><span class="secno">4.7 </span>CORS check</a></ul></li>
+   <li><a href="#main-fetch"><span class="secno">4.1 </span>Main fetch</a></li>
+   <li><a href="#basic-fetch"><span class="secno">4.2 </span>Basic fetch</a></li>
+   <li><a href="#http-fetch"><span class="secno">4.3 </span>HTTP fetch</a></li>
+   <li><a href="#http-network-or-cache-fetch"><span class="secno">4.4 </span>HTTP network or cache fetch</a></li>
+   <li><a href="#http-network-fetch"><span class="secno">4.5 </span>HTTP network fetch</a></li>
+   <li><a href="#cors-preflight-fetch"><span class="secno">4.6 </span>CORS preflight fetch</a></li>
+   <li><a href="#cors-preflight-cache"><span class="secno">4.7 </span>CORS preflight cache</a></li>
+   <li><a href="#cors-check"><span class="secno">4.8 </span>CORS check</a></ul></li>
  <li><a href="#fetch-api"><span class="secno">5 </span>Fetch API</a>
   <ul class="toc">
    <li><a href="#headers-class"><span class="secno">5.1 </span>Headers class</a></li>
@@ -1249,15 +1250,25 @@ response <a href="#concept-header" title="concept-header">header</a> can be used
  <a href="#queue-a-fetch-task" title="queue a fetch task">queued</a>.
 </div>
 
-<p>To perform a <dfn id="concept-fetch" title="concept-fetch">fetch</dfn> using <var title="">request</var>,
-optionally with a <i title="">CORS flag</i>, run the steps below. An ongoing
-<a href="#concept-fetch" title="concept-fetch">fetch</a> can be
+<p>To perform a <dfn id="concept-fetch" title="concept-fetch">fetch</dfn> using <var title="">request</var>, run
+the steps below. An ongoing <a href="#concept-fetch" title="concept-fetch">fetch</a> can be
 <dfn id="concept-fetch-terminate" title="concept-fetch-terminate">terminated</dfn> with reason <var title="">reason</var>,
 which must be one of <i title="">end-user abort</i>, <i title="">fatal</i>, or
 <i title="">timeout</i>.
 
+<ol>
+ <li><p>Return the result of performing a <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a>
+ using <var title="">request</var>.
+</ol>
+
+
+<h3 id="main-fetch"><span class="secno">4.1 </span>Main fetch</h3>
+
+<p>To perform a <dfn id="concept-main-fetch" title="concept-main-fetch">main fetch</dfn> using
+<var title="">request</var>, optionally with a <i title="">CORS flag</i>, run these steps:
+
 <p class="note no-backref">The <i title="">CORS flag</i> is a bookkeeping detail for handling
-redirects. Only use the <var title="">request</var> parameter in other standards.
+redirects.
 
 <ol>
  <li><p>Let <var title="">response</var> be null.
@@ -1298,8 +1309,8 @@ redirects. Only use the <var title="">request</var> parameter in other standards
  <!-- Per Mike West HSTS happens "probably after" Referrer -->
 
  <li><p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is unset and
- <a href="#concept-fetch" title="concept-fetch">fetch</a> is not invoked recursively, run the remaining
- steps <a class="external" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>.
+ <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> is not invoked recursively, run the
+ remaining steps <a class="external" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>.
 
  <li>
   <p>If <var title="">response</var> is null, set <var title="">response</var> to the value
@@ -1370,7 +1381,8 @@ redirects. Only use the <var title="">request</var> parameter in other standards
     <var title="">request</var> with the <i title="">CORS flag</i> set.
   </dl>
 
- <li><p>If <a href="#concept-fetch" title="concept-fetch">fetch</a> is invoked recursively, return <var title="">response</var>.
+ <li><p>If <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> is invoked recursively, return
+ <var title="">response</var>.
 
  <li><p>If
  <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var title="">response</var> to <var title="">request</var> be blocked as mixed content</a>
@@ -1476,7 +1488,7 @@ redirects. Only use the <var title="">request</var> parameter in other standards
 </ol>
 
 
-<h3 id="basic-fetch"><span class="secno">4.1 </span>Basic fetch</h3>
+<h3 id="basic-fetch"><span class="secno">4.2 </span>Basic fetch</h3>
 
 <p>To perform a <dfn id="concept-basic-fetch" title="concept-basic-fetch">basic fetch</dfn> using
 <var title="">request</var>, switch on <var title="">request</var>'s
@@ -1618,7 +1630,7 @@ steps:
 </dl>
 
 
-<h3 id="http-fetch"><span class="secno">4.2 </span>HTTP fetch</h3>
+<h3 id="http-fetch"><span class="secno">4.3 </span>HTTP fetch</h3>
 
 <p>To perform an <dfn id="concept-http-fetch" title="concept-http-fetch">HTTP fetch</dfn> using
 <var title="">request</var> with an optional <i title="">CORS flag</i>,
@@ -1849,9 +1861,14 @@ indicates an attempt to authenticate.
        <li><p>Set <var title="">request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
        <var title="">locationURL</var>.
 
-       <li><p>Return the result of performing a <a href="#concept-fetch" title="concept-fetch">fetch</a> using
-       <var title="">request</var>, with the <i title="">CORS flag</i> set if set.
-       <!-- Unfortunately this has to invoke fetch to get response tainting correct -->
+       <li>
+        <p>Return the result of performing a
+        <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> using <var title="">request</var>,
+        with the <i title="">CORS flag</i> set if set.
+
+        <p class="note no-backref">This has to invoke
+        <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> to get
+        <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> correct.
       </ol>
     </ol>
 
@@ -1920,7 +1937,7 @@ indicates an attempt to authenticate.
 </ol>
 
 
-<h3 id="http-network-or-cache-fetch"><span class="secno">4.3 </span>HTTP network or cache fetch</h3>
+<h3 id="http-network-or-cache-fetch"><span class="secno">4.4 </span>HTTP network or cache fetch</h3>
 
 <p>To perform an
 <dfn id="concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP network or cache fetch</dfn> using
@@ -2083,7 +2100,7 @@ The <i title="">credentials flag</i> is one too.
 </ol>
 
 
-<h3 id="http-network-fetch"><span class="secno">4.4 </span>HTTP network fetch</h3>
+<h3 id="http-network-fetch"><span class="secno">4.5 </span>HTTP network fetch</h3>
 
 <p>To perform an <dfn id="concept-http-network-fetch" title="concept-http-network-fetch">HTTP network fetch</dfn> using
 <var title="">request</var> with an optional <i title="">credentials flag</i>, run these steps:
@@ -2257,7 +2274,7 @@ The <i title="">credentials flag</i> is one too.
 </ol>
 
 
-<h3 id="cors-preflight-fetch"><span class="secno">4.5 </span>CORS preflight fetch</h3>
+<h3 id="cors-preflight-fetch"><span class="secno">4.6 </span>CORS preflight fetch</h3>
 
 <p>To perform a <dfn id="cors-preflight-fetch-0">CORS preflight fetch</dfn> using <var title="">request</var>, run these
 steps:
@@ -2434,7 +2451,7 @@ steps:
 </ol>
 
 
-<h3 id="cors-preflight-cache"><span class="secno">4.6 </span>CORS preflight cache</h3>
+<h3 id="cors-preflight-cache"><span class="secno">4.7 </span>CORS preflight cache</h3>
 
 <p>A <dfn id="concept-cache" title="concept-cache">CORS preflight cache</dfn> consists of a collection of
 entries where each entry has these fields:
@@ -2480,7 +2497,7 @@ Entries may be removed before that moment arrives.
 <a href="#concept-cache-header-name" title="concept-cache-header-name">header name</a> is <var title="">headerName</var>.
 
 
-<h3 id="cors-check"><span class="secno">4.7 </span>CORS check</h3>
+<h3 id="cors-check"><span class="secno">4.8 </span>CORS check</h3>
 
 <p>To perform a <dfn id="concept-cors-check" title="concept-cors-check">CORS check</dfn> for a
 <var title="">request</var> and <var title="">response</var>, run these steps:
