@@ -770,18 +770,33 @@ bookkeeping details by the <span title=concept-fetch>fetch</span> algorithm.
 
 <hr>
 
-<p>A <dfn>client request</dfn> is a <span title=concept-request>request</span> whose
-<span title=concept-request-context>context</span> is one of
+<p>An <dfn>image request context</dfn> is one of
+"<code title>favicon</code>",
+"<code title>image</code>", and
+"<code title>imageset</code>.
+
+<p>A <dfn>navigation request context</dfn> is one of
 "<code title>form</code>",
 "<code title>frame</code>",
 "<code title>hyperlink</code>",
 "<code title>iframe</code>",
 "<code title>internal</code>" (as long as <span title=concept-request-context-frame-type>context frame type</span> is not "<code title>none</code>"),
-"<code title>location</code>",
-"<code title>metarefresh</code>",
+"<code title>location</code>", and
+"<code title>metarefresh</code>".
+
+<p>A <dfn>worker request context</dfn> is one of
 "<code title>serviceworker</code>",
 "<code title>sharedworker</code>", and
 "<code title>worker</code>".
+
+<p>A <dfn>client request context</dfn> is a <span>navigation request context</span> or a
+<span>worker request context</span>.
+
+<hr>
+
+<p>A <dfn>client request</dfn> is a <span title=concept-request>request</span> whose
+<span title=concept-request-context>context</span> is a
+<span>client request context</span>.
 
 <p>A <dfn>potential client request</dfn> is a <span title=concept-request>request</span>
 whose <span title=concept-request-context>context</span> is "<code title>embed</code>" or
@@ -1147,8 +1162,7 @@ response <span title=concept-header>header</span> can be used to require checkin
 
  <!-- "eventsource" is already strict -->
 
- <li><p>If <var title>context</var> is "<code title>favicon</code>",
- "<code title>image</code>", or "<code title>imageset</code>", and
+ <li><p>If <var title>context</var> is an <span>image request context</span>, and
  <var title>MIMEType</var> (ignoring parameters) is <em>not</em> an
  <a class=XXX href=https://www.w3.org/Bugs/Public/show_bug.cgi?id=28398>image MIME type</a>,
  return <b title>blocked</b>.
@@ -1158,10 +1172,9 @@ response <span title=concept-header>header</span> can be used to require checkin
  <a class=XXX href=https://lists.w3.org/Archives/Public/www-style/2015Apr/0027.html>font MIME type</a>,
  return <b title>blocked</b>.
 
- <li><p>If <var title>context</var> is "<code title>script</code>",
- "<code title>serviceworker</code>", "<code  title>sharedworker</code>", or
- "<code title>worker</code>", and <var title>MIMEType</var> (ignoring parameters) is
- <em>not</em> a
+ <li><p>If <var title>context</var> is "<code title>script</code>" or a
+ <span>worker request context</span>, and <var title>MIMEType</var> (ignoring parameters)
+ is <em>not</em> a
  <a class=XXX href=https://www.w3.org/Bugs/Public/show_bug.cgi?id=28397>JavaScript MIME type</a>,
  return <b title>blocked</b>.
 
@@ -1206,6 +1219,53 @@ which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
 <i title>timeout</i>.
 
 <ol>
+ <li>
+  <p>If <var title>request</var>'s <span title=concept-request-context>context</span>
+  is not "<code title>fetch</code>" and <var title>request</var>'s
+  <span title=concept-request-header-list>header list</span> does not contain a
+  <span title=concept-header>header</span> whose
+  <span title=concept-header-name>name</span> is `<code title>Accept</code>`, run these
+  substeps:
+
+  <p class=note>This is accounting for <code>XMLHttpRequest</code>, which like
+  <code title=dom-global-fetch>fetch()</code> can set this header, but has a default value
+  for it.
+
+  <ol>
+   <li>
+    <p>Let <var title>value</var> be the first matching statement, switching on
+    <var title>request</var>'s <span title=concept-request-context>context</span>:
+    <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
+
+    <dl class=switch>
+     <dt><span>image request context</span>
+     <dd>`<code title>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
+
+     <dt><span>navigation request context</span>
+     <dd>`<code title>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`
+
+     <dt>"<code title>style</code>"
+     <dd>`<code title>text/css,*/*;q=0.1</code>`
+
+     <dt>Otherwise
+     <dd>`<code title>*/*</code>`
+    </dl>
+
+   <li><p>User agents should <span title=concept-header-list-append>append</span>
+   `<code title=http-accept>Accept</code>`/<var title>value</var> to
+   <var title>request</var>'s <span title=concept-request-header-list>header list</span>.
+  </ol>
+
+ <li><p>If <var title>request</var>'s <span title=concept-request-context>context</span>
+ is not "<code title>fetch</code>" and <var title>request</var>'s
+ <span title=concept-request-header-list>header list</span> does not contain a
+ <span title=concept-header>header</span> whose
+ <span title=concept-header-name>name</span> is
+ `<code title=http-accept-language>Accept-Language</code>`, user agents should
+ <span title=concept-header-list-append>append</span>
+ `<code>Accept-Language</code>`/an appropriate <span title=concept-header-value>value</span>
+ to <var title>request</var>'s <span title=concept-request-header-list>header list</span>.
+
  <li><p>Return the result of performing a <span title=concept-main-fetch>main fetch</span>
  using <var title>request</var>.
 </ol>
@@ -2035,8 +2095,9 @@ The <i title>credentials flag</i> is one too.
 
   <p>`<code title=http-accept-charset>Accept-Charset</code>` must not be included.
   `<code title=http-accept>Accept</code>` and
-  `<code title=http-accept-language>Accept-Language</code>` must not be included at this
-  point. <span class=note>See <span>HTTP header layer division</span>.</span>
+  `<code title=http-accept-language>Accept-Language</code>` are already included at this
+  point (unless <code title=dom-global-fetch>fetch()</code> is used, which can omit them).
+  <span class=note>See <span>HTTP header layer division</span>.</span>
 
  <li>
   <p>If <var title>response</var> is null, set <var title>response</var> to the result of
@@ -3629,9 +3690,10 @@ method, must run these steps:
 <h3 class=no-num><dfn>HTTP header layer division</dfn></h3>
 
 <p>For the purposes of fetching, the platform has an API layer (HTML's
-<code title>img</code>, CSS' <code title>background-image</code>), service worker layer,
-and network &amp; cache layer. `<code title=http-accept>Accept</code>` and
-`<code title=http-accept-language>Accept-Language</code>` are set at the API layer
+<code title>img</code>, CSS' <code title>background-image</code>), early fetch layer,
+service worker layer, and network &amp; cache layer.
+`<code title=http-accept>Accept</code>` and
+`<code title=http-accept-language>Accept-Language</code>` are set in the early fetch layer
 (typically by the user agent). Most other headers controlled by the user agent, such as
 `<code title=http-accept-encoding>Accept-Encoding</code>`,
 `<code title=http-host>Host</code>`, and `<code title=http-referer>Referer</code>`, are
