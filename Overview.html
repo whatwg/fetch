@@ -2014,6 +2014,27 @@ The <i title="">credentials flag</i> is one too.
   without affecting <var title="">request</var>. Due to redirects or authentication failure,
   it can get reused.
 
+ <li><p>Let <var title="">contentLengthValue</var> be null.
+
+ <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is null
+ and <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is
+ `<code title="">HEAD</code>`, `<code title="">POST</code>`, or `<code title="">PUT</code>`, set
+ <var title="">contentLengthValue</var> to `<code title="">0</code>`.
+ <!-- https://chromium.googlesource.com/chromium/src/+/ca9d6916c5fedf6f0ee73dfc397cb0f65ad326b9/net/http/http_network_transaction.cc#894 -->
+
+ <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+ non-null, set <var title="">contentLengthValue</var> to <var title="">request</var>'s
+ <a href="#concept-request-body" title="concept-request-body">body</a>'s
+ <a href="#concept-body-length" title="concept-body-length">length</a>,
+ <a class="external" href="https://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>.
+ <!-- XXX with streams we don't always know the length and so need to do chunked here -->
+
+ <li><p>If <var title="">contentLengthValue</var> is non-null,
+ <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
+ `<code title="">Content-Length</code>`/<var title="">contentLengthValue</var> to
+ <var title="">HTTPRequest</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+
  <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
  `<code title="">Referer</code>`/empty byte sequence, if <var title="">HTTPRequest</var>'s
  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <i title="">no referrer</i>, and
@@ -2197,13 +2218,6 @@ The <i title="">credentials flag</i> is one too.
   non-null, run these substeps:
 
   <ol>
-   <li><p>If <var title="">request</var>'s
-   <a href="#concept-request-body" title="concept-request-body">body</a>'s payload body length is known, set
-   <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>'s
-   <a href="#concept-body-length" title="concept-body-length">length</a> to <var title="">request</var>'s
-   <a href="#concept-request-body" title="concept-request-body">body</a>'s payload body length.
-   <!-- XXX xref payload body -->
-
    <li>
     <p>Whenever <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
     read from (i.e. is transmitted), increase <var title="">request</var>'s

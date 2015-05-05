@@ -1963,6 +1963,27 @@ The <i title>credentials flag</i> is one too.
   without affecting <var title>request</var>. Due to redirects or authentication failure,
   it can get reused.
 
+ <li><p>Let <var title>contentLengthValue</var> be null.
+
+ <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is null
+ and <var title>request</var>'s <span title=concept-request-method>method</span> is
+ `<code title>HEAD</code>`, `<code title>POST</code>`, or `<code title>PUT</code>`, set
+ <var title>contentLengthValue</var> to `<code title>0</code>`.
+ <!-- https://chromium.googlesource.com/chromium/src/+/ca9d6916c5fedf6f0ee73dfc397cb0f65ad326b9/net/http/http_network_transaction.cc#894 -->
+
+ <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
+ non-null, set <var title>contentLengthValue</var> to <var title>request</var>'s
+ <span title=concept-request-body>body</span>'s
+ <span title=concept-body-length>length</span>,
+ <span data-anolis-spec=encoding title="utf-8 encode">utf-8 encoded</span>.
+ <!-- XXX with streams we don't always know the length and so need to do chunked here -->
+
+ <li><p>If <var title>contentLengthValue</var> is non-null,
+ <span title=concept-header-list-append>append</span>
+ `<code title>Content-Length</code>`/<var title>contentLengthValue</var> to
+ <var title>HTTPRequest</var>'s
+ <span title=concept-request-header-list>header list</span>.
+
  <li><p><span title=concept-header-list-append>Append</span>
  `<code title>Referer</code>`/empty byte sequence, if <var title>HTTPRequest</var>'s
  <span title=concept-request-referrer>referrer</span> is <i title>no referrer</i>, and
@@ -2146,13 +2167,6 @@ The <i title>credentials flag</i> is one too.
   non-null, run these substeps:
 
   <ol>
-   <li><p>If <var title>request</var>'s
-   <span title=concept-request-body>body</span>'s payload body length is known, set
-   <var title>request</var>'s <span title=concept-request-body>body</span>'s
-   <span title=concept-body-length>length</span> to <var title>request</var>'s
-   <span title=concept-request-body>body</span>'s payload body length.
-   <!-- XXX xref payload body -->
-
    <li>
     <p>Whenever <var title>request</var>'s <span title=concept-request-body>body</span> is
     read from (i.e. is transmitted), increase <var title>request</var>'s
