@@ -133,6 +133,16 @@ range 0x61 to 0x7A, inclusive, by 0x20.
  <span data-anolis-spec=html>networking task source</span>.
 </ol>
 
+<p>To <dfn>queue a fetch done task</dfn> given a <var title>request</var> and
+<var title>response</var>, run these steps:
+
+<ol>
+ <li><p>Set <var title>request</var>'s <span>done flag</span>.
+
+ <li><p><span>Queue a fetch task</span> on <var title>request</var> to
+ <dfn>process response end-of-file</dfn> for <var title>response</var>.
+</ol>
+
 
 <h3>HTTP</h3>
 
@@ -416,6 +426,13 @@ outlawing <span title="forbidden method">forbidden methods</span> and
 <span data-anolis-spec=html>environment settings object</span>). <span class=note>It is
 null when <span data-anolis-spec=html title=navigate>navigating</span>, service worker
 script updates, etc.</span>
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn>keep-alive flag</dfn>. Unless stated otherwise it is unset.
+
+<p class="note no-backref">This is used by <code>navigator.sendBeacon</code> and the HTML
+<code>img</code> element to outlive the
+<span data-anolis-spec=html>environment settings object</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>skip service worker flag</dfn>. Unless stated otherwise it is unset.
@@ -776,12 +793,16 @@ it is zero.
 "<code title>basic</code>", "<code title>cors</code>", and "<code title>opaque</code>".
 Unless stated otherwise, it is "<code title>basic</code>".
 
+<p>A <span title=concept-request>request</span> has an associated <dfn>done flag</dfn>.
+Unless stated otherwise, it is unset.
+
 <p class="note no-backref">A <span title=concept-request>request</span>'s
 <span title=concept-request-url-list>url list</span>,
 <span title=concept-request-current-url>current url</span>,
-<span title=concept-request-redirect-count>redirect count</span>, and
-<span title=concept-request-response-tainting>response tainting</span> are used as
-bookkeeping details by the <span title=concept-fetch>fetch</span> algorithm.
+<span title=concept-request-redirect-count>redirect count</span>,
+<span title=concept-request-response-tainting>response tainting</span>, and
+<span>done flag</span> are used as bookkeeping details by the
+<span title=concept-fetch>fetch</span> algorithm.
 
 <hr>
 
@@ -985,6 +1006,34 @@ tracking functionality.
 
 <p>Further details are defined by HTTP.
 <span data-anolis-ref>HTTPAUTH</span>
+
+
+<h3>Fetch registries</h3>
+
+<p>Each <span data-anolis-spec=html>environment settings object</span> has an associated
+<dfn title=concept-fetch-registry>fetch registry</dfn>.
+
+<p>A <span title=concept-fetch-registry>fetch registry</span> holds an ordered list of
+<dfn title=concept-fetch-record>fetch records</dfn>.
+
+<p>A <span title=concept-fetch-record>fetch record</span> has an associated
+<dfn title=concept-fetch-record-request>request</dfn> (a
+<span title=concept-request>request</span>).
+
+<p>A <span title=concept-fetch-record>fetch record</span> has an associated
+<dfn title=concept-fetch-record-fetch>fetch</dfn> (a
+<span title=concept-fetch>fetch</span> algorithm or null).
+
+<hr>
+
+<p>When a <span title=concept-fetch-registry>fetch registry</span> is
+<dfn title=concept-fetch-registry-terminate>terminated</dfn>, for each associated
+<span title=concept-fetch-record>fetch record</span> whose
+<span title=concept-request-record-request>request</span>'s <span>done flag</span> or
+<span>keep-alive flag</span> is unset,
+<span title=concept-fetch-terminate>terminate</span> the
+<span title=concept-fetch-record>fetch record</span>'s
+<span title=concept-fetch-record-fetch>fetch</span> with reason <i title>fatal</i>.
 
 
 
@@ -1306,6 +1355,22 @@ which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
   for HTTP/2, and equivalent information used to prioritize dispatch and processing of
   HTTP/1 fetches.
 
+ <li>
+  <p>If <var title>request</var>'s <span title=concept-request-client>client</span> is
+  non-null, run these substeps:
+
+  <ol>
+   <li><p>Let <var title>record</var> be a new
+   <span title=concept-fetch-record>fetch record</span> consisting of
+   <var title>request</var> and this instance of the
+   <span title=concept-fetch>fetch</span> algorithm.
+
+   <li><p>Append <var title>record</var> to <var title>request</var>'s
+   <span title=concept-request-client>client</span>'s
+   <span title=concept-fetch-registry>fetch registry</span> list of
+   <span title=concept-fetch-record>fetch records</span>.
+  </ol>
+
  <li><p>Return the result of performing a <span title=concept-main-fetch>main fetch</span>
  using <var title>request</var>.
 </ol>
@@ -1514,8 +1579,8 @@ redirects.
    <li><span>Queue a fetch task</span> on <var title>request</var> to
    <dfn>process response body</dfn> for <var title>response</var>.
 
-   <li><p><span>Queue a fetch task</span> on <var title>request</var> to
-   <dfn>process response end-of-file</dfn> for <var title>response</var>.
+   <li><p><span>Queue a fetch done task</span> using <var title>request</var> and
+   <var title>response</var>.
   </ol>
 
  <li>
@@ -1535,15 +1600,12 @@ redirects.
     <p>Once end-of-file has been pushed to <var title>response</var>'s
     <span title=concept-response-body>body</span> or <var title>response</var> has a
     <span title=concept-response-termination-reason>termination reason</span>,
-    <span>queue a fetch task</span> on <var title>request</var> to
-    <span>process response end-of-file</span> for <var title>response</var>.
+    <span>queue a fetch done task</span> using <var title>request</var> and
+    <var title>response</var>.
 
     <p class=note>Ideally FTP/HTTP define this in more detail and this becomes a set of
     simple hooks.
   </ol>
-
-  <p>Use the <span data-anolis-spec=html>networking task source</span> for these
-  <span data-anolis-spec=html title=concept-task>tasks</span>.
 </ol>
 
 
