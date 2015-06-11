@@ -376,12 +376,12 @@ steps:
 <span title=concept-method>method</span>). Unless stated otherwise it is
 `<code title>GET</code>`.
 
+<p class="note no-backref">This can be updated during redirects to
+`<code title>GET</code>` as described in <span title=concept-http-fetch>HTTP fetch</span>.
+
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-url>url</dfn> (a
 <span data-anolis-spec=url title=concept-url>URL</span>).
-
-<p class="note no-backref">This is updated during redirects as described in
-<span title=concept-http-fetch>HTTP fetch</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>local URLs only flag</dfn>. Unless stated otherwise it is unset.
@@ -755,6 +755,19 @@ Unless stated otherwise, it is "<code title>follow</code>".
 <hr>
 
 <p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-url-list>url list</dfn> (a list of one or more
+<span data-anolis-spec=url title=concept-url>URLs</span>). Unless stated otherwise,
+it is a list containing a copy of <span title=concept-request>request</span>'s
+<span title=concept-request-url>url</span>.
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-current-url>current url</dfn> (a
+<span data-anolis-spec=url title=concept-url>URL</span>). Unless stated otherwise, it is a
+pointer to the last <span data-anolis-spec=url title=concept-url>URL</span> in
+<span title=concept-request>request</span>'s
+<span title=concept-request-url-list>url list</span>.
+
+<p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-redirect-count>redirect count</dfn>. Unless stated otherwise,
 it is zero.
 
@@ -764,7 +777,9 @@ it is zero.
 Unless stated otherwise, it is "<code title>basic</code>".
 
 <p class="note no-backref">A <span title=concept-request>request</span>'s
-<span title=concept-request-redirect-count>redirect count</span> and
+<span title=concept-request-url-list>url list</span>,
+<span title=concept-request-current-url>current url</span>,
+<span title=concept-request-redirect-count>redirect count</span>, and
 <span title=concept-request-response-tainting>response tainting</span> are used as
 bookkeeping details by the <span title=concept-fetch>fetch</span> algorithm.
 
@@ -830,8 +845,23 @@ Unless stated otherwise, it is "<code title>default</code>".
 
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-url>url</dfn> (null or a
-<span data-anolis-spec=url title=concept-url>URL</span>). Unless stated otherwise it is
-null.
+<span data-anolis-spec=url title=concept-url>URL</span>). Unless stated otherwise, it is
+a pointer to the last <span data-anolis-spec=url title=concept-url>URL</span> in
+<span title=concept-response>response</span>'s
+<span title=concept-response-url-list>url list</span> and null if
+<span title=concept-response>response</span>'s
+<span title=concept-response-url-list>url list</span> is the empty list.
+
+<p>A <span title=concept-response>response</span> has an associated
+<dfn title=concept-response-url-list>url list</dfn> (a list of zero or more
+<span data-anolis-spec=url title=concept-url>URLs</span>). Unless stated otherwise,
+it is the empty list.
+
+<p class="note no-backref">Except for the last
+<span data-anolis-spec=url title=concept-url>URL</span>, if any, a
+<span title=concept-request>request</span>'s
+<span title=concept-response-url-list>url list</span> cannot be exposed to script. That
+would violate <span>atomic HTTP redirect handling</span>.
 
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-status>status</dfn>. Unless stated otherwise it is
@@ -931,7 +961,7 @@ whose <span title=concept-header-name>name</span> is both not a
 <span title=concept-response-type>type</span> is "<code title>opaque</code>",
 <span title=concept-response-status>status</span> is <code title>0</code>,
 <span title=concept-response-status-message>status message</span> is the empty byte sequence,
-<span title=concept-response-header-list>header list</span> is an empty list,
+<span title=concept-response-header-list>header list</span> is the empty list,
 <span title=concept-response-body>body</span> is null, and
 <span title=concept-response-cache-state>cache state</span> is "<code title>none</code>".
 
@@ -1293,9 +1323,9 @@ redirects.
  <li><p>Let <var title>response</var> be null.
 
  <li><p>If <var title>request</var>'s <span>local URLs only flag</span> is set and
- <var title>request</var>'s <span title=concept-request-url>url</span> is not
- <span data-anolis-spec=url title="is local">local</span>, set <var title>response</var>
- to a <span title=concept-network-error>network error</span>.
+ <var title>request</var>'s <span title=concept-request-current-url>current url</span> is
+ not <span data-anolis-spec=url title="is local">local</span>, set
+ <var title>response</var> to a <span title=concept-network-error>network error</span>.
 
  <li><p><a href="https://w3c.github.io/webappsec/specs/upgrade/#upgrade-request">Upgrade <var title>request</var> to a potentially secure URL, if appropriate</a>.
  <span data-anolis-ref>UPGRADE</span>
@@ -1321,8 +1351,9 @@ redirects.
   <span title=concept-request-referrer>referrer</span> to <i title>no referrer</i> or have
   it expose less sensitive information.
 
- <li><p>If <var title>request</var>'s <span title=concept-request-url>url</span> contains
- a Known HSTS Host, modify it per the requirements of the
+ <li><p>If <var title>request</var>'s
+ <span title=concept-request-current-url>current url</span> contains a Known HSTS Host,
+ modify it per the requirements of the
  <a href="https://tools.ietf.org/html/rfc6797#section-8.3">"URI [sic] Loading and Port Mapping" chapter of HTTP Strict Transport Security</a>.
  <span data-anolis-ref>HSTS</span>
  <!-- Per Mike West HSTS happens "probably after" Referrer -->
@@ -1336,15 +1367,18 @@ redirects.
   corresponding to the first matching statement:
 
   <dl class=switch>
-   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
+   <dt><var title>request</var>'s
+   <span title=concept-request-current-url>current url</span>'s
    <span data-anolis-spec=url title=concept-url-origin>origin</span> is
    <var title>request</var>'s <span title=concept-request-origin>origin</span> and the
    <i title>CORS flag</i> is unset
-   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
+   <dt><var title>request</var>'s
+   <span title=concept-request-current-url>current url</span>'s
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
    "<code title>data</code>" and <var title>request</var>'s
    <span>same-origin data URL flag</span> is set
-   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
+   <dt><var title>request</var>'s
+   <span title=concept-request-current-url>current url</span>'s
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
    "<code title>about</code>"
 
@@ -1365,7 +1399,8 @@ redirects.
     <var title>request</var>.
     <!-- file URLs end up here as they are not same-origin typically. -->
 
-   <dt><var title>request</var>'s <span title=concept-request-url>url</span>'s
+   <dt><var title>request</var>'s
+   <span title=concept-request-current-url>current url</span>'s
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is not one of
    "<code title>http</code>" and "<code title>https</code>"
 
@@ -1402,6 +1437,10 @@ redirects.
 
  <li><p>If <span title=concept-main-fetch>main fetch</span> is invoked recursively, return
  <var title>response</var>.
+
+ <li><p>Set <var title>response</var>'s
+ <span title=concept-response-url-list>url list</span> to a copy of
+ <var title>request</var>'s <span title=concept-request-url-list>url list</span>.
 
  <li><p>If
  <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var title>response</var> to <var title>request</var> be blocked as mixed content</a>
@@ -1457,7 +1496,8 @@ redirects.
   <p class="note no-backref">This terminates <span title=concept-fetch>fetch</span>.
 
  <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
- non-null and <var title>request</var>'s <span title=concept-request-url>url</span>'s
+ non-null and <var title>request</var>'s
+ <span title=concept-request-current-url>current url</span>'s
  <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
  "<code title>http</code>" or "<code title>https</code>",
  <span>queue a fetch task</span> on <var title>request</var> to
@@ -1511,14 +1551,15 @@ redirects.
 
 <p>To perform a <dfn title=concept-basic-fetch>basic fetch</dfn> using
 <var title>request</var>, switch on <var title>request</var>'s
-<span title=concept-request-url>url</span>'s
+<span title=concept-request-current-url>current url</span>'s
 <span data-anolis-spec=url title=concept-url-scheme>scheme</span>, and run the associated
 steps:
 
 <dl class=switch>
  <dt>"<code title>about</code>"
  <dd>
-  <p>If <var title>request</var>'s <span title=concept-request-url>url</span>'s
+  <p>If <var title>request</var>'s
+  <span title=concept-request-current-url>current url</span>'s
   <span data-anolis-spec=url title=concept-url-scheme-data>scheme data</span> is
   "<code title>blank</code>", return a <span title=concept-response>response</span> whose
   <span title=concept-response-header-list>header list</span> consist of a single
@@ -1533,7 +1574,7 @@ steps:
   <!-- XXX xref HTTPS state -->
 
   <p id=unicorn>Otherwise, if <var title>request</var>'s
-  <span title=concept-request-url>url</span>'s
+  <span title=concept-request-current-url>current url</span>'s
   <span data-anolis-spec=url title=concept-url-scheme-data>scheme data</span> is
   "<code title>unicorn</code>", return a <span title=concept-response>response</span>
   whose <span title=concept-response-header-list>header list</span> consist of a single
@@ -1563,7 +1604,7 @@ steps:
  <dd>
   <ol>
    <li><p>Let <var title>blob</var> be <var title>request</var>'s
-   <span title=concept-request-url>url</span>'s
+   <span title=concept-request-current-url>current url</span>'s
    <span data-anolis-spec=url title=concept-url-object>object</span>.
 
    <li><p>If <var title>blob</var> is null, return a
@@ -1604,8 +1645,8 @@ steps:
   <p>If <var title>request</var>'s <span title=concept-request-method>method</span> is
   `<code title>GET</code>` and
   <a href="https://simonsapin.github.io/data-urls/">obtaining a resource</a> from
-  <var title>request</var>'s <span title=concept-request-url>url</span> does not return
-  failure, return a <span title=concept-response>response</span> whose
+  <var title>request</var>'s <span title=concept-request-current-url>current url</span>
+  does not return failure, return a <span title=concept-response>response</span> whose
   <span title=concept-response-header-list>header list</span> consist of a single
   <span title=concept-header>header</span> whose
   <span title=concept-header-name>name</span> is `<code title>Content-Type</code>` and
@@ -1835,7 +1876,7 @@ indicates an attempt to authenticate.
      <li><p>Let <var title>locationURL</var> be the result of
      <span data-anolis-spec=url title=concept-url-parser>parsing</span>
      <var title>location</var> with <var title>request</var>'s
-     <span title=concept-request-url>url</span>.
+     <span title=concept-request-current-url>current url</span>.
 
      <li><p>If <var title>locationURL</var> is failure, return a
      <span title=concept-network-error>network error</span>.
@@ -1857,7 +1898,8 @@ indicates an attempt to authenticate.
       <ol>
        <li><p>If the <i title>CORS flag</i> is set and <var title>locationURL</var>'s
        <span data-anolis-spec=url title=concept-url-origin>origin</span> is not
-       <var title>request</var>'s <span title=concept-request-url>url</span>'s
+       <var title>request</var>'s
+       <span title=concept-request-current-url>current url</span>'s
        <span data-analis-spec=url title=concept-url-origin>origin</span>, set
        <var title>request</var>'s <span title=concept-request-origin>origin</span> to an
        opaque identifier.
@@ -1877,8 +1919,8 @@ indicates an attempt to authenticate.
        <code title>303</code>, set <var title>request</var>'s
        <span title=concept-request-method>method</span> to `<code title>GET</code>`.
 
-       <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
-       <var title>locationURL</var>.
+       <li><p>Append <var title>locationURL</var> to <var title>request</var>'s
+       <span title=concept-request-url-list>url list</span>.
 
        <li>
         <p>Return the result of performing a
@@ -1910,11 +1952,13 @@ indicates an attempt to authenticate.
        prompting the end user for a username and password, respectively.
 
        <li><p><span data-anolis-spec=url>Set the username</span> given
-       <var title>request</var>'s <span title=concept-request-url>url</span> and
+       <var title>request</var>'s
+       <span title=concept-request-current-url>current url</span> and
        <var title>username</var>.
 
        <li><p><span data-anolis-spec=url>Set the password</span> given
-       <var title>request</var>'s <span title=concept-request-url>url</span> and
+       <var title>request</var>'s
+       <span title=concept-request-current-url>current url</span> and
        <var title>password</var>.
       </ol>
 
@@ -2036,17 +2080,18 @@ The <i title>credentials flag</i> is one too.
    <li><p>If there's an <span>authentication entry</span> for <var title>HTTPRequest</var>
    and either <var title>HTTPRequest</var>'s
    <span title=concept-request-use-url-credentials-flag>use URL credentials flag</span> is
-   unset or <var title>HTTPRequest</var>'s <span title=concept-request-url>url</span> does
-   not <span data-anolis-spec=url>include credentials</span>, set
+   unset or <var title>HTTPRequest</var>'s
+   <span title=concept-request-current-url>current url</span> does not
+   <span data-anolis-spec=url>include credentials</span>, set
    <var title>authorizationValue</var> to <span>authentication entry</span>.
    <!-- need to define the cache concept -->
 
    <li><p>Otherwise, if <var title>HTTPRequest</var>'s
-   <span title=concept-request-url>url</span> does
+   <span title=concept-request-current-url>current url</span> does
    <span data-anolis-spec=url>include credentials</span> and the
    <i title>authentication fetch flag</i> is set, set
    <var title>authorizationValue</var> to <var title>HTTPRequest</var>'s
-   <span title=concept-request-url>url</span>,
+   <span title=concept-request-current-url>current url</span>,
    <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
 
    <li><p>If <var title>authorizationValue</var> is non-null,
@@ -2317,7 +2362,7 @@ steps:
  <li><p>Let <var title>preflight</var> be a new <span title=concept-request>request</span>
  whose <span title=concept-request-method>method</span> is `<code title>OPTIONS</code>`,
  <span title=concept-request-url>url</span> is <var title>request</var>'s
- <span title=concept-request-url>url</span>,
+ <span title=concept-request-current-url>current url</span>,
  <span title=concept-request-context>context</span> is <var title>request</var>'s
  <span title=concept-request-context>context</span>,
  <span title=concept-request-context-frame-type>context frame type</span> is
@@ -2433,7 +2478,8 @@ steps:
      <dd><var title>request</var>'s <span title=concept-request-origin>origin</span>
 
      <dt><span title=concept-cache-url>url</span>
-     <dd><var title>request</var>'s <span title=concept-request-url>url</span>
+     <dd><var title>request</var>'s
+     <span title=concept-request-current-url>current url</span>
 
      <dt><span title=concept-cache-max-age>max-age</span>
      <dd><var title>max-age</var>
@@ -2464,7 +2510,8 @@ steps:
      <dd><var title>request</var>'s <span title=concept-request-origin>origin</span>
 
      <dt><span title=concept-cache-url>url</span>
-     <dd><var title>request</var>'s <span title=concept-request-url>url</span>
+     <dd><var title>request</var>'s
+     <span title=concept-request-current-url>current url</span>
 
      <dt><span title=concept-cache-max-age>max-age</span>
      <dd><var title>max-age</var>
@@ -2506,13 +2553,13 @@ Entries may be removed before that moment arrives.
 <span title=concept-cache-origin>origin</span> is <var title>request</var>'s
 <span title=concept-request-origin>origin</span> and whose
 <span title=concept-cache-url>url</span> is <var title>request</var>'s
-<span title=concept-request-url>url</span>.
+<span title=concept-request-current-url>current url</span>.
 
 <p>There is a <dfn title=concept-cache-match>cache match</dfn> for
 <var title>request</var> if <span title=concept-cache-origin>origin</span> is
 <var title>request</var>'s <span title=concept-request-origin>origin</span>,
 <span title=concept-cache-url>url</span> is <var title>request</var>'s
-<span title=concept-request-url>url</span>, and either
+<span title=concept-request-current-url>current url</span>, and either
 <span title=concept-cache-credentials>credentials</span> is false and
 <var title>request</var>'s
 <span title=concept-request-credentials-mode>credentials mode</span> is not
@@ -3160,7 +3207,7 @@ constructor must run these steps:
 
  <li><p>Set <var title>request</var> to a new <span title=concept-request>request</span>
  whose <span title=concept-request-url>url</span> is <var title>request</var>'s
- <span title=concept-request-url>url</span>,
+ <span title=concept-request-current-url>current url</span>,
  <span title=concept-request-method>method</span> is <var title>request</var>'s
  <span title=concept-request-method>method</span>,
  <span title=concept-request-header-list>header list</span> is a copy of
@@ -3211,6 +3258,9 @@ constructor must run these steps:
    <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
    <li><p>Set <var title>request</var>'s <span title=concept-request-url>url</span> to
+   <var title>parsedURL</var> and replace <var title>request</var>'s
+   <span title=concept-request-url-list>url list</span> single
+   <span data-anolis-spec=url title=concept-url>URL</span> with a copy of
    <var title>parsedURL</var>.
 
    <li><p>Set <var title>fallbackMode</var> to "<code title>cors</code>".
@@ -3728,7 +3778,7 @@ Developers have almost no control over
 `<code title=http-referer>Referer</code>` for instance.
 
 
-<h3 class=no-num>Atomic HTTP redirect handling</h3>
+<h3 class=no-num><dfn>Atomic HTTP redirect handling</dfn></h3>
 
 <p>Throughout the platform, redirects (a
 <span title=concept-response>response</span> whose
