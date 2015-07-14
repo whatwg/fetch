@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-13-july-2015">Living Standard — Last Updated 13 July 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-14-july-2015">Living Standard — Last Updated 14 July 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -502,6 +502,21 @@ null when <a class="external" href="https://html.spec.whatwg.org/multipage/brows
 script updates, etc.</span>
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-window" title="concept-request-window">window</dfn> ("<code>no-window</code>",
+"<code>client</code>", or an
+<a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a> whose
+<a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#global-object">global object</a> is a
+<code class="external"><a href="https://html.spec.whatwg.org/multipage/browsers.html#window">Window</a></code> object). Unless stated otherwise it is
+"<code>client</code>".
+
+<p class="note no-backref">The "<code>client</code>" value is changed to either
+"<code>no-window</code>" or <a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-client" title="concept-request-client">client</a> during
+<a href="#concept-fetch" title="concept-fetch">fetching</a>. It provides a convenient way for standards to
+not have to explicitly set <a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-window" title="concept-request-window">window</a>.
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="keep-alive-flag">keep-alive flag</dfn>. Unless stated otherwise it is unset.
 
 <p class="note no-backref">This is used by <code>navigator.sendBeacon</code> and the HTML
@@ -800,9 +815,6 @@ opaque identifier.
 stated otherwise it is <i title="">client</i>.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="authentication-flag">authentication flag</dfn>. Unless stated otherwise it is unset.
-
-<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="synchronous-flag">synchronous flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
@@ -954,7 +966,7 @@ it is the empty list.
 
 <p class="note no-backref">Except for the last
 <a class="external" href="https://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>, if any, a
-<a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-response" title="concept-response">response</a>'s
 <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> cannot be exposed to script. That
 would violate <a href="#atomic-http-redirect-handling">atomic HTTP redirect handling</a>.
 
@@ -1373,6 +1385,15 @@ which must be one of <i title="">end-user abort</i>, <i title="">fatal</i>, or
 <i title="">timeout</i>.
 
 <ol>
+ <li><p>If <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
+ "<code>client</code>", set <var title="">request</var>'s
+ <a href="#concept-request-window" title="concept-request-window">window</a> to <var title="">request</var>'s
+ <a href="#concept-request-client" title="concept-request-client">client</a>, if <var title="">request</var>'s
+ <a href="#concept-request-client" title="concept-request-client">client</a>'s
+ <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#global-object">global object</a> is a
+ <code class="external"><a href="https://html.spec.whatwg.org/multipage/browsers.html#window">Window</a></code> object, and to "<code>no-window</code>"
+ otherwise.
+
  <li>
   <p>If <var title="">request</var>'s <a href="#concept-request-context" title="concept-request-context">context</a>
   is not "<code title="">fetch</code>" and <var title="">request</var>'s
@@ -1911,7 +1932,8 @@ indicates an attempt to authenticate.
     <p>Set <var title="">request</var>'s <a href="#skip-service-worker-flag">skip-service-worker flag</a>.
 
     <p class="note no-backref">There might be redirects. Alternatively,
-    <var title="">request</var>'s <a href="#authentication-flag">authentication flag</a> is set and the
+    <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is an
+    <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a> and the
     <i title="">CORS flag</i> is unset.
 
    <li><p>Let <var title="">credentials flag</var> be set if either
@@ -2072,8 +2094,9 @@ indicates an attempt to authenticate.
    <dt><code title="">401</code>
    <dd>
     <ol>
-     <li><p>If <var title="">request</var>'s <a href="#authentication-flag">authentication flag</a> is unset or the
-     <i title="">CORS flag</i> is set, return <var title="">response</var>.
+     <li><p>If <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a>
+     is "<code>no-window</code> or the <i title="">CORS flag</i> is set, return
+     <var title="">response</var>.
 
      <li class="XXX"><p>Needs testing: multiple `<code>WWW-Authenticate</code>` headers,
      missing, parsing issues.
@@ -2085,7 +2108,8 @@ indicates an attempt to authenticate.
 
       <ol>
        <li><p>Let <var title="">username</var> and <var title="">password</var> be the result of
-       prompting the end user for a username and password, respectively.
+       prompting the end user for a username and password, respectively, in
+       <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a>.
 
        <li><p><a class="external" href="https://url.spec.whatwg.org/#set-the-username">Set the username</a> given
        <var title="">request</var>'s
@@ -2107,11 +2131,16 @@ indicates an attempt to authenticate.
    <dt><code title="">407</code>
    <dd>
     <ol>
+     <li><p>If <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a>
+     is "<code>no-window</code>", return a
+     <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
      <li class="XXX"><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers,
      missing, parsing issues.
 
      <li>
-      <p>Prompt the end user as appropriate and store the result as appropriate as a
+      <p>Prompt the end user as appropriate in <var title="">request</var>'s
+      <a href="#concept-request-window" title="concept-request-window">window</a> and store the result as a
       <a href="#proxy-authentication-entry">proxy-authentication entry</a>.
       <a href="#refsHTTP">[HTTP]</a>
 
@@ -2347,6 +2376,17 @@ The <i title="">credentials flag</i> is one too.
   have the <i title="">credentials flag</i> unset. In other words, ambient authority should
   not leak across this grouping.
   <!-- XXX https://www.w3.org/Bugs/Public/show_bug.cgi?id=26556 -->
+
+  <p>If the HTTP request results in a TLS client certificate dialog, run these substeps:
+
+  <ol>
+   <li><p>If <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a>
+   is an <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>, make the dialog
+   available in <var title="">request</var>'s
+   <a href="#concept-request-window" title="concept-request-window">window</a>.
+
+   <li><p>Otherwise, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+  </ol>
 
   <p>If <var title="">response</var> was retrieved over TLS, set its
   <a href="#concept-response-https-state" title="concept-response-https-state">HTTPS state</a> to either
@@ -3288,6 +3328,7 @@ dictionary <dfn id="requestinit">RequestInit</dfn> {
   <a href="#requestcredentials">RequestCredentials</a> credentials;
   <a href="#requestcache">RequestCache</a> cache;
   <a href="#requestredirect">RequestRedirect</a> redirect; // "manual" cannot be set
+  any window; // can only be set to null
 };
 
 enum <dfn id="requestcontext">RequestContext</dfn> {
@@ -3345,6 +3386,25 @@ constructor must run these steps:
  <code><a href="#request">Request</a></code> object, and a new <a href="#concept-request" title="concept-request">request</a>
  otherwise.
 
+ <li><p>Let <var title="">origin</var> be
+ <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>.
+
+ <li><p>Let <var title="">window</var> be "<code>client</code>".
+
+ <li><p>If <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
+ an <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a> and its
+ <a class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a> is
+ <a class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var title="">origin</var>, set
+ <var title="">window</var> to <var title="">request</var>'s
+ <a href="#concept-request-window" title="concept-request-window">window</a>.
+
+ <li><p>If <var title="">init</var>'s <code title="">window</code> member is present and it is
+ not null, <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>If <var title="">init</var>'s <code title="">window</code> member is present, set
+ <var title="">window</var> to "<code>no-window</code>".
+
  <li><p>Set <var title="">request</var> to a new <a href="#concept-request" title="concept-request">request</a>
  whose <a href="#concept-request-url" title="concept-request-url">url</a> is <var title="">request</var>'s
  <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>,
@@ -3355,9 +3415,8 @@ constructor must run these steps:
  <span title="concept-unsafe-request-flag">unsafe-request flag</span> is set,
  <a href="#concept-request-client" title="concept-request-client">client</a> is
  <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>,
- <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
- <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
- <a class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>,
+ <a href="#concept-request-window" title="concept-request-window">window</a> is <var title="">window</var>,
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a> is <var title="">origin</var>,
  <a href="#force-origin-header-flag">force-<code>Origin</code>-header flag</a> is set,
  <a href="#same-origin-data-url-flag">same-origin data-URL flag</a> is set,
  <a href="#concept-request-context" title="concept-request-context">context</a> is the empty string,
