@@ -1546,20 +1546,6 @@ redirects.
  <li><p>If <span title=concept-main-fetch>main fetch</span> is invoked recursively, return
  <var title>response</var>.
 
- <li><p>Set <var title>response</var>'s
- <span title=concept-response-url-list>url list</span> to a copy of
- <var title>request</var>'s <span title=concept-request-url-list>url list</span>.
-
- <li><p>If
- <a href=https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response>should <var>response</var> to <var>request</var> be blocked as mixed content</a>,
- <span class=XXX>should <var>response</var> to <var>request</var> be blocked as content security</span>,
- or
- <span>should <var title>response</var> to <var title>request</var> be blocked due to nosniff</span>
- returns <b title>blocked</b>, set <var title>response</var> to a
- <span title=concept-network-error>network error</span>.
- <span data-anolis-ref>MIX</span>
- <span data-anolis-ref>CSP</span>
-
  <li>
   <p>If <var title>response</var> is not a
   <span title=concept-network-error>network error</span> and
@@ -1581,25 +1567,39 @@ redirects.
    <dd><span title=concept-filtered-response-opaque>opaque filtered response</span>
   </dl>
 
+ <li><p>Let <var>internalResponse</var> be <var title>response</var>'s
+ <span title=concept-internal-response>internal response</span>.
+
+ <li><p>Set <var title>internalResponse</var>'s
+ <span title=concept-response-url-list>url list</span> to a copy of
+ <var title>request</var>'s <span title=concept-request-url-list>url list</span>.
+
+ <li><p>If
+ <a href=https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
+ <span class=XXX>should <var>internalResponse</var> to <var title>request</var> be blocked as content security</span>,
+ or
+ <span>should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</span>
+ returns <b title>blocked</b>, set <var title>response</var> to a
+ <span title=concept-network-error>network error</span>.
+ <span data-anolis-ref>MIX</span>
+ <span data-anolis-ref>CSP</span>
+
  <li>
   <p>If <var title>request</var>'s <span title=concept-request-method>method</span>
   is `<code title>HEAD</code>` or `<code title>CONNECT</code>`, or
-  <var title>response</var>'s
-  <span title=concept-internal-response>internal response</span>'s
+  <var title>internalResponse</var>'s
   <span title=concept-response-status>status</span> is <code title>101</code>,
   <code title>204</code>, <code title>205</code>, or <code title>304</code>, set
-  <var title>response</var>'s
-  <span title=concept-internal-response>internal response</span>'s
-  <span title=concept-response-body>body</span> to null and disregard any pushing toward
-  it (if any).
+  <var title>internalResponse</var>'s <span title=concept-response-body>body</span> to
+  null and disregard any pushing toward it (if any).
 
   <p class=note>This standardizes the error handling for servers that violate HTTP.
 
  <li>
   <p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
   either end-of-file to have been pushed to
-  <var title>response</var>'s <span title=concept-response-body>body</span> or for
-  <var title>response</var> to have a
+  <var title>internalResponse</var>'s <span title=concept-response-body>body</span> or for
+  <var title>internalResponse</var> to have a
   <span title=concept-response-termination-reason>termination reason</span>, and then
   return <var title>response</var>.
 
@@ -1617,7 +1617,7 @@ redirects.
  <dfn>process response</dfn> for <var title>response</var>.
 
  <li>
-  <p>If <var title>response</var>'s
+  <p>If <var title>internalResponse</var>'s
   <span title=concept-response-body>body</span> is null, run these substeps:
 
   <ol>
@@ -1629,22 +1629,22 @@ redirects.
   </ol>
 
  <li>
-  <p>Otherwise, if <var title>response</var>'s
+  <p>Otherwise, if <var title>internalResponse</var>'s
   <span title=concept-response-body>body</span> is non-null, run these substeps:
 
   <ol>
-   <li><p>Whenever <var title>response</var>'s
+   <li><p>Whenever <var title>internalResponse</var>'s
    <span title=concept-response-body>body</span>'s is pushed to, for and as long as
-   <var title>response</var> has no
+   <var title>internalResponse</var> has no
    <span title=concept-response-termination-reason>termination reason</span> and
    end-of-file has not been pushed,
    <span>queue a fetch task</span> on <var title>request</var> to
    <span>process response body</span> for <var title>response</var>.
 
    <li>
-    <p>Once end-of-file has been pushed to <var title>response</var>'s
-    <span title=concept-response-body>body</span> or <var title>response</var> has a
-    <span title=concept-response-termination-reason>termination reason</span>,
+    <p>Once end-of-file has been pushed to <var title>internalResponse</var>'s
+    <span title=concept-response-body>body</span> or <var title>internalResponse</var> has
+    a <span title=concept-response-termination-reason>termination reason</span>,
     <span>queue a fetch-done task</span> using <var title>request</var> and
     <var title>response</var>.
 
@@ -1920,9 +1920,15 @@ indicates an attempt to authenticate.
     <span title=concept-response>response</span> from a service worker.
   </ol>
 
+ <li>Let <var title>status</var> be <var title>response</var>'s
+ <span title=concept-response-status>status</span>, if <var title>response</var> is not a
+ <span title=concept-filtered-response>filtered response</span>, and
+ <var title>response</var>'s
+ <span title=concept-internal-response>internal response</span>'s
+ <span title=concept-response-status>status</span> otherwise.
+
  <li>
-  <p>Then, switch on <var title>response</var>'s
-  <span title=concept-response-status>status</span>:
+  <p>Switch on <var title>status</var>:
 
   <dl class=switch>
    <dt><code title>304</code>
@@ -2110,8 +2116,9 @@ indicates an attempt to authenticate.
  <span data-anolis-ref>HTTPAUTH</span>
 
  <li><p>Return <var title>response</var>. <span class="note no-backref">Typically
- <var title>response</var>'s <span title=concept-response-body>body</span> is still being
- pushed to after returning.</span>
+ <var title>response</var>'s <span title=concept-response-body>body</span> (or that of the
+ <span title=concept-internal-response>internal response</span>) is still being pushed to
+ after returning.</span>
 </ol>
 
 

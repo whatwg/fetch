@@ -1599,20 +1599,6 @@ redirects.
  <li><p>If <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> is invoked recursively, return
  <var title="">response</var>.
 
- <li><p>Set <var title="">response</var>'s
- <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> to a copy of
- <var title="">request</var>'s <a href="#concept-request-url-list" title="concept-request-url-list">url list</a>.
-
- <li><p>If
- <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var>response</var> to <var>request</var> be blocked as mixed content</a>,
- <span class="XXX">should <var><a href="#response">response</a></var> to <var><a href="#request">request</a></var> be blocked as content security</span>,
- or
- <a href="#should-response-to-request-be-blocked-due-to-nosniff?">should <var title="">response</var> to <var title="">request</var> be blocked due to nosniff</a>
- returns <b title="">blocked</b>, set <var title="">response</var> to a
- <a href="#concept-network-error" title="concept-network-error">network error</a>.
- <a href="#refsMIX">[MIX]</a>
- <a href="#refsCSP">[CSP]</a>
-
  <li>
   <p>If <var title="">response</var> is not a
   <a href="#concept-network-error" title="concept-network-error">network error</a> and
@@ -1634,25 +1620,39 @@ redirects.
    <dd><a href="#concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered response</a>
   </dl>
 
+ <li><p>Let <var>internalResponse</var> be <var title="">response</var>'s
+ <a href="#concept-internal-response" title="concept-internal-response">internal response</a>.
+
+ <li><p>Set <var title="">internalResponse</var>'s
+ <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> to a copy of
+ <var title="">request</var>'s <a href="#concept-request-url-list" title="concept-request-url-list">url list</a>.
+
+ <li><p>If
+ <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
+ <span class="XXX">should <var>internalResponse</var> to <var title="">request</var> be blocked as content security</span>,
+ or
+ <span>should <var>internalResponse</var> to <var><a href="#request">request</a></var> be blocked due to nosniff</span>
+ returns <b title="">blocked</b>, set <var title="">response</var> to a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
+ <a href="#refsMIX">[MIX]</a>
+ <a href="#refsCSP">[CSP]</a>
+
  <li>
   <p>If <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
   is `<code title="">HEAD</code>` or `<code title="">CONNECT</code>`, or
-  <var title="">response</var>'s
-  <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
+  <var title="">internalResponse</var>'s
   <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">101</code>,
   <code title="">204</code>, <code title="">205</code>, or <code title="">304</code>, set
-  <var title="">response</var>'s
-  <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
-  <a href="#concept-response-body" title="concept-response-body">body</a> to null and disregard any pushing toward
-  it (if any).
+  <var title="">internalResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> to
+  null and disregard any pushing toward it (if any).
 
   <p class="note">This standardizes the error handling for servers that violate HTTP.
 
  <li>
   <p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set, wait for
   either end-of-file to have been pushed to
-  <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> or for
-  <var title="">response</var> to have a
+  <var title="">internalResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> or for
+  <var title="">internalResponse</var> to have a
   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>, and then
   return <var title="">response</var>.
 
@@ -1670,7 +1670,7 @@ redirects.
  <dfn id="process-response">process response</dfn> for <var title="">response</var>.
 
  <li>
-  <p>If <var title="">response</var>'s
+  <p>If <var title="">internalResponse</var>'s
   <a href="#concept-response-body" title="concept-response-body">body</a> is null, run these substeps:
 
   <ol>
@@ -1682,22 +1682,22 @@ redirects.
   </ol>
 
  <li>
-  <p>Otherwise, if <var title="">response</var>'s
+  <p>Otherwise, if <var title="">internalResponse</var>'s
   <a href="#concept-response-body" title="concept-response-body">body</a> is non-null, run these substeps:
 
   <ol>
-   <li><p>Whenever <var title="">response</var>'s
+   <li><p>Whenever <var title="">internalResponse</var>'s
    <a href="#concept-response-body" title="concept-response-body">body</a>'s is pushed to, for and as long as
-   <var title="">response</var> has no
+   <var title="">internalResponse</var> has no
    <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> and
    end-of-file has not been pushed,
    <a href="#queue-a-fetch-task">queue a fetch task</a> on <var title="">request</var> to
    <a href="#process-response-body">process response body</a> for <var title="">response</var>.
 
    <li>
-    <p>Once end-of-file has been pushed to <var title="">response</var>'s
-    <a href="#concept-response-body" title="concept-response-body">body</a> or <var title="">response</var> has a
-    <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>,
+    <p>Once end-of-file has been pushed to <var title="">internalResponse</var>'s
+    <a href="#concept-response-body" title="concept-response-body">body</a> or <var title="">internalResponse</var> has
+    a <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>,
     <a href="#queue-a-fetch-done-task">queue a fetch-done task</a> using <var title="">request</var> and
     <var title="">response</var>.
 
@@ -1973,9 +1973,15 @@ indicates an attempt to authenticate.
     <a href="#concept-response" title="concept-response">response</a> from a service worker.
   </ol>
 
+ <li>Let <var title="">status</var> be <var title="">response</var>'s
+ <a href="#concept-response-status" title="concept-response-status">status</a>, if <var title="">response</var> is not a
+ <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>, and
+ <var title="">response</var>'s
+ <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
+ <a href="#concept-response-status" title="concept-response-status">status</a> otherwise.
+
  <li>
-  <p>Then, switch on <var title="">response</var>'s
-  <a href="#concept-response-status" title="concept-response-status">status</a>:
+  <p>Switch on <var title="">status</var>:
 
   <dl class="switch">
    <dt><code title="">304</code>
@@ -2163,8 +2169,9 @@ indicates an attempt to authenticate.
  <a href="#refsHTTPAUTH">[HTTPAUTH]</a>
 
  <li><p>Return <var title="">response</var>. <span class="note no-backref">Typically
- <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being
- pushed to after returning.</span>
+ <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> (or that of the
+ <a href="#concept-internal-response" title="concept-internal-response">internal response</a>) is still being pushed to
+ after returning.</span>
 </ol>
 
 
