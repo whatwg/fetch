@@ -872,6 +872,10 @@ Unless stated otherwise, it is unset.
 whose <span title=concept-request-context>context</span> is "<code title>embed</code>" or
 "<code title>object</code>".
 
+<p>A <dfn>navigation request</dfn> is a <span title=concept-request>request</span> whose
+<span title=concept-request-context>context</span> is a
+<span>navigation request-context</span>.
+
 <p>A <dfn>resource request</dfn> is a <span title=concept-request>request</span> that is
 neither a <span>client request</span> nor a <span>potential-client request</span>.
 
@@ -1019,6 +1023,20 @@ whose <span title=concept-header-name>name</span> is both not a
 <span title=concept-response-header-list>header list</span> is the empty list,
 <span title=concept-response-body>body</span> is null, and
 <span title=concept-response-cache-state>cache state</span> is "<code title>none</code>".
+
+<p>An <dfn title=concept-filtered-response-opaque-redirect>opaque-redirect filtered response</dfn>
+is a <span title=concept-filtered-response>filtered response</span> whose
+<span title=concept-response-type>type</span> is "<code title>opaqueredirect</code>",
+<span title=concept-response-status>status</span> is <code title>0</code>,
+<span title=concept-response-status-message>status message</span> is the empty byte sequence,
+<span title=concept-response-header-list>header list</span> is the empty list,
+<span title=concept-response-body>body</span> is null, and
+<span title=concept-response-cache-state>cache state</span> is "<code title>none</code>".
+
+<p class="note no-backref">Exposing the
+<span title=concept-response-url-list>url list</span> for
+<span title=concept-filtered-response-opaque-redirect>opaque-redirect filtered responses</span>
+is harmless since no redirects are followed.
 
 <p class="note no-backref">In other words, an
 <span title=concept-filtered-response-opaque>opaque filtered response</span> is nearly
@@ -1838,9 +1856,13 @@ indicates an attempt to authenticate.
      "<code title>no-cors</code>" and <var title>response</var>'s
      <span title=concept-response-type>type</span> is "<code title>opaque</code>".
 
+     <li><var title>request</var> is <em>not</em> a <span>navigation request</span> and
+     <var title>response</var>'s <span title=concept-response-type>type</span> is
+     "<code title>opaqueredirect</code>".
+
      <li><var title>request</var> is a <span>client request</span> and
-     <var title>response</var>'s <span title=concept-response-type>type</span> is neither
-     "<code title>basic</code>" nor "<code title>default</code>".
+     <var title>response</var>'s <span title=concept-response-type>type</span> is none of
+     "<code>basic</code>", "<code>default</code>", and "<code>opaqueredirect</code>".
      <!-- This needs to be revisited somehow if we ever get cross-origin workers. -->
     </ul>
   </ol>
@@ -2045,6 +2067,13 @@ indicates an attempt to authenticate.
         <span title=concept-main-fetch>main fetch</span> to get
         <span title=concept-request-response-tainting>response tainting</span> correct.
       </ol>
+
+     <li><p>Otherwise, <var title>request</var>'s
+     <span title=concept-request-redirect-mode>redirect mode</span> is
+     "<code title>manual</code>", set <var title>response</var> to an
+     <span title=concept-filtered-response-opaque-redirect>opaque-redirect filtered response</span>
+     whose <span title=concept-internal-response>internal response</span> is
+     <var title>response</var>.
     </ol>
 
    <dt><code title>401</code>
@@ -3284,7 +3313,7 @@ dictionary <dfn>RequestInit</dfn> {
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
   <span>RequestCache</span> cache;
-  <span>RequestRedirect</span> redirect; // "manual" cannot be set
+  <span>RequestRedirect</span> redirect;
   any window; // can only be set to null
 };
 
@@ -3448,10 +3477,6 @@ constructor must run these steps:
  <li><p>If <var title>cache</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-cache-mode>cache mode</span> to <var title>cache</var>.
 
- <li><p>If <var title>init</var>'s <code title>redirect</code> member is present and it is
- "<code title>manual</code>", <span data-anolis-spec=webidl>throw</span> a
- <code title>TypeError</code>.
-
  <li><p>Let <var title>redirect</var> be <var title>init</var>'s
  <code title>redirect</code> member if it is present, and
  <var title>fallbackRedirect</var> otherwise.
@@ -3459,10 +3484,6 @@ constructor must run these steps:
  <li><p>If <var title>redirect</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-redirect-mode>redirect mode</span> to
  <var title>redirect</var>.
-
- <li><p>If <var title>request</var>'s
- <span title=concept-request-redirect-mode>redirect mode</span> is
- "<code title>manual</code>", set it to "<code title>follow</code>".
 
  <li>
   <p>If <var title>init</var>'s <code title>method</code> member is present, let
@@ -3662,7 +3683,7 @@ dictionary <dfn>ResponseInit</dfn> {
   <span>HeadersInit</span> headers;
 };
 
-enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>
+enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque", "opaqueredirect" };</pre>
 
 <p>A <code>Response</code> object has an associated
 <dfn title=concept-Response-response>response</dfn> (a

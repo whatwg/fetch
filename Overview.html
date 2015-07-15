@@ -925,6 +925,10 @@ Unless stated otherwise, it is unset.
 whose <a href="#concept-request-context" title="concept-request-context">context</a> is "<code title="">embed</code>" or
 "<code title="">object</code>".
 
+<p>A <dfn id="navigation-request">navigation request</dfn> is a <a href="#concept-request" title="concept-request">request</a> whose
+<a href="#concept-request-context" title="concept-request-context">context</a> is a
+<a href="#navigation-request-context">navigation request-context</a>.
+
 <p>A <dfn id="resource-request">resource request</dfn> is a <a href="#concept-request" title="concept-request">request</a> that is
 neither a <a href="#client-request">client request</a> nor a <a href="#potential-client-request">potential-client request</a>.
 
@@ -1072,6 +1076,20 @@ whose <a href="#concept-header-name" title="concept-header-name">name</a> is bot
 <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is the empty list,
 <a href="#concept-response-body" title="concept-response-body">body</a> is null, and
 <a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a> is "<code title="">none</code>".
+
+<p>An <dfn id="concept-filtered-response-opaque-redirect" title="concept-filtered-response-opaque-redirect">opaque-redirect filtered response</dfn>
+is a <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> whose
+<a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaqueredirect</code>",
+<a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">0</code>,
+<a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is the empty list,
+<a href="#concept-response-body" title="concept-response-body">body</a> is null, and
+<a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a> is "<code title="">none</code>".
+
+<p class="note no-backref">Exposing the
+<a href="#concept-response-url-list" title="concept-response-url-list">url list</a> for
+<a href="#concept-filtered-response-opaque-redirect" title="concept-filtered-response-opaque-redirect">opaque-redirect filtered responses</a>
+is harmless since no redirects are followed.
 
 <p class="note no-backref">In other words, an
 <a href="#concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered response</a> is nearly
@@ -1891,9 +1909,13 @@ indicates an attempt to authenticate.
      "<code title="">no-cors</code>" and <var title="">response</var>'s
      <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaque</code>".
 
+     <li><var title="">request</var> is <em>not</em> a <a href="#navigation-request">navigation request</a> and
+     <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> is
+     "<code title="">opaqueredirect</code>".
+
      <li><var title="">request</var> is a <a href="#client-request">client request</a> and
-     <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> is neither
-     "<code title="">basic</code>" nor "<code title="">default</code>".
+     <var title="">response</var>'s <a href="#concept-response-type" title="concept-response-type">type</a> is none of
+     "<code>basic</code>", "<code>default</code>", and "<code>opaqueredirect</code>".
      <!-- This needs to be revisited somehow if we ever get cross-origin workers. -->
     </ul>
   </ol>
@@ -2098,6 +2120,13 @@ indicates an attempt to authenticate.
         <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> to get
         <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> correct.
       </ol>
+
+     <li><p>Otherwise, <var title="">request</var>'s
+     <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
+     "<code title="">manual</code>", set <var title="">response</var> to an
+     <a href="#concept-filtered-response-opaque-redirect" title="concept-filtered-response-opaque-redirect">opaque-redirect filtered response</a>
+     whose <a href="#concept-internal-response" title="concept-internal-response">internal response</a> is
+     <var title="">response</var>.
     </ol>
 
    <dt><code title="">401</code>
@@ -3337,7 +3366,7 @@ dictionary <dfn id="requestinit">RequestInit</dfn> {
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
   <a href="#requestcache">RequestCache</a> cache;
-  <a href="#requestredirect">RequestRedirect</a> redirect; // "manual" cannot be set
+  <a href="#requestredirect">RequestRedirect</a> redirect;
   any window; // can only be set to null
 };
 
@@ -3501,10 +3530,6 @@ constructor must run these steps:
  <li><p>If <var title="">cache</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to <var title="">cache</var>.
 
- <li><p>If <var title="">init</var>'s <code title="">redirect</code> member is present and it is
- "<code title="">manual</code>", <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
- <code title="">TypeError</code>.
-
  <li><p>Let <var title="">redirect</var> be <var title="">init</var>'s
  <code title="">redirect</code> member if it is present, and
  <var title="">fallbackRedirect</var> otherwise.
@@ -3512,10 +3537,6 @@ constructor must run these steps:
  <li><p>If <var title="">redirect</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> to
  <var title="">redirect</var>.
-
- <li><p>If <var title="">request</var>'s
- <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
- "<code title="">manual</code>", set it to "<code title="">follow</code>".
 
  <li>
   <p>If <var title="">init</var>'s <code title="">method</code> member is present, let
@@ -3715,7 +3736,7 @@ dictionary <dfn id="responseinit">ResponseInit</dfn> {
   <a href="#headersinit">HeadersInit</a> headers;
 };
 
-enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "error", "opaque" };</pre>
+enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "error", "opaque", "opaqueredirect" };</pre>
 
 <p>A <code><a href="#response">Response</a></code> object has an associated
 <dfn id="concept-response-response" title="concept-Response-response">response</dfn> (a
