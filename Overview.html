@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-15-july-2015">Living Standard — Last Updated 15 July 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-16-july-2015">Living Standard — Last Updated 16 July 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -53,7 +53,8 @@ fetching.
      <li><a href="#requests"><span class="secno">3.1.4 </span>Requests</a></li>
      <li><a href="#responses"><span class="secno">3.1.5 </span>Responses</a></ul></li>
    <li><a href="#authentication-entries"><span class="secno">3.2 </span>Authentication entries</a></li>
-   <li><a href="#fetch-registries"><span class="secno">3.3 </span>Fetch registries</a></ul></li>
+   <li><a href="#fetch-registries"><span class="secno">3.3 </span>Fetch registries</a></li>
+   <li><a href="#referrer-policies"><span class="secno">3.4 </span>Referrer policies</a></ul></li>
  <li><a href="#http-extensions"><span class="secno">4 </span>HTTP extensions</a>
   <ul class="toc">
    <li><a href="#origin-header"><span class="secno">4.1 </span>`<code title="">Origin</code>` header</a></li>
@@ -810,9 +811,18 @@ opaque identifier.
 <dfn id="same-origin-data-url-flag">same-origin data-URL flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-referrer" title="concept-request-referrer">referrer</dfn>, which is <i title="">no referrer</i>,
-<i title="">client</i>, or a <a class="external" href="https://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>. Unless
-stated otherwise it is <i title="">client</i>.
+<dfn id="concept-request-referrer" title="concept-request-referrer">referrer</dfn>, which is "<code>no-referrer</code>",
+"<code>client</code>", or a <a class="external" href="https://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>.
+Unless stated otherwise it is "<code>client</code>".
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</dfn>, which is a
+<a href="#concept-referrer-policy" title="concept-referrer-policy">referrer policy</a>. Unless stated otherwise it is
+the empty string.
+
+<p class="note no-backref">This can be used to override a referrer policy associated with
+an <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>.
+<a href="#refsREFERRER">[REFERRER]</a>
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="synchronous-flag">synchronous flag</dfn>. Unless stated otherwise it is unset.
@@ -1139,6 +1149,27 @@ tracking functionality.
 <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminate</a> the
 <a href="#concept-fetch-record" title="concept-fetch-record">fetch record</a>'s
 <a href="#concept-fetch-record-fetch" title="concept-fetch-record-fetch">fetch</a> with reason <i title="">fatal</i>.
+
+
+
+<h3 id="referrer-policies"><span class="secno">3.4 </span>Referrer policies</h3>
+
+<p>A <dfn id="concept-referrer-policy" title="concept-referrer-policy">referrer policy</dfn> is the empty string,
+"<code>no-referrer</code>", "<code>no-referrer-when-downgrade</code>",
+"<code>origin-only</code>", "<code>origin-when-cross-origin</code>", or
+"<code>unsafe-url</code>".
+
+<pre class="idl">enum <dfn id="referrerpolicy">ReferrerPolicy</dfn> {
+  "",
+  "no-referrer",
+  "no-referrer-when-downgrade",
+  "origin-only",
+  "origin-when-cross-origin",
+  "unsafe-url"
+};</pre>
+
+<p class="note">The details of referrer policies are discussed in Referrer Policy.
+<a href="#refsREFERRER">[REFERRER]</a>
 
 
 
@@ -1520,15 +1551,15 @@ redirects.
 
  <li>
   <p>If <var title="">request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>
-  is not <i title="">no referrer</i>, set <var title="">request</var>'s
+  is not "<code>no-referrer</code>", set <var title="">request</var>'s
   <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to the result of invoking
   <a href="https://w3c.github.io/webappsec/specs/referrer-policy/#determine-requests-referrer">determine <var title="">request</var>'s referrer</a>.
   <a href="#refsREFERRER">[REFERRER]</a>
 
   <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
   provide the end user with options to override <var title="">request</var>'s
-  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to <i title="">no referrer</i> or have
-  it expose less sensitive information.
+  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to "<code>no-referrer</code>" or
+  have it expose less sensitive information.
 
  <li><p>If <var title="">request</var>'s
  <a href="#concept-request-current-url" title="concept-request-current-url">current url</a> contains a Known HSTS Host,
@@ -1649,7 +1680,7 @@ redirects.
  <a href="https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
  <span class="XXX">should <var>internalResponse</var> to <var title="">request</var> be blocked as content security</span>,
  or
- <span>should <var>internalResponse</var> to <var><a href="#request">request</a></var> be blocked due to nosniff</span>
+ <a href="#should-response-to-request-be-blocked-due-to-nosniff?" title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>
  returns <b title="">blocked</b>, set <var title="">response</var> to a
  <a href="#concept-network-error" title="concept-network-error">network error</a>.
  <a href="#refsMIX">[MIX]</a>
@@ -1738,7 +1769,8 @@ steps:
  <dd>
   <p>If <var title="">request</var>'s
   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
-  <a class="external" href="https://url.spec.whatwg.org/#concept-url-scheme-data" title="concept-url-scheme-data">scheme data</a> is
+  <a class="external" href="https://url.spec.whatwg.org/#non_relative-flag">non-relative flag</a> is set and
+  <a class="external" href="https://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> contains a single string
   "<code title="">blank</code>", return a <a href="#concept-response" title="concept-response">response</a> whose
   <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> consist of a single
   <a href="#concept-header" title="concept-header">header</a> whose
@@ -1753,7 +1785,8 @@ steps:
 
   <p id="unicorn">Otherwise, if <var title="">request</var>'s
   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
-  <a class="external" href="https://url.spec.whatwg.org/#concept-url-scheme-data" title="concept-url-scheme-data">scheme data</a> is
+  <a class="external" href="https://url.spec.whatwg.org/#non_relative-flag">non-relative flag</a> is set and
+  <a class="external" href="https://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> contains a single string
   "<code title="">unicorn</code>", return a <a href="#concept-response" title="concept-response">response</a>
   whose <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> consist of a single
   <a href="#concept-header" title="concept-header">header</a> whose
@@ -2247,7 +2280,7 @@ The <i title="">credentials flag</i> is one too.
 
  <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
  `<code title="">Referer</code>`/empty byte sequence, if <var title="">HTTPRequest</var>'s
- <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <i title="">no referrer</i>, and
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is "<code>no-referrer</code>", and
  `<code title="">Referer</code>`/<var title="">HTTPRequest</var>'s
  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>,
  <a class="external" href="https://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> and
@@ -2585,9 +2618,12 @@ steps:
  <a href="#concept-request-context-frame-type" title="concept-request-context-frame-type">context-frame type</a>,
  <a href="#concept-request-origin" title="concept-request-origin">origin</a> is <var title="">request</var>'s
  <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
- <a href="#force-origin-header-flag">force-<code>Origin</code>-header flag</a> is set, and
+ <a href="#force-origin-header-flag">force-<code>Origin</code>-header flag</a> is set,
  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <var title="">request</var>'s
- <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>.
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>, and
+ <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a> is
+ <var title="">request</var>'s
+ <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a>.
 
  <li><p><a href="#concept-header-list-set" title="concept-header-list-set">Set</a>
  `<code title="http-access-control-request-method"><a href="#http-access-control-request-method">Access-Control-Request-Method</a></code>` to
@@ -3345,8 +3381,9 @@ interface <dfn id="request">Request</dfn> {
   [SameObject] readonly attribute <a href="#headers">Headers</a> <a href="#dom-request-headers" title="dom-Request-headers">headers</a>;
 
   readonly attribute <a href="#requestcontext">RequestContext</a> <a href="#dom-request-context" title="dom-Request-context">context</a>;<!--
-  readonly attribute DOMString <span title=dom-Request-origin>origin</span>;-->
-  readonly attribute DOMString <a href="#dom-request-referrer" title="dom-Request-referrer">referrer</a>;<!--
+  readonly attribute USVString <span title=dom-Request-origin>origin</span>;-->
+  readonly attribute USVString <a href="#dom-request-referrer" title="dom-Request-referrer">referrer</a>;
+  readonly attribute <a href="#referrerpolicy">ReferrerPolicy</a> <a href="#dom-request-referrerpolicy" title="dom-Request-referrerPolicy">referrerPolicy</a>;<!--
   readonly attribute boolean <span title=dom-Request-handles401>handles401</span>;
   readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;-->
   readonly attribute <a href="#requestmode">RequestMode</a> <a href="#dom-request-mode" title="dom-Request-mode">mode</a>;
@@ -3359,10 +3396,15 @@ interface <dfn id="request">Request</dfn> {
 };
 <a href="#request">Request</a> implements <a href="#body">Body</a>;
 
-dictionary <dfn id="requestinit">RequestInit</dfn> {
+<!--
+  Careful: defaults can only be set in prose, otherwise the Request() constructor
+           algorithm breaks down.
+-->dictionary <dfn id="requestinit">RequestInit</dfn> {
   ByteString method;
   <a href="#headersinit">HeadersInit</a> headers;
   <a href="#bodyinit">BodyInit</a> body;
+  USVString referrer;
+  <a href="#referrerpolicy">ReferrerPolicy</a> referrerPolicy;
   <a href="#requestmode">RequestMode</a> mode;
   <a href="#requestcredentials">RequestCredentials</a> credentials;
   <a href="#requestcache">RequestCache</a> cache;
@@ -3458,6 +3500,11 @@ constructor must run these steps:
  <a href="#concept-request-origin" title="concept-request-origin">origin</a> is <var title="">origin</var>,
  <a href="#force-origin-header-flag">force-<code>Origin</code>-header flag</a> is set,
  <a href="#same-origin-data-url-flag">same-origin data-URL flag</a> is set,
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <var title="">request</var>'s
+ <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>,
+ <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a> is
+ <var title="">request</var>'s
+ <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a>,
  <a href="#concept-request-context" title="concept-request-context">context</a> is the empty string,
  <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <var title="">request</var>'s
  <a href="#concept-request-mode" title="concept-request-mode">mode</a>,
@@ -3479,14 +3526,17 @@ constructor must run these steps:
 
  <li><p>Let <var title="">fallbackRedirect</var> be null.
 
+ <li><p>Let <var>baseURL</var> be
+ <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url">API base URL</a>.
+
  <li>
   <p>If <var title="">input</var> is a string, run these substeps:
 
   <ol>
    <li><p>Let <var title="">parsedURL</var> be the result of
    <a class="external" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
-   <var title="">input</var> with <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
-   <a class="external" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url">API base URL</a>.
+   <var title="">input</var> with <var>baseURL</var>.
 
    <li><p>If <var title="">parsedURL</var> is failure,
    <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
@@ -3509,6 +3559,49 @@ constructor must run these steps:
 
    <li><p>Set <var title="">fallbackRedirect</var> to "<code title="">follow</code>".
   </ol>
+
+ <li><p>If any of <var title="">init</var>'s members are present, set
+ <var title="">request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to
+ "<code>client</code>", and <var title="">request</var>'s
+ <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a> to the empty string.
+
+ <li>
+  <p>If <var title="">init</var>'s <code>referrer</code> member is present, run these
+  substeps:
+
+  <ol>
+   <li><p>Let <var title="">referrer</var> be <var title="">init</var>'s <code>referrer</code>
+   member.
+
+   <li><p>If <var title="">referrer</var> is the empty string, set <var title="">request</var>'s
+   <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to "<code>no-referrer</code>" and
+   terminate these substeps.
+
+   <li><p>Let <var>parsedReferrer</var> be the result of
+   <a class="external" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
+   <var title="">referrer</var> with <var>baseURL</var>.
+
+   <li><p>If <var>parsedReferrer</var>'s
+   <a class="external" href="https://url.spec.whatwg.org/#non_relative-flag">non-relative flag</a> is set,
+   <a class="external" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
+   "<code>about</code>", and
+   <a class="external" href="https://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> contains a single string
+   "<code>client</code>", set <var title="">request</var>'s
+   <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to "<code>client</code>" and
+   terminate these substeps.
+
+   <li><p>If <var>parsedReferrer</var>'s
+   <a class="external" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> is not
+   <a class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var title="">origin</var>,
+   <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p>Set <var title="">request</var>'s
+   <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to <var>parsedReferrer</var>.
+  </ol>
+
+ <li><p>If <var title="">init</var>'s <code><a href="#referrerpolicy">referrerPolicy</a></code> member is present, set
+ <var title="">request</var>'s
+ <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a> to it.
 
  <li><p>Let <var title="">mode</var> be <var title="">init</var>'s <code title="">mode</code>
  member if it is present, and <var title="">fallbackMode</var> otherwise.
@@ -3653,12 +3746,16 @@ return <a href="#concept-request-request" title="concept-Request-request">reques
 
 <p>The <dfn id="dom-request-referrer" title="dom-Request-referrer"><code>referrer</code></dfn> attribute's getter must
 return the empty string if <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-<a href="#concept-request-referrer" title="concept-Request-referrer">referrer</a> is <i title="">no referrer</i>,
+<a href="#concept-request-referrer" title="concept-Request-referrer">referrer</a> is "<code>no-referrer</code>",
 "<code title="">about:client</code>" if <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-<a href="#concept-request-referrer" title="concept-Request-referrer">referrer</a> is <i title="">client</i> and
+<a href="#concept-request-referrer" title="concept-Request-referrer">referrer</a> is "<code>client</code>", and
 <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-referrer" title="concept-Request-referrer">referrer</a>,
 <a class="external" href="https://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a>, otherwise.
+
+<p>The <dfn id="dom-request-referrerpolicy" title="dom-Request-referrerPolicy"><code>referrerPolicy</code></dfn> attribute's
+getter must return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+<a href="#concept-request-referrer-policy" title="concept-Request-referrer-policy">referrer policy</a>.
 
 <p>The <dfn id="dom-request-mode" title="dom-Request-mode"><code>mode</code></dfn> attribute's getter must
 return the value corresponding to the first matching statement, switching on

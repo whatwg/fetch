@@ -757,9 +757,18 @@ opaque identifier.
 <dfn>same-origin data-URL flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-referrer>referrer</dfn>, which is <i title>no referrer</i>,
-<i title>client</i>, or a <span data-anolis-spec=url title=concept-url>URL</span>. Unless
-stated otherwise it is <i title>client</i>.
+<dfn title=concept-request-referrer>referrer</dfn>, which is "<code>no-referrer</code>",
+"<code>client</code>", or a <span data-anolis-spec=url title=concept-url>URL</span>.
+Unless stated otherwise it is "<code>client</code>".
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-referrer-policy>referrer policy</dfn>, which is a
+<span title=concept-referrer-policy>referrer policy</span>. Unless stated otherwise it is
+the empty string.
+
+<p class="note no-backref">This can be used to override a referrer policy associated with
+an <span data-anolis-spec=html>environment settings object</span>.
+<span data-anolis-ref>REFERRER</span>
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>synchronous flag</dfn>. Unless stated otherwise it is unset.
@@ -1086,6 +1095,27 @@ tracking functionality.
 <span title=concept-fetch-terminate>terminate</span> the
 <span title=concept-fetch-record>fetch record</span>'s
 <span title=concept-fetch-record-fetch>fetch</span> with reason <i title>fatal</i>.
+
+
+
+<h3>Referrer policies</h3>
+
+<p>A <dfn title=concept-referrer-policy>referrer policy</dfn> is the empty string,
+"<code>no-referrer</code>", "<code>no-referrer-when-downgrade</code>",
+"<code>origin-only</code>", "<code>origin-when-cross-origin</code>", or
+"<code>unsafe-url</code>".
+
+<pre class=idl>enum <dfn>ReferrerPolicy</dfn> {
+  "",
+  "no-referrer",
+  "no-referrer-when-downgrade",
+  "origin-only",
+  "origin-when-cross-origin",
+  "unsafe-url"
+};</pre>
+
+<p class=note>The details of referrer policies are discussed in Referrer Policy.
+<span data-anolis-ref>REFERRER</span>
 
 
 
@@ -1467,15 +1497,15 @@ redirects.
 
  <li>
   <p>If <var title>request</var>'s <span title=concept-request-referrer>referrer</span>
-  is not <i title>no referrer</i>, set <var title>request</var>'s
+  is not "<code>no-referrer</code>", set <var title>request</var>'s
   <span title=concept-request-referrer>referrer</span> to the result of invoking
   <a href=https://w3c.github.io/webappsec/specs/referrer-policy/#determine-requests-referrer>determine <var title>request</var>'s referrer</a>.
   <span data-anolis-ref>REFERRER</span>
 
   <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
   provide the end user with options to override <var title>request</var>'s
-  <span title=concept-request-referrer>referrer</span> to <i title>no referrer</i> or have
-  it expose less sensitive information.
+  <span title=concept-request-referrer>referrer</span> to "<code>no-referrer</code>" or
+  have it expose less sensitive information.
 
  <li><p>If <var title>request</var>'s
  <span title=concept-request-current-url>current url</span> contains a Known HSTS Host,
@@ -1596,7 +1626,7 @@ redirects.
  <a href=https://w3c.github.io/webappsec/specs/mixedcontent/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
  <span class=XXX>should <var>internalResponse</var> to <var title>request</var> be blocked as content security</span>,
  or
- <span>should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</span>
+ <span title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</span>
  returns <b title>blocked</b>, set <var title>response</var> to a
  <span title=concept-network-error>network error</span>.
  <span data-anolis-ref>MIX</span>
@@ -1685,7 +1715,8 @@ steps:
  <dd>
   <p>If <var title>request</var>'s
   <span title=concept-request-current-url>current url</span>'s
-  <span data-anolis-spec=url title=concept-url-scheme-data>scheme data</span> is
+  <span data-anolis-spec=url>non-relative flag</span> is set and
+  <span data-anolis-spec=url title=concept-url-path>path</span> contains a single string
   "<code title>blank</code>", return a <span title=concept-response>response</span> whose
   <span title=concept-response-header-list>header list</span> consist of a single
   <span title=concept-header>header</span> whose
@@ -1700,7 +1731,8 @@ steps:
 
   <p id=unicorn>Otherwise, if <var title>request</var>'s
   <span title=concept-request-current-url>current url</span>'s
-  <span data-anolis-spec=url title=concept-url-scheme-data>scheme data</span> is
+  <span data-anolis-spec=url>non-relative flag</span> is set and
+  <span data-anolis-spec=url title=concept-url-path>path</span> contains a single string
   "<code title>unicorn</code>", return a <span title=concept-response>response</span>
   whose <span title=concept-response-header-list>header list</span> consist of a single
   <span title=concept-header>header</span> whose
@@ -2194,7 +2226,7 @@ The <i title>credentials flag</i> is one too.
 
  <li><p><span title=concept-header-list-append>Append</span>
  `<code title>Referer</code>`/empty byte sequence, if <var title>HTTPRequest</var>'s
- <span title=concept-request-referrer>referrer</span> is <i title>no referrer</i>, and
+ <span title=concept-request-referrer>referrer</span> is "<code>no-referrer</code>", and
  `<code title>Referer</code>`/<var title>HTTPRequest</var>'s
  <span title=concept-request-referrer>referrer</span>,
  <span data-anolis-spec=url title=concept-url-serializer>serialized</span> and
@@ -2532,9 +2564,12 @@ steps:
  <span title=concept-request-context-frame-type>context-frame type</span>,
  <span title=concept-request-origin>origin</span> is <var title>request</var>'s
  <span title=concept-request-origin>origin</span>,
- <span>force-<code>Origin</code>-header flag</span> is set, and
+ <span>force-<code>Origin</code>-header flag</span> is set,
  <span title=concept-request-referrer>referrer</span> is <var title>request</var>'s
- <span title=concept-request-referrer>referrer</span>.
+ <span title=concept-request-referrer>referrer</span>, and
+ <span title=concept-request-referrer-policy>referrer policy</span> is
+ <var title>request</var>'s
+ <span title=concept-request-referrer-policy>referrer policy</span>.
 
  <li><p><span title=concept-header-list-set>Set</span>
  `<code title=http-access-control-request-method>Access-Control-Request-Method</code>` to
@@ -3292,8 +3327,9 @@ interface <dfn>Request</dfn> {
   [SameObject] readonly attribute <span>Headers</span> <span title=dom-Request-headers>headers</span>;
 
   readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;<!--
-  readonly attribute DOMString <span title=dom-Request-origin>origin</span>;-->
-  readonly attribute DOMString <span title=dom-Request-referrer>referrer</span>;<!--
+  readonly attribute USVString <span title=dom-Request-origin>origin</span>;-->
+  readonly attribute USVString <span title=dom-Request-referrer>referrer</span>;
+  readonly attribute <span>ReferrerPolicy</span> <span title=dom-Request-referrerPolicy>referrerPolicy</span>;<!--
   readonly attribute boolean <span title=dom-Request-handles401>handles401</span>;
   readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;-->
   readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
@@ -3306,10 +3342,15 @@ interface <dfn>Request</dfn> {
 };
 <span>Request</span> implements <span>Body</span>;
 
-dictionary <dfn>RequestInit</dfn> {
+<!--
+  Careful: defaults can only be set in prose, otherwise the Request() constructor
+           algorithm breaks down.
+-->dictionary <dfn>RequestInit</dfn> {
   ByteString method;
   <span>HeadersInit</span> headers;
   <span>BodyInit</span> body;
+  USVString referrer;
+  <span>ReferrerPolicy</span> referrerPolicy;
   <span>RequestMode</span> mode;
   <span>RequestCredentials</span> credentials;
   <span>RequestCache</span> cache;
@@ -3405,6 +3446,11 @@ constructor must run these steps:
  <span title=concept-request-origin>origin</span> is <var title>origin</var>,
  <span>force-<code>Origin</code>-header flag</span> is set,
  <span>same-origin data-URL flag</span> is set,
+ <span title=concept-request-referrer>referrer</span> is <var title>request</var>'s
+ <span title=concept-request-referrer>referrer</span>,
+ <span title=concept-request-referrer-policy>referrer policy</span> is
+ <var title>request</var>'s
+ <span title=concept-request-referrer-policy>referrer policy</span>,
  <span title=concept-request-context>context</span> is the empty string,
  <span title=concept-request-mode>mode</span> is <var title>request</var>'s
  <span title=concept-request-mode>mode</span>,
@@ -3426,14 +3472,17 @@ constructor must run these steps:
 
  <li><p>Let <var title>fallbackRedirect</var> be null.
 
+ <li><p>Let <var>baseURL</var> be
+ <span data-anolis-spec=html>entry settings object</span>'s
+ <span data-anolis-spec=html>API base URL</span>.
+
  <li>
   <p>If <var title>input</var> is a string, run these substeps:
 
   <ol>
    <li><p>Let <var title>parsedURL</var> be the result of
    <span data-anolis-spec=url title=concept-url-parser>parsing</span>
-   <var title>input</var> with <span data-anolis-spec=html>entry settings object</span>'s
-   <span data-anolis-spec=html>API base URL</span>.
+   <var title>input</var> with <var>baseURL</var>.
 
    <li><p>If <var title>parsedURL</var> is failure,
    <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
@@ -3456,6 +3505,49 @@ constructor must run these steps:
 
    <li><p>Set <var title>fallbackRedirect</var> to "<code title>follow</code>".
   </ol>
+
+ <li><p>If any of <var title>init</var>'s members are present, set
+ <var title>request</var>'s <span title=concept-request-referrer>referrer</span> to
+ "<code>client</code>", and <var title>request</var>'s
+ <span title=concept-request-referrer-policy>referrer policy</span> to the empty string.
+
+ <li>
+  <p>If <var title>init</var>'s <code>referrer</code> member is present, run these
+  substeps:
+
+  <ol>
+   <li><p>Let <var title>referrer</var> be <var title>init</var>'s <code>referrer</code>
+   member.
+
+   <li><p>If <var title>referrer</var> is the empty string, set <var title>request</var>'s
+   <span title=concept-request-referrer>referrer</span> to "<code>no-referrer</code>" and
+   terminate these substeps.
+
+   <li><p>Let <var>parsedReferrer</var> be the result of
+   <span data-anolis-spec=url title=concept-url-parser>parsing</span>
+   <var title>referrer</var> with <var>baseURL</var>.
+
+   <li><p>If <var>parsedReferrer</var>'s
+   <span data-anolis-spec=url>non-relative flag</span> is set,
+   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
+   "<code>about</code>", and
+   <span data-anolis-spec=url title=concept-url-path>path</span> contains a single string
+   "<code>client</code>", set <var title>request</var>'s
+   <span title=concept-request-referrer>referrer</span> to "<code>client</code>" and
+   terminate these substeps.
+
+   <li><p>If <var>parsedReferrer</var>'s
+   <span data-anolis-spec=url title=concept-url-origin>origin</span> is not
+   <span data-anolis-spec=html>same origin</span> with <var title>origin</var>,
+   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p>Set <var title>request</var>'s
+   <span title=concept-request-referrer>referrer</span> to <var>parsedReferrer</var>.
+  </ol>
+
+ <li><p>If <var title>init</var>'s <code>referrerPolicy</code> member is present, set
+ <var title>request</var>'s
+ <span title=concept-request-referrer-policy>referrer policy</span> to it.
 
  <li><p>Let <var title>mode</var> be <var title>init</var>'s <code title>mode</code>
  member if it is present, and <var title>fallbackMode</var> otherwise.
@@ -3600,12 +3692,16 @@ return <span title=concept-Request-request>request</span>'s
 
 <p>The <dfn title=dom-Request-referrer><code>referrer</code></dfn> attribute's getter must
 return the empty string if <span title=concept-Request-request>request</span>'s
-<span title=concept-Request-referrer>referrer</span> is <i title>no referrer</i>,
+<span title=concept-Request-referrer>referrer</span> is "<code>no-referrer</code>",
 "<code title>about:client</code>" if <span title=concept-Request-request>request</span>'s
-<span title=concept-Request-referrer>referrer</span> is <i title>client</i> and
+<span title=concept-Request-referrer>referrer</span> is "<code>client</code>", and
 <span title=concept-Request-request>request</span>'s
 <span title=concept-Request-referrer>referrer</span>,
 <span data-anolis-spec=url title=concept-url-serializer>serialized</span>, otherwise.
+
+<p>The <dfn title=dom-Request-referrerPolicy><code>referrerPolicy</code></dfn> attribute's
+getter must return <span title=concept-Request-request>request</span>'s
+<span title=concept-Request-referrer-policy>referrer policy</span>.
 
 <p>The <dfn title=dom-Request-mode><code>mode</code></dfn> attribute's getter must
 return the value corresponding to the first matching statement, switching on
