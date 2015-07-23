@@ -173,6 +173,13 @@ the <i title>exclude fragment flag</i> is set, meaning implementations can store
  <dfn>process response end-of-file</dfn> for <var title>response</var>.
 </ol>
 
+<hr>
+
+<p>To <dfn>wait for a <var>response</var></dfn>, wait for either end-of-file to have been
+pushed to <var title>response</var>'s <span title=concept-response-body>body</span> or for
+<var title>response</var> to have a
+<span title=concept-response-termination-reason>termination reason</span>.
+
 
 <h3>HTTP</h3>
 
@@ -823,6 +830,10 @@ if it is "<code title>default</code>".
 <dfn title=concept-request-redirect-mode>redirect mode</dfn>, which is one of
 "<code title>follow</code>", "<code title>error</code>", and "<code title>manual</code>".
 Unless stated otherwise, it is "<code title>follow</code>".
+
+<p>A <span title=concept-request>request</span> has associated
+<dfn title=concept-request-integrity-metadata>integrity metadata</dfn> (a string). Unless
+stated otherwise, it is the empty string.
 
 <hr>
 
@@ -1650,11 +1661,31 @@ redirects.
   <p class=note>This standardizes the error handling for servers that violate HTTP.
 
  <li>
-  <p>If <var title>request</var>'s <span>synchronous flag</span> is set, wait for
-  either end-of-file to have been pushed to
-  <var title>internalResponse</var>'s <span title=concept-response-body>body</span> or for
-  <var title>internalResponse</var> to have a
-  <span title=concept-response-termination-reason>termination reason</span>, and then
+  <p>If <var title>request</var>'s
+  <span title=concept-request-integrity-metadata>integrity metadata</span> is not
+  the empty string and <var title>response</var> is not a
+  <span title=concept-network-error>network error</span>, run these substeps:
+
+  <ol>
+   <li><p><span title="Wait for a response">Wait for <var>response</var></span>.
+
+   <li><p>If <var title>response</var> does not have a
+   <span title=concept-response-termination-reason>termination reason</span> and
+   <var title>response</var> does not
+   <a href="https://w3c.github.io/webappsec/specs/subresourceintegrity/#does-varresponsevar-match-varmetadatalistvar">match</a>
+   <var title>request</var>'s
+   <span title=concept-request-integrity-metadata>integrity metadata</span>, set
+   <var title>response</var> to a
+   <span title=concept-network-error>network error</span>.
+   <span data-anolis-ref>SRI</span>
+  </ol>
+
+  <p class=note>This operates on <var title>response</var> as this algorithm is not
+  supposed to observe <var>internalResponse</var>.
+
+ <li>
+  <p>If <var title>request</var>'s <span>synchronous flag</span> is set,
+  <span title="wait for a response">wait for <var>internalResponse</var></span>, and then
   return <var title>response</var>.
 
   <p class="note no-backref">This terminates <span title=concept-fetch>fetch</span>.
@@ -3357,6 +3388,7 @@ interface <dfn>Request</dfn> {
   readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;-->
   readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;
   readonly attribute <span>RequestRedirect</span> <span title=dom-Request-redirect>redirect</span>;
+  readonly attribute DOMString <span title=dom-Request-integrity>integrity</span>;
 
   [NewObject] <span>Request</span> <span title=dom-Request-clone>clone</span>();
 };
@@ -3375,6 +3407,7 @@ interface <dfn>Request</dfn> {
   <span>RequestCredentials</span> credentials;
   <span>RequestCache</span> cache;
   <span>RequestRedirect</span> redirect;
+  DOMString integrity;
   any window; // can only be set to null
 };
 
@@ -3473,18 +3506,17 @@ constructor must run these steps:
  <span title=concept-request-credentials-mode>credentials mode</span>,
  <span title=concept-request-cache-mode>cache mode</span> is
  <var title>request</var>'s
- <span title=concept-request-cache-mode>cache mode</span>, and
+ <span title=concept-request-cache-mode>cache mode</span>,
  <span title=concept-request-redirect-mode>redirect mode</span> is
  <var title>request</var>'s
- <span title=concept-request-redirect-mode>redirect mode</span>.
+ <span title=concept-request-redirect-mode>redirect mode</span>, and
+ <span title=concept-request-integrity-metadata>integrity metadata</span> is
+ <var title>request</var>'s
+ <span title=concept-request-integrity-metadata>integrity metadata</span>.
 
  <li><p>Let <var title>fallbackMode</var> be null.
 
  <li><p>Let <var title>fallbackCredentials</var> be null.
-
- <li><p>Let <var title>fallbackCache</var> be null.
-
- <li><p>Let <var title>fallbackRedirect</var> be null.
 
  <li><p>Let <var>baseURL</var> be
  <span data-anolis-spec=html>entry settings object</span>'s
@@ -3514,10 +3546,6 @@ constructor must run these steps:
    <li><p>Set <var title>fallbackMode</var> to "<code title>cors</code>".
 
    <li><p>Set <var title>fallbackCredentials</var> to "<code title>omit</code>".
-
-   <li><p>Set <var title>fallbackCache</var> to "<code title>default</code>".
-
-   <li><p>Set <var title>fallbackRedirect</var> to "<code title>follow</code>".
   </ol>
 
  <li><p>If any of <var title>init</var>'s members are present, set
@@ -3577,19 +3605,17 @@ constructor must run these steps:
  <span title=concept-request-credentials-mode>credentials mode</span> to
  <var title>credentials</var>.
 
- <li><p>Let <var title>cache</var> be <var title>init</var>'s <code title>cache</code>
- member if it is present, and <var title>fallbackCache</var> otherwise.
+ <li><p>If <var title>init</var>'s <code title>cache</code> member is present, set
+ <var title>request</var>'s <span title=concept-request-cache-mode>cache mode</span> to
+ it.
 
- <li><p>If <var title>cache</var> is non-null, set <var title>request</var>'s
- <span title=concept-request-cache-mode>cache mode</span> to <var title>cache</var>.
+ <li><p>If <var title>init</var>'s <code title>redirect</code> member is present, set
+ <var title>request</var>'s <span title=concept-request-redirect-mode>redirect mode</span>
+ to it.
 
- <li><p>Let <var title>redirect</var> be <var title>init</var>'s
- <code title>redirect</code> member if it is present, and
- <var title>fallbackRedirect</var> otherwise.
-
- <li><p>If <var title>redirect</var> is non-null, set <var title>request</var>'s
- <span title=concept-request-redirect-mode>redirect mode</span> to
- <var title>redirect</var>.
+ <li><p>If <var title>init</var>'s <code title>integrity</code> member is present, set
+ <var title>request</var>'s
+ <span title=concept-request-integrity-metadata>integrity metadata</span> to it.
 
  <li>
   <p>If <var title>init</var>'s <code title>method</code> member is present, let
@@ -3629,6 +3655,11 @@ constructor must run these steps:
    <li><p>If <var title>r</var>'s <span title=concept-Request-request>request</span>'s
    <span title=concept-request-method>method</span> is not a <span>simple method</span>,
    <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p>If <var title>request</var>'s
+   <span title=concept-request-integrity-metadata>integrity metadata</span> is not
+   the empty string, <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
 
    <li><p>Set <var title>r</var>'s <code>Headers</code> object's
    <span title=concept-Headers-guard>guard</span> to "<code title>request-no-cors</code>".
@@ -3740,6 +3771,10 @@ return <span title=concept-Request-request>request</span>'s
 <p>The <dfn title=dom-Request-redirect><code>redirect</code></dfn> attribute's getter must
 return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-redirect-mode>redirect mode</span>.
+
+<p>The <dfn title=dom-Request-integrity><code>integrity</code></dfn> attribute's getter
+must return <span title=concept-Request-request>request</span>'s
+<span title=concept-request-integrity-metadata>integrity metadata</span>.
 
 <hr>
 
