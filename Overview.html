@@ -49,9 +49,10 @@ fetching.
     <ul class="toc">
      <li><a href="#methods"><span class="secno">3.1.1 </span>Methods</a></li>
      <li><a href="#terminology-headers"><span class="secno">3.1.2 </span>Headers</a></li>
-     <li><a href="#bodies"><span class="secno">3.1.3 </span>Bodies</a></li>
-     <li><a href="#requests"><span class="secno">3.1.4 </span>Requests</a></li>
-     <li><a href="#responses"><span class="secno">3.1.5 </span>Responses</a></ul></li>
+     <li><a href="#statuses"><span class="secno">3.1.3 </span>Statuses</a></li>
+     <li><a href="#bodies"><span class="secno">3.1.4 </span>Bodies</a></li>
+     <li><a href="#requests"><span class="secno">3.1.5 </span>Requests</a></li>
+     <li><a href="#responses"><span class="secno">3.1.6 </span>Responses</a></ul></li>
    <li><a href="#authentication-entries"><span class="secno">3.2 </span>Authentication entries</a></li>
    <li><a href="#fetch-registries"><span class="secno">3.3 </span>Fetch registries</a></li>
    <li><a href="#referrer-policies"><span class="secno">3.4 </span>Referrer policies</a></ul></li>
@@ -442,7 +443,12 @@ steps:
  <a href="#byte-lowercase" title="byte-lowercase">byte-lowercased</a>.
 </ol>
 
-<h4 id="bodies"><span class="secno">3.1.3 </span>Bodies</h4>
+<h4 id="statuses"><span class="secno">3.1.3 </span>Statuses</h4>
+
+<p>A <dfn id="null-body-status">null body status</dfn> is <code>101</code>, <code>204</code>, <code>205</code>,
+or <code>304</code>.
+
+<h4 id="bodies"><span class="secno">3.1.4 </span>Bodies</h4>
 
 <p>A <dfn id="concept-body" title="concept-body">body</dfn> is a byte stream. It has an associated
 <dfn id="concept-body-transmitted" title="concept-body-transmitted">transmitted</dfn> which is an integer and initially 0,
@@ -460,7 +466,7 @@ steps:
 </ol>
 <!-- XXX no hook in HTTP -->
 
-<h4 id="requests"><span class="secno">3.1.4 </span>Requests</h4>
+<h4 id="requests"><span class="secno">3.1.5 </span>Requests</h4>
 
 <p>The input to <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-request" title="concept-request">request</dfn>.
@@ -951,7 +957,7 @@ neither a <a href="#client-request">client request</a> nor a <a href="#potential
 <!-- These concepts are introduced for service workers. At some point we should xref that. -->
 
 
-<h4 id="responses"><span class="secno">3.1.5 </span>Responses</h4>
+<h4 id="responses"><span class="secno">3.1.6 </span>Responses</h4>
 
 <p>The result of <a href="#concept-fetch" title="concept-fetch">fetch</a> is a
 <dfn id="concept-response" title="concept-response">response</dfn>. A <a href="#concept-response" title="concept-response">response</a>
@@ -1692,9 +1698,8 @@ redirects.
   <p>If <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
   is `<code title="">HEAD</code>` or `<code title="">CONNECT</code>`, or
   <var title="">internalResponse</var>'s
-  <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">101</code>,
-  <code title="">204</code>, <code title="">205</code>, or <code title="">304</code>, set
-  <var title="">internalResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> to
+  <a href="#concept-response-status" title="concept-response-status">status</a> is a <a href="#null-body-status">null body status</a>,
+  set <var title="">internalResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> to
   null and disregard any pushing toward it (if any).
 
   <p class="note">This standardizes the error handling for servers that violate HTTP.
@@ -3865,6 +3870,10 @@ constructor, when invoked, must run these steps:
  <li><p>If <var title="">init</var>'s <code title="">status</code> member is not in the range
  <code title="">200</code> to <code title="">599</code>, inclusive,
  <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
+
+ <li><p>If <var title="">init</var>'s <code title="">status</code> member is a
+ <a href="#null-body-status">null body status</a> and <var title="">body</var> is non-null,
+ <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>If <var title="">init</var>'s <code title="">statusText</code> member does not match the
  <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-6.1.1">Reason-Phrase</a> token production,
