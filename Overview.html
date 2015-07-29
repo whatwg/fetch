@@ -405,7 +405,6 @@ that is one of `<code title="">application/x-www-form-urlencoded</code>`,
  <li>`<code title="">Trailer</code>`
  <li>`<code title="">Transfer-Encoding</code>`
  <li>`<code title="">Upgrade</code>`
- <li>`<code title="">User-Agent</code>`
  <li>`<code title="">Via</code>`
 </ul>
 
@@ -2321,12 +2320,12 @@ The <i title="">credentials flag</i> is one too.
 
 <ol>
  <li>
-  <p>Let <var title="">HTTPRequest</var> be <var title="">request</var> if
+  <p>Let <var title="">httpRequest</var> be <var title="">request</var> if
   <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
   "<code>no-window</code>" and <var title="">request</var>'s
   <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is not
   "<code>follow</code>", and a copy of <var title="">request</var>, with
-  <var title="">HTTPRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> being a tee
+  <var title="">httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> being a tee
   of <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>, otherwise.
 
   <p class="note no-backref">A <var title="">request</var> is typically copied as it needs to
@@ -2337,14 +2336,14 @@ The <i title="">credentials flag</i> is one too.
 
  <li><p>Let <var title="">contentLengthValue</var> be null.
 
- <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is null
- and <var title="">request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is
- `<code title="">HEAD</code>`, `<code title="">POST</code>`, or `<code title="">PUT</code>`, set
+ <li><p>If <var title="">httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+ null and <var title="">httpRequest</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
+ is `<code title="">HEAD</code>`, `<code title="">POST</code>`, or `<code title="">PUT</code>`, set
  <var title="">contentLengthValue</var> to `<code title="">0</code>`.
  <!-- https://chromium.googlesource.com/chromium/src/+/ca9d6916c5fedf6f0ee73dfc397cb0f65ad326b9/net/http/http_network_transaction.cc#894 -->
 
- <li><p>If <var title="">request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
- non-null, set <var title="">contentLengthValue</var> to <var title="">request</var>'s
+ <li><p>If <var title="">httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+ non-null, set <var title="">contentLengthValue</var> to <var title="">httpRequest</var>'s
  <a href="#concept-request-body" title="concept-request-body">body</a>'s
  <a href="#concept-body-length" title="concept-body-length">length</a>,
  <a class="external" href="https://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>.
@@ -2353,127 +2352,44 @@ The <i title="">credentials flag</i> is one too.
  <li><p>If <var title="">contentLengthValue</var> is non-null,
  <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
  `<code title="">Content-Length</code>`/<var title="">contentLengthValue</var> to
- <var title="">HTTPRequest</var>'s
+ <var title="">httpRequest</var>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
  <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
- `<code title="">Referer</code>`/empty byte sequence, if <var title="">HTTPRequest</var>'s
+ `<code title="">Referer</code>`/empty byte sequence, if <var title="">httpRequest</var>'s
  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is "<code>no-referrer</code>", and
- `<code title="">Referer</code>`/<var title="">HTTPRequest</var>'s
+ `<code title="">Referer</code>`/<var title="">httpRequest</var>'s
  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>,
  <a class="external" href="https://url.spec.whatwg.org/#concept-url-serializer" title="concept-url-serializer">serialized</a> and
  <a class="external" href="https://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>, otherwise, to
- <var title="">HTTPRequest</var>'s
+ <var title="">httpRequest</var>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
  <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
           concept-as-bytes -->
 
- <li><p>If <var title="">HTTPRequest</var>'s
+ <li><p>If <var title="">httpRequest</var>'s
  <a href="#force-origin-header-flag">force-<code>Origin</code>-header flag</a> is set,
  <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
- `<code title="">Origin</code>`/<var title="">HTTPRequest</var>'s
+ `<code title="">Origin</code>`/<var title="">httpRequest</var>'s
  <a href="#concept-request-origin" title="concept-request-origin">origin</a>,
  <a class="external" href="https://html.spec.whatwg.org/multipage/browsers.html#ascii-serialisation-of-an-origin" title="ASCII serialization of an origin">serialized</a>
  and <a class="external" href="https://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>, to
- <var title="">HTTPRequest</var>'s
+ <var title="">httpRequest</var>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
  <!-- XXX concept-as-bytes -->
 
- <li>
-  <p>If <var title="">credentials flag</var> is set, run these substeps:
-
-  <ol>
-   <li><p>Modify <var title="">HTTPRequest</var>'s
-   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
-   per HTTP State Management Mechanism.
-   <a href="#refsCOOKIES">[COOKIES]</a>
-   <!-- XXX proper hook? -->
-
-   <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
-   <li><p>Let <var title="">authorizationValue</var> be null.
-
-   <li><p>If there's an <a href="#authentication-entry">authentication entry</a> for <var title="">HTTPRequest</var>
-   and either <var title="">HTTPRequest</var>'s
-   <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use-URL-credentials flag</a> is
-   unset or <var title="">HTTPRequest</var>'s
-   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a> does not
-   <a class="external" href="https://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
-   <var title="">authorizationValue</var> to <a href="#authentication-entry">authentication entry</a>.
-   <!-- need to define the cache concept -->
-
-   <li><p>Otherwise, if <var title="">HTTPRequest</var>'s
-   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a> does
-   <a class="external" href="https://url.spec.whatwg.org/#include-credentials">include credentials</a> and the
-   <i title="">authentication-fetch flag</i> is set, set
-   <var title="">authorizationValue</var> to <var title="">HTTPRequest</var>'s
-   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>,
-   <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
-
-   <li><p>If <var title="">authorizationValue</var> is non-null,
-   <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
-   `<code title="">Authorization</code>`/<var title="">authorizationValue</var> to
-   <var title="">HTTPRequest</var>'s
-   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
-  </ol>
+ <li><p>If <var title="">httpRequest</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> does not contain a
+ <a href="#concept-header" title="concept-header">header</a> whose
+ <a href="#concept-header-name" title="concept-header-name">name</a> is
+ `<code title="http-user-agent">User-Agent</code>`, user agents should
+ <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
+ `<code>User-Agent</code>`/an appropriate <a href="#concept-header-value" title="concept-header-value">value</a> to
+ <var title="">httpRequest</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
  <li>
-  <p>If there's a <a href="#proxy-authentication-entry">proxy-authentication entry</a>, use it as appropriate.
-
-  <p class="note no-backref">This intentionally does not depend on
-  <var title="">HTTPRequest</var>'s
-  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
-
- <li><p>Let <var title="">response</var> be null.
-
- <li>
-  <p>If <var title="">request</var>'s
-  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is neither
-  "<code title="">no-store</code>" nor "<code title="">reload</code>", and there is a <em>complete</em>
-  <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
-  <var title="">request</var> run these substeps:
-  <!-- XXX xref "HTTP cache" -->
-
-  <ol>
-   <li><p>If <var title="">request</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either
-   "<code title="">force-cache</code>" or "<code title="">only-if-cached</code>", set <var title="">response</var>
-   to the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
-   <var title="">request</var>.
-
-   <li><p>Otherwise, if <var title="">request</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is "<code title="">default</code>" and
-   the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
-   <var title="">request</var> does not require revalidation, set <var title="">response</var>
-   to that <a href="#concept-response" title="concept-response">response</a> and set
-   <var title="">response</var>'s <a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a>
-   to "<code title="">local</code>".
-   <!-- XXX xref "revalidation" -->
-
-   <li><p>Otherwise, if <var title="">request</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either "<code title="">default</code>"
-   or "<code title="">no-cache</code>", and the <a href="#concept-response" title="concept-response">response</a> in the
-   HTTP cache for <var title="">request</var> does require revalidation, modify
-   <var title="">HTTPRequest</var>'s
-   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with revalidation
-   <a href="#concept-header" title="concept-header">headers</a>.
-   <!-- XXX modify, revalidation headers -->
-  </ol>
-
- <li><p>Otherwise, if <var title="">request</var>'s
- <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either "<code title="">default</code>"
- or "<code title="">force-cache</code>", and there is a <em>partial</em>
- <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
- <var title="">request</var>, modify <var title="">HTTPRequest</var>'s
- <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with resume
- <a href="#concept-header" title="concept-header">headers</a>.
- <!-- XXX xref partial, modify, resume headers -->
-
- <li>If <var title="">response</var> is null and <var title="">request</var>'s
- <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is "<code title="">only-if-cached</code>",
- return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
- <li>
-  <p>If <var title="">response</var> is null, modify <var title="">HTTPRequest</var>'s
+  <p>Modify <var title="">httpRequest</var>'s
   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> per HTTP.
 
   <p class="note no-backref">It would be great if we could make this more normative
@@ -2491,9 +2407,107 @@ The <i title="">credentials flag</i> is one too.
   <span class="note">See <a href="#http-header-layer-division">HTTP header layer division</a>.</span>
 
  <li>
-  <p>If <var title="">response</var> is null, set <var title="">response</var> to the result of
-  making an <a href="#concept-http-network-fetch" title="concept-http-network-fetch">HTTP-network fetch</a> using
-  <var title="">HTTPRequest</var> with the <i title="">credentials flag</i> set if set.
+  <p>If <var title="">credentials flag</var> is set, run these substeps:
+
+  <ol>
+   <li><p>Modify <var title="">httpRequest</var>'s
+   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
+   per HTTP State Management Mechanism.
+   <a href="#refsCOOKIES">[COOKIES]</a>
+   <!-- XXX proper hook? -->
+
+   <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
+   <li><p>Let <var title="">authorizationValue</var> be null.
+
+   <li><p>If there's an <a href="#authentication-entry">authentication entry</a> for <var title="">httpRequest</var>
+   and either <var title="">httpRequest</var>'s
+   <a href="#concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use-URL-credentials flag</a> is
+   unset or <var title="">httpRequest</var>'s
+   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a> does not
+   <a class="external" href="https://url.spec.whatwg.org/#include-credentials">include credentials</a>, set
+   <var title="">authorizationValue</var> to <a href="#authentication-entry">authentication entry</a>.
+   <!-- need to define the cache concept -->
+
+   <li><p>Otherwise, if <var title="">httpRequest</var>'s
+   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a> does
+   <a class="external" href="https://url.spec.whatwg.org/#include-credentials">include credentials</a> and the
+   <i title="">authentication-fetch flag</i> is set, set
+   <var title="">authorizationValue</var> to <var title="">httpRequest</var>'s
+   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>,
+   <span class="XXX">converted to an `<code title="">Authorization</code>` value</span>.
+
+   <li><p>If <var title="">authorizationValue</var> is non-null,
+   <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
+   `<code title="">Authorization</code>`/<var title="">authorizationValue</var> to
+   <var title="">httpRequest</var>'s
+   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+  </ol>
+
+ <li>
+  <p>If there's a <a href="#proxy-authentication-entry">proxy-authentication entry</a>, use it as appropriate.
+
+  <p class="note no-backref">This intentionally does not depend on
+  <var title="">httpRequest</var>'s
+  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>.
+
+ <li><p>Let <var title="">response</var> be null.
+
+ <li>
+  <p>If <var title="">httpRequest</var>'s
+  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is neither
+  "<code title="">no-store</code>" nor "<code title="">reload</code>", and there is a <em>complete</em>
+  <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+  <var title="">httpRequest</var> run these substeps:
+  <!-- XXX xref "HTTP cache" -->
+
+  <ol>
+   <li><p>If <var title="">httpRequest</var>'s
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either
+   "<code title="">force-cache</code>" or "<code title="">only-if-cached</code>", set <var title="">response</var>
+   to the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+   <var title="">httpRequest</var>.
+
+   <li><p>Otherwise, if <var title="">httpRequest</var>'s
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is "<code title="">default</code>" and
+   the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+   <var title="">httpRequest</var> does not require revalidation, set
+   <var title="">response</var> to that <a href="#concept-response" title="concept-response">response</a> and set
+   <var title="">response</var>'s <a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a>
+   to "<code title="">local</code>".
+   <!-- XXX xref "revalidation" -->
+
+   <li><p>Otherwise, if <var title="">httpRequest</var>'s
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either "<code title="">default</code>"
+   or "<code title="">no-cache</code>", and the <a href="#concept-response" title="concept-response">response</a> in the
+   HTTP cache for <var title="">httpRequest</var> does require revalidation, modify
+   <var title="">httpRequest</var>'s
+   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with revalidation
+   <a href="#concept-header" title="concept-header">headers</a>.
+   <!-- XXX modify, revalidation headers -->
+  </ol>
+
+ <li><p>Otherwise, if <var title="">httpRequest</var>'s
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either
+ "<code title="">default</code>" or "<code title="">force-cache</code>", and there is a
+ <em>partial</em> <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+ <var title="">httpRequest</var>, modify <var title="">httpRequest</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with resume
+ <a href="#concept-header" title="concept-header">headers</a>.
+ <!-- XXX xref partial, modify, resume headers -->
+
+ <li>
+  <p>If <var title="">response</var> is null, run these substeps:
+
+  <ol>
+   <li><p>If <var title="">httpRequest</var>'s
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
+   "<code title="">only-if-cached</code>", return a
+   <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+   <li><p>Set <var title="">response</var> to the result of making an
+   <a href="#concept-http-network-fetch" title="concept-http-network-fetch">HTTP-network fetch</a> using
+   <var title="">httpRequest</var> with the <i title="">credentials flag</i> set if set.
+  </ol>
 
  <li><p>Return <var title="">response</var>. <span class="note no-backref">Typically
  <var title="">response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being

@@ -350,7 +350,6 @@ that is one of `<code title>application/x-www-form-urlencoded</code>`,
  <li>`<code title>Trailer</code>`
  <li>`<code title>Transfer-Encoding</code>`
  <li>`<code title>Upgrade</code>`
- <li>`<code title>User-Agent</code>`
  <li>`<code title>Via</code>`
 </ul>
 
@@ -2266,12 +2265,12 @@ The <i title>credentials flag</i> is one too.
 
 <ol>
  <li>
-  <p>Let <var title>HTTPRequest</var> be <var title>request</var> if
+  <p>Let <var title>httpRequest</var> be <var title>request</var> if
   <var title>request</var>'s <span title=concept-request-window>window</span> is
   "<code>no-window</code>" and <var title>request</var>'s
   <span title=concept-request-redirect-mode>redirect mode</span> is not
   "<code>follow</code>", and a copy of <var title>request</var>, with
-  <var title>HTTPRequest</var>'s <span title=concept-request-body>body</span> being a tee
+  <var title>httpRequest</var>'s <span title=concept-request-body>body</span> being a tee
   of <var title>request</var>'s <span title=concept-request-body>body</span>, otherwise.
 
   <p class="note no-backref">A <var title>request</var> is typically copied as it needs to
@@ -2282,14 +2281,14 @@ The <i title>credentials flag</i> is one too.
 
  <li><p>Let <var title>contentLengthValue</var> be null.
 
- <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is null
- and <var title>request</var>'s <span title=concept-request-method>method</span> is
- `<code title>HEAD</code>`, `<code title>POST</code>`, or `<code title>PUT</code>`, set
+ <li><p>If <var title>httpRequest</var>'s <span title=concept-request-body>body</span> is
+ null and <var title>httpRequest</var>'s <span title=concept-request-method>method</span>
+ is `<code title>HEAD</code>`, `<code title>POST</code>`, or `<code title>PUT</code>`, set
  <var title>contentLengthValue</var> to `<code title>0</code>`.
  <!-- https://chromium.googlesource.com/chromium/src/+/ca9d6916c5fedf6f0ee73dfc397cb0f65ad326b9/net/http/http_network_transaction.cc#894 -->
 
- <li><p>If <var title>request</var>'s <span title=concept-request-body>body</span> is
- non-null, set <var title>contentLengthValue</var> to <var title>request</var>'s
+ <li><p>If <var title>httpRequest</var>'s <span title=concept-request-body>body</span> is
+ non-null, set <var title>contentLengthValue</var> to <var title>httpRequest</var>'s
  <span title=concept-request-body>body</span>'s
  <span title=concept-body-length>length</span>,
  <span data-anolis-spec=encoding title="utf-8 encode">utf-8 encoded</span>.
@@ -2298,127 +2297,44 @@ The <i title>credentials flag</i> is one too.
  <li><p>If <var title>contentLengthValue</var> is non-null,
  <span title=concept-header-list-append>append</span>
  `<code title>Content-Length</code>`/<var title>contentLengthValue</var> to
- <var title>HTTPRequest</var>'s
+ <var title>httpRequest</var>'s
  <span title=concept-request-header-list>header list</span>.
 
  <li><p><span title=concept-header-list-append>Append</span>
- `<code title>Referer</code>`/empty byte sequence, if <var title>HTTPRequest</var>'s
+ `<code title>Referer</code>`/empty byte sequence, if <var title>httpRequest</var>'s
  <span title=concept-request-referrer>referrer</span> is "<code>no-referrer</code>", and
- `<code title>Referer</code>`/<var title>HTTPRequest</var>'s
+ `<code title>Referer</code>`/<var title>httpRequest</var>'s
  <span title=concept-request-referrer>referrer</span>,
  <span data-anolis-spec=url title=concept-url-serializer>serialized</span> and
  <span data-anolis-spec=encoding title="utf-8 encode">utf-8 encoded</span>, otherwise, to
- <var title>HTTPRequest</var>'s
+ <var title>httpRequest</var>'s
  <span title=concept-request-header-list>header list</span>.
  <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
           concept-as-bytes -->
 
- <li><p>If <var title>HTTPRequest</var>'s
+ <li><p>If <var title>httpRequest</var>'s
  <span>force-<code>Origin</code>-header flag</span> is set,
  <span title=concept-header-list-append>append</span>
- `<code title>Origin</code>`/<var title>HTTPRequest</var>'s
+ `<code title>Origin</code>`/<var title>httpRequest</var>'s
  <span title=concept-request-origin>origin</span>,
  <span data-anolis-spec=html title="ASCII serialization of an origin">serialized</span>
  and <span data-anolis-spec=encoding title="utf-8 encode">utf-8 encoded</span>, to
- <var title>HTTPRequest</var>'s
+ <var title>httpRequest</var>'s
  <span title=concept-request-header-list>header list</span>.
  <!-- XXX concept-as-bytes -->
 
- <li>
-  <p>If <var title>credentials flag</var> is set, run these substeps:
-
-  <ol>
-   <li><p>Modify <var title>HTTPRequest</var>'s
-   <span title=concept-request-header-list>header list</span>
-   per HTTP State Management Mechanism.
-   <span data-anolis-ref>COOKIES</span>
-   <!-- XXX proper hook? -->
-
-   <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
-   <li><p>Let <var title>authorizationValue</var> be null.
-
-   <li><p>If there's an <span>authentication entry</span> for <var title>HTTPRequest</var>
-   and either <var title>HTTPRequest</var>'s
-   <span title=concept-request-use-url-credentials-flag>use-URL-credentials flag</span> is
-   unset or <var title>HTTPRequest</var>'s
-   <span title=concept-request-current-url>current url</span> does not
-   <span data-anolis-spec=url>include credentials</span>, set
-   <var title>authorizationValue</var> to <span>authentication entry</span>.
-   <!-- need to define the cache concept -->
-
-   <li><p>Otherwise, if <var title>HTTPRequest</var>'s
-   <span title=concept-request-current-url>current url</span> does
-   <span data-anolis-spec=url>include credentials</span> and the
-   <i title>authentication-fetch flag</i> is set, set
-   <var title>authorizationValue</var> to <var title>HTTPRequest</var>'s
-   <span title=concept-request-current-url>current url</span>,
-   <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
-
-   <li><p>If <var title>authorizationValue</var> is non-null,
-   <span title=concept-header-list-append>append</span>
-   `<code title>Authorization</code>`/<var title>authorizationValue</var> to
-   <var title>HTTPRequest</var>'s
-   <span title=concept-request-header-list>header list</span>.
-  </ol>
+ <li><p>If <var title>httpRequest</var>'s
+ <span title=concept-request-header-list>header list</span> does not contain a
+ <span title=concept-header>header</span> whose
+ <span title=concept-header-name>name</span> is
+ `<code title=http-user-agent>User-Agent</code>`, user agents should
+ <span title=concept-header-list-append>append</span>
+ `<code>User-Agent</code>`/an appropriate <span title=concept-header-value>value</span> to
+ <var title>httpRequest</var>'s
+ <span title=concept-request-header-list>header list</span>.
 
  <li>
-  <p>If there's a <span>proxy-authentication entry</span>, use it as appropriate.
-
-  <p class="note no-backref">This intentionally does not depend on
-  <var title>HTTPRequest</var>'s
-  <span title=concept-request-credentials-mode>credentials mode</span>.
-
- <li><p>Let <var title>response</var> be null.
-
- <li>
-  <p>If <var title>request</var>'s
-  <span title=concept-request-cache-mode>cache mode</span> is neither
-  "<code title>no-store</code>" nor "<code title>reload</code>", and there is a <em>complete</em>
-  <span title=concept-response>response</span> in the HTTP cache for
-  <var title>request</var> run these substeps:
-  <!-- XXX xref "HTTP cache" -->
-
-  <ol>
-   <li><p>If <var title>request</var>'s
-   <span title=concept-request-cache-mode>cache mode</span> is either
-   "<code title>force-cache</code>" or "<code title>only-if-cached</code>", set <var title>response</var>
-   to the <span title=concept-response>response</span> in the HTTP cache for
-   <var title>request</var>.
-
-   <li><p>Otherwise, if <var title>request</var>'s
-   <span title=concept-request-cache-mode>cache mode</span> is "<code title>default</code>" and
-   the <span title=concept-response>response</span> in the HTTP cache for
-   <var title>request</var> does not require revalidation, set <var title>response</var>
-   to that <span title=concept-response>response</span> and set
-   <var title>response</var>'s <span title=concept-response-cache-state>cache state</span>
-   to "<code title>local</code>".
-   <!-- XXX xref "revalidation" -->
-
-   <li><p>Otherwise, if <var title>request</var>'s
-   <span title=concept-request-cache-mode>cache mode</span> is either "<code title>default</code>"
-   or "<code title>no-cache</code>", and the <span title=concept-response>response</span> in the
-   HTTP cache for <var title>request</var> does require revalidation, modify
-   <var title>HTTPRequest</var>'s
-   <span title=concept-request-header-list>header list</span> with revalidation
-   <span title=concept-header>headers</span>.
-   <!-- XXX modify, revalidation headers -->
-  </ol>
-
- <li><p>Otherwise, if <var title>request</var>'s
- <span title=concept-request-cache-mode>cache mode</span> is either "<code title>default</code>"
- or "<code title>force-cache</code>", and there is a <em>partial</em>
- <span title=concept-response>response</span> in the HTTP cache for
- <var title>request</var>, modify <var title>HTTPRequest</var>'s
- <span title=concept-request-header-list>header list</span> with resume
- <span title=concept-header>headers</span>.
- <!-- XXX xref partial, modify, resume headers -->
-
- <li>If <var title>response</var> is null and <var title>request</var>'s
- <span title=concept-request-cache-mode>cache mode</span> is "<code title>only-if-cached</code>",
- return a <span title=concept-network-error>network error</span>.
-
- <li>
-  <p>If <var title>response</var> is null, modify <var title>HTTPRequest</var>'s
+  <p>Modify <var title>httpRequest</var>'s
   <span title=concept-request-header-list>header list</span> per HTTP.
 
   <p class="note no-backref">It would be great if we could make this more normative
@@ -2436,9 +2352,107 @@ The <i title>credentials flag</i> is one too.
   <span class=note>See <span>HTTP header layer division</span>.</span>
 
  <li>
-  <p>If <var title>response</var> is null, set <var title>response</var> to the result of
-  making an <span title=concept-http-network-fetch>HTTP-network fetch</span> using
-  <var title>HTTPRequest</var> with the <i title>credentials flag</i> set if set.
+  <p>If <var title>credentials flag</var> is set, run these substeps:
+
+  <ol>
+   <li><p>Modify <var title>httpRequest</var>'s
+   <span title=concept-request-header-list>header list</span>
+   per HTTP State Management Mechanism.
+   <span data-anolis-ref>COOKIES</span>
+   <!-- XXX proper hook? -->
+
+   <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
+   <li><p>Let <var title>authorizationValue</var> be null.
+
+   <li><p>If there's an <span>authentication entry</span> for <var title>httpRequest</var>
+   and either <var title>httpRequest</var>'s
+   <span title=concept-request-use-url-credentials-flag>use-URL-credentials flag</span> is
+   unset or <var title>httpRequest</var>'s
+   <span title=concept-request-current-url>current url</span> does not
+   <span data-anolis-spec=url>include credentials</span>, set
+   <var title>authorizationValue</var> to <span>authentication entry</span>.
+   <!-- need to define the cache concept -->
+
+   <li><p>Otherwise, if <var title>httpRequest</var>'s
+   <span title=concept-request-current-url>current url</span> does
+   <span data-anolis-spec=url>include credentials</span> and the
+   <i title>authentication-fetch flag</i> is set, set
+   <var title>authorizationValue</var> to <var title>httpRequest</var>'s
+   <span title=concept-request-current-url>current url</span>,
+   <span class=XXX>converted to an `<code title>Authorization</code>` value</span>.
+
+   <li><p>If <var title>authorizationValue</var> is non-null,
+   <span title=concept-header-list-append>append</span>
+   `<code title>Authorization</code>`/<var title>authorizationValue</var> to
+   <var title>httpRequest</var>'s
+   <span title=concept-request-header-list>header list</span>.
+  </ol>
+
+ <li>
+  <p>If there's a <span>proxy-authentication entry</span>, use it as appropriate.
+
+  <p class="note no-backref">This intentionally does not depend on
+  <var title>httpRequest</var>'s
+  <span title=concept-request-credentials-mode>credentials mode</span>.
+
+ <li><p>Let <var title>response</var> be null.
+
+ <li>
+  <p>If <var title>httpRequest</var>'s
+  <span title=concept-request-cache-mode>cache mode</span> is neither
+  "<code title>no-store</code>" nor "<code title>reload</code>", and there is a <em>complete</em>
+  <span title=concept-response>response</span> in the HTTP cache for
+  <var title>httpRequest</var> run these substeps:
+  <!-- XXX xref "HTTP cache" -->
+
+  <ol>
+   <li><p>If <var title>httpRequest</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is either
+   "<code title>force-cache</code>" or "<code title>only-if-cached</code>", set <var title>response</var>
+   to the <span title=concept-response>response</span> in the HTTP cache for
+   <var title>httpRequest</var>.
+
+   <li><p>Otherwise, if <var title>httpRequest</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is "<code title>default</code>" and
+   the <span title=concept-response>response</span> in the HTTP cache for
+   <var title>httpRequest</var> does not require revalidation, set
+   <var title>response</var> to that <span title=concept-response>response</span> and set
+   <var title>response</var>'s <span title=concept-response-cache-state>cache state</span>
+   to "<code title>local</code>".
+   <!-- XXX xref "revalidation" -->
+
+   <li><p>Otherwise, if <var title>httpRequest</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is either "<code title>default</code>"
+   or "<code title>no-cache</code>", and the <span title=concept-response>response</span> in the
+   HTTP cache for <var title>httpRequest</var> does require revalidation, modify
+   <var title>httpRequest</var>'s
+   <span title=concept-request-header-list>header list</span> with revalidation
+   <span title=concept-header>headers</span>.
+   <!-- XXX modify, revalidation headers -->
+  </ol>
+
+ <li><p>Otherwise, if <var title>httpRequest</var>'s
+ <span title=concept-request-cache-mode>cache mode</span> is either
+ "<code title>default</code>" or "<code title>force-cache</code>", and there is a
+ <em>partial</em> <span title=concept-response>response</span> in the HTTP cache for
+ <var title>httpRequest</var>, modify <var title>httpRequest</var>'s
+ <span title=concept-request-header-list>header list</span> with resume
+ <span title=concept-header>headers</span>.
+ <!-- XXX xref partial, modify, resume headers -->
+
+ <li>
+  <p>If <var title>response</var> is null, run these substeps:
+
+  <ol>
+   <li><p>If <var title>httpRequest</var>'s
+   <span title=concept-request-cache-mode>cache mode</span> is
+   "<code title>only-if-cached</code>", return a
+   <span title=concept-network-error>network error</span>.
+
+   <li><p>Set <var title>response</var> to the result of making an
+   <span title=concept-http-network-fetch>HTTP-network fetch</span> using
+   <var title>httpRequest</var> with the <i title>credentials flag</i> set if set.
+  </ol>
 
  <li><p>Return <var title>response</var>. <span class="note no-backref">Typically
  <var title>response</var>'s <span title=concept-response-body>body</span> is still being
