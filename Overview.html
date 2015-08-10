@@ -264,11 +264,13 @@ bytes transmitted and then <a href="#queue-a-fetch-task">queue a fetch task</a> 
 borrows a number of concepts from HTTP and applies these to resources obtained via other
 means (e.g., <code title="">data</code> URLs).
 
+<p>The <dfn id="http-whitespace-bytes">HTTP whitespace bytes</dfn> are 0x09, 0x0A, 0x0D, and 0x20.
+
 
 <h4 id="methods"><span class="secno">3.1.1 </span>Methods</h4>
 
 <p>A <dfn id="concept-method" title="concept-method">method</dfn> is a byte sequence that matches the
-<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a> token production.
+<a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.1.1">method</a> token production.
 
 <p>A <dfn id="simple-method">simple method</dfn> is a <a href="#concept-method" title="concept-method">method</a> that is
 `<code title="">GET</code>`, `<code title="">HEAD</code>`, or `<code title="">POST</code>`.
@@ -361,12 +363,16 @@ exists for <code class="external"><a href="https://xhr.spec.whatwg.org/#xmlhttpr
 <dfn id="concept-header-name" title="concept-header-name">name</dfn> and <dfn id="concept-header-value" title="concept-header-value">value</dfn>.
 A <a href="#concept-header-name" title="concept-header-name">name</a> is a
 <a href="#case-insensitive-byte-sequence">case-insensitive byte sequence</a> that matches the
-<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a> token production. A
+<a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.2">field-name</a> token production. A
 <a href="#concept-header-value" title="concept-header-value">value</a> is a byte sequence that matches the
-<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-value</a> token production and contains no 0x0A or
-0x0D bytes.
+<a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.2">field-content</a> token production.
 
-<p class="note">Allowing 0x0A and 0x0D bytes can lead to reparsing issues.
+<p class="note no-backref"><a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.2">field-value</a> allows 0x0A and
+0x0D bytes which can lead to reparsing issues.
+
+<p>To <dfn id="concept-header-value-normalize" title="concept-header-value-normalize">normalize</dfn> a
+<a href="#concept-header-value" title="concept-header-value">value</a>, remove any leading and trailing
+<a href="#http-whitespace-bytes">HTTP whitespace bytes</a> from it.
 
 <hr>
 
@@ -1369,15 +1375,15 @@ these <a href="#concept-header" title="concept-header">headers</a>:
 <p>ABNF for the <a href="#concept-header-value" title="concept-header-value">values</a> of the
 <a href="#concept-header" title="concept-header">headers</a> used by the <a href="#cors-protocol">CORS protocol</a>:
 
-<pre>Access-Control-Request-Method    = <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a>
-Access-Control-Request-Headers   = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
+<pre>Access-Control-Request-Method    = <a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.1.1">method</a>
+Access-Control-Request-Headers   = #<a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.2">field-name</a>
 
 Access-Control-Allow-Origin      = origin-or-null / "*"
 Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
-Access-Control-Expose-Headers    = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a>
-Access-Control-Max-Age           = <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-3.3.2">delta-seconds</a>
-Access-Control-Allow-Methods     = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-5.1.1">Method</a>
-Access-Control-Allow-Headers     = #<a class="external" href="http://tools.ietf.org/html/rfc2616/#section-4.2">field-name</a></pre>
+Access-Control-Expose-Headers    = #<a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.2">field-name</a>
+Access-Control-Max-Age           = <a class="external" href="https://tools.ietf.org/html/rfc7234#section-1.2.1">delta-seconds</a>
+Access-Control-Allow-Methods     = #<a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.1.1">method</a>
+Access-Control-Allow-Headers     = #<a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.2">field-name</a></pre>
 
 
 <h3 id="x-content-type-options-header"><span class="secno">4.3 </span>`<code title="">X-Content-Type-Options</code>` header</h3>
@@ -1385,8 +1391,7 @@ Access-Control-Allow-Headers     = #<a class="external" href="http://tools.ietf.
 <p>The
 `<dfn id="http-x-content-type-options" title="http-x-content-type-options"><code>X-Content-Type-Options</code></dfn>`
 response <a href="#concept-header" title="concept-header">header</a> can be used to require checking of a
-<a href="#concept-response" title="concept-response">response</a>'s
-`<code title="http-content-type">Content-Type</code>`
+<a href="#concept-response" title="concept-response">response</a>'s `<code title="">Content-Type</code>`
 <a href="#concept-header" title="concept-header">header</a> against the
 <a href="#concept-request-context" title="concept-request-context">context</a> of a
 <a href="#concept-request" title="concept-request">request</a>.
@@ -3036,6 +3041,39 @@ interface <dfn id="headers">Headers</dfn> {
 <p class="note no-backref">"<code title="">immutable</code>" exists for service workers.
 <a href="#refsSW">[SW]</a>
 
+<p>To <dfn id="concept-headers-append" title="concept-Headers-append">append</dfn> a
+<a href="#concept-header-name" title="concept-header-name">name</a>/<a href="#concept-header-value" title="concept-header-value">value</a>
+(<var title="">name</var>/<var title="">value</var>) pair to a
+<code><a href="#headers">Headers</a></code> object (<var title="">headers</var>), run these steps:
+
+<ol>
+ <li><p><a href="#concept-header-value-normalize" title="concept-header-value-normalize">Normalize</a>
+ <var title="">value</var>.
+
+ <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a> or
+ <var title="">value</var> is not a <a href="#concept-header-value" title="concept-header-value">value</a>,
+ <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">immutable</code>",
+ <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ "<code title="">request</code>" and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
+ return.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ "<code title="">request-no-cors</code>" and <var title="">name</var>/<var title="">value</var> is not a
+ <a href="#simple-header">simple header</a>, return.
+
+ <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ "<code title="">response</code>" and <var title="">name</var> is a
+ <a href="#forbidden-response-header-name">forbidden response-header name</a>, return.
+
+ <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+ <var title="">name</var>/<var title="">value</var> to
+ <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
+</ol>
+
 <p>To <dfn id="concept-headers-fill" title="concept-Headers-fill">fill</dfn> a <code><a href="#headers">Headers</a></code> object
 (<var title="">headers</var>) with a given object (<var title="">object</var>), run these steps:
 
@@ -3091,36 +3129,6 @@ when invoked, must run these steps:
  <var title="">headers</var> with <var title="">init</var>. Rethrow any exception.
 
  <li><p>Return <var title="">headers</var>.
-</ol>
-
-<p>To <dfn id="concept-headers-append" title="concept-Headers-append">append</dfn> a
-<a href="#concept-header-name" title="concept-header-name">name</a>/<a href="#concept-header-value" title="concept-header-value">value</a>
-(<var title="">name</var>/<var title="">value</var>) pair to a
-<code><a href="#headers">Headers</a></code> object (<var title="">headers</var>), run these steps:
-
-<ol>
- <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a> or
- <var title="">value</var> is not a <a href="#concept-header-value" title="concept-header-value">value</a>,
- <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
- <li><p>If <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">immutable</code>",
- <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
- <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
- "<code title="">request</code>" and <var title="">name</var> is a <a href="#forbidden-header-name">forbidden header name</a>,
- return.
-
- <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
- "<code title="">request-no-cors</code>" and <var title="">name</var>/<var title="">value</var> is not a
- <a href="#simple-header">simple header</a>, return.
-
- <li><p>Otherwise, if <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
- "<code title="">response</code>" and <var title="">name</var> is a
- <a href="#forbidden-response-header-name">forbidden response-header name</a>, return.
-
- <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
- <var title="">name</var>/<var title="">value</var> to
- <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 </ol>
 
 <p>The
@@ -3200,6 +3208,9 @@ when invoked, must run these steps:
 method, when invoked, must run these steps:
 
 <ol>
+ <li><p><a href="#concept-header-value-normalize" title="concept-header-value-normalize">Normalize</a>
+ <var title="">value</var>.
+
  <li><p>If <var title="">name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a> or
  <var title="">value</var> is not a <a href="#concept-header-value" title="concept-header-value">value</a>,
  <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
@@ -3944,7 +3955,7 @@ constructor, when invoked, must run these steps:
  <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
 
  <li><p>If <var title="">init</var>'s <code title="">statusText</code> member does not match the
- <a class="external" href="http://tools.ietf.org/html/rfc2616/#section-6.1.1">Reason-Phrase</a> token production,
+ <a class="external" href="https://tools.ietf.org/html/rfc7230#section-3.1.2">reason-phrase</a> token production,
  <a class="external" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>Let <var title="">r</var> be a new <code><a href="#response">Response</a></code> object, associated with a
@@ -4276,7 +4287,11 @@ however, it is perfectly fine to do so.
 <dd><cite><a href="https://html.spec.whatwg.org/multipage/">HTML</a></cite>, Ian Hickson. WHATWG.
 
 <dt id="refsHTTP">[HTTP]
-<dd><cite><a href="https://tools.ietf.org/html/rfc2616">Hypertext Transfer Protocol -- HTTP/1.1</a></cite>, Roy Fielding, James Gettys, Jeffrey Mogul et al.. IETF.
+<dd><cite><a href="https://tools.ietf.org/html/rfc7230">Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and Routing</a></cite>, Roy Fielding and Julian Reschke. IETF.
+
+<dd><cite><a href="https://tools.ietf.org/html/rfc7231">Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content</a></cite>, Roy Fielding and Julian Reschke. IETF.
+
+<dd><cite><a href="https://tools.ietf.org/html/rfc7234">Hypertext Transfer Protocol (HTTP/1.1): Caching</a></cite>, Roy Fielding and Julian Reschke. IETF.
 
 <dt id="refsHTTPAUTH">[HTTPAUTH]
 <dd><cite><a href="https://tools.ietf.org/html/rfc2617">HTTP Authentication: Basic and Digest Access Authentication</a></cite>, J. Franks, Phillip Hallam-Baker, J. Hostetler et al.. IETF.
@@ -4361,6 +4376,7 @@ Graham Klyne,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Henri Sivonen,
+Hiroshige Hayashizaki,
 Honza Bambas,
 Ian Hickson,
 Ilya Grigorik,
@@ -4376,6 +4392,7 @@ Jörn Zaefferer,
 Julian Reschke,
 송정기 (Jungkee Song),
 Jussi Kalliokoski,
+Jxck,
 Kenji Baheux,
 Lachlan Hunt,
 Lucas Gonze,

@@ -209,11 +209,13 @@ bytes transmitted and then <span>queue a fetch task</span> on <var title>request
 borrows a number of concepts from HTTP and applies these to resources obtained via other
 means (e.g., <code title>data</code> URLs).
 
+<p>The <dfn>HTTP whitespace bytes</dfn> are 0x09, 0x0A, 0x0D, and 0x20.
+
 
 <h4>Methods</h4>
 
 <p>A <dfn title=concept-method>method</dfn> is a byte sequence that matches the
-<span data-anolis-spec=http>Method</span> token production.
+<span data-anolis-spec=http>method</span> token production.
 
 <p>A <dfn>simple method</dfn> is a <span title=concept-method>method</span> that is
 `<code title>GET</code>`, `<code title>HEAD</code>`, or `<code title>POST</code>`.
@@ -308,10 +310,14 @@ A <span title=concept-header-name>name</span> is a
 <span>case-insensitive byte sequence</span> that matches the
 <span data-anolis-spec=http>field-name</span> token production. A
 <span title=concept-header-value>value</span> is a byte sequence that matches the
-<span data-anolis-spec=http>field-value</span> token production and contains no 0x0A or
-0x0D bytes.
+<span data-anolis-spec=http>field-content</span> token production.
 
-<p class=note>Allowing 0x0A and 0x0D bytes can lead to reparsing issues.
+<p class="note no-backref"><span data-anolis-spec=http>field-value</span> allows 0x0A and
+0x0D bytes which can lead to reparsing issues.
+
+<p>To <dfn title=concept-header-value-normalize>normalize</dfn> a
+<span title=concept-header-value>value</span>, remove any leading and trailing
+<span>HTTP whitespace bytes</span> from it.
 
 <hr>
 
@@ -1314,14 +1320,14 @@ these <span title=concept-header>headers</span>:
 <p>ABNF for the <span title=concept-header-value>values</span> of the
 <span title=concept-header>headers</span> used by the <span>CORS protocol</span>:
 
-<pre>Access-Control-Request-Method    = <span data-anolis-spec=http>Method</span>
+<pre>Access-Control-Request-Method    = <span data-anolis-spec=http>method</span>
 Access-Control-Request-Headers   = #<span data-anolis-spec=http>field-name</span>
 
 Access-Control-Allow-Origin      = origin-or-null / "*"
 Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
 Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span>
-Access-Control-Max-Age           = <span data-anolis-spec=http>delta-seconds</span>
-Access-Control-Allow-Methods     = #<span data-anolis-spec=http>Method</span>
+Access-Control-Max-Age           = <span data-anolis-spec=http-caching>delta-seconds</span>
+Access-Control-Allow-Methods     = #<span data-anolis-spec=http>method</span>
 Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span></pre>
 
 
@@ -1330,8 +1336,7 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
 <p>The
 `<dfn title="http-x-content-type-options"><code>X-Content-Type-Options</code></dfn>`
 response <span title=concept-header>header</span> can be used to require checking of a
-<span title=concept-response>response</span>'s
-`<code title=http-content-type>Content-Type</code>`
+<span title=concept-response>response</span>'s `<code title>Content-Type</code>`
 <span title=concept-header>header</span> against the
 <span title=concept-request-context>context</span> of a
 <span title=concept-request>request</span>.
@@ -2981,6 +2986,39 @@ interface <dfn>Headers</dfn> {
 <p class="note no-backref">"<code title>immutable</code>" exists for service workers.
 <span data-anolis-ref>SW</span>
 
+<p>To <dfn title=concept-Headers-append>append</dfn> a
+<span title=concept-header-name>name</span>/<span title=concept-header-value>value</span>
+(<var title>name</var>/<var title>value</var>) pair to a
+<code>Headers</code> object (<var title>headers</var>), run these steps:
+
+<ol>
+ <li><p><span title=concept-header-value-normalize>Normalize</span>
+ <var title>value</var>.
+
+ <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span> or
+ <var title>value</var> is not a <span title=concept-header-value>value</span>,
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>If <span title=concept-Headers-guard>guard</span> is "<code title>immutable</code>",
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ "<code title>request</code>" and <var title>name</var> is a <span>forbidden header name</span>,
+ return.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ "<code title>request-no-cors</code>" and <var title>name</var>/<var title>value</var> is not a
+ <span>simple header</span>, return.
+
+ <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
+ "<code title>response</code>" and <var title>name</var> is a
+ <span>forbidden response-header name</span>, return.
+
+ <li><p><span title=concept-header-list-append>Append</span>
+ <var title>name</var>/<var title>value</var> to
+ <span title=concept-Headers-header-list>header list</span>.
+</ol>
+
 <p>To <dfn title=concept-Headers-fill>fill</dfn> a <code>Headers</code> object
 (<var title>headers</var>) with a given object (<var title>object</var>), run these steps:
 
@@ -3036,36 +3074,6 @@ when invoked, must run these steps:
  <var title>headers</var> with <var title>init</var>. Rethrow any exception.
 
  <li><p>Return <var title>headers</var>.
-</ol>
-
-<p>To <dfn title=concept-Headers-append>append</dfn> a
-<span title=concept-header-name>name</span>/<span title=concept-header-value>value</span>
-(<var title>name</var>/<var title>value</var>) pair to a
-<code>Headers</code> object (<var title>headers</var>), run these steps:
-
-<ol>
- <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span> or
- <var title>value</var> is not a <span title=concept-header-value>value</span>,
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
-
- <li><p>If <span title=concept-Headers-guard>guard</span> is "<code title>immutable</code>",
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
-
- <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
- "<code title>request</code>" and <var title>name</var> is a <span>forbidden header name</span>,
- return.
-
- <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
- "<code title>request-no-cors</code>" and <var title>name</var>/<var title>value</var> is not a
- <span>simple header</span>, return.
-
- <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
- "<code title>response</code>" and <var title>name</var> is a
- <span>forbidden response-header name</span>, return.
-
- <li><p><span title=concept-header-list-append>Append</span>
- <var title>name</var>/<var title>value</var> to
- <span title=concept-Headers-header-list>header list</span>.
 </ol>
 
 <p>The
@@ -3145,6 +3153,9 @@ when invoked, must run these steps:
 method, when invoked, must run these steps:
 
 <ol>
+ <li><p><span title=concept-header-value-normalize>Normalize</span>
+ <var title>value</var>.
+
  <li><p>If <var title>name</var> is not a <span title=concept-header-name>name</span> or
  <var title>value</var> is not a <span title=concept-header-value>value</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
@@ -3889,7 +3900,7 @@ constructor, when invoked, must run these steps:
  <span data-anolis-spec=webidl>throw</span> a <code title>RangeError</code>.
 
  <li><p>If <var title>init</var>'s <code title>statusText</code> member does not match the
- <span data-anolis-spec=http>Reason-Phrase</span> token production,
+ <span data-anolis-spec=http>reason-phrase</span> token production,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
  <li><p>Let <var title>r</var> be a new <code>Response</code> object, associated with a
@@ -4239,6 +4250,7 @@ Graham Klyne,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Henri Sivonen,
+Hiroshige Hayashizaki,
 Honza Bambas,
 Ian Hickson,
 Ilya Grigorik,
@@ -4254,6 +4266,7 @@ Jörn Zaefferer,
 Julian Reschke,
 송정기 (Jungkee Song),
 Jussi Kalliokoski,
+Jxck,
 Kenji Baheux,
 Lachlan Hunt,
 Lucas Gonze,
