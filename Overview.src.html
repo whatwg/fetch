@@ -521,275 +521,163 @@ not have to explicitly set <span title=concept-request>request</span>'s
 <dfn>skip-service-worker flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-context>context</dfn>, which is one of
+<dfn title=concept-request-initiator>initiator</dfn>, which is one of
 the empty string,
-"<code title>applet</code>",
-"<code title>audio</code>",
-"<code title>beacon</code>",
-"<code title>cspreport</code>",
 "<code title>download</code>",
-"<code title>embed</code>",
-"<code title>eventsource</code>",
-"<code title>favicon</code>",
 "<code title>fetch</code>",
-"<code title>font</code>",
-"<code title>form</code>",
-"<code title>frame</code>",
-"<code title>hyperlink</code>",
-"<code title>iframe</code>",
-"<code title>image</code>",
 "<code title>imageset</code>",
-"<code title>import</code>",
-"<code title>internal</code>",
-"<code title>location</code>",
-"<code title>manifest</code>",
-"<code title>metarefresh</code>",
-"<code title>object</code>",
-"<code title>ping</code>",
-"<code title>plugin</code>",
-"<code title>prefetch</code>",
-"<code title>preload</code>",
-"<code title>prerender</code>",
+"<code title>manifest</code>", and
+"<code title>xslt</code>". Unless stated otherwise it is the empty string.
+
+<p class="note no-backref">A <span title=concept-request>request</span>'s
+<span title=concept-request-initiator>initiator</span> is not particularly granular for
+the time being as other specifications do not require it to. It is primarily a
+specification device to assist defining CSP and Mixed Content. It is not exposed to
+JavaScript. <span data-anolis-ref>CSP</span> <span data-anolis-ref>MIX</span>
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-type>type</dfn>, which is one of
+the empty string,
+"<code title>audio</code>",
+"<code title>font</code>",
+"<code title>image</code>",
 "<code title>script</code>",
+"<code title>style</code>",
+"<code title>track</code>", and
+"<code title>video</code>". Unless stated otherwise it is the empty string.
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-destination>destination</dfn>, which is one of
+the empty string,
+"<code title>document</code>",
 "<code title>serviceworker</code>",
 "<code title>sharedworker</code>",
 "<code title>subresource</code>",
-"<code title>style</code>",
-"<code title>track</code>",
-"<code title>video</code>",
-"<code title>worker</code>",
-"<code title>xmlhttprequest</code>", and
-"<code title>xslt</code>".
-<!--
-https://wiki.whatwg.org/wiki/Contexts
-https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsIContentPolicy
--->
-
-<p class=note>The empty string is a special value for synthetic <code>Request</code>
-objects.
-
-<p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-context-frame-type>context-frame type</dfn>, which is one of
-"<code title>auxiliary</code>", "<code title>top-level</code>",
-"<code title>nested</code>", and "<code title>none</code>". Unless stated otherwise it is
-"<code title>none</code>".
-<!-- I think it's "none" for workers, and perhaps if the client closed somehow, e.g., with
-     ping="". -->
-
-<p class=XXX>Remove "<code title>auxiliary</code>"? Not sure it is distinctive enough.
+"<code title>unknown</code>", and
+"<code title>worker</code>".
 
 <div class=note>
  <p>The following table illustrates the relationship between a
  <span title=concept-request>request</span>'s
- <span title=concept-request-context>context</span>, its
- <span title=concept-request-context-frame-type>context-frame type</span>, and
- CSP directives:
+ <span title=concept-request-initiator>initiator</span>,
+ <span title=concept-request-type>type</span>,
+ <span title=concept-request-destination>destination</span>, CSP directives, and features.
 
  <table>
   <tr>
-   <th><span title=concept-request-context>context</span>
-   <th><span title=concept-request-context-frame-type>context-frame type</span>
+   <th><span title=concept-request-initiator>Initiator</span>
+   <th><span title=concept-request-type>Type</span>
+   <th><span title=concept-request-destination>Destination</span>
    <th>CSP directive
-   <th>Platform feature example
+   <th>Features
   <tr>
-   <td>"" (the empty string)
-   <td>&mdash;
-   <td>&mdash;
-   <td>&mdash;
+   <td rowspan=14>""
+   <td rowspan=4>""
+   <td>""
+   <td rowspan=2>?
+   <td>CSP, NEL reports.
   <tr>
-   <td>"<code title>applet</code>"
-   <td>"<code title>none</code>"
+   <td>"<code title>document</code>"
+   <td>HTML's navigate algorithm.
+  <tr>
+   <td>"<code title>subresource</code>"
+   <td><code title>connect-src</code>
+   <td><code>navigator.sendBeacon()</code>, <code>EventSource</code>,
+   HTML's <code>ping=""</code>, <code>XMLHttpRequest</code>
+  <tr>
+   <td>"<code title>unknown</code>"
    <td><code title>object-src</code>
-   <td>HTML's <code>applet</code> element
+   <td>HTML's <code>&lt;embed></code> and <code>&lt;object></code>
   <tr>
    <td>"<code title>audio</code>"
-   <td>"<code title>none</code>"
+   <td>"<code title>subresource</code>"
    <td><code title>media-src</code>
-   <td>HTML's <code>audio</code> element
-  <tr>
-   <td>"<code title>beacon</code>"
-   <td>"<code title>none</code>"
-   <td><code title>connect-src</code>
-   <td><code>navigator.sendBeacon()</code>
-  <tr>
-   <td>"<code title>cspreport</code>"
-   <td>"<code title>none</code>"
-   <td><code title>connect-src</code>
-   <td>CSP's report feature
-  <tr>
-   <td>"<code title>download</code>"
-   <td>"<code title>none</code>"
-   <td>&mdash;
-   <td>HTML's <code>a</code> element when its <code>download</code> attribute is set
-  <tr>
-   <td>"<code title>embed</code>"
-   <td>"<code title>none</code>"
-   <td><code title>object-src</code>
-   <td>HTML's <code>embed</code> element
-  <tr>
-   <td>"<code title>eventsource</code>"
-   <td>"<code title>none</code>"
-   <td><code title>connect-src</code>
-   <td><code>EventSource</code>
-  <tr>
-   <td>"<code title>favicon</code>"
-   <td>"<code title>none</code>"
-   <td>&mdash;
-   <td><code title>/favicon.ico</code> resource
-  <tr>
-   <td>"<code title>fetch</code>"
-   <td>"<code title>none</code>"
-   <td><code title>connect-src</code>
-   <td><code title=dom-global-fetch>fetch()</code>
+   <td>HTML's <code>&lt;audio></code>
   <tr>
    <td>"<code title>font</code>"
-   <td>"<code title>none</code>"
+   <td>"<code title>subresource</code>"
    <td><code title>font-src</code>
    <td>CSS' <code>@font-face</code>
   <tr>
-   <td>"<code title>form</code>"
-   <td>any but "<code title>none</code>"
-   <td><code title>form-action</code>, potentially <code title>child-src</code>
-   <td>HTML's <code>form</code> element
-  <tr>
-   <td>"<code title>frame</code>"
-   <td>"<code title>nested</code>"
-   <td><code title>child-src</code>
-   <td>HTML's <code>frame</code> element
-  <tr>
-   <td>"<code title>hyperlink</code>"
-   <td>any but "<code title>none</code>"
-   <td>potentially <code title>child-src</code>
-   <td>HTML's <code>a</code> element
-  <tr>
-   <td>"<code title>iframe</code>"
-   <td>"<code title>nested</code>"
-   <td><code title>child-src</code>
-   <td>HTML's <code>iframe</code> element
-  <tr>
    <td>"<code title>image</code>"
-   <td>"<code title>none</code>"
+   <td>"<code title>subresource</code>"
    <td><code title>img-src</code>
-   <td>SVG's <code>image</code> element
+   <td>HTML's <code>&lt;img src></code>, <code title>/favicon.ico</code> resource,
+   SVG's <code>&lt;image></code>, CSS' <code>background-image</code>, CSS'
+   <code>cursor</code>, CSS' <code>list-style-image</code>, &hellip;
   <tr>
-   <td>"<code title>imageset</code>"
-   <td>"<code title>none</code>"
-   <td><code title>img-src</code>
-   <td>HTML's <code>picture</code> element
-  <tr>
-   <td>"<code title>import</code>"
-   <td>"<code title>none</code>"
+   <td rowspan=4>"<code title>script</code>"
+   <td>"<code title>subresource</code>"
    <td><code title>script-src</code>
-   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
-   "<code>import</code>"
-  <tr>
-   <td>"<code title>internal</code>"
-   <td>any
-   <td>&mdash;
-   <td>User agent actions such as refresh, back, forward; other user agent usage
-  <tr>
-   <td>"<code title>location</code>"
-   <td>any but "<code title>none</code>"
-   <td>potentially <code title>child-src</code>
-   <td><code title>window.location</code>
-  <tr>
-   <td>"<code title>manifest</code>"
-   <td>"<code title>none</code>"
-   <td><code title>manifest-src</code>
-   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
-   "<code title>manifest</code>"
-  <tr>
-   <td>"<code title>metarefresh</code>"
-   <td>any but "<code title>none</code>"
-   <td>potentially <code title>child-src</code>
-   <td>HTML's <code>meta</code> element when its <code>http-equiv</code> attribute is set
-   to "<code title>refresh</code>"
-  <tr>
-   <td>"<code title>object</code>"
-   <td>"<code title>none</code>"
-   <td><code title>object-src</code>
-   <td>HTML's <code>object</code> element
-  <tr>
-   <td>"<code title>ping</code>"
-   <td>"<code title>none</code>"
-   <td><code title>connect-src</code>
-   <td>HTML's <code>ping</code> attribute
-  <tr>
-   <td>"<code title>plugin</code>"
-   <td>"<code title>none</code>"
-   <td>&mdash;
-   <td>A <span title=concept-fetch>fetch</span> from a plugin
-  <tr>
-   <td>"<code title>prefetch</code>"
-   <td>"<code title>none</code>"
-   <td>?
-   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
-   "<code>prefetch</code>"
-  <tr>
-   <td>"<code title>preload</code>"
-   <td>"<code title>none</code>"
-   <td>?
-   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
-   "<code>preload</code>"
-  <tr>
-   <td>"<code title>prerender</code>"
-   <td>"<code title>none</code>"
-   <td>?
-   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
-   "<code>prerender</code>"
-  <tr>
-   <td>"<code title>script</code>"
-   <td>"<code title>none</code>"
-   <td><code title>script-src</code>
-   <td>HTML's <code>script</code> element
+   <td>HTML's <code>&lt;script></code>, <code>importScripts()</code>
   <tr>
    <td>"<code title>serviceworker</code>"
-   <td>"<code title>none</code>"
-   <td>&mdash;
+   <td>?
    <td><code title>navigator.serviceWorker.register()</code>
   <tr>
    <td>"<code title>sharedworker</code>"
-   <td>"<code title>none</code>"
    <td><code title>child-src</code>
    <td><code>SharedWorker</code>
   <tr>
-   <td>"<code title>subresource</code>"
-   <td>"<code title>none</code>"
-   <td>&mdash;
-   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
-   "<code>subresource</code>"
-  <tr>
-   <td>"<code title>style</code>"
-   <td>"<code title>none</code>"
-   <td><code title>style-src</code>
-   <td>HTML's <code>link</code> element when its <code>rel</code> attribute is set to
-   "<code>stylesheet</code>"
-  <tr>
-   <td>"<code title>track</code>"
-   <td>"<code title>none</code>"
-   <td><code title>media-src</code>
-   <td>HTML's <code>track</code> element
-  <tr>
-   <td>"<code title>video</code>"
-   <td>"<code title>none</code>"
-   <td><code title>media-src</code>
-   <td>HTML's <code>video</code> element
-  <tr>
    <td>"<code title>worker</code>"
-   <td>"<code title>none</code>"
    <td><code title>child-src</code>
    <td><code>Worker</code>
   <tr>
-   <td>"<code title>xmlhttprequest</code>"
-   <td>"<code title>none</code>"
+   <td>"<code title>style</code>"
+   <td>"<code title>subresource</code>"
+   <td><code title>style-src</code>
+   <td>HTML's <code>&lt;link rel=stylesheet></code>, CSS' <code>@import</code>
+  <tr>
+   <td>"<code title>track</code>"
+   <td>"<code title>subresource</code>"
+   <td><code title>media-src</code>
+   <td>HTML's <code>&lt;track></code>
+  <tr>
+   <td>"<code title>video</code>"
+   <td>"<code title>subresource</code>"
+   <td><code title>media-src</code>
+   <td>HTML's <code>&lt;video></code> element
+  <tr>
+   <td>"<code title>download</code>"
+   <td>""
+   <td>""
+   <td>?
+   <td>HTML's <code>download=""</code>, "Save Link As&hellip;" UI
+  <tr>
+   <td>"<code title>fetch</code>"
+   <td>""
+   <td>"<code title>subresource</code>"
    <td><code title>connect-src</code>
-   <td><code data-anolis-spec=xhr>XMLHttpRequest</code>
+   <td><code title=dom-global-fetch>fetch()</code>, Cache API?
+  <tr>
+   <td>"<code title>imageset</code>"
+   <td>"<code title>image</code>"
+   <td>"<code title>subresource</code>"
+   <td><code title>img-src</code>
+   <td>HTML's <code>&lt;img srcset></code> and <code>&lt;picture></code>
+  <tr>
+   <td>"<code title>manifest</code>"
+   <td>""
+   <td>"<code title>subresource</code>"
+   <td><code title>manifest-src</code>
+   <td>HTML's <code>&lt;link rel=manifest></code>
   <tr>
    <td>"<code title>xslt</code>"
-   <td>"<code title>none</code>"
+   <td>"<code title>script</code>"
+   <td>"<code title>subresource</code>"
    <td><code title>script-src</code>
    <td><code>&lt;?xml-stylesheet></code>
  </table>
+
+ <p>CSP's <code>form-action</code> needs to be a hook directly in HTML's navigate or form
+ submission algorithm.
+
+ <p>CSP will also need to check
+ <span title=concept-request>request</span>'s
+ <span title=concept-request-client>client</span>'s
+ <span data-anolis-spec=html>browsing context</span>'s
+ <span data-anolis-spec=html title="ancestor browsing context">ancestor browsing contexts</span>
+  for various CSP directives.
 </div>
 
 <hr>
@@ -909,47 +797,25 @@ Unless stated otherwise, it is unset.
 
 <hr>
 
-<p>An <dfn>image request-context</dfn> is one of
-"<code title>favicon</code>",
-"<code title>image</code>", and
-"<code title>imageset</code>".
+<p>A <dfn>subresource request</dfn> is a <span title=concept-request>request</span>
+whose <span title=concept-request-destination>destination</span> is
+"<code title>subresource</code>".
 
-<p>A <dfn>navigation request-context</dfn> is one of
-"<code title>form</code>",
-"<code title>frame</code>",
-"<code title>hyperlink</code>",
-"<code title>iframe</code>",
-"<code title>internal</code>" (as long as <span title=concept-request-context-frame-type>context-frame type</span> is not "<code title>none</code>"),
-"<code title>location</code>",
-"<code title>metarefresh</code>", and
-"<code title>prerender</code>".
+<p>A <dfn>potential-navigation-or-subresource request</dfn> is a
+<span title=concept-request>request</span> whose
+<span title=concept-request-destination>destination</span> is
+"<code title>unknown</code>".
 
-<p>A <dfn>worker request-context</dfn> is one of
-"<code title>serviceworker</code>",
-"<code title>sharedworker</code>", and
-"<code title>worker</code>".
-
-<p>A <dfn>client request-context</dfn> is a <span>navigation request-context</span> or a
-<span>worker request-context</span>.
-
-<hr>
-
-<p>A <dfn>client request</dfn> is a <span title=concept-request>request</span> whose
-<span title=concept-request-context>context</span> is a
-<span>client request-context</span>.
-
-<p>A <dfn>potential-client request</dfn> is a <span title=concept-request>request</span>
-whose <span title=concept-request-context>context</span> is "<code title>embed</code>" or
-"<code title>object</code>".
+<p>A <dfn>non-subresource request</dfn> is a <span title=concept-request>request</span>
+whose <span title=concept-request-destination>destination</span> is neither
+"<code title>subresource</code>" nor "<code title>unknown</code>".
 
 <p>A <dfn>navigation request</dfn> is a <span title=concept-request>request</span> whose
-<span title=concept-request-context>context</span> is a
-<span>navigation request-context</span>.
+<span title=concept-request-destination>destination</span> is
+"<code title>document</code>".
 
-<p>A <dfn>resource request</dfn> is a <span title=concept-request>request</span> that is
-neither a <span>client request</span> nor a <span>potential-client request</span>.
-
-<!-- These concepts are introduced for service workers. At some point we should xref that. -->
+<p class=note>See <span data-anolis-spec=sw>handle fetch</span> for usage of these terms.
+<span data-anolis-ref>SW</span>
 
 
 <h4>Responses</h4>
@@ -1344,7 +1210,7 @@ Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span
 response <span title=concept-header>header</span> can be used to require checking of a
 <span title=concept-response>response</span>'s `<code title>Content-Type</code>`
 <span title=concept-header>header</span> against the
-<span title=concept-request-context>context</span> of a
+<span title=concept-request-type>type</span> of a
 <span title=concept-request>request</span>.
 
 <p>Its <span title=concept-header-value>value</span> ABNF:
@@ -1376,34 +1242,31 @@ response <span title=concept-header>header</span> can be used to require checkin
  <span title=concept-header-extract-mime-type>extracting a MIME type</span> from
  <var title>response</var>'s <span title=concept-response-header-list>header list</span>.
 
- <li><p>Let <var title>context</var> be <var title>request</var>'s
- <span title=concept-request-context>context</span>.
+ <li><p>Let <var title>type</var> be <var title>request</var>'s
+ <span title=concept-request-type>type</span>.
 
  <li><p class=XXX>"<code title>audio</code>", "<code title>video</code>" ...
 
- <!-- "eventsource" is already strict -->
-
- <li><p>If <var title>context</var> is an <span>image request-context</span>, and
+ <li><p>If <var title>type</var> is "<code title>image</code>", and
  <var title>MIMEType</var> (ignoring parameters) is <em>not</em> an
  <a class=XXX href=https://www.w3.org/Bugs/Public/show_bug.cgi?id=28398>image MIME type</a>,
  return <b title>blocked</b>.
 
- <li><p>If <var title>context</var> is "<code title>font</code>" and
+ <li><p>If <var title>type</var> is "<code title>font</code>" and
  <var title>MIMEType</var> (ignoring parameters) is <em>not</em> a
  <a class=XXX href=https://lists.w3.org/Archives/Public/www-style/2015Apr/0027.html>font MIME type</a>,
  return <b title>blocked</b>.
 
- <li><p>If <var title>context</var> is "<code title>script</code>" or a
- <span>worker request-context</span>, and <var title>MIMEType</var> (ignoring parameters)
- is <em>not</em> a
+ <li><p>If <var title>type</var> is "<code title>script</code>", and
+ <var title>MIMEType</var> (ignoring parameters) is <em>not</em> a
  <a class=XXX href=https://www.w3.org/Bugs/Public/show_bug.cgi?id=28397>JavaScript MIME type</a>,
  return <b title>blocked</b>.
 
- <li><p>If <var title>context</var> is "<code title>style</code>" and
+ <li><p>If <var title>type</var> is "<code title>style</code>" and
  <var title>MIMEType</var> (ignoring parameters) is <em>not</em>
  `<code title>text/css</code>`, return <b title>blocked</b>.
 
- <li><p>If <var title>context</var> is "<code title>track</code>" and
+ <li><p>If <var title>type</var> is "<code title>track</code>" and
  <var title>MIMEType</var> (ignoring parameters) is <em>not</em>
  `<code title>text/vtt</code>`, return <b title>blocked</b>.
 
@@ -1450,7 +1313,7 @@ which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
  otherwise.
 
  <li>
-  <p>If <var title>request</var>'s <span title=concept-request-context>context</span>
+  <p>If <var title>request</var>'s <span title=concept-request-initiator>initiator</span>
   is not "<code title>fetch</code>" and <var title>request</var>'s
   <span title=concept-request-header-list>header list</span> does not contain a
   <span title=concept-header>header</span> whose
@@ -1462,23 +1325,23 @@ which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
   for it.
 
   <ol>
+   <li><p>Let <var title>value</var> be `<code title>*/*</code>`.
+
+   <li><p>If <var title>request</var> is a <span>navigation request</span>, set
+   <var title>value</var> to
+   `<code title>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`.
+
    <li>
-    <p>Let <var title>value</var> be the first matching statement, switching on
-    <var title>request</var>'s <span title=concept-request-context>context</span>:
+    <p>Otherwise, set <var title>value</var> to the first matching statement, if any,
+    switching on <var title>request</var>'s <span title=concept-request-type>type</span>:
     <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
 
     <dl class=switch>
-     <dt><span>image request-context</span>
+     <dt>"<code title>image</code>"
      <dd>`<code title>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
-
-     <dt><span>navigation request-context</span>
-     <dd>`<code title>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`
 
      <dt>"<code title>style</code>"
      <dd>`<code title>text/css,*/*;q=0.1</code>`
-
-     <dt>Otherwise
-     <dd>`<code title>*/*</code>`
     </dl>
 
    <li><p>User agents should <span title=concept-header-list-append>append</span>
@@ -1486,10 +1349,10 @@ which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
    <var title>request</var>'s <span title=concept-request-header-list>header list</span>.
   </ol>
 
- <li><p>If <var title>request</var>'s <span title=concept-request-context>context</span>
- is not "<code title>fetch</code>" and <var title>request</var>'s
- <span title=concept-request-header-list>header list</span> does not contain a
- <span title=concept-header>header</span> whose
+ <li><p>If <var title>request</var>'s
+ <span title=concept-request-initiator>initiator</span> is not "<code title>fetch</code>"
+ and <var title>request</var>'s <span title=concept-request-header-list>header list</span>
+ does not contain a <span title=concept-header>header</span> whose
  <span title=concept-header-name>name</span> is
  `<code title=http-accept-language>Accept-Language</code>`, user agents should
  <span title=concept-header-list-append>append</span>
@@ -1498,7 +1361,10 @@ which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
 
  <li>
   <p>If <var title>request</var>'s <span title=concept-request-priority>priority</span> is
-  null, use <var title>request</var>'s <span title=concept-request-context>context</span>
+  null, use <var title>request</var>'s
+  <span title=concept-request-initiator>initiator</span>,
+  <span title=concept-request-type>type</span>, and
+  <span title=concept-request-destination>destination</span>
   appropriately in setting it to a user-agent-defined object.
 
   <p class=note>The user-agent-defined object could encompass stream weight and dependency
@@ -1975,7 +1841,7 @@ indicates an attempt to authenticate.
     </ul>
 
     <p class="note no-backref">The underlying assumption here is that all
-    <span title="client request">client requests</span> use
+    <span title="non-subresource request">non-subresource requests</span> use
     <span title=concept-request-mode>mode</span> "<code title>same-origin</code>", which
     is currently not explicitly stated for
     <span title="navigation request">navigation requests</span>.
@@ -2649,11 +2515,12 @@ steps:
  whose <span title=concept-request-method>method</span> is `<code title>OPTIONS</code>`,
  <span title=concept-request-url>url</span> is <var title>request</var>'s
  <span title=concept-request-current-url>current url</span>,
- <span title=concept-request-context>context</span> is <var title>request</var>'s
- <span title=concept-request-context>context</span>,
- <span title=concept-request-context-frame-type>context-frame type</span> is
- <var title>request</var>'s
- <span title=concept-request-context-frame-type>context-frame type</span>,
+ <span title=concept-request-initiator>initiator</span> is <var title>request</var>'s
+ <span title=concept-request-initiator>initiator</span>,
+ <span title=concept-request-type>type</span> is <var title>request</var>'s
+ <span title=concept-request-type>type</span>,
+ <span title=concept-request-destination>destination</span> is <var title>request</var>'s
+ <span title=concept-request-destination>destination</span>,
  <span title=concept-request-origin>origin</span> is <var title>request</var>'s
  <span title=concept-request-origin>origin</span>,
  <span>force-<code>Origin</code>-header flag</span> is set,
@@ -3431,15 +3298,12 @@ interface <dfn>Request</dfn> {
   readonly attribute USVString <span title=dom-Request-url>url</span>;
   [SameObject] readonly attribute <span>Headers</span> <span title=dom-Request-headers>headers</span>;
 
-  readonly attribute <span>RequestContext</span> <span title=dom-Request-context>context</span>;<!--
-  readonly attribute USVString <span title=dom-Request-origin>origin</span>;-->
+  readonly attribute <span>RequestType</span> <span title=dom-Request-type>type</span>;
+  readonly attribute <span>RequestDestination</span> <span title=dom-Request-destination>destination</span>;
   readonly attribute USVString <span title=dom-Request-referrer>referrer</span>;
-  readonly attribute <span>ReferrerPolicy</span> <span title=dom-Request-referrerPolicy>referrerPolicy</span>;<!--
-  readonly attribute boolean <span title=dom-Request-handles401>handles401</span>;
-  readonly attribute boolean <span title=dom-Request-isSynchronous>isSynchronous</span>;-->
+  readonly attribute <span>ReferrerPolicy</span> <span title=dom-Request-referrerPolicy>referrerPolicy</span>;
   readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
-  readonly attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;<!--
-  readonly attribute boolean <span title=dom-Request-usingURLCredentials>usingURLCredentials</span>;-->
+  readonly attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;
   readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;
   readonly attribute <span>RequestRedirect</span> <span title=dom-Request-redirect>redirect</span>;
   readonly attribute DOMString <span title=dom-Request-integrity>integrity</span>;
@@ -3465,21 +3329,17 @@ interface <dfn>Request</dfn> {
   any window; // can only be set to null
 };
 
-enum <dfn>RequestContext</dfn> {
-  "", "applet", "audio", "beacon", "cspreport", "download", "embed", "eventsource",
-  "favicon", "fetch", "font", "form", "frame", "hyperlink", "iframe", "image", "imageset",
-  "import", "internal", "location", "manifest", "metarefresh", "object", "ping", "plugin",
-  "prefetch", "preload", "prerender", "script", "sharedworker", "subresource", "style",
-  "track", "video", "worker", "xmlhttprequest", "xslt"
-};
+enum <dfn>RequestType</dfn> { "", "audio", "font", "image", "script", "style", "track", "video" };
+enum <dfn>RequestDestination</dfn> { "", "document", "sharedworker", "subresource", "unknown", "worker" };
 enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };
 enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum <dfn>RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
-<p class=note>"<code>serviceworker</code>" is omitted from <code>RequestContext</code> as
-it cannot be observed from JavaScript. Implementations will still need to support it as
-<span title=concept-request-context>context</span>.
+<p class="note no-backref">"<code>serviceworker</code>" is omitted from
+<code>RequestDestination</code> as it cannot be observed from JavaScript. Implementations
+will still need to support it as a
+<span title=concept-request-destination>destination</span>.
 
 <p>A <code>Request</code> object has an associated
 <dfn title=concept-Request-request>request</dfn> (a
@@ -3552,7 +3412,7 @@ constructor must run these steps:
  <span title=concept-request-referrer-policy>referrer policy</span> is
  <var title>request</var>'s
  <span title=concept-request-referrer-policy>referrer policy</span>,
- <span title=concept-request-context>context</span> is the empty string,
+ <span title=concept-request-destination>destination</span> is the empty string,
  <span title=concept-request-mode>mode</span> is <var title>request</var>'s
  <span title=concept-request-mode>mode</span>,
  <span title=concept-request-credentials-mode>credentials mode</span> is
@@ -3788,9 +3648,13 @@ return <span title=concept-Request-request>request</span>'s
 <p>The <dfn title=dom-Request-headers><code>headers</code></dfn> attribute's getter must
 return the associated <code>Headers</code> object.
 
-<p>The <dfn title=dom-Request-context><code>context</code></dfn> attribute's getter must
-return <span title=concept-Request-request>request</span>'s
-<span title=concept-Request-context>context</span>.
+<p>The <dfn title=dom-Request-type><code>type</code></dfn> attribute's getter must return
+<span title=concept-Request-request>request</span>'s
+<span title=concept-Request-type>type</span>.
+
+<p>The <dfn title=dom-Request-destination><code>destination</code></dfn> attribute's
+getter must return <span title=concept-Request-request>request</span>'s
+<span title=concept-Request-destination>destination</span>.
 
 <p>The <dfn title=dom-Request-referrer><code>referrer</code></dfn> attribute's getter must
 return the empty string if <span title=concept-Request-request>request</span>'s
@@ -4109,8 +3973,12 @@ method, must run these steps:
  <var title>init</var> as arguments. If this throws an exception, reject
  <var title>p</var> with it.
 
- <li><p>Set <var title>r</var>'s <span title=concept-request-context>context</span> to
+ <li><p>Set <var title>r</var>'s <span title=concept-request-initiator>initiator</span> to
  "<code title>fetch</code>".
+
+ <li><p>Set <var title>r</var>'s
+ <span title=concept-request-destination>destination</span> to
+ "<code title>subresource</code>".
 
  <li>
   <p>Run the following <span data-anolis-spec=html>in parallel</span>:
@@ -4317,6 +4185,7 @@ Tomás Aparicio,
 Tyler Close,
 Vladimir Dzhuvinov,
 Wayne Carr,
+Youenn Fablet,
 平野裕 (Yutaka Hirano), and
 Zhenbin Xu
 for being awesome.
