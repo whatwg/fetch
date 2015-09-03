@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-25-august-2015">Living Standard — Last Updated 25 August 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-3-september-2015">Living Standard — Last Updated 3 September 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -745,9 +745,15 @@ the empty string,
 Unless otherwise stated it is null.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-origin" title="concept-request-origin">origin</dfn> (an
-<a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>). Unless stated otherwise it is an
-opaque identifier.
+<dfn id="concept-request-origin" title="concept-request-origin">origin</dfn>, which is "<code>client</code>" or an
+<a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>. Unless stated otherwise it is "<code>client</code>".
+
+<p class="note no-backref">"<code>client</code>" is changed to an
+<a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a> during <a href="#concept-fetch" title="concept-fetch">fetching</a>. It
+provides a convenient way for standards to not have to set
+<a href="#concept-request" title="concept-request">request</a>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a>.
+<a href="#concept-request" title="concept-request">Request</a>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> can be
+changed during redirects too.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="force-origin-header-flag">force-<code title="">Origin</code>-header flag</dfn>. Unless stated otherwise it is unset.
@@ -1369,6 +1375,11 @@ which must be one of <i title="">end-user abort</i>, <i title="">fatal</i>, or
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#global-object">global object</a> is a
  <a href="https://html.spec.whatwg.org/multipage/browsers.html#window"><code class="external" data-anolis-spec="html">Window</code></a> object, and to "<code>no-window</code>"
  otherwise.
+
+ <li><p>If <var title="">request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
+ "<code>client</code>", set <var title="">request</var>'s
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a> to  <var title="">request</var>'s
+ <a href="#concept-request-client" title="concept-request-client">client</a>'s <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>.
 
  <li>
   <p>If <var title="">request</var>'s <a href="#concept-request-initiator" title="concept-request-initiator">initiator</a>
@@ -3444,18 +3455,14 @@ constructor must run these steps:
  <a href="#request"><code>Request</code></a> object, and a new <a href="#concept-request" title="concept-request">request</a>
  otherwise.
 
- <li><p>Let <var title="">origin</var> be
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>.
-
  <li><p>Let <var title="">window</var> be "<code>client</code>".
 
  <li><p>If <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
  an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a> and its
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a> is
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var title="">origin</var>, set
- <var title="">window</var> to <var title="">request</var>'s
- <a href="#concept-request-window" title="concept-request-window">window</a>.
+ <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a> is <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with
+ <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>, set <var title="">window</var> to
+ <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a>.
 
  <li><p>If <var title="">init</var>'s <code title="">window</code> member is present and it is
  not null, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
@@ -3474,7 +3481,7 @@ constructor must run these steps:
  <a href="#concept-request-client" title="concept-request-client">client</a> is
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>,
  <a href="#concept-request-window" title="concept-request-window">window</a> is <var title="">window</var>,
- <a href="#concept-request-origin" title="concept-request-origin">origin</a> is <var title="">origin</var>,
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a> is "<code>client</code>",
  <a href="#force-origin-header-flag">force-<code>Origin</code>-header flag</a> is set,
  <a href="#same-origin-data-url-flag">same-origin data-URL flag</a> is set,
  <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is <var title="">request</var>'s
