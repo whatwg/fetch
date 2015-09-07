@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-september-2015">Living Standard — Last Updated 10 September 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-15-september-2015">Living Standard — Last Updated 15 September 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -55,7 +55,10 @@ fetching.
      <li><a href="#responses"><span class="secno">3.1.6 </span>Responses</a></ol></li>
    <li><a href="#authentication-entries"><span class="secno">3.2 </span>Authentication entries</a></li>
    <li><a href="#fetch-groups"><span class="secno">3.3 </span>Fetch groups</a></li>
-   <li><a href="#referrer-policies"><span class="secno">3.4 </span>Referrer policies</a></ol></li>
+   <li><a href="#referrer-policies"><span class="secno">3.4 </span>Referrer policies</a></li>
+   <li><a href="#streams"><span class="secno">3.5 </span>Streams</a>
+    <ol>
+     <li><a href="#readablestream"><span class="secno">3.5.1 </span>ReadableStream</a></ol></ol></li>
  <li><a href="#http-extensions"><span class="secno">4 </span>HTTP extensions</a>
   <ol>
    <li><a href="#origin-header"><span class="secno">4.1 </span>`<code title="">Origin</code>` header</a></li>
@@ -1113,6 +1116,169 @@ tracking functionality.
 
 <p class="note">The details of referrer policies are discussed in Referrer Policy.
 <a href="#refsREFERRER">[REFERRER]</a>
+
+<h3 id="streams"><span class="secno">3.5 </span>Streams</h3>
+
+<p class="note no-backref">This section might be moved to other specifications, such as Web IDL, in the future. <a href="#refsWEBIDL">[WEBIDL]</a>
+
+<h4 id="readablestream"><span class="secno">3.5.1 </span>ReadableStream</h4>
+
+<p>A <dfn id="concept-readablestream" title="concept-ReadableStream">ReadableStream</dfn> represents a
+<a class="external" data-anolis-spec="streams" href="https://streams.spec.whatwg.org/#rs-class" title="readablestream">stream of data</a>. In this section, we
+define common operations for ReadableStream. <a href="#refsSTREAMS">[STREAMS]</a>
+
+<p>To <dfn id="concept-enqueue-readablestream" title="concept-enqueue-ReadableStream">enqueue</dfn> a byte sequence
+(<var title="">chunk</var>) into a <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a>
+<var title="">stream</var>, run the these steps:
+
+<ol>
+ <li><p>Call <a href="https://streams.spec.whatwg.org/#enqueue-in-readable-stream"><code class="external" data-anolis-spec="streams">EnqueueInReadableStream</code></a>(<var title="">stream</var>,
+ <var title="">chunk</var>). Rethrow any exceptions.
+</ol>
+
+<p>To <dfn id="concept-close-readablestream" title="concept-close-ReadableStream">close</dfn> a
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var>, run these steps:
+<ol>
+ <li><p>Call <a href="https://streams.spec.whatwg.org/#close-readable-stream"><code class="external" data-anolis-spec="streams">CloseReadableStream</code></a>(<var title="">stream</var>).
+ Rethrow any exceptions.
+</ol>
+
+<p>To <dfn id="concept-construct-readablestream" title="concept-construct-ReadableStream">construct</dfn> a
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> with given <var title="">strategy</var>,
+<var title="">pull</var> action and <var title="">cancel</var> action, all of which are optional, run
+these steps:
+
+<ol>
+ <li><p>Let <var title="">init</var> be a new object.
+
+ <li><p>Set <var title="">init</var>["pull"] to a function that runs <var title="">pull</var> if
+ <var title="">pull</var> is given.
+
+ <li><p>Set <var title="">init</var>["cancel"] to a function that runs <var title="">cancel</var> if
+ <var title="">cancel</var> is given.
+
+ <li><p>Set <var title="">init</var>["strategy"] to <var title="">strategy</var> if
+ <var title="">strategy</var> is given.
+
+ <li><p>Set <var title="">init</var> be the result of calling the initial value of
+ <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> as constructor with
+ <var title="">init</var> as an argument. Rethrow any exceptions.
+
+ <li><p>Return <var title="">stream</var>.
+</ol>
+
+<p>To <dfn id="concept-construct-fixed-readablestream" title="concept-construct-fixed-ReadableStream">construct</dfn> a fixed
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> with given <var title="">chunks</var>,
+run these steps:
+
+<ol>
+ <li><p>Let <var title="">stream</var> be the result of
+ <a href="#concept-construct-readablestream" title="concept-construct-ReadableStream">constructing</a> a
+ <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a>. Rethrow any exceptions.
+
+ <li><p>For each <var title="">chunk</var> in <var title="">chunks</var>,
+ <a href="#concept-enqueue-readablestream" title="concept-enqueue-ReadableStream">enqueue</a> <var title="">chunk</var> into
+ <var title="">stream</var>. Rethrow any exceptions.
+
+ <li><p><a href="#concept-close-readablestream" title="concept-close-ReadableStream">Close</a> <var title="">stream</var>. Rethrow any
+ exceptions.
+
+ <li>Return <var title="">stream</var>.
+</ol>
+
+<p>To <dfn id="concept-get-reader" title="concept-get-reader">get</dfn> a reader from a
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var>, run these steps:
+<ol>
+ <li><p>Let <var title="">reader</var> be the result of calling
+ <a href="https://streams.spec.whatwg.org/#acquire-readable-stream-reader"><code class="external" data-anolis-spec="streams">AcquireReadableStreamReader</code></a>(<var title="">stream</var>).
+ Rethrow any exceptions.
+
+ <li><p>Return <var title="">reader</var>.
+</ol>
+
+<p>To <dfn id="concept-read-all-bytes-from-readablestream" title="concept-read-all-bytes-from-ReadableStream">read</dfn> all bytes from a
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> with <var title="">reader</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var title="">promise</var> be a new promise.
+
+ <li><p>Let <var title="">bytes</var> be an empty byte sequence.
+
+ <li>
+ <p>Let <var title="">read</var> be the result of calling
+ <a href="https://streams.spec.whatwg.org/#read-from-readable-stream-reader"><code class="external" data-anolis-spec="streams">ReadFromReadableStreamReader</code></a>(<var title="">reader</var>).
+
+ <ul>
+  <li><p>When <var title="">read</var> is fulfilled with an object whose <code title="">done</code>
+  property is false and whose <code title="">value</code> property is a
+  <code title="">Uint8Array</code>, append the <code title="">value</code> property to
+  <var title="">bytes</var> and run the above step again.
+
+  <li><p>When <var title="">read</var> is fulfilled with an object whose <code title="">done</code>
+  property is true, resolve <var title="">promise</var> with <var title="">bytes</var>.
+
+  <li><p>When <var title="">read</var> is fulfilled with a value that matches with neither of the
+  above patterns, reject <var title="">promise</var> with a <code title="">TypeError</code>.
+
+  <li><p>When <var title="">read</var> is rejected with an error, reject <var title="">promise</var>
+  with that error.
+ </ul>
+
+ <li><p>Return <var title="">promise</var>.
+</ol>
+
+<p class="note no-backref">Because the reader grants exclusive access, the actual mechanism of how
+to read cannot be observed. Implementations could use more direct mechanism if convenient.
+
+<p>To <dfn id="concept-tee-readablestream" title="concept-tee-ReadableStream">tee</dfn> a
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var>, run these steps:
+
+<ol>
+ <li><p>Return the result of calling
+ <a href="https://streams.spec.whatwg.org/#tee-readable-stream"><code class="external" data-anolis-spec="streams">TeeReadableStream</code></a>(<var title="">stream</var>, true).
+ Rethrow any exception.
+</ol>
+
+<p>An <dfn id="concept-empty-readablestream" title="concept-empty-ReadableStream">empty</dfn>
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> is the result of
+<a href="#concept-construct-fixed-readablestream" title="concept-construct-fixed-ReadableStream">constructing</a> a fixed
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> with an empty array.
+
+<p class="note no-backref">Constructing an <a href="#concept-empty-readablestream" title="concept-empty-ReadableStream">empty</a>
+<a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> will not throw an exception.
+
+<p>A <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var> is said to be
+<dfn id="concept-readablestream-readable" title="concept-ReadableStream-readable">readable</dfn> if <var title="">stream</var>@[[state]] is
+"readable".
+
+<p>A <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var> is said to be
+<dfn id="concept-readablestream-closed" title="concept-ReadableStream-closed">closed</dfn> if <var title="">stream</var>@[[state]] is
+"closed".
+
+<p>A <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var> is said to be
+<dfn id="concept-readablestream-errored" title="concept-ReadableStream-errored">errored</dfn> if <var title="">stream</var>@[[state]] is
+"errored".
+
+<p>A <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var> is said to be
+<dfn id="concept-readablestream-locked" title="concept-ReadableStream-locked">locked</dfn> if the result of calling
+<a href="https://streams.spec.whatwg.org/#is-readable-stream-locked"><code class="external" data-anolis-spec="streams">IsReadableStreamLocked</code></a>(<var title="">stream</var>) is true.
+
+<p>A <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var> is said to
+<dfn id="concept-readablestream-need-more-data" title="concept-ReadableStream-need-more-data">need more data</dfn> if the following conditions
+hold:
+
+<ul>
+ <li><p><var title="">stream</var> is <a href="#concept-readablestream-readable" title="concept-ReadableStream-readable">readable</a>.
+
+ <li><p>The result of calling
+ <a href="https://streams.spec.whatwg.org/#get-readable-stream-desired-size"><code class="external" data-anolis-spec="streams">GetReadableStreamDesiredSize</code></a>(<var title="">stream</var>) is
+ positive.
+</ul>
+
+<p>A <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a> <var title="">stream</var> is said to be
+<dfn id="concept-readablestream-disturbed" title="concept-ReadableStream-disturbed">disturbed</dfn> if the result of calling
+<a href="https://streams.spec.whatwg.org/#is-readable-stream-disturbed"><code class="external" data-anolis-spec="streams">IsReadableStreamDisturbed</code></a>(<var title="">stream</var>) is true.
 
 
 
@@ -4224,6 +4390,9 @@ however, it is perfectly fine to do so.
 <dt id="refsSRI">[SRI]
 <dd><cite><a href="https://w3c.github.io/webappsec/specs/subresourceintegrity/">Subresource Integrity</a></cite>, Devdatta Akhawe, Francois Marier, Frederik Braun et al.. W3C.
 
+<dt id="refsSTREAMS">[STREAMS]
+<dd><cite><a href="https://streams.spec.whatwg.org/">Streams</a></cite>, Domenic Denicola and Takeshi Yoshino. WHATWG.
+
 <dt id="refsSW">[SW]
 <dd><cite><a href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/">Service Workers</a></cite>, Alex Russell and Jungkee Song. W3C.
 
@@ -4235,6 +4404,9 @@ however, it is perfectly fine to do so.
 
 <dt id="refsURL">[URL]
 <dd><cite><a href="https://url.spec.whatwg.org/">URL</a></cite>, Anne van Kesteren. WHATWG.
+
+<dt id="refsWEBIDL">[WEBIDL]
+<dd><cite><a href="https://heycam.github.io/webidl/">Web IDL</a></cite>, Cameron McCormack. W3C.
 
 <dt id="refsXHR">[XHR]
 <dd>(Non-normative) <cite><a href="https://xhr.spec.whatwg.org/">XMLHttpRequest</a></cite>, Anne van Kesteren. WHATWG.
