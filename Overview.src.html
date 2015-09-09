@@ -1315,8 +1315,20 @@ response <span title=concept-header>header</span> can be used to require checkin
 <p>To perform a <dfn title=concept-fetch>fetch</dfn> using <var title>request</var>, run
 the steps below. An ongoing <span title=concept-fetch>fetch</span> can be
 <dfn title=concept-fetch-terminate>terminated</dfn> with reason <var title>reason</var>,
-which must be one of <i title>end-user abort</i>, <i title>fatal</i>, or
-<i title>timeout</i>.
+which must be one of <i title>end-user abort</i>, <i title>fatal</i>, <i title>timeout</i>, or
+<i title>garbage collection</i>.
+
+<p>The user agent may be asked to <dfn title=concept-fetch-suspend>suspend</dfn> the ongoing fetch.
+The user agent may either accept or ignore the suspension request. The susppended fetch can be
+<dfn title=concept-fetch-resume>resumed</dfn>. The user agent should ignore the suspension request
+if the ongoing fetch is updating the response in the HTTP cache for the request.
+
+<p class="note no-backref">The user agant must not update the entry in the HTTP cache for a request
+if request's cache mode is "no-store".
+
+<p class="note no-backref">The user agent must not update the entry in the HTTP cache for a request
+if "Cache-Control: no-store" HTTP header appears in the response.
+<span data-anolis-ref>HTTP</span>
 
 <ol>
  <li><p>If <var title>request</var>'s <span title=concept-request-window>window</span> is
@@ -4027,6 +4039,51 @@ method, must run these steps:
 
  <li><p>Return <var title>p</var>.
 </ol>
+
+<h3>Fetch termination initiated by the user agent</h3>
+
+<p>The user agent may <span title=concept-fetch-terminate>terminate</span> an ongoing fetch with
+reason <i title>garbage collection</i> if that termination is not observable through script.
+
+<p class="note no-backref">The server observing garbage collection has precedent, e.g. with
+WebSocket and XMLHttpRequest.
+
+<div class="example no-backref">
+ <p>The user agent can terminate the fetch because the termination cannot be observed.
+ <pre>fetch("https://www.example.com/")</pre>
+</div>
+
+<div class="example no-backref">
+ <p>The user agent cannot terminate the fetch because the termination can be observed through
+ the promise.
+ <pre>window.promise = fetch("https://www.example.com/")</pre>
+</div>
+
+<div class="example no-backref">
+ <p>The user agent can terminate the fetch because the associated body is not observable.
+ <pre>window.promise = fetch("https://www.example.com/").then(res => res.headers)</pre>
+</div>
+
+<div class="example no-backref">
+ <p>The user agent can terminate the fetch because the termination cannot be observed.
+ <pre>fetch("https://www.example.com/").then(res => res.body.getReader().closed)</pre>
+</div>
+
+<div class="example no-backref">
+ <p>The user agent cannot terminate the fetch because one can observe the termination by registering
+ a handler for the promise object.
+ <pre>window.promise = fetch("https://www.example.com/")
+  .then(res => res.body.getReader().closed)</pre>
+</div>
+
+<div class="example no-backref">
+ <p>The user agent cannot terminate the fetch as termination would be observable via the registered
+ handler.
+ <pre>fetch("https://www.example.com/")
+  .then(res => {
+    res.body.getReader().closed.then(() => console.log("stream closed!"))
+  })</pre>
+</div>
 
 
 
