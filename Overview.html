@@ -89,7 +89,8 @@ fetching.
    <li><a href="#request-class"><span class="secno">6.3 </span>Request class</a></li>
    <li><a href="#response-class"><span class="secno">6.4 </span>Response class</a></li>
    <li><a href="#structured-cloning-of-headers,-request,-and-response-objects"><span class="secno">6.5 </span>Structured cloning of <code>Headers</code>, <code>Request</code>, and <code>Response</code> objects</a></li>
-   <li><a href="#fetch-method"><span class="secno">6.6 </span>Fetch method</a></ol></li>
+   <li><a href="#fetch-method"><span class="secno">6.6 </span>Fetch method</a></li>
+   <li><a href="#garbage-collection"><span class="secno">6.7 </span>Garbage collection</a></ol></li>
  <li><a class="no-num" href="#background-reading">Background reading</a>
   <ol>
    <li><a class="no-num" href="#http-header-layer-division">HTTP header layer division</a></li>
@@ -171,7 +172,6 @@ not appear in all uppercase letters in this specification.
 <a href="#refsWEBIDL">[WEBIDL]</a>
 <a href="#refsSTREAMS">[STREAMS]</a>
 <a href="#refsURL">[URL]</a>
-
 
 <p>A <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#byte">byte</a> sequence with bytes in the range 0x00 to
 0x7F, inclusive, is represented as a <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#utf-8">utf-8</a>-encoded
@@ -1541,8 +1541,18 @@ response <a href="#concept-header" title="concept-header">header</a> can be used
 <p>To perform a <dfn id="concept-fetch" title="concept-fetch">fetch</dfn> using <var title="">request</var>, run
 the steps below. An ongoing <a href="#concept-fetch" title="concept-fetch">fetch</a> can be
 <dfn id="concept-fetch-terminate" title="concept-fetch-terminate">terminated</dfn> with reason <var title="">reason</var>,
-which must be one of <i title="">end-user abort</i>, <i title="">fatal</i>, or
-<i title="">timeout</i>.
+which must be one of <i title="">end-user abort</i>, <i title="">fatal</i>, <i title="">timeout</i>, or
+<i title="">garbage collection</i>.
+
+<p>The user agent may be asked to <dfn id="concept-fetch-suspend" title="concept-fetch-suspend">suspend</dfn> the ongoing fetch.
+The user agent may either accept or ignore the suspension request. The susppended fetch can be
+<dfn id="concept-fetch-resume" title="concept-fetch-resume">resumed</dfn>. The user agent should ignore the suspension request
+if the ongoing fetch is updating the response in the HTTP cache for the request.
+
+<p class="note no-backref">The user agant does not update the entry in the HTTP cache for a
+<a href="#concept-request" title="concept-request">request</a> if request's cache mode is "no-store" or a
+`<code>Cache-Control: no-store</code>` header appears in the response.
+<a href="#refsHTTP">[HTTP]</a>
 
 <ol>
  <li><p>If <var title="">request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
@@ -4255,8 +4265,44 @@ method, must run these steps:
 </ol>
 
 
+<h3 id="garbage-collection"><span class="secno">6.7 </span>Garbage collection</h3>
 
-<!-- XMLHttpRequest API -->
+<p>The user agent may <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminate</a> an ongoing fetch with
+reason <i title="">garbage collection</i> if that termination is not observable through script.
+
+<p class="note no-backref">"Observable through script" means observable through
+<a href="#dom-global-fetch"><code title="dom-global-fetch">fetch()</code></a>'s arguments and return value. Other ways, such as
+communicating with the server through a side-channel are not included.
+
+<p class="note no-backref">The server being able to observe garbage collection has precedent, e.g.,
+with <code>WebSocket</code> and <code>XMLHttpRequest</code>.
+
+<div class="example no-backref">
+ <p>The user agent can terminate the fetch because the termination cannot be observed.
+ <pre>fetch("https://www.example.com/")</pre>
+
+ <p>The user agent cannot terminate the fetch because the termination can be observed through
+ the promise.
+ <pre>window.promise = fetch("https://www.example.com/")</pre>
+
+ <p>The user agent can terminate the fetch because the associated body is not observable.
+ <pre>window.promise = fetch("https://www.example.com/").then(res =&gt; res.headers)</pre>
+
+ <p>The user agent can terminate the fetch because the termination cannot be observed.
+ <pre>fetch("https://www.example.com/").then(res =&gt; res.body.getReader().closed)</pre>
+
+ <p>The user agent cannot terminate the fetch because one can observe the termination by registering
+ a handler for the promise object.
+ <pre>window.promise = fetch("https://www.example.com/")
+  .then(res =&gt; res.body.getReader().closed)</pre>
+
+ <p>The user agent cannot terminate the fetch as termination would be observable via the registered
+ handler.
+ <pre>fetch("https://www.example.com/")
+  .then(res =&gt; {
+    res.body.getReader().closed.then(() =&gt; console.log("stream closed!"))
+  })</pre>
+</div>
 
 
 
@@ -4333,7 +4379,6 @@ however, it is perfectly fine to do so.
 <a href="#refsHTTP">[HTTP]</a>
 
 <pre class="example">Vary: Access-Control-Allow-Origin</pre>
-
 
 
 
