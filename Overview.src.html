@@ -106,9 +106,11 @@ not appear in all uppercase letters in this specification.
 
 <h2>Infrastructure</h2>
 
-<p>This specification uses terminology from the Encoding, HTML, and URL Standards.
+<p>This specification uses terminology from the Encoding, HTML, IDL, Streams, and URL Standards.
 <span data-anolis-ref>ENCODING</span>
 <span data-anolis-ref>HTML</span>
+<span data-anolis-ref>WEBIDL</span>
+<span data-anolis-ref>STREAMS</span>
 <span data-anolis-ref>URL</span>
 
 <p>A <span data-anolis-spec=encoding>byte</span> sequence with bytes in the range 0x00 to
@@ -1057,6 +1059,170 @@ tracking functionality.
 
 <p class=note>The details of referrer policies are discussed in Referrer Policy.
 <span data-anolis-ref>REFERRER</span>
+
+
+<h3>Streams</h3>
+
+<p class="note no-backref">This section might be integrated into other standards, such as IDL.
+
+<h4>ReadableStream</h4>
+
+<p>A <dfn title=concept-ReadableStream>ReadableStream</dfn> represents a
+<span data-anolis-spec=streams title=readablestream>stream of data</span>. In this section, we
+define common operations for ReadableStream. <span data-anolis-ref>STREAMS</span>
+
+<p>To <dfn title=concept-enqueue-ReadableStream>enqueue</dfn> a byte sequence
+(<var title>chunk</var>) into a <span title=concept-ReadableStream>ReadableStream</span>
+<var title>stream</var>, run the these steps:
+
+<ol>
+ <li><p>Call <code data-anolis-spec=streams>EnqueueInReadableStream</code>(<var title>stream</var>,
+ <var title>chunk</var>). Rethrow any exceptions.
+</ol>
+
+<p>To <dfn title=concept-close-ReadableStream>close</dfn> a
+<span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var>, run these steps:
+<ol>
+ <li><p>Call <code data-anolis-spec=streams>CloseReadableStream</code>(<var title>stream</var>).
+ Rethrow any exceptions.
+</ol>
+
+<p>To <dfn title=concept-construct-ReadableStream>construct</dfn> a
+<span title=concept-ReadableStream>ReadableStream</span> with given <var title>strategy</var>,
+<var title>pull</var> action and <var title>cancel</var> action, all of which are optional, run
+these steps:
+
+<ol>
+ <li><p>Let <var title>init</var> be a new object.
+
+ <li><p>Set <var title>init</var>["pull"] to a function that runs <var title>pull</var> if
+ <var title>pull</var> is given.
+
+ <li><p>Set <var title>init</var>["cancel"] to a function that runs <var title>cancel</var> if
+ <var title>cancel</var> is given.
+
+ <li><p>Set <var title>init</var>["strategy"] to <var title>strategy</var> if
+ <var title>strategy</var> is given.
+
+ <li><p>Set <var title>init</var> be the result of calling the initial value of
+ <span title=concept-ReadableStream>ReadableStream</span> as constructor with
+ <var title>init</var> as an argument. Rethrow any exceptions.
+
+ <li><p>Return <var title>stream</var>.
+</ol>
+
+<p>To <dfn title=concept-construct-fixed-ReadableStream>construct</dfn> a fixed
+<span title=concept-ReadableStream>ReadableStream</span> with given <var title>chunks</var>,
+run these steps:
+
+<ol>
+ <li><p>Let <var title>stream</var> be the result of
+ <span title=concept-construct-ReadableStream>constructing</span> a
+ <span title=concept-ReadableStream>ReadableStream</span>. Rethrow any exceptions.
+
+ <li><p>For each <var title>chunk</var> in <var title>chunks</var>,
+ <span title=concept-enqueue-ReadableStream>enqueue</span> <var title>chunk</var> into
+ <var title>stream</var>. Rethrow any exceptions.
+
+ <li><p><span title=concept-close-ReadableStream>Close</span> <var title>stream</var>. Rethrow any
+ exceptions.
+
+ <li>Return <var title>stream</var>.
+</ol>
+
+<p>To <dfn title=concept-get-reader>get</dfn> a reader from a
+<span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var>, run these steps:
+<ol>
+ <li><p>Let <var title>reader</var> be the result of calling
+ <code data-anolis-spec=streams>AcquireReadableStreamReader</code>(<var title>stream</var>).
+ Rethrow any exceptions.
+
+ <li><p>Return <var title>reader</var>.
+</ol>
+
+<p>To <dfn title=concept-read-all-bytes-from-ReadableStream>read</dfn> all bytes from a
+<span title=concept-ReadableStream>ReadableStream</span> with <var title>reader</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var title>promise</var> be a new promise.
+
+ <li><p>Let <var title>bytes</var> be an empty byte sequence.
+
+ <li>
+ <p>Let <var title>read</var> be the result of calling
+ <code data-anolis-spec=streams>ReadFromReadableStreamReader</code>(<var title>reader</var>).
+
+ <ul>
+  <li><p>When <var title>read</var> is fulfilled with an object whose <code title>done</code>
+  property is false and whose <code title>value</code> property is a
+  <code title>Uint8Array</code>, append the <code title>value</code> property to
+  <var title>bytes</var> and run the above step again.
+
+  <li><p>When <var title>read</var> is fulfilled with an object whose <code title>done</code>
+  property is true, resolve <var title>promise</var> with <var title>bytes</var>.
+
+  <li><p>When <var title>read</var> is fulfilled with a value that matches with neither of the
+  above patterns, reject <var title>promise</var> with a <code title>TypeError</code>.
+
+  <li><p>When <var title>read</var> is rejected with an error, reject <var title>promise</var>
+  with that error.
+ </ul>
+
+ <li><p>Return <var title>promise</var>.
+</ol>
+
+<p class="note no-backref">Because the reader grants exclusive access, the actual mechanism of how
+to read cannot be observed. Implementations could use more direct mechanism if convenient.
+
+<p>To <dfn title=concept-tee-ReadableStream>tee</dfn> a
+<span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var>, run these steps:
+
+<ol>
+ <li><p>Return the result of calling
+ <code data-anolis-spec=streams>TeeReadableStream</code>(<var title>stream</var>, true).
+ Rethrow any exception.
+</ol>
+
+<p>An <dfn title=concept-empty-ReadableStream>empty</dfn>
+<span title=concept-ReadableStream>ReadableStream</span> is the result of
+<span title=concept-construct-fixed-ReadableStream>constructing</span> a fixed
+<span title=concept-ReadableStream>ReadableStream</span> with an empty array.
+
+<p class="note no-backref">Constructing an <span title=concept-empty-ReadableStream>empty</span>
+<span title=concept-ReadableStream>ReadableStream</span> will not throw an exception.
+
+<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
+<dfn title=concept-ReadableStream-readable>readable</dfn> if <var title>stream</var>@[[state]] is
+"readable".
+
+<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
+<dfn title=concept-ReadableStream-closed>closed</dfn> if <var title>stream</var>@[[state]] is
+"closed".
+
+<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
+<dfn title=concept-ReadableStream-errored>errored</dfn> if <var title>stream</var>@[[state]] is
+"errored".
+
+<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
+<dfn title=concept-ReadableStream-locked>locked</dfn> if the result of calling
+<code data-anolis-spec=streams>IsReadableStreamLocked</code>(<var title>stream</var>) is true.
+
+<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to
+<dfn title=concept-ReadableStream-need-more-data>need more data</dfn> if the following conditions
+hold:
+
+<ul>
+ <li><p><var title>stream</var> is <span title=concept-ReadableStream-readable>readable</span>.
+
+ <li><p>The result of calling
+ <code data-anolis-spec=streams>GetReadableStreamDesiredSize</code>(<var title>stream</var>) is
+ positive.
+</ul>
+
+<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
+<dfn title=concept-ReadableStream-disturbed>disturbed</dfn> if the result of calling
+<code data-anolis-spec=streams>IsReadableStreamDisturbed</code>(<var title>stream</var>) is true.
 
 
 
