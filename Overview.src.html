@@ -1106,30 +1106,29 @@ clearly stipulates that <span title=concept-connection>connections</span> are ke
 
 <h4>ReadableStream</h4>
 
-<p>A <dfn title=concept-ReadableStream>ReadableStream</dfn> represents a
+<p>A <dfn title=concept-ReadableStream>ReadableStream</dfn> object represents a
 <span data-anolis-spec=streams title=readablestream>stream of data</span>. In this section, we
 define common operations for ReadableStream. <span data-anolis-ref>STREAMS</span>
 
-<p>To <dfn title=concept-enqueue-ReadableStream>enqueue</dfn> a byte sequence
-(<var title>chunk</var>) into a <span title=concept-ReadableStream>ReadableStream</span>
-<var title>stream</var>, run the these steps:
+<p>To <dfn title=concept-enqueue-ReadableStream>enqueue</dfn> <var>chunk</var> into a
+<code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var>, run these steps:
 
 <ol>
- <li><p>Call <code data-anolis-spec=streams>EnqueueInReadableStream</code>(<var title>stream</var>,
- <var title>chunk</var>). Rethrow any exceptions.
+ <li><p>Call <code data-anolis-spec=streams>EnqueueInReadableStream</code>(<var>stream</var>,
+ <var>chunk</var>). Rethrow any exceptions.
 </ol>
 
 <p>To <dfn title=concept-close-ReadableStream>close</dfn> a
-<span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var>, run these steps:
+<code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var>, run these steps:
+
 <ol>
- <li><p>Call <code data-anolis-spec=streams>CloseReadableStream</code>(<var title>stream</var>).
+ <li><p>Call <code data-anolis-spec=streams>CloseReadableStream</code>(<var>stream</var>).
  Rethrow any exceptions.
 </ol>
 
 <p>To <dfn title=concept-construct-ReadableStream>construct</dfn> a
-<span title=concept-ReadableStream>ReadableStream</span> with given <var title>strategy</var>,
-<var title>pull</var> action and <var title>cancel</var> action, all of which are optional, run
-these steps:
+<code title=concept-ReadableStream>ReadableStream</code> object with given <var>strategy</var>,
+<var>pull</var> action and <var>cancel</var> action, all of which are optional, run these steps:
 
 <ol>
  <li><p>Let <var title>init</var> be a new object.
@@ -1144,20 +1143,20 @@ these steps:
  <var title>strategy</var> is given.
 
  <li><p>Set <var title>init</var> be the result of calling the initial value of
- <span title=concept-ReadableStream>ReadableStream</span> as constructor with
+ <code title=concept-ReadableStream>ReadableStream</code> as constructor with
  <var title>init</var> as an argument. Rethrow any exceptions.
 
  <li><p>Return <var title>stream</var>.
 </ol>
 
 <p>To <dfn title=concept-construct-fixed-ReadableStream>construct</dfn> a fixed
-<span title=concept-ReadableStream>ReadableStream</span> with given <var title>chunks</var>,
+<code title=concept-ReadableStream>ReadableStream</code> object with given <var>chunks</var>,
 run these steps:
 
 <ol>
  <li><p>Let <var title>stream</var> be the result of
  <span title=concept-construct-ReadableStream>constructing</span> a
- <span title=concept-ReadableStream>ReadableStream</span>. Rethrow any exceptions.
+ <code title=concept-ReadableStream>ReadableStream</code> object. Rethrow any exceptions.
 
  <li><p>For each <var title>chunk</var> in <var title>chunks</var>,
  <span title=concept-enqueue-ReadableStream>enqueue</span> <var title>chunk</var> into
@@ -1169,8 +1168,25 @@ run these steps:
  <li>Return <var title>stream</var>.
 </ol>
 
+<p>To <dfn title=concept-construct-ReadableStream-with-byte-stream>construct</dfn> a
+<code title=concept-ReadableStream>ReadableStream</code> object with given a byte stream
+<var>byteStream</var>, run these steps:
+
+<p class=XXX>This operation is a workaround and will be deleted when we stop using byte streams. 
+
+<ol>
+ <li><p>Let <var>stream</var> be a <code title=concept-ReadableStream>ReadableStream</code> object
+ such that consuming it will result in chunks each of which is a <code title>Uint8Array</code>
+ object wrapping an <code title>ArrayBuffer</code> and the result of concatenating them all will be
+ equivalent to the byte sequence which would be read from <var>byteStream</var>. Rethrow any
+ exceptions.
+
+ <li><p>Return <var>stream</var>.
+</ol>
+
 <p>To <dfn title=concept-get-reader>get</dfn> a reader from a
-<span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var>, run these steps:
+<code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var>, run these steps:
+
 <ol>
  <li><p>Let <var title>reader</var> be the result of calling
  <code data-anolis-spec=streams>AcquireReadableStreamReader</code>(<var title>stream</var>).
@@ -1180,7 +1196,7 @@ run these steps:
 </ol>
 
 <p>To <dfn title=concept-read-all-bytes-from-ReadableStream>read</dfn> all bytes from a
-<span title=concept-ReadableStream>ReadableStream</span> with <var title>reader</var>, run these
+<code title=concept-ReadableStream>ReadableStream</code> object with <var>reader</var>, run these
 steps:
 
 <ol>
@@ -1195,7 +1211,7 @@ steps:
  <ul>
   <li><p>When <var title>read</var> is fulfilled with an object whose <code title>done</code>
   property is false and whose <code title>value</code> property is a
-  <code title>Uint8Array</code>, append the <code title>value</code> property to
+  <code title>Uint8Array</code> object, append the <code title>value</code> property to
   <var title>bytes</var> and run the above step again.
 
   <li><p>When <var title>read</var> is fulfilled with an object whose <code title>done</code>
@@ -1215,7 +1231,7 @@ steps:
 to read cannot be observed. Implementations could use more direct mechanism if convenient.
 
 <p>To <dfn title=concept-tee-ReadableStream>tee</dfn> a
-<span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var>, run these steps:
+<code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var>, run these steps:
 
 <ol>
  <li><p>Return the result of calling
@@ -1224,30 +1240,29 @@ to read cannot be observed. Implementations could use more direct mechanism if c
 </ol>
 
 <p>An <dfn title=concept-empty-ReadableStream>empty</dfn>
-<span title=concept-ReadableStream>ReadableStream</span> is the result of
+<code title=concept-ReadableStream>ReadableStream</code> object is the result of
 <span title=concept-construct-fixed-ReadableStream>constructing</span> a fixed
-<span title=concept-ReadableStream>ReadableStream</span> with an empty array.
+<code title=concept-ReadableStream>ReadableStream</code> object with an empty list.
 
 <p class="note no-backref">Constructing an <span title=concept-empty-ReadableStream>empty</span>
-<span title=concept-ReadableStream>ReadableStream</span> will not throw an exception.
+<code title=concept-ReadableStream>ReadableStream</code> object will not throw an exception.
 
-<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
-<dfn title=concept-ReadableStream-readable>readable</dfn> if <var title>stream</var>@[[state]] is
+<p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
+<dfn title=concept-ReadableStream-readable>readable</dfn> if <var>stream</var>@[[state]] is
 "readable".
 
-<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
-<dfn title=concept-ReadableStream-closed>closed</dfn> if <var title>stream</var>@[[state]] is
-"closed".
+<p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
+<dfn title=concept-ReadableStream-closed>closed</dfn> if <var>stream</var>@[[state]] is "closed".
 
-<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
-<dfn title=concept-ReadableStream-errored>errored</dfn> if <var title>stream</var>@[[state]] is
+<p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
+<dfn title=concept-ReadableStream-errored>errored</dfn> if <var>stream</var>@[[state]] is
 "errored".
 
-<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
+<p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
 <dfn title=concept-ReadableStream-locked>locked</dfn> if the result of calling
-<code data-anolis-spec=streams>IsReadableStreamLocked</code>(<var title>stream</var>) is true.
+<code data-anolis-spec=streams>IsReadableStreamLocked</code>(<var>stream</var>) is true.
 
-<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to
+<p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to
 <dfn title=concept-ReadableStream-need-more-data>need more data</dfn> if the following conditions
 hold:
 
@@ -1259,9 +1274,9 @@ hold:
  positive.
 </ul>
 
-<p>A <span title=concept-ReadableStream>ReadableStream</span> <var title>stream</var> is said to be
+<p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
 <dfn title=concept-ReadableStream-disturbed>disturbed</dfn> if the result of calling
-<code data-anolis-spec=streams>IsReadableStreamDisturbed</code>(<var title>stream</var>) is true.
+<code data-anolis-spec=streams>IsReadableStreamDisturbed</code>(<var>stream</var>) is true.
 
 
 
@@ -3394,120 +3409,82 @@ HTML, will likely not be exposed here. Rather, an HTML parser API might accept a
 due course.
 <!-- https://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>Objects implementing the <code>Body</code> mixin gain an associated
-<dfn title=concept-Body-body>body</dfn> (a byte stream), a
-<dfn title=concept-Body-used-flag>used flag</dfn> (initially unset), and a
+<p>Objects implementing the <code>Body</code> mixin gain a
 <dfn title=concept-Body-MIME-type>MIME type</dfn> (initially the empty byte sequence).
 
+<p>Objects implementing the <code>Body</code> mixin must define an associated
+<dfn title=concept-Body-disturbed>disturbed</dfn> predicate and a
+<dfn title=concept-Body-consume-body>consume body</dfn> algorithm.
+
 <p>The <dfn title=dom-Body-bodyUsed><code>bodyUsed</code></dfn> attribute's getter must
-return true if the <span title=concept-Body-used-flag>used flag</span> is set, and false
-otherwise.
+return true if <span title="concept-Body-disturbed">disturbed</span>, and false otherwise.
 
 <p>Objects implementing the <code>Body</code> mixin also have an associated
-<dfn title=concept-Body-consume-body>consume body</dfn> algorithm, which given a
-<var title>type</var>, runs these steps:
+<dfn title=concept-Body-package-data>package data</dfn> algorithm, which given
+<var>bytes</var>, a <var>type</var> and a <var>MIME type</var>, switches on <var>type</var>, and
+runs the associated steps:
 
-<ol>
- <li><p>Let <var title>p</var> be a new promise.
+<dl class=switch>
+ <dt><i title>ArrayBuffer</i>
+ <dd><p>Return an <code>ArrayBuffer</code> whose contents are <var>bytes</var>. Rethrow any
+ exceptions.
 
- <li><p>If <span title=concept-Body-used-flag>used flag</span> is set, reject
- <var title>p</var> with a <code title>TypeError</code>.
+ <dt><i title>Blob</i>
+ <dd><p>Return a <code data-anolis-spec=fileapi>Blob</code> whose contents are
+ <var>bytes</var> and <code data-anolis-spec=fileapi title=dom-Blob-type>type</code>
+ is <var>MIME type</var>.
 
- <li>
-  <p>Otherwise, set <span title=concept-Body-used-flag>used flag</span> and then run these
-  substeps <span data-anolis-spec=html>in parallel</span>:
-  <!-- We do not check for body being null to make this API work consistently.
-       Otherwise we'd need an additional flag. -->
+ <dt><i title>FormData</i>
+ <dd>
+  <p>If <var>MIME type</var> (ignoring parameters) is `<code>multipart/form-data</code>`,
+  run these substeps:
 
   <ol>
-   <li><p>Let <var title>stream</var> be <span title=concept-Body-body>body</span>.
+   <li><p>Parse <var>bytes</var>, using the value of the
+   `<code title>boundary</code>` parameter from <var>MIME type</var> and
+   <span data-anolis-spec=encoding>utf-8</span> as encoding, per the rules set forth
+   in <cite>Returning Values from Forms: multipart/form-data</cite>.
+   <span data-anolis-ref>RFC2388</span>
 
-   <li><p>If <var title>stream</var> is null, set <var title>stream</var> to an empty byte
-   sequence.
+   <li><p>If that fails for some reason, <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
 
-   <li><p>Let <var title>bytes</var> be the result of reading from <var title>stream</var>
-   until it returns end-of-stream.
-   <!-- XXX stream -->
-
-   <li>
-    <p>Switch on <var title>type</var>:
-
-    <dl class=switch>
-     <dt><i title>ArrayBuffer</i>
-     <dd><p>Resolve <var title>p</var> with an <code>ArrayBuffer</code> whose contents are
-     <var title>bytes</var>.
-
-     <dt><i title>Blob</i>
-     <dd><p>Resolve <var title>p</var> with a <code data-anolis-spec=fileapi>Blob</code>
-     whose contents are <var title>bytes</var> and
-     <code data-anolis-spec=fileapi title=dom-Blob-type>type</code> is
-     <span title=concept-Body-MIME-type>MIME type</span>.
-
-     <dt><i title>FormData</i>
-     <dd>
-      <p>If <span title=concept-Body-MIME-type>MIME type</span> (ignoring parameters)
-      is `<code>multipart/form-data</code>`, run these subsubsteps:
-
-      <ol>
-       <li><p>Parse <var title>bytes</var>, using the value of the
-       `<code title>boundary</code>` parameter from
-       <span title=concept-Body-MIME-type>MIME type</span> and
-       <span data-anolis-spec=encoding>utf-8</span> as encoding, per the rules set forth
-       in <cite>Returning Values from Forms: multipart/form-data</cite>.
-       <span data-anolis-ref>RFC2388</span>
-
-       <li><p>If that fails for some reason, reject <var title>p</var> with a
-       <code title>TypeError</code>.
-
-       <li><p>Otherwise, resolve <var title>p</var> with a new
-       <code data-anolis-spec=xhr>FormData</code> object, appending each entry, resulting
-       from the parsing operation, to
-       <span data-anolis-spec=xhr title=concept-FormData-entry>entries</span>.
-      </ol>
-
-      <p class=XXX>The above is a rough approximation of what is required for
-      `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
-      written. Volunteers welcome.
-
-      <p>Otherwise, if <span title=concept-Body-MIME-type>MIME type</span>
-      (ignoring parameters) is `<code>application/x-www-form-urlencoded</code>`, run these
-      subsubsteps:
-
-      <ol>
-       <li><p>Let <var title>entries</var> be the result of
-       <span data-anolis-spec=url title=concept-urlencoded-parser>parsing</span>
-       <var title>bytes</var>.
-
-       <li><p>If <var title>entries</var> is failure, reject <var title>p</var> with a
-       <code title>TypeError</code>.
-
-       <li><p>Resolve <var title>p</var> with a new
-       <code data-anolis-spec=xhr>FormData</code> object whose
-       <span data-anolis-spec=xhr title=concept-FormData-entry>entries</span> are
-       <var title>entries</var>.
-      </ol>
-
-      <p>Otherwise, reject <var title>p</var> with a <code title>TypeError</code>.
-
-     <dt><i title>JSON</i>
-     <dd>
-      <p>Let <var title>JSON</var> be the result of invoking the initial value of the
-      <code title>parse</code> property of the <code title>JSON</code> object with the
-      result of running <span data-anolis-spec=encoding>utf-8 decode</span> on
-      <var title>bytes</var> as argument.
-
-      <p>If that threw an exception, reject <var title>p</var> with that exception.
-
-      <p>Otherwise, resolve <var title>p</var> with <var title>JSON</var>.
-
-     <dt><i title>text</i>
-     <dd><p>Resolve <var title>p</var> with the result of running
-     <span data-anolis-spec=encoding>utf-8 decode</span> on <var title>bytes</var>.
-    </dl>
+   <li><p>Return a new <code data-anolis-spec=xhr>FormData</code> object, appending each entry,
+   resulting from the parsing operation, to
+   <span data-anolis-spec=xhr title=concept-FormData-entry>entries</span>.
   </ol>
 
- <li><p>Return <var title>p</var>.
-</ol>
+  <p class=XXX>The above is a rough approximation of what is required for
+  `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
+  written. Volunteers welcome.
+
+  <p>Otherwise, if <var>MIME type</var> (ignoring parameters) is
+  `<code>application/x-www-form-urlencoded</code>`, run these substeps:
+
+  <ol>
+   <li><p>Let <var>entries</var> be the result of
+   <span data-anolis-spec=url title=concept-urlencoded-parser>parsing</span> <var>bytes</var>.
+
+   <li><p>If <var>entries</var> is failure, <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
+
+   <li><p>Return a new <code data-anolis-spec=xhr>FormData</code> object whose
+   <span data-anolis-spec=xhr title=concept-FormData-entry>entries</span> are <var>entries</var>.
+  </ol>
+
+  <p>Otherwise, <span data-anolis-spec=webidl>throw</span> a<code title>TypeError</code>.
+
+ <dt><i title>JSON</i>
+ <dd>
+  <p>Return the result of invoking the initial value of the <code title>parse</code> property of
+  the <code title>JSON</code> object with the result of running
+  <span data-anolis-spec=encoding>utf-8 decode</span> on <var>bytes</var> as argument.
+  Rethrow any exceptions.
+
+ <dt><i title>text</i>
+ <dd><p>Return the result of running <span data-anolis-spec=encoding>utf-8 decode</span> on
+ <var>bytes</var>.
+</dl>
 
 <p>The <dfn title=dom-Body-arrayBuffer><code>arrayBuffer()</code></dfn>
 method, when invoked, must return the result of running
@@ -3596,9 +3573,43 @@ will still need to support it as a
 is itself associated with <span title=concept-Request-request>request</span>'s
 <span title=concept-request-header-list>header list</span>.
 
-<p>A <code>Request</code> object's <span title=concept-Body-body>body</span> is its
-<span title=concept-Request-request>request</span>'s
-<span title=concept-request-body>body</span>.
+<p>A <code>Request</code> object also has an associated
+<dfn title=concept-Request-disturbed-flag>disturbed flag</dfn> which is initially unset.
+
+<p>A <code>Request</code> object's <span title=concept-Body-disturbed>disturbed</span> predicate
+returns true if the associated <span title=concept-Request-request>request</span>'s
+<span title=concept-request-body>body</span> is not null and the associated
+<span title=concept-Request-disturbed-flag>disturbed flag</span> is set.
+
+<p>A <code>Request</code> object's <span title=concept-body-consume-body>consume body</span>
+algorithm, which given a <var>type</var>, runs these steps:
+
+<ol>
+ <li><p>If this <code>Request</code> object is <span title=concept-Body-disturbed>disturbed</span>,
+ return a new promise rejected with a <code>TypeError</code>.
+
+ <li><p>Set <span title=concept-Request-disturbed-flag>disturbed flag</span>.
+
+ <li><p>Let <var>p</var> be a new promise.
+
+ <li>
+  <p>Run these substeps <span data-anolis-spec=html>in parallel</span>:
+  <ol>
+   <li><p>Let <var>bytes</var> be the empty byte sequence.
+
+   <li><p>If <span title=concept-Request-request>request</span>'s
+   <span title=concept-request-body>body</span> is not null, set <var>bytes</var> to the result of
+   reading from <span title=concept-Request-request>request</span>'s
+   <span title=concept-request-body>body</span> until it returns end-of-stream.
+
+   <li><p>Resolve <var>p</var> with the result of running the
+   <span title=concept-body-package-data>package data</span> algorithm with <var>bytes</var>,
+   <var>type</var> and <span title=concept-Body-MIME-type>MIME type</span>. If that threw an
+   exception, reject <var>p</var> with that exception.
+  </ol>
+
+ <li><p>Return <var>p</var>.
+</ol>
 
 <hr>
 
@@ -3607,14 +3618,13 @@ is itself associated with <span title=concept-Request-request>request</span>'s
 constructor must run these steps:
 
 <ol>
- <li><p>If <var title>input</var> is a <code>Request</code> object and its
- <span title=concept-Body-used-flag>used flag</span> is set,
+ <li><p>If <var>input</var> is a <code>Request</code> object and it is
+ <span title=concept-Body-disturbed>disturbed</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
  <li><p>Let <var title>temporaryBody</var> be <var title>input</var>'s
- <span title=concept-Body-body>body</span> if <var title>input</var> is a
- <code>Request</code> object and <var title>input</var>'s
- <span title=concept-Body-body>body</span> is non-null, and null otherwise.
+ <span title=concept-Request-request>request</span>'s <span title=concept-request-body>body</span>
+ if <var>input</var> is a <code>Request</code> object, and null otherwise.
 
  <li><p>Let <var title>request</var> be <var title>input</var>'s
  <span title=concept-Request-request>request</span>, if <var title>input</var> is a
@@ -3855,11 +3865,11 @@ constructor must run these steps:
   substeps:
 
   <ol>
-   <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
-   <span title=concept-BodyInit-extract>extracting</span> <var title>init</var>'s
+   <li><p>Let <var>stream</var> and <var>Content-Type</var> be the result of
+   <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s
    <code title>body</code> member.
 
-   <li><p>Set <var title>temporaryBody</var> to <var title>stream</var>.
+   <li><p>Set <var>temporaryBody</var> to <var>stream</var>.
 
    <li><p>If <var title>Content-Type</var> is non-null and <var title>r</var>'s
    <span title=concept-Request-request>request</span>'s
@@ -3870,8 +3880,8 @@ constructor must run these steps:
    <code>Headers</code> object. Rethrow any exception.
   </ol>
 
- <li><p>Set <var title>r</var>'s <span title=concept-Body-body>body</span> to
- <var title>temporaryBody</var>.
+ <li><p>Set <var>r</var>'s <span title=concept-Request-request>request</span>'s
+ <span title=concept-request-body>body</span> to <var>temporaryBody</var>.
  <!-- Any steps after this must not throw. -->
 
  <li><p>Set <var title>r</var>'s <span title=concept-Body-MIME-type>MIME type</span> to
@@ -3880,15 +3890,16 @@ constructor must run these steps:
  <span title=concept-request-header-list>header list</span>.
 
  <li>
-  <p>If <var title>input</var> is a <code>Request</code> object and
-  <var title>input</var>'s <span title=concept-Body-body>body</span> is non-null, run
-  these substeps:
+  <p>If <var>input</var> is a <code>Request</code> object and
+  <var>input</var>'s <span title=concept-Request-request>request</span>'s
+  <span title=concept-request-body>body</span> is non-null, run these substeps:
 
   <ol>
-   <li><p>Set <var title>input</var>'s <span title=concept-Body-body>body</span> to null.
+   <li><p>Set <var>input</var>'s <span title=concept-Request-request>request</span>'s
+   <span title=concept-request-body>body</span> to null.
 
-   <li><p>Set <var title>input</var>'s
-   <span title=concept-Body-used-flag>used flag</span>.
+   <li><p>Set <var>input</var>'s
+   <span title=concept-Request-disturbed-flag>disturbed flag</span>.
   </ol>
 
  <li><p>Return <var title>r</var>.
@@ -3962,7 +3973,7 @@ must return <span title=concept-Request-request>request</span>'s
 run these steps:
 
 <ol>
- <li><p>If <span title=concept-Body-used-flag>used flag</span> is set,
+ <li><p>If this <code>Request</code> object is <span title=concept-Body-disturbed>disturbed</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
  <li><p>Let <var title>newRequest</var> be a copy of
@@ -3997,6 +4008,7 @@ interface <dfn>Response</dfn> {
   readonly attribute boolean <span title=dom-Response-ok>ok</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
   [SameObject] readonly attribute <span>Headers</span> <span title=dom-Response-headers>headers</span>;
+  [SameObject] readonly attribute <code title=concept-ReadableStream>ReadableStream</code> <span title=dom-Response-body>body</span>;
 
   [NewObject] <span>Response</span> <span title=dom-Response-clone>clone</span>();
 };
@@ -4018,9 +4030,52 @@ enum <dfn>ResponseType</dfn> { "basic", "cors", "default", "error", "opaque", "o
 is itself associated with <span title=concept-Response-response>response</span>'s
 <span title=concept-response-header-list>header list</span>.
 
-<p>A <code>Response</code> object's <span title=concept-Body-body>body</span> is its
-<span title=concept-Response-response>response</span>'s
-<span title=concept-response-body>body</span>.
+<p>A <code>Response</code> object also has an associated
+<dfn title=concept-Response-readable-stream>readable stream</dfn> which is null or a
+<code title=concept-ReadableStream>ReadableStream</code> object. Its initial value is null.
+
+<p class="XXX"><a href="https://github.com/whatwg/streams/issues/379">This might become a
+<code>ReadableByteStream</code> object</a>. While the type might change, the behavior specified will
+be equivalent since the hypothetical <code title>ReadableByteStream</code> object will have the same
+members as the <code title=concept-ReadableStream>ReadableStream</code> object has today.
+
+<p>A <code>Response</code> object is said to be <dfn title=concept-Response-locked>locked</dfn> if
+the associated <span title=concept-Response-readable-stream>readable stream</span> is not null and
+it is <span title=concept-ReadableStream-locked>locked</span>.
+
+<p>A <code>Response</code> object's <span title=concept-Body-disturbed>disturbed</span> predicate
+returns true if the associated <span title=concept-Response-readable-stream>readable stream</span>
+is not null and it is <span title=concept-ReadableStream-disturbed>disturbed</span>.
+
+<p>A <code>Response</code> object's <span title=concept-body-consume-body>consume body</span>
+algorithm, which given a <var>type</var>, runs these steps:
+
+<ol>
+ <li><p>If this <code>Response</code> object is <span title=concept-Body-disturbed>disturbed</span>
+ or <span title=concept-Response-locked>locked</span>, return a new promise rejected with a
+ <code>TypeError</code>.
+
+ <li><p>Let <var>stream</var> be <span title=concept-Response-readable-stream>readable
+ stream</span>.
+
+ <li><p>If <var>stream</var> is null, set <var>stream</var> to an
+ <span title=concept-empty-ReadableStream>empty</span>
+ <code title=concept-ReadableStream>ReadableStream</code> object.
+
+ <li><p>Let <var>reader</var> be the result of <span title=concept-get-reader>getting</span>
+ a reader from <var>stream</var>. If that threw an exception, return a new promise rejected
+ with that exception.
+
+ <li><p>Let <var>promise</var> be the result of
+ <span title=concept-read-all-bytes-from-ReadableStream>reading</span> all bytes from
+ <var>stream</var> with <var>reader</var>.
+
+ <li><p>Return the result of transforming <var>promise</var> by a fulfillment handler that
+ returns the result of the <span title=concept-body-package-data>package data</span> algorithm
+ with its first argument, <var>type</var> and <span title=concept-body-mime-type>MIME type</span>.
+ <!-- XXX IDL really needs to define "transforming". For now it is defined in
+          http://www.w3.org/2001/tag/doc/promises-guide -->
+</ol>
 
 <p>The
 <dfn title=dom-Response><code>Response(<var>body</var>, <var>init</var>)</code></dfn>
@@ -4073,11 +4128,14 @@ constructor, when invoked, must run these steps:
     <p class="note no-backref"><code title>101</code> is included in
     <span>null body status</span> due to its use elsewhere. It does not affect this step.
 
-   <li><p>Let <var title>stream</var> and <var title>Content-Type</var> be the result of
-   <span title=concept-BodyInit-extract>extracting</span> <var title>body</var>.
+   <li><p>Let <var>byteStream</var> and <var>Content-Type</var> be the result of
+   <span title=concept-BodyInit-extract>extracting</span> <var>body</var>.
 
-   <li><p>Set <var title>r</var>'s <span title=concept-Response-response>response</span>'s
-   <span title=concept-response-body>body</span> to <var title>stream</var>.
+   <li><p>Set <var>r</var>'s
+   <span title=concept-Response-readable-stream>readable stream</span> to the result of
+   <span title=concept-construct-ReadableStream-with-byte-stream>constructing</span> a
+   <code title=concept-ReadableStream>ReadableStream</code> object with <var>byteStream</var>.
+   Rethrow any exceptions.
 
    <li><p>If <var title>Content-Type</var> is non-null and <var title>r</var>'s
    <span title=concept-Response-response>response</span>'s
@@ -4169,21 +4227,22 @@ must return <span title=concept-Response-response>response</span>'s
 <p>The <dfn title=dom-Response-headers><code>headers</code></dfn> attribute's getter must
 return the associated <code>Headers</code> object.
 
+<p>The <dfn title=dom-Response-body><code>body</code></dfn> attribute's getter must return the
+associated <span title=concept-Response-readable-stream>readable stream</span>.
+
 <hr>
 
 <p>The <dfn title=dom-Response-clone><code>clone()</code></dfn> method, when invoked, must
 run these steps:
 
 <ol>
- <li><p>If <span title=concept-Body-used-flag>used flag</span> is set,
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+ <li><p>If this <code>Response</code> object is <span title=concept-Body-disturbed>disturbed</span>
+ or <span title=concept-Response-locked>locked</span>, <span data-anolis-spec=webidl>throw</span> a
+ <code>TypeError</code>.
 
  <li><p>Let <var title>newResponse</var> be a copy of
- <span title=concept-Response-response>response</span>, with
- <var title>newResponse</var>'s <span title=concept-response-body>body</span> being a tee
- of <span title=concept-Response-response>response</span>'s
+ <span title=concept-Response-response>response</span> except its
  <span title=concept-response-body>body</span>.
- <!-- Similar text in: HTTP-network-or-cache fetch -->
 
  <li><p>Let <var title>r</var> be a new <code>Response</code> object associated with
  <var title>newResponse</var> and a new <code>Headers</code> object whose
@@ -4191,7 +4250,19 @@ run these steps:
  <span data-anolis-spec=dom>context object</span>'s <code>Headers</code>'
  <span title=concept-Headers-guard>guard</span>.
 
- <li><p>Return <var title>r</var>.
+ <li><p>If <span title=concept-Response-readable-stream>readable stream</span> is null, Return
+ <var>r</var>.
+
+ <li><p>Let «<var>out1</var>, <var>out2</var>» be the result of
+ <span title=concept-tee-ReadableStream>teeing</span>
+ <span title=concept-Response-readable-stream>readable stream</span>. Rethrow any exceptions.
+
+ <li><p>Set <span title=concept-Response-readable-stream>readable stream</span> to <var>out1</var>.
+
+ <li><p>Set <var>r</var>'s <span title=concept-Response-readable-stream>readable stream</span> to
+ <var>out2</var>.
+
+ <li><p>Return <var>r</var>.
 </ol>
 
 
@@ -4217,44 +4288,101 @@ interface <dfn>GlobalFetch</dfn> {
 method, must run these steps:
 
 <ol>
- <li><p>Let <var title>p</var> be a new promise.
+ <li><p>Let <var>p</var> be a new promise.
 
- <li><p>Let <var title>r</var> be the associated
+ <li><p>Let <var>request</var> be the associated
  <span title=concept-request>request</span> of the result of invoking the initial value of
- <code title=dom-Request>Request</code> as constructor with <var title>input</var> and
- <var title>init</var> as arguments. If this throws an exception, reject
- <var title>p</var> with it.
+ <code title=dom-Request>Request</code> as constructor with <var>input</var> and
+ <var>init</var> as arguments. If this throws an exception, reject
+ <var>p</var> with it and return <var>p</var>.
 
- <li><p>Set <var title>r</var>'s <span title=concept-request-initiator>initiator</span> to
+ <li><p>Set <var>request</var>'s <span title=concept-request-initiator>initiator</span> to
  "<code title>fetch</code>".
 
- <li><p>Set <var title>r</var>'s
- <span title=concept-request-destination>destination</span> to
+ <li><p>Set <var>request</var>'s <span title=concept-request-destination>destination</span> to
  "<code title>subresource</code>".
+
+ <li><p>Let <var>stream</var> be null.
 
  <li>
   <p>Run the following <span data-anolis-spec=html>in parallel</span>:
 
-  <p><span title=concept-fetch>Fetch</span> <var title>r</var>.
+  <p><span title=concept-fetch>Fetch</span> <var>request</var>.
 
-  <p>To <span>process response</span> for <var title>response</var>, run these substeps:
+  <p>To <span>process response</span> for <var>response</var>, run these substeps:
 
   <ol>
-   <li><p>If <var title>response</var>'s <span title=concept-response-type>type</span> is
-   "<code title>error</code>", reject <var title>p</var> with a
-   <code title>TypeError</code>.
+   <li><p>If <var>response</var>'s <span title=concept-response-type>type</span> is
+   "<code title>error</code>", reject <var>p</var> with a <code title>TypeError</code> and terminate
+   these substeps.
 
-   <li><p>Otherwise, resolve <var title>p</var> with a new <code>Response</code> object
-   associated with <var title>response</var> and a new <code>Headers</code> object whose
+   <li><p>Let <var>responseObject</var> be a new <code>Response</code> object associated with
+   <var>response</var> and a new <code>Headers</code> object whose
    <span title=concept-Headers-guard>guard</span> is "<code title>immutable</code>".
+
+   <li><p>If <var>response</var>'s <span title=concept-response-body>body</span> is null, resolve
+   <var>p</var> with <var>responseObject</var> and terminate these substeps.
+
+   <li><p>Let <var>pull</var> be an action that <span title=concept-fetch-resume>resumes</span> the
+   ongoing fetch if it is <span title=concept-fetch-suspend>suspended</span>.
+
+   <li><p>Let <var>cancel</var> be an action that
+   <span title=concept-fetch-terminate>terminates</span> the ongoing fetch with reason
+   <i title>end-user abort</i>.
+
+   <li>
+    <p>Let <var>strategy</var> be an object. The user agent may choose any object.
+    <p class="note no-backref"><var>strategy</var> is used to control the queuing strategy of
+    <var>stream</var> constructed below.
+
+   <li>
+    <p>Set <var>stream</var> to the result of
+    <span title=concept-construct-ReadableStream>constructing</span> a
+    <code title=concept-ReadableStream>ReadableStream</code> object with <var>strategy</var>,
+    <var>pull</var> and <var>cancel</var>. If that threw an exception, run the following
+    subsubsteps and terminate these substeps:
+
+    <ol>
+     <li><p>Reject <var>p</var> with that exception.
+
+     <li><p><span title=concept-fetch-terminate>Terminate</span> the ongoing fetch with reason
+     <i title>fatal</i>.
+    </ol>
+
+   <li><p>Set <var>responseObject</var>'s <span title=concept-Response-readable-stream>readable
+   stream</span> to <var>stream</var>.
+
+   <li><p>Resolve <var>p</var> with <var>responseObject</var>.
   </ol>
 
-  <p>To <span>process response body</span> for <var title>response</var>, do nothing.
+  <p>To <span>process response body</span> for <var>response</var>, run these substeps:
 
-  <p>To <span>process response end-of-file</span> for <var title>response</var>,
-  do nothing.
+  <ol>
+   <li><p>If <var>stream</var> is null, terminate these substeps.
 
- <li><p>Return <var title>p</var>.
+   <li>
+    <p><span title=concept-enqueue-ReadableStream>Enqueue</span> a <code title>Uint8Array</code>
+    object wrapping an <code title>ArrayBuffer</code> containing the result of reading
+    <var>response</var>'s <span title=concept-response-body>body</span> into <var>stream</var>. If
+    that threw an exception, run the following subsubsteps and terminate these substeps:
+
+    <ol>
+     <li><p>Reject <var>p</var> with that exception.
+
+     <li><p><span title=concept-fetch-terminate>Terminate</span> the ongoing fetch with reason
+     <i title>fatal</i>.
+    </ol>
+
+   <li><p>If <var>stream</var> doesn't
+   <span title=concept-ReadableStream-need-more-data>need more data</span>, ask the user agent to
+   <span title=concept-fetch-suspend>suspend</span> the ongoing fetch.
+  </ol>
+
+  <p>To <span>process response end-of-file</span> for <var>response</var>,
+  <span title=concept-close-ReadableStream>close</span> <var>stream</var>
+  if <var>stream</var> is not null.
+
+ <li><p>Return <var>p</var>.
 </ol>
 
 
