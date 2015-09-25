@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-22-september-2015">Living Standard — Last Updated 22 September 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-25-september-2015">Living Standard — Last Updated 25 September 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -798,8 +798,8 @@ an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.or
 <dfn id="synchronous-flag">synchronous flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-mode" title="concept-request-mode">mode</dfn>, which is one of "<code title="">same-origin</code>",
-"<code title="">no-cors</code>", "<code title="">cors</code>", and
+<dfn id="concept-request-mode" title="concept-request-mode">mode</dfn>, which is one of "<code title="">navigate</code>",
+"<code title="">same-origin</code>", "<code title="">no-cors</code>", "<code title="">cors</code>", and
 "<code title="">cors-with-forced-preflight</code>". Unless stated otherwise, it is
 "<code title="">no-cors</code>".
 
@@ -1094,7 +1094,7 @@ tracking functionality.
 <p>When a <a href="#concept-fetch-group" title="concept-fetch-group">fetch group</a> is
 <dfn id="concept-fetch-group-terminate" title="concept-fetch-group-terminate">terminated</dfn>, for each associated
 <a href="#concept-fetch-record" title="concept-fetch-record">fetch record</a> whose
-<span title="concept-request-record-request">request</span>'s <a href="#done-flag">done flag</a> or
+<a href="#concept-fetch-record-request" title="concept-fetch-record-request">request</a>'s <a href="#done-flag">done flag</a> or
 <a href="#keep-alive-flag">keep-alive flag</a> is unset,
 <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminate</a> the
 <a href="#concept-fetch-record" title="concept-fetch-record">fetch record</a>'s
@@ -1718,6 +1718,8 @@ redirects.
    <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
    "<code title="">about</code>"
+   <dt><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+   "<code title="">navigate</code>"
 
    <dd><p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var title="">request</var>.
 
@@ -3600,7 +3602,7 @@ interface <dfn id="request">Request</dfn> {
 
 enum <dfn id="requesttype">RequestType</dfn> { "", "audio", "font", "image", "script", "style", "track", "video" };
 enum <dfn id="requestdestination">RequestDestination</dfn> { "", "document", "sharedworker", "subresource", "unknown", "worker" };
-enum <dfn id="requestmode">RequestMode</dfn> { "same-origin", "no-cors", "cors" };
+enum <dfn id="requestmode">RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
 enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };
 enum <dfn id="requestcache">RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum <dfn id="requestredirect">RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
@@ -3728,11 +3730,22 @@ constructor must run these steps:
    <li><p>Set <var title="">fallbackCredentials</var> to "<code title="">omit</code>".
   </ol>
 
- <li><p>If any of <var title="">init</var>'s members are present, unset <var title="">request</var>'s
- <a href="#omit-origin-header-flag">omit-<code>Origin</code>-header flag</a>, set <var title="">request</var>'s
- <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to "<code>client</code>", and
- <var title="">request</var>'s <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a> to
- the empty string.
+ <li>
+  <p>If any of <var title="">init</var>'s members are present, run these substeps:
+
+  <ol>
+   <li><p>If <var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
+   "<code title="">navigate</code>", <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+   <code title="">TypeError</code>.
+
+   <li><p>Unset <var>request</var>'s <a href="#omit-origin-header-flag">omit-<code>Origin</code>-header flag</a>.
+
+   <li><p>Set <var>request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to
+   "<code>client</code>"
+
+   <li><p>Set <var>request</var>'s
+   <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a> to the empty string.
+  </ol>
 
  <li>
   <p>If <var title="">init</var>'s <code>referrer</code> member is present, run these
@@ -3777,6 +3790,9 @@ constructor must run these steps:
 
  <li><p>Let <var title="">mode</var> be <var title="">init</var>'s <code title="">mode</code>
  member if it is present, and <var title="">fallbackMode</var> otherwise.
+
+ <li><p>If <var>mode</var> is "<code title="">navigate</code>",
+ <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>If <var title="">mode</var> is non-null, set <var title="">request</var>'s
  <a href="#concept-request-mode" title="concept-request-mode">mode</a> to <var title="">mode</var>.

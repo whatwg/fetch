@@ -738,8 +738,8 @@ an <span data-anolis-spec=html>environment settings object</span>.
 <dfn>synchronous flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-mode>mode</dfn>, which is one of "<code title>same-origin</code>",
-"<code title>no-cors</code>", "<code title>cors</code>", and
+<dfn title=concept-request-mode>mode</dfn>, which is one of "<code title>navigate</code>",
+"<code title>same-origin</code>", "<code title>no-cors</code>", "<code title>cors</code>", and
 "<code title>cors-with-forced-preflight</code>". Unless stated otherwise, it is
 "<code title>no-cors</code>".
 
@@ -1034,7 +1034,7 @@ tracking functionality.
 <p>When a <span title=concept-fetch-group>fetch group</span> is
 <dfn title=concept-fetch-group-terminate>terminated</dfn>, for each associated
 <span title=concept-fetch-record>fetch record</span> whose
-<span title=concept-request-record-request>request</span>'s <span>done flag</span> or
+<span title=concept-fetch-record-request>request</span>'s <span>done flag</span> or
 <span>keep-alive flag</span> is unset,
 <span title=concept-fetch-terminate>terminate</span> the
 <span title=concept-fetch-record>fetch record</span>'s
@@ -1658,6 +1658,8 @@ redirects.
    <span title=concept-request-current-url>current url</span>'s
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
    "<code title>about</code>"
+   <dt><var>request</var>'s <span title=concept-request-mode>mode</span> is
+   "<code title>navigate</code>"
 
    <dd><p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using <var title>request</var>.
 
@@ -3540,7 +3542,7 @@ interface <dfn>Request</dfn> {
 
 enum <dfn>RequestType</dfn> { "", "audio", "font", "image", "script", "style", "track", "video" };
 enum <dfn>RequestDestination</dfn> { "", "document", "sharedworker", "subresource", "unknown", "worker" };
-enum <dfn>RequestMode</dfn> { "same-origin", "no-cors", "cors" };
+enum <dfn>RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };
 enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum <dfn>RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
@@ -3668,11 +3670,22 @@ constructor must run these steps:
    <li><p>Set <var title>fallbackCredentials</var> to "<code title>omit</code>".
   </ol>
 
- <li><p>If any of <var title>init</var>'s members are present, unset <var title>request</var>'s
- <span>omit-<code>Origin</code>-header flag</span>, set <var title>request</var>'s
- <span title=concept-request-referrer>referrer</span> to "<code>client</code>", and
- <var title>request</var>'s <span title=concept-request-referrer-policy>referrer policy</span> to
- the empty string.
+ <li>
+  <p>If any of <var title>init</var>'s members are present, run these substeps:
+
+  <ol>
+   <li><p>If <var>request</var>'s <span title=concept-request-mode>mode</span> is
+   "<code title>navigate</code>", <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
+
+   <li><p>Unset <var>request</var>'s <span>omit-<code>Origin</code>-header flag</span>.
+
+   <li><p>Set <var>request</var>'s <span title=concept-request-referrer>referrer</span> to
+   "<code>client</code>"
+
+   <li><p>Set <var>request</var>'s
+   <span title=concept-request-referrer-policy>referrer policy</span> to the empty string.
+  </ol>
 
  <li>
   <p>If <var title>init</var>'s <code>referrer</code> member is present, run these
@@ -3717,6 +3730,9 @@ constructor must run these steps:
 
  <li><p>Let <var title>mode</var> be <var title>init</var>'s <code title>mode</code>
  member if it is present, and <var title>fallbackMode</var> otherwise.
+
+ <li><p>If <var>mode</var> is "<code title>navigate</code>",
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
  <li><p>If <var title>mode</var> is non-null, set <var title>request</var>'s
  <span title=concept-request-mode>mode</span> to <var title>mode</var>.
