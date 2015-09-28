@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-26-september-2015">Living Standard — Last Updated 26 September 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-28-september-2015">Living Standard — Last Updated 28 September 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -55,10 +55,11 @@ fetching.
      <li><a href="#responses"><span class="secno">3.1.6 </span>Responses</a></ol></li>
    <li><a href="#authentication-entries"><span class="secno">3.2 </span>Authentication entries</a></li>
    <li><a href="#fetch-groups"><span class="secno">3.3 </span>Fetch groups</a></li>
-   <li><a href="#referrer-policies"><span class="secno">3.4 </span>Referrer policies</a></li>
-   <li><a href="#streams"><span class="secno">3.5 </span>Streams</a>
+   <li><a href="#connections"><span class="secno">3.4 </span>Connections</a></li>
+   <li><a href="#referrer-policies"><span class="secno">3.5 </span>Referrer policies</a></li>
+   <li><a href="#streams"><span class="secno">3.6 </span>Streams</a>
     <ol>
-     <li><a href="#readablestream"><span class="secno">3.5.1 </span>ReadableStream</a></ol></ol></li>
+     <li><a href="#readablestream"><span class="secno">3.6.1 </span>ReadableStream</a></ol></ol></li>
  <li><a href="#http-extensions"><span class="secno">4 </span>HTTP extensions</a>
   <ol>
    <li><a href="#origin-header"><span class="secno">4.1 </span>`<code title="">Origin</code>` header</a></li>
@@ -1102,7 +1103,46 @@ tracking functionality.
 <a href="#concept-fetch-record-fetch" title="concept-fetch-record-fetch">fetch</a> with reason <i title="">fatal</i>.
 
 
-<h3 id="referrer-policies"><span class="secno">3.4 </span>Referrer policies</h3>
+<h3 id="connections"><span class="secno">3.4 </span>Connections</h3>
+
+<p>A user agent has an associated <dfn id="concept-connection-pool" title="concept-connection-pool">connection pool</dfn>. A
+<a href="#concept-connection-pool" title="concept-connection-pool">connection pool</a> consists of zero or more
+<dfn id="concept-connection" title="concept-connection">connections</dfn>. Each
+<span title="concept-conneciton">connection</span> is identified by an <b>origin</b> (an
+<a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>) and <b>credentials</b> (a boolean).
+
+<p>To <dfn id="concept-connection-obtain" title="concept-connection-obtain">obtain a connection</dfn>, given an <var>origin</var> and
+<var>credentials</var>, run these steps:
+
+<ol>
+ <li><p>If <a href="#concept-connection-pool" title="concept-connection-pool">connection pool</a> contains a
+ <span title="concept-conneciton">connection</span> whose <b>origin</b> is <var>origin</var> and
+ <b>credentials</b> is <var>credentials</var>, return that
+ <span title="concept-conneciton">connection</span>.
+
+ <li>
+  <p>Let <var>connection</var> be the result of establishing an HTTP connection to
+  <var>origin</var>. <a href="#refsHTTP">[HTTP]</a>
+
+  <p>If establishing a connection does not succeed (e.g., a DNS, TCP, or TLS error), return failure.
+
+ <li><p>Add <var>connection</var> to the <a href="#concept-connection-pool" title="concept-connection-pool">connection pool</a>
+ with <b>origin</b> being <var>origin</var> and <b>credentials</b> being <var>credentials</var>.
+
+ <li><p>Return <var>connection</var>.
+</ol>
+
+<p class="note no-backref">This is intentionally a little vague as the finer points are still
+evolving. Describing this helps explain the <code>&lt;link rel=preconnect&gt;</code> feature and
+clearly stipulates that <span title="concept-conneciton">connections</span> are keyed on
+<b>credentials</b>. The latter clarifies that e.g., TLS session identifiers are not reused across
+<span title="concept-conneciton">connections</span> whose <b>credentials</b> are false with
+<span title="concept-conneciton">connections</span> whose <b>credentials</b> are true.
+<!-- See https://github.com/whatwg/fetch/issues/114#issuecomment-143500095 for when we make
+     WebSocket saner -->
+
+
+<h3 id="referrer-policies"><span class="secno">3.5 </span>Referrer policies</h3>
 
 <p>A <dfn id="concept-referrer-policy" title="concept-referrer-policy">referrer policy</dfn> is the empty string,
 "<code>no-referrer</code>", "<code>no-referrer-when-downgrade</code>",
@@ -1122,11 +1162,11 @@ tracking functionality.
 <a href="#refsREFERRER">[REFERRER]</a>
 
 
-<h3 id="streams"><span class="secno">3.5 </span>Streams</h3>
+<h3 id="streams"><span class="secno">3.6 </span>Streams</h3>
 
 <p class="note no-backref">This section might be integrated into other standards, such as IDL.
 
-<h4 id="readablestream"><span class="secno">3.5.1 </span>ReadableStream</h4>
+<h4 id="readablestream"><span class="secno">3.6.1 </span>ReadableStream</h4>
 
 <p>A <dfn id="concept-readablestream" title="concept-ReadableStream">ReadableStream</dfn> represents a
 <a class="external" data-anolis-spec="streams" href="https://streams.spec.whatwg.org/#rs-class" title="readablestream">stream of data</a>. In this section, we
@@ -2609,25 +2649,28 @@ The <i title="">credentials flag</i> is one too.
 <var title="">request</var> with an optional <i title="">credentials flag</i>, run these steps:
 
 <ol>
+ <li><p>Let <var>credentials</var> be true if <i title="">credentials flag</i> is set, and false
+ otherwise.
+
+ <li><p>Let <var>connection</var> be the result of
+ <a href="#concept-connection-obtain" title="concept-connection-obtain">obtaining a connection</a>, given <var>request</var>'s
+ <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> and <var>credentials</var>.
+
+ <li><p>If <var>connection</var> is failure, return a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
  <li>
-  <p>Let <var title="">response</var> be the result of making an HTTP request using
-  <var title="">request</var>, following the requirements from HTTP, and waiting until either
-  all the <a href="#concept-header" title="concept-header">headers</a> are transmitted or a
-  <a href="#concept-network-error" title="concept-network-error">network error</a> was returned. If a
-  <a href="#concept-network-error" title="concept-network-error">network error</a> was returned due to
-  <a href="#concept-fetch" title="concept-fetch">fetch</a> being
+  <p>Let <var>response</var> be the result of making an HTTP request over <var>connection</var>
+  using <var>request</var>, following the relevant requirements from HTTP, and waiting until all the
+  <a href="#concept-header" title="concept-header">headers</a> are transmitted or
+  <a href="#concept-fetch" title="concept-fetch">fetch</a> is being
   <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
-  <var title="">reason</var>, set <var title="">response</var>'s
+  <var title="">reason</var>. If <a href="#concept-fetch" title="concept-fetch">fetch</a> is being
+  <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a>, set <var title="">response</var>'s
   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
   <var title="">reason</var>.
   <a href="#refsHTTP">[HTTP]</a>
-
-  <p>HTTP requests should be grouped based on the <i title="">credentials flag</i>.
-  HTTP requests with the <i title="">credentials flag</i> set should not share anything about
-  the connection or TLS particulars (such as session identifiers) with HTTP requests that
-  have the <i title="">credentials flag</i> unset. In other words, ambient authority should
-  not leak across this grouping.
-  <!-- XXX https://www.w3.org/Bugs/Public/show_bug.cgi?id=26556 -->
 
   <p>If the HTTP request results in a TLS client certificate dialog, run these substeps:
 
