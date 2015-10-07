@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-6-october-2015">Living Standard — Last Updated 6 October 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-13-october-2015">Living Standard — Last Updated 13 October 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -3110,7 +3110,7 @@ Entries may be removed before that moment arrives.
 <p class="no-backref">The <a href="#dom-global-fetch"><code title="dom-global-fetch">fetch()</code></a> method is relatively
 low-level API for <a href="#concept-fetch" title="concept-fetch">fetching</a> resources. It covers slightly
 more ground than <a href="https://xhr.spec.whatwg.org/#xmlhttprequest"><code class="external" data-anolis-spec="xhr">XMLHttpRequest</code></a>, although it is
-currently lacking when it comes to reporting progression.
+currently lacking when it comes to request progression (not response progression).
 
 <div class="example no-backref">
  <p>The <a href="#dom-global-fetch"><code title="dom-global-fetch">fetch()</code></a> method makes it quite straightforward
@@ -3143,6 +3143,31 @@ currently lacking when it comes to reporting progression.
     params = {lat:35.696233, long:139.570431}
 Object.keys(params).forEach(key =&gt; url.searchParams.append(key, params[key]))
 fetch(url).then(/* … */)</pre>
+
+ <p>If you want to receive the body data progressively:
+
+ <pre>function consume(reader) {
+  var total = 0
+  return new Promise((resolve, reject) =&gt; {
+    function pump() {
+      reader.read().then(({done, value}) =&gt; {
+        if (done) {
+          resolve()
+          return
+        }
+        total += value.byteLength
+        log(`received ${value.byteLength} bytes (${total} bytes in total)`)
+        pump()
+      }).catch(reject)
+    }
+    pump()
+  })
+}
+
+fetch("/music/pk/altes-kamuffel.flac")
+  .then(res =&gt; consume(res.body.getReader()))
+  .then(() =&gt; log("consumed the entire body without keeping the whole thing in memory!"))
+  .catch(e =&gt; log("something went wrong: " + e))</pre>
 </div>
 
 
