@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-29-october-2015">Living Standard — Last Updated 29 October 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-31-october-2015">Living Standard — Last Updated 31 October 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -1239,7 +1239,7 @@ run these steps:
 <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object with given a byte stream
 <var>byteStream</var>, run these steps:
 
-<p class="XXX">This operation is a workaround and will be deleted when we stop using byte streams. 
+<p class="XXX">This operation is a workaround and will be deleted when we stop using byte streams.
 
 <ol>
  <li><p>Let <var>stream</var> be a <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object
@@ -2219,18 +2219,6 @@ indicates an attempt to authenticate.
 
     <p>is true, and unset otherwise.
 
-   <li><p>If <var title="">request</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is "<code title="">default</code>" and
-   <var title="">request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
-   contains a <a href="#concept-header" title="concept-header">header</a>
-   <span title="concept-header-named">named</span>
-   `<code title="">If-Modified-Since</code>`,
-   `<code title="">If-None-Match</code>`,
-   `<code title="">If-Unmodified-Since</code>`,
-   `<code title="">If-Match</code>`, or
-   `<code title="">If-Range</code>`, set <var title="">request</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to "<code title="">no-store</code>".
-
    <li><p>Set <var title="">response</var> to the result of performing an
    <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP-network-or-cache fetch</a>
    using <var title="">request</var> with <var title="">credentials flag</var> if set and
@@ -2256,41 +2244,6 @@ indicates an attempt to authenticate.
   <p>Switch on <var>actualResponse</var>'s <var title="">status</var>:
 
   <dl class="switch">
-   <dt><code title="">304</code>
-   <dd>
-    <ol>
-     <li><p>If <var title="">request</var>'s
-     <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is neither
-     "<code title="">default</code>" nor "<code title="">no-cache</code>", do nothing.
-
-     <li>
-      <p>Otherwise, run these subsubsteps:
-
-      <ol>
-       <li><p>If there is no entry in the HTTP cache for <var title="">request</var> and
-       <var title="">response</var>, return a
-       <a href="#concept-network-error" title="concept-network-error">network error</a>.
-       <!-- XXX xref "HTTP cache" -->
-
-       <li>
-        <p>Set <var title="">response</var> to the result of obtaining a
-        <a href="#concept-response" title="concept-response">response</a> from the HTTP cache using
-        <var title="">request</var> and <var title="">response</var>.
-        <!-- XXX xref "HTTP cache" -->
-
-        <p class="note no-backref">This changes <var title="">response</var> entirely,
-        including its <a href="#concept-response-status" title="concept-response-status">status</a> which is most
-        likely <code title="">200</code> now.
-
-        <p>Set <var title="">response</var>'s
-        <a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a> to
-        "<code title="">validated</code>".
-      </ol>
-    </ol>
-
-    <p class="XXX">Unclear how to rework this in terms of <var>actualResponse</var>. See
-    also <a href="https://github.com/whatwg/fetch/issues/97">206/304 handling broken?</a>
-
    <dt><a href="#redirect-status">redirect status</a>
    <dd>
     <ol>
@@ -2542,6 +2495,17 @@ The <i title="">credentials flag</i> is one too.
  <var title="">httpRequest</var>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
+ <li><p>If <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
+ "<code title="">default</code>" and <var>httpRequest</var>'s
+ <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> contains a
+ <a href="#concept-header" title="concept-header">header</a> <span title="concept-header-named">named</span>
+ `<code title="">If-Modified-Since</code>`,
+ `<code title="">If-None-Match</code>`,
+ `<code title="">If-Unmodified-Since</code>`,
+ `<code title="">If-Match</code>`, or
+ `<code title="">If-Range</code>`, set <var>httpRequest</var>'s
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to "<code title="">no-store</code>".
+
  <li>
   <p>Modify <var title="">httpRequest</var>'s
   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> per HTTP.
@@ -2661,6 +2625,44 @@ The <i title="">credentials flag</i> is one too.
    <li><p>Set <var title="">response</var> to the result of making an
    <a href="#concept-http-network-fetch" title="concept-http-network-fetch">HTTP-network fetch</a> using
    <var title="">httpRequest</var> with the <i title="">credentials flag</i> set if set.
+  </ol>
+
+ <li>
+  <p>If <var>response</var>'s <a href="#concept-status" title="status">status</a> is <code>304</code>, run these
+  substeps:
+
+  <ol>
+   <li><p>If <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
+   neither "<code title="">default</code>" nor "<code title="">no-cache</code>", do nothing.
+
+   <li>
+    <p>Otherwise, run these subsubsteps:
+
+    <ol>
+     <li><p>Set <var>cachedResponse</var> to the result of selecting a stored
+     <a href="#concept-response" title="concept-response">response</a> from the HTTP cache using <var>httpRequest</var>,
+     as per the
+     "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
+     chapter of <cite>HTTP Caching</cite>. <a href="#refsHTTP">[HTTP]</a>
+
+     <li><p>If <var>cachedResponse</var> is <code>null</code> (i.e., one cannot be selected), return
+     a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+     <li><p>Update <var>cachedresponse</var>'s <a href="#concept-header-list" title="concept-header-list">header list</a>
+     using <var>response</var>'s <a href="#concept-header-list" title="concept-header-list">header list</a>, as per the
+     "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
+     chapter of <cite>HTTP Caching</cite>. <a href="#refsHTTP">[HTTP]</a>
+
+     <li>
+      <p>Set <var>response</var> to the <var>cachedResponse</var>.
+
+      <p class="note no-backref">This changes <var>response</var> entirely, including its
+      <a href="#concept-response-status" title="concept-response-status">status</a> which is most likely <code title="">200</code>
+      now.
+
+     <li><p>Set <var>response</var>'s <a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a> to
+     "<code title="">validated</code>".
+    </ol>
   </ol>
 
  <li><p>Return <var title="">response</var>. <span class="note no-backref">Typically
