@@ -1897,10 +1897,6 @@ redirects.
   <p class="note">This operates on <var title="">response</var> as this algorithm is not
   supposed to observe <var>internalResponse</var>.
 
- <li><p>Set <var title="">internalResponse</var>'s
- <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> to a copy of
- <var title="">request</var>'s <a href="#concept-request-url-list" title="concept-request-url-list">url list</a>.
-
  <li>
   <p>If <var title="">request</var>'s <a href="#synchronous-flag">synchronous flag</a> is set,
   <a href="#wait-for-a-response" title="wait for a response">wait for <var>internalResponse</var></a>, and then
@@ -2114,6 +2110,8 @@ indicates an attempt to authenticate.
 <ol>
  <li><p>Let <var title="">response</var> be null.
 
+ <li><p>Let <var>actualResponse</var> be null.
+
  <li>
   <p>If <var title="">request</var>'s <a href="#skip-service-worker-flag">skip-service-worker flag</a> is unset and
   either <var title="">request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a> is
@@ -2130,6 +2128,10 @@ indicates an attempt to authenticate.
     <a href="#refsSW">[SW]</a>
 
     <p><a href="#read-a-request" title="Read a request">Read <var>request</var></a>.
+
+   <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
+   <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>, and to <var>response</var>'s
+   <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
 
    <li>
     <p>If one of the following conditions is true, return a
@@ -2148,13 +2150,13 @@ indicates an attempt to authenticate.
      <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaqueredirect</code>".
     </ul>
 
-   <li>
-     <p>If <var>response</var> is a <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>,
-     then execute <a href="https://w3c.github.io/webappsec-csp/set-response-policy-list">set
-     <var>response</var>'s CSP list</a> on <var>response</var>'s
-     <a href="#concept-internal-response" title="concept-internal-response">internal response</a>. Otherwise, execute
-     <a href="https://w3c.github.io/webappsec-csp/set-response-policy-list">set
-     <var>response</var>'s CSP list</a> on <var>response</var>. <a href="#refsCSP">[CSP]</a>
+   <li><p>If <var>actualResponse</var>'s <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> is
+   empty, set it to a copy of <var>request</var>'s
+   <a href="#concept-request-url-list" title="concept-request-url-list">url list</a>.
+
+   <li><p>Execute
+   <a href="https://w3c.github.io/webappsec-csp/set-response-policy-list">set <var>response</var>'s CSP list</a>
+   on <var>actualResponse</var>. <a href="#refsCSP">[CSP]</a>
   </ol>
 
  <li>
@@ -2212,7 +2214,7 @@ indicates an attempt to authenticate.
 
     <p>is true, and unset otherwise.
 
-   <li><p>Set <var title="">response</var> to the result of performing an
+   <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of performing an
    <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP-network-or-cache fetch</a>
    using <var title="">request</var> with <var title="">credentials flag</var> if set and
    <i title="">authentication-fetch flag</i> if set.
@@ -2226,12 +2228,6 @@ indicates an attempt to authenticate.
     <p class="note">There is no need to apply this to a
     <a href="#concept-response" title="concept-response">response</a> from a service worker.
   </ol>
-
- <li>Let <var>actualResponse</var> be <var title="">response</var>, if
- <var title="">response</var> is not a
- <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>, and
- <var title="">response</var>'s
- <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
 
  <li>
   <p>Switch on <var>actualResponse</var>'s <var title="">status</var>:
@@ -2803,8 +2799,12 @@ The <i title="">credentials flag</i> is one too.
   <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1030660">bug 1030660</a> looks
   into whether this quirk can be removed.
 
- <li><p>Execute <a href="https://w3c.github.io/webappsec-csp/set-response-policy-list">set
- <var>response</var>'s CSP list</a> on <var>response</var>. <a href="#refsCSP">[CSP]</a>
+ <li><p>Set <var>response</var>'s <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> to a copy of
+ <var>request</var>'s <a href="#concept-request-url-list" title="concept-request-url-list">url list</a>.
+
+ <li><p>Execute
+ <a href="https://w3c.github.io/webappsec-csp/set-response-policy-list">set <var>response</var>'s CSP list</a>
+ on <var>response</var>. <a href="#refsCSP">[CSP]</a>
 
  <li><p>If <var title="">response</var> is not a
  <a href="#concept-network-error" title="concept-network-error">network error</a> and <var title="">request</var>'s

@@ -1836,10 +1836,6 @@ redirects.
   <p class=note>This operates on <var title>response</var> as this algorithm is not
   supposed to observe <var>internalResponse</var>.
 
- <li><p>Set <var title>internalResponse</var>'s
- <span title=concept-response-url-list>url list</span> to a copy of
- <var title>request</var>'s <span title=concept-request-url-list>url list</span>.
-
  <li>
   <p>If <var title>request</var>'s <span>synchronous flag</span> is set,
   <span title="wait for a response">wait for <var>internalResponse</var></span>, and then
@@ -2053,6 +2049,8 @@ indicates an attempt to authenticate.
 <ol>
  <li><p>Let <var title>response</var> be null.
 
+ <li><p>Let <var>actualResponse</var> be null.
+
  <li>
   <p>If <var title>request</var>'s <span>skip-service-worker flag</span> is unset and
   either <var title>request</var>'s <span title=concept-request-client>client</span> is
@@ -2069,6 +2067,10 @@ indicates an attempt to authenticate.
     <span data-anolis-ref>SW</span>
 
     <p><span title="Read a request">Read <var>request</var></span>.
+
+   <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
+   <span title=concept-filtered-response>filtered response</span>, and to <var>response</var>'s
+   <span title=concept-internal-response>internal response</span> otherwise.
 
    <li>
     <p>If one of the following conditions is true, return a
@@ -2087,13 +2089,13 @@ indicates an attempt to authenticate.
      <span title=concept-response-type>type</span> is "<code title>opaqueredirect</code>".
     </ul>
 
-   <li>
-     <p>If <var>response</var> is a <span title=concept-filtered-response>filtered response</span>,
-     then execute <a href=https://w3c.github.io/webappsec-csp/set-response-policy-list>set
-     <var>response</var>'s CSP list</a> on <var>response</var>'s
-     <span title=concept-internal-response>internal response</span>. Otherwise, execute
-     <a href=https://w3c.github.io/webappsec-csp/set-response-policy-list>set
-     <var>response</var>'s CSP list</a> on <var>response</var>. <span data-anolis-ref>CSP</span>
+   <li><p>If <var>actualResponse</var>'s <span title=concept-response-url-list>url list</span> is
+   empty, set it to a copy of <var>request</var>'s
+   <span title=concept-request-url-list>url list</span>.
+
+   <li><p>Execute
+   <a href=https://w3c.github.io/webappsec-csp/set-response-policy-list>set <var>response</var>'s CSP list</a>
+   on <var>actualResponse</var>. <span data-anolis-ref>CSP</span>
   </ol>
 
  <li>
@@ -2151,7 +2153,7 @@ indicates an attempt to authenticate.
 
     <p>is true, and unset otherwise.
 
-   <li><p>Set <var title>response</var> to the result of performing an
+   <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of performing an
    <span title=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</span>
    using <var title>request</var> with <var title>credentials flag</var> if set and
    <i title>authentication-fetch flag</i> if set.
@@ -2165,12 +2167,6 @@ indicates an attempt to authenticate.
     <p class=note>There is no need to apply this to a
     <span title=concept-response>response</span> from a service worker.
   </ol>
-
- <li>Let <var>actualResponse</var> be <var title>response</var>, if
- <var title>response</var> is not a
- <span title=concept-filtered-response>filtered response</span>, and
- <var title>response</var>'s
- <span title=concept-internal-response>internal response</span> otherwise.
 
  <li>
   <p>Switch on <var>actualResponse</var>'s <var title>status</var>:
@@ -2742,8 +2738,12 @@ The <i title>credentials flag</i> is one too.
   <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1030660">bug 1030660</a> looks
   into whether this quirk can be removed.
 
- <li><p>Execute <a href=https://w3c.github.io/webappsec-csp/set-response-policy-list>set
- <var>response</var>'s CSP list</a> on <var>response</var>. <span data-anolis-ref>CSP</span>
+ <li><p>Set <var>response</var>'s <span title=concept-response-url-list>url list</span> to a copy of
+ <var>request</var>'s <span title=concept-request-url-list>url list</span>.
+
+ <li><p>Execute
+ <a href=https://w3c.github.io/webappsec-csp/set-response-policy-list>set <var>response</var>'s CSP list</a>
+ on <var>response</var>. <span data-anolis-ref>CSP</span>
 
  <li><p>If <var title>response</var> is not a
  <span title=concept-network-error>network error</span> and <var title>request</var>'s
