@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-november-2015">Living Standard — Last Updated 10 November 2015</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-11-november-2015">Living Standard — Last Updated 11 November 2015</h2>
 
 <dl>
  <dt>Participate:
@@ -2610,41 +2610,33 @@ The <i title="">credentials flag</i> is one too.
  the <i title="">credentials flag</i> set if set.
 
  <li>
-  <p>If <var>response</var>'s <a href="#concept-status" title="status">status</a> is <code>304</code>, run these
-  substeps:
+  <p>If <var>response</var>'s <a href="#concept-status" title="status">status</a> is <code>304</code> and
+  <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either
+  "<code title="">default</code>" or "<code title="">no-cache</code>", run these substeps:
 
   <ol>
-   <li><p>If <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
-   neither "<code title="">default</code>" nor "<code title="">no-cache</code>", do nothing.
+   <li><p>Set <var>cachedResponse</var> to the result of selecting a stored
+   <a href="#concept-response" title="concept-response">response</a> from the HTTP cache using <var>httpRequest</var>, as
+   per the
+   "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
+   chapter of <cite>HTTP Caching</cite>. <a href="#refsHTTP">[HTTP]</a>
+
+   <li><p>If <var>cachedResponse</var> is null (i.e., one cannot be selected), return a
+   <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+   <li><p>Update <var>cachedResponse</var>'s <a href="#concept-header-list" title="concept-header-list">header list</a>
+   using <var>response</var>'s <a href="#concept-header-list" title="concept-header-list">header list</a>, as per the
+   "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
+   chapter of <cite>HTTP Caching</cite>. <a href="#refsHTTP">[HTTP]</a>
 
    <li>
-    <p>Otherwise, run these subsubsteps:
+    <p>Set <var>response</var> to the <var>cachedResponse</var>.
 
-    <ol>
-     <li><p>Set <var>cachedResponse</var> to the result of selecting a stored
-     <a href="#concept-response" title="concept-response">response</a> from the HTTP cache using <var>httpRequest</var>,
-     as per the
-     "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
-     chapter of <cite>HTTP Caching</cite>. <a href="#refsHTTP">[HTTP]</a>
+    <p class="note no-backref">This changes <var>response</var> entirely, including its
+    <a href="#concept-response-status" title="concept-response-status">status</a> which is most likely <code>200</code> now.
 
-     <li><p>If <var>cachedResponse</var> is <code>null</code> (i.e., one cannot be selected), return
-     a <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
-     <li><p>Update <var>cachedresponse</var>'s <a href="#concept-header-list" title="concept-header-list">header list</a>
-     using <var>response</var>'s <a href="#concept-header-list" title="concept-header-list">header list</a>, as per the
-     "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
-     chapter of <cite>HTTP Caching</cite>. <a href="#refsHTTP">[HTTP]</a>
-
-     <li>
-      <p>Set <var>response</var> to the <var>cachedResponse</var>.
-
-      <p class="note no-backref">This changes <var>response</var> entirely, including its
-      <a href="#concept-response-status" title="concept-response-status">status</a> which is most likely <code title="">200</code>
-      now.
-
-     <li><p>Set <var>response</var>'s <a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a> to
-     "<code title="">validated</code>".
-    </ol>
+   <li><p>Set <var>response</var>'s <a href="#concept-response-cache-state" title="concept-response-cache-state">cache state</a> to
+   "<code title="">validated</code>".
   </ol>
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
@@ -4174,8 +4166,8 @@ constructor, when invoked, must run these steps:
 
 <ol>
  <li><p>If <var>init</var>'s <code title="">status</code> member is not in the range
- <code title="">200</code> to <code title="">599</code>, inclusive,
- <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
+ <code>200</code> to <code>599</code>, inclusive, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+ <code title="">RangeError</code>.
 
  <li><p>If <var>init</var>'s <code title="">statusText</code> member does not match the
  <a class="external" data-anolis-spec="http" href="https://tools.ietf.org/html/rfc7230#section-3.1.2">reason-phrase</a> token production,

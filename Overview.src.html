@@ -2549,41 +2549,33 @@ The <i title>credentials flag</i> is one too.
  the <i title>credentials flag</i> set if set.
 
  <li>
-  <p>If <var>response</var>'s <span title=status>status</span> is <code>304</code>, run these
-  substeps:
+  <p>If <var>response</var>'s <span title=status>status</span> is <code>304</code> and
+  <var>httpRequest</var>'s <span title=concept-request-cache-mode>cache mode</span> is either
+  "<code title>default</code>" or "<code title>no-cache</code>", run these substeps:
 
   <ol>
-   <li><p>If <var>httpRequest</var>'s <span title=concept-request-cache-mode>cache mode</span> is
-   neither "<code title>default</code>" nor "<code title>no-cache</code>", do nothing.
+   <li><p>Set <var>cachedResponse</var> to the result of selecting a stored
+   <span title=concept-response>response</span> from the HTTP cache using <var>httpRequest</var>, as
+   per the
+   "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
+   chapter of <cite>HTTP Caching</cite>. <span data-anolis-ref>HTTP</span>
+
+   <li><p>If <var>cachedResponse</var> is null (i.e., one cannot be selected), return a
+   <span title=concept-network-error>network error</span>.
+
+   <li><p>Update <var>cachedResponse</var>'s <span title=concept-header-list>header list</span>
+   using <var>response</var>'s <span title=concept-header-list>header list</span>, as per the
+   "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
+   chapter of <cite>HTTP Caching</cite>. <span data-anolis-ref>HTTP</span>
 
    <li>
-    <p>Otherwise, run these subsubsteps:
+    <p>Set <var>response</var> to the <var>cachedResponse</var>.
 
-    <ol>
-     <li><p>Set <var>cachedResponse</var> to the result of selecting a stored
-     <span title=concept-response>response</span> from the HTTP cache using <var>httpRequest</var>,
-     as per the
-     "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
-     chapter of <cite>HTTP Caching</cite>. <span data-anolis-ref>HTTP</span>
+    <p class="note no-backref">This changes <var>response</var> entirely, including its
+    <span title=concept-response-status>status</span> which is most likely <code>200</code> now.
 
-     <li><p>If <var>cachedResponse</var> is <code>null</code> (i.e., one cannot be selected), return
-     a <span title=concept-network-error>network error</span>.
-
-     <li><p>Update <var>cachedresponse</var>'s <span title=concept-header-list>header list</span>
-     using <var>response</var>'s <span title=concept-header-list>header list</span>, as per the
-     "<a href="https://tools.ietf.org/html/rfc7234#section-4.3.4">Freshening Stored Responses upon Validation</a>"
-     chapter of <cite>HTTP Caching</cite>. <span data-anolis-ref>HTTP</span>
-
-     <li>
-      <p>Set <var>response</var> to the <var>cachedResponse</var>.
-
-      <p class="note no-backref">This changes <var>response</var> entirely, including its
-      <span title=concept-response-status>status</span> which is most likely <code title>200</code>
-      now.
-
-     <li><p>Set <var>response</var>'s <span title=concept-response-cache-state>cache state</span> to
-     "<code title>validated</code>".
-    </ol>
+   <li><p>Set <var>response</var>'s <span title=concept-response-cache-state>cache state</span> to
+   "<code title>validated</code>".
   </ol>
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
@@ -4113,8 +4105,8 @@ constructor, when invoked, must run these steps:
 
 <ol>
  <li><p>If <var>init</var>'s <code title>status</code> member is not in the range
- <code title>200</code> to <code title>599</code>, inclusive,
- <span data-anolis-spec=webidl>throw</span> a <code title>RangeError</code>.
+ <code>200</code> to <code>599</code>, inclusive, <span data-anolis-spec=webidl>throw</span> a
+ <code title>RangeError</code>.
 
  <li><p>If <var>init</var>'s <code title>statusText</code> member does not match the
  <span data-anolis-spec=http>reason-phrase</span> token production,
