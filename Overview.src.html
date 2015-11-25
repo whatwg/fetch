@@ -743,9 +743,11 @@ an <span data-anolis-spec=html>environment settings object</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-mode>mode</dfn>, which is one of "<code title>navigate</code>",
-"<code title>same-origin</code>", "<code title>no-cors</code>", "<code title>cors</code>", and
-"<code title>cors-with-forced-preflight</code>". Unless stated otherwise, it is
-"<code title>no-cors</code>".
+"<code title>same-origin</code>", "<code title>no-cors</code>", and "<code title>cors</code>".
+Unless stated otherwise, it is "<code title>no-cors</code>".
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn>use-CORS-preflight flag</dfn>. Unless stated otherwise, it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-credentials-mode>credentials mode</dfn>, which is
@@ -1742,8 +1744,7 @@ redirects.
 
    <dd><p>A <span title=concept-network-error>network error</span>.
 
-   <dt><var>request</var>'s <span title=concept-request-mode>mode</span> is
-   "<code title>cors-with-forced-preflight</code>"
+   <dt><var>request</var>'s <span>use-CORS-preflight flag</span> is set
    <dt><var>request</var>'s <span>unsafe-request flag</span> is set and either
    <var>request</var>'s <span title=concept-request-method>method</span> is not
    a <span>simple method</span> or a <span title=concept-header>header</span> in
@@ -2115,8 +2116,7 @@ indicates an attempt to authenticate.
      <var>request</var>'s <span title=concept-request-method>method</span> using
      <var>request</var>, and either <var>request</var>'s
      <span title=concept-request-method>method</span> is a not <span>simple method</span>
-     or <var>request</var>'s <span title=concept-request-mode>mode</span> is
-     "<code title>cors-with-forced-preflight</code>".
+     or <var>request</var>'s <span>use-CORS-preflight flag</span> is set.
 
      <li>There is at least one <span title=concept-header>header</span> in
      <var>request</var>'s <span title=concept-request-header-list>header list</span>
@@ -2229,8 +2229,7 @@ indicates an attempt to authenticate.
 
       <ol>
        <li><p>If <var>request</var>'s <span title=concept-request-mode>mode</span> is
-       either "<code>cors</code>" or "<code>cors-with-forced-preflight</code>",
-       <var>request</var>'s <span title=concept-request-origin>origin</span> is
+       "<code>cors</code>", <var>request</var>'s <span title=concept-request-origin>origin</span> is
        <em>not</em> <span data-anolis-spec=html>same origin</span> with
        <var>locationURL</var>'s
        <span data-anolis-spec=url title=concept-url-origin>origin</span>, and
@@ -2844,15 +2843,13 @@ steps:
    return a <span title=concept-network-error>network error</span>.
 
    <li>
-    <p>If <var>methods</var> is null and <var>request</var>'s
-    <span title=concept-request-mode>mode</span> is
-    "<code title>cors-with-forced-preflight</code>", set <var>methods</var> to
-    <var>request</var>'s <span title=concept-request-method>method</span>.
+    <p>If <var>methods</var> is null and <var>request</var>'s <span>use-CORS-preflight flag</span>
+    is set, set <var>methods</var> to <var>request</var>'s
+    <span title=concept-request-method>method</span>.
 
     <p class="note no-backref">This ensures that a <span>CORS-preflight fetch</span> that
-    happened due to <var>request</var>'s
-    <span title=concept-request-mode>mode</span> being
-    "<code title>cors-with-forced-preflight</code>" is <span title=concept-cache>cached</span>.
+    happened due to <var>request</var>'s <span>use-CORS-preflight flag</span> being set is
+    <span title=concept-cache>cached</span>.
 
    <li><p>If <var>request</var>'s <span title=concept-request-method>method</span>
    is not in <var>methods</var> and is not a <span>simple method</span>, return a
@@ -3965,17 +3962,8 @@ return the empty string if <span title=concept-Request-request>request</span>'s
 getter must return <span title=concept-Request-request>request</span>'s
 <span title=concept-Request-referrer-policy>referrer policy</span>.
 
-<p>The <dfn title=dom-Request-mode><code>mode</code></dfn> attribute's getter must
-return the value corresponding to the first matching statement, switching on
-<span title=concept-Request-request>request</span>'s
-<span title=concept-request-mode>mode</span>:
-
-<dl class=switch>
- <dt>"<code title>cors-with-forced-preflight</code>"
- <dd>"<code title>cors</code>"
- <dt>Otherwise
- <dd>Value as is.
-</dl>
+<p>The <dfn title=dom-Request-mode><code>mode</code></dfn> attribute's getter must return
+<span title=concept-Request-request>request</span>'s <span title=concept-request-mode>mode</span>.
 
 <p>The <dfn title=dom-Request-credentials><code>credentials</code></dfn> attribute's
 getter must return <span title=concept-Request-request>request</span>'s

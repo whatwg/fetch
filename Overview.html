@@ -804,9 +804,11 @@ an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.or
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-mode" title="concept-request-mode">mode</dfn>, which is one of "<code title="">navigate</code>",
-"<code title="">same-origin</code>", "<code title="">no-cors</code>", "<code title="">cors</code>", and
-"<code title="">cors-with-forced-preflight</code>". Unless stated otherwise, it is
-"<code title="">no-cors</code>".
+"<code title="">same-origin</code>", "<code title="">no-cors</code>", and "<code title="">cors</code>".
+Unless stated otherwise, it is "<code title="">no-cors</code>".
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="use-cors-preflight-flag">use-CORS-preflight flag</dfn>. Unless stated otherwise, it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</dfn>, which is
@@ -1803,8 +1805,7 @@ redirects.
 
    <dd><p>A <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
-   <dt><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-   "<code title="">cors-with-forced-preflight</code>"
+   <dt><var>request</var>'s <a href="#use-cors-preflight-flag">use-CORS-preflight flag</a> is set
    <dt><var>request</var>'s <a href="#unsafe-request-flag">unsafe-request flag</a> is set and either
    <var>request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is not
    a <a href="#simple-method">simple method</a> or a <a href="#concept-header" title="concept-header">header</a> in
@@ -2176,8 +2177,7 @@ indicates an attempt to authenticate.
      <var>request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> using
      <var>request</var>, and either <var>request</var>'s
      <a href="#concept-request-method" title="concept-request-method">method</a> is a not <a href="#simple-method">simple method</a>
-     or <var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-     "<code title="">cors-with-forced-preflight</code>".
+     or <var>request</var>'s <a href="#use-cors-preflight-flag">use-CORS-preflight flag</a> is set.
 
      <li>There is at least one <a href="#concept-header" title="concept-header">header</a> in
      <var>request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
@@ -2290,8 +2290,7 @@ indicates an attempt to authenticate.
 
       <ol>
        <li><p>If <var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-       either "<code>cors</code>" or "<code>cors-with-forced-preflight</code>",
-       <var>request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
+       "<code>cors</code>", <var>request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
        <em>not</em> <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with
        <var>locationURL</var>'s
        <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a>, and
@@ -2905,15 +2904,13 @@ steps:
    return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
    <li>
-    <p>If <var>methods</var> is null and <var>request</var>'s
-    <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-    "<code title="">cors-with-forced-preflight</code>", set <var>methods</var> to
-    <var>request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>.
+    <p>If <var>methods</var> is null and <var>request</var>'s <a href="#use-cors-preflight-flag">use-CORS-preflight flag</a>
+    is set, set <var>methods</var> to <var>request</var>'s
+    <a href="#concept-request-method" title="concept-request-method">method</a>.
 
     <p class="note no-backref">This ensures that a <a href="#cors-preflight-fetch-0">CORS-preflight fetch</a> that
-    happened due to <var>request</var>'s
-    <a href="#concept-request-mode" title="concept-request-mode">mode</a> being
-    "<code title="">cors-with-forced-preflight</code>" is <a href="#concept-cache" title="concept-cache">cached</a>.
+    happened due to <var>request</var>'s <a href="#use-cors-preflight-flag">use-CORS-preflight flag</a> being set is
+    <a href="#concept-cache" title="concept-cache">cached</a>.
 
    <li><p>If <var>request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
    is not in <var>methods</var> and is not a <a href="#simple-method">simple method</a>, return a
@@ -4026,17 +4023,8 @@ return the empty string if <a href="#concept-request-request" title="concept-Req
 getter must return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-referrer-policy" title="concept-Request-referrer-policy">referrer policy</a>.
 
-<p>The <dfn id="dom-request-mode" title="dom-Request-mode"><code>mode</code></dfn> attribute's getter must
-return the value corresponding to the first matching statement, switching on
-<a href="#concept-request-request" title="concept-Request-request">request</a>'s
-<a href="#concept-request-mode" title="concept-request-mode">mode</a>:
-
-<dl class="switch">
- <dt>"<code title="">cors-with-forced-preflight</code>"
- <dd>"<code title="">cors</code>"
- <dt>Otherwise
- <dd>Value as is.
-</dl>
+<p>The <dfn id="dom-request-mode" title="dom-Request-mode"><code>mode</code></dfn> attribute's getter must return
+<a href="#concept-request-request" title="concept-Request-request">request</a>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a>.
 
 <p>The <dfn id="dom-request-credentials" title="dom-Request-credentials"><code>credentials</code></dfn> attribute's
 getter must return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
