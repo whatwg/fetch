@@ -2641,58 +2641,6 @@ The <i title>credentials flag</i> is one too.
 
   <p><span title="Read a request">Read <var>request</var></span>.
 
-  <p>Run these substeps <span data-anolis-spec=html>in parallel</span>, after the outer
-  set of steps has returned:
-
-  <ol>
-   <li><p>If <var>response</var>'s <span title=concept-response-body>body</span> is
-   non-null, set <var>response</var>'s
-   <span title=concept-response-body>body</span>'s
-   <span title=concept-body-length>length</span> to <var>response</var>'s
-   <span title=concept-response-body>body</span>'s payload body length.
-   <!-- XXX xref payload body -->
-
-   <li>
-    <p>Whenever one or more bytes are transmitted, let <var>bytes</var> be the
-    transmitted bytes and run these subsubsteps:
-
-    <ol>
-     <li><p>Increase <var>response</var>'s
-     <span title=concept-response-body>body</span>'s
-     <span title=concept-body-transmitted>transmitted</span> with <var>bytes</var>'
-     length.
-
-     <li><p>Let <var>codings</var> be the result of
-     <span title=concept-header-parse>parsing</span> `<code title>Content-Encoding</code>`
-     in <var>response</var>'s
-     <span title=concept-response-header-list>header list</span>.
-
-     <li><p>Set <var>bytes</var> to the result of
-     <span title="handle content codings">handling content codings</span> given
-     <var>codings</var> and <var>bytes</var>.
-
-     <li><p>Push <var>bytes</var> to <var>response</var>'s
-     <span title=concept-response-body>body</span>.
-     <!-- XXX xref payload body / streams -->
-    </ol>
-
-    <p class="note no-backref">This means that the `<code title>Content-Length</code>`
-    <span title=concept-header>header</span> is no longer reliable. A
-    <span title=concept-response>response</span> will still include it, but it cannot be
-    used, except for debugging and logging purposes.
-
-   <li>If at any point <span title=concept-fetch>fetch</span> is
-   <span title=concept-fetch-terminate>terminated</span> with reason
-   <var>reason</var>, set <var>response</var>'s
-   <span title=concept-response-termination-reason>termination reason</span> to
-   <var>reason</var>.
-  </ol>
-
-  <p class="note no-backref">These are run <span data-anolis-spec=html>in parallel</span>
-  as at this point it is unclear whether <var>response</var>'s
-  <span title=concept-response-body>body</span> is relevant (<var>response</var>
-  might be a redirect).
-
  <li>
   <p><span title=concept-header-list-delete>Delete</span>
   `<code title>Content-Encoding</code>` from <var>response</var>'s
@@ -2760,6 +2708,58 @@ The <i title>credentials flag</i> is one too.
    <li><p>Release the <span data-anolis-spec=html>storage mutex</span> so that it is once
    again free.
   </ol>
+
+ <li>
+  <p>Run these substeps <span data-anolis-spec=html>in parallel</span>:
+
+  <ol>
+   <li><p>If <var>response</var>'s <span title=concept-response-body>body</span> is
+   non-null, set <var>response</var>'s
+   <span title=concept-response-body>body</span>'s
+   <span title=concept-body-length>length</span> to <var>response</var>'s
+   <span title=concept-response-body>body</span>'s payload body length.
+   <!-- XXX xref payload body -->
+
+   <li>
+    <p>Whenever one or more bytes are transmitted, let <var>bytes</var> be the
+    transmitted bytes and run these subsubsteps:
+
+    <ol>
+     <li><p>Increase <var>response</var>'s
+     <span title=concept-response-body>body</span>'s
+     <span title=concept-body-transmitted>transmitted</span> with <var>bytes</var>'
+     length.
+
+     <li><p>Let <var>codings</var> be the result of
+     <span title=concept-header-parse>parsing</span> `<code title>Content-Encoding</code>`
+     in <var>response</var>'s
+     <span title=concept-response-header-list>header list</span>.
+
+     <li><p>Set <var>bytes</var> to the result of
+     <span title="handle content codings">handling content codings</span> given
+     <var>codings</var> and <var>bytes</var>.
+
+     <li><p>Push <var>bytes</var> to <var>response</var>'s
+     <span title=concept-response-body>body</span>.
+     <!-- XXX xref payload body / streams -->
+    </ol>
+
+    <p class="note no-backref">This means that the `<code title>Content-Length</code>`
+    <span title=concept-header>header</span> is no longer reliable. A
+    <span title=concept-response>response</span> will still include it, but it cannot be
+    used, except for debugging and logging purposes.
+
+   <li>If at any point <span title=concept-fetch>fetch</span> is
+   <span title=concept-fetch-terminate>terminated</span> with reason
+   <var>reason</var>, set <var>response</var>'s
+   <span title=concept-response-termination-reason>termination reason</span> to
+   <var>reason</var>.
+  </ol>
+
+  <p class="note no-backref">These are run <span data-anolis-spec=html>in parallel</span>
+  as at this point it is unclear whether <var>response</var>'s
+  <span title=concept-response-body>body</span> is relevant (<var>response</var>
+  might be a redirect).
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
  <var>response</var>'s <span title=concept-response-body>body</span> is still being

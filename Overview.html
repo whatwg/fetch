@@ -2702,58 +2702,6 @@ The <i title="">credentials flag</i> is one too.
 
   <p><a href="#read-a-request" title="Read a request">Read <var>request</var></a>.
 
-  <p>Run these substeps <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>, after the outer
-  set of steps has returned:
-
-  <ol>
-   <li><p>If <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is
-   non-null, set <var>response</var>'s
-   <a href="#concept-response-body" title="concept-response-body">body</a>'s
-   <a href="#concept-body-length" title="concept-body-length">length</a> to <var>response</var>'s
-   <a href="#concept-response-body" title="concept-response-body">body</a>'s payload body length.
-   <!-- XXX xref payload body -->
-
-   <li>
-    <p>Whenever one or more bytes are transmitted, let <var>bytes</var> be the
-    transmitted bytes and run these subsubsteps:
-
-    <ol>
-     <li><p>Increase <var>response</var>'s
-     <a href="#concept-response-body" title="concept-response-body">body</a>'s
-     <a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted</a> with <var>bytes</var>'
-     length.
-
-     <li><p>Let <var>codings</var> be the result of
-     <a href="#concept-header-parse" title="concept-header-parse">parsing</a> `<code title="">Content-Encoding</code>`
-     in <var>response</var>'s
-     <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
-
-     <li><p>Set <var>bytes</var> to the result of
-     <a href="#handle-content-codings" title="handle content codings">handling content codings</a> given
-     <var>codings</var> and <var>bytes</var>.
-
-     <li><p>Push <var>bytes</var> to <var>response</var>'s
-     <a href="#concept-response-body" title="concept-response-body">body</a>.
-     <!-- XXX xref payload body / streams -->
-    </ol>
-
-    <p class="note no-backref">This means that the `<code title="">Content-Length</code>`
-    <a href="#concept-header" title="concept-header">header</a> is no longer reliable. A
-    <a href="#concept-response" title="concept-response">response</a> will still include it, but it cannot be
-    used, except for debugging and logging purposes.
-
-   <li>If at any point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
-   <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
-   <var>reason</var>, set <var>response</var>'s
-   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
-   <var>reason</var>.
-  </ol>
-
-  <p class="note no-backref">These are run <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>
-  as at this point it is unclear whether <var>response</var>'s
-  <a href="#concept-response-body" title="concept-response-body">body</a> is relevant (<var>response</var>
-  might be a redirect).
-
  <li>
   <p><a href="#concept-header-list-delete" title="concept-header-list-delete">Delete</a>
   `<code title="">Content-Encoding</code>` from <var>response</var>'s
@@ -2821,6 +2769,58 @@ The <i title="">credentials flag</i> is one too.
    <li><p>Release the <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#storage-mutex">storage mutex</a> so that it is once
    again free.
   </ol>
+
+ <li>
+  <p>Run these substeps <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>:
+
+  <ol>
+   <li><p>If <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is
+   non-null, set <var>response</var>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a>'s
+   <a href="#concept-body-length" title="concept-body-length">length</a> to <var>response</var>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a>'s payload body length.
+   <!-- XXX xref payload body -->
+
+   <li>
+    <p>Whenever one or more bytes are transmitted, let <var>bytes</var> be the
+    transmitted bytes and run these subsubsteps:
+
+    <ol>
+     <li><p>Increase <var>response</var>'s
+     <a href="#concept-response-body" title="concept-response-body">body</a>'s
+     <a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted</a> with <var>bytes</var>'
+     length.
+
+     <li><p>Let <var>codings</var> be the result of
+     <a href="#concept-header-parse" title="concept-header-parse">parsing</a> `<code title="">Content-Encoding</code>`
+     in <var>response</var>'s
+     <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+
+     <li><p>Set <var>bytes</var> to the result of
+     <a href="#handle-content-codings" title="handle content codings">handling content codings</a> given
+     <var>codings</var> and <var>bytes</var>.
+
+     <li><p>Push <var>bytes</var> to <var>response</var>'s
+     <a href="#concept-response-body" title="concept-response-body">body</a>.
+     <!-- XXX xref payload body / streams -->
+    </ol>
+
+    <p class="note no-backref">This means that the `<code title="">Content-Length</code>`
+    <a href="#concept-header" title="concept-header">header</a> is no longer reliable. A
+    <a href="#concept-response" title="concept-response">response</a> will still include it, but it cannot be
+    used, except for debugging and logging purposes.
+
+   <li>If at any point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
+   <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
+   <var>reason</var>, set <var>response</var>'s
+   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
+   <var>reason</var>.
+  </ol>
+
+  <p class="note no-backref">These are run <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>
+  as at this point it is unclear whether <var>response</var>'s
+  <a href="#concept-response-body" title="concept-response-body">body</a> is relevant (<var>response</var>
+  might be a redirect).
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
  <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being
