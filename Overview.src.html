@@ -1799,23 +1799,24 @@ redirects.
    <dd><span title=concept-filtered-response-opaque>opaque filtered response</span>
   </dl>
 
- <li><p>Let <var>internalResponse</var> be <var>response</var>'s
- <span title=concept-internal-response>internal response</span>.
+ <li><p>Let <var>internalResponse</var> be <var>response</var>, if <var>response</var> is a
+ <span title=concept-network-error>network error</span>, and <var>response</var>'s
+ <span title=concept-internal-response>internal response</span> otherwise.
 
- <li><p>If
- <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
+ <li><p>If <var>response</var> is not a <span title=concept-network-error>network error</span> and
+ one of <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
  <a href=https://w3c.github.io/webappsec-csp/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>,
- or
+ and
  <span title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</span>
- returns <b title>blocked</b>, set <var>response</var> to a
+ returns <b title>blocked</b>, set <var>response</var> and <var>internalResponse</var> to a
  <span title=concept-network-error>network error</span>.
  <span data-anolis-ref>MIX</span>
  <span data-anolis-ref>CSP</span>
 
  <li>
-  <p>If <var>request</var>'s <span title=concept-request-method>method</span>
-  is `<code title>HEAD</code>` or `<code title>CONNECT</code>`, or
-  <var>internalResponse</var>'s
+  <p>If <var>response</var> is not a <span title=concept-network-error>network error</span> and
+  either <var>request</var>'s <span title=concept-request-method>method</span> is
+  `<code title>HEAD</code>` or `<code title>CONNECT</code>`, or <var>internalResponse</var>'s
   <span title=concept-response-status>status</span> is a <span>null body status</span>,
   set <var>internalResponse</var>'s <span title=concept-response-body>body</span> to
   null and disregard any pushing toward it (if any).
@@ -1823,10 +1824,9 @@ redirects.
   <p class=note>This standardizes the error handling for servers that violate HTTP.
 
  <li>
-  <p>If <var>request</var>'s
-  <span title=concept-request-integrity-metadata>integrity metadata</span> is not
-  the empty string and <var>response</var> is not a
-  <span title=concept-network-error>network error</span>, run these substeps:
+  <p>If <var>response</var> is not a <span title=concept-network-error>network error</span> and
+  <var>request</var>'s <span title=concept-request-integrity-metadata>integrity metadata</span> is
+  not the empty string, run these substeps:
 
   <ol>
    <li><p><span title="Wait for a response">Wait for <var>response</var></span>.
@@ -1835,15 +1835,14 @@ redirects.
    <span title=concept-response-termination-reason>termination reason</span> and
    <var>response</var> does not
    <a href=https://w3c.github.io/webappsec-subresource-integrity/#does-response-match-metadatalist>match</a>
-   <var>request</var>'s
-   <span title=concept-request-integrity-metadata>integrity metadata</span>, set
-   <var>response</var> to a
+   <var>request</var>'s <span title=concept-request-integrity-metadata>integrity metadata</span>,
+   set <var>response</var> and <var>internalResponse</var> to a
    <span title=concept-network-error>network error</span>.
    <span data-anolis-ref>SRI</span>
   </ol>
 
-  <p class=note>This operates on <var>response</var> as this algorithm is not
-  supposed to observe <var>internalResponse</var>.
+  <p class=note>This operates on <var>response</var> as this algorithm is not supposed to observe
+  <var>internalResponse</var>. That would allow an attacker to use hashes as an oracle.
 
  <li>
   <p>If <var>request</var>'s <span>synchronous flag</span> is set,
