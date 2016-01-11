@@ -749,6 +749,11 @@ an <span data-anolis-spec=html>environment settings object</span>.
 "<code title>same-origin</code>", "<code title>no-cors</code>", and "<code title>cors</code>".
 Unless stated otherwise, it is "<code title>no-cors</code>".
 
+<p class=note>Even though the default <span title=concept-request>request</span>
+<span title=concept-request-mode>mode</span> is "<code title>no-cors</code>", standards are highly
+discouraged from using it for new features. It is rather unsafe. "<code title>navigate</code>" is a
+special value reserved for <cite>HTML</cite>. <span data-anolis-ref>HTML</span>
+
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>use-CORS-preflight flag</dfn>. Unless stated otherwise, it is unset.
 
@@ -756,6 +761,13 @@ Unless stated otherwise, it is "<code title>no-cors</code>".
 <dfn title=concept-request-credentials-mode>credentials mode</dfn>, which is
 one of "<code title>omit</code>", "<code title>same-origin</code>", and
 "<code title>include</code>". Unless stated otherwise, it is "<code title>omit</code>".
+
+<p class=note>If <span title=concept-request>request</span>'s
+<span title=concept-request-mode>mode</span> is "<code title>no-cors</code>",
+<span title=concept-request>request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> cannot be
+"<code title>same-origin</code>". The <span title=concept-fetch>fetch</span> algorithm does not
+account for that combination as "<code title>no-cors</code>" is a legacy feature.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-use-url-credentials-flag>use-URL-credentials flag</dfn>.
@@ -2154,19 +2166,11 @@ indicates an attempt to authenticate.
     <span data-anolis-spec=html>environment settings object</span> and the
     <i title>CORS flag</i> is unset.</span>
 
-   <li>
-    <p>Let <var>credentials flag</var> be set if one of
-
-    <ul>
-     <li><var>request</var>'s <span title=concept-request-credentials-mode>credentials mode</span>
-     is "<code title>include</code>"
-     <li><var>request</var>'s  <span title=concept-request-credentials-mode>credentials mode</span>
-     is "<code title>same-origin</code>" and either the <i>CORS flag</i> is unset or
-     <span title=concept-request-response-tainting>response tainting</span> is
-     "<code title>opaque</code>"
-    </ul>
-
-    <p>is true, and unset otherwise.
+   <li><p>Let <var>credentials flag</var> be set if either <var>request</var>'s
+   <span title=concept-request-credentials-mode>credentials mode</span> is
+   "<code title>include</code>", or <var>request</var>'s
+   <span title=concept-request-credentials-mode>credentials mode</span> is
+   "<code title>same-origin</code>" and the <i>CORS flag</i> is unset, and unset otherwise.
 
    <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of performing an
    <span title=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</span>
@@ -3879,6 +3883,11 @@ constructor must run these steps:
    <li><p>If <var>r</var>'s <span title=concept-Request-request>request</span>'s
    <span title=concept-request-method>method</span> is not a <span>simple method</span>,
    <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p>If <var>r</var>'s <span title=concept-Request-request>request</span>'s
+   <span title=concept-request-credentials-mode>credentials mode</span> is "
+   <code title>same-origin</code>", <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
 
    <li><p>If <var>request</var>'s
    <span title=concept-request-integrity-metadata>integrity metadata</span> is not

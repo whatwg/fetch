@@ -810,6 +810,11 @@ an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.or
 "<code title="">same-origin</code>", "<code title="">no-cors</code>", and "<code title="">cors</code>".
 Unless stated otherwise, it is "<code title="">no-cors</code>".
 
+<p class="note">Even though the default <a href="#concept-request" title="concept-request">request</a>
+<a href="#concept-request-mode" title="concept-request-mode">mode</a> is "<code title="">no-cors</code>", standards are highly
+discouraged from using it for new features. It is rather unsafe. "<code title="">navigate</code>" is a
+special value reserved for <cite>HTML</cite>. <a href="#refsHTML">[HTML]</a>
+
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="use-cors-preflight-flag">use-CORS-preflight flag</dfn>. Unless stated otherwise, it is unset.
 
@@ -817,6 +822,13 @@ Unless stated otherwise, it is "<code title="">no-cors</code>".
 <dfn id="concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</dfn>, which is
 one of "<code title="">omit</code>", "<code title="">same-origin</code>", and
 "<code title="">include</code>". Unless stated otherwise, it is "<code title="">omit</code>".
+
+<p class="note">If <a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-mode" title="concept-request-mode">mode</a> is "<code title="">no-cors</code>",
+<a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> cannot be
+"<code title="">same-origin</code>". The <a href="#concept-fetch" title="concept-fetch">fetch</a> algorithm does not
+account for that combination as "<code title="">no-cors</code>" is a legacy feature.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use-URL-credentials flag</dfn>.
@@ -2215,19 +2227,11 @@ indicates an attempt to authenticate.
     <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a> and the
     <i title="">CORS flag</i> is unset.
 
-   <li>
-    <p>Let <var>credentials flag</var> be set if one of
-
-    <ul>
-     <li><var>request</var>'s <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
-     is "<code title="">include</code>"
-     <li><var>request</var>'s  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
-     is "<code title="">same-origin</code>" and either the <i>CORS flag</i> is unset or
-     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> is
-     "<code title="">opaque</code>"
-    </ul>
-
-    <p>is true, and unset otherwise.
+   <li><p>Let <var>credentials flag</var> be set if either <var>request</var>'s
+   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
+   "<code title="">include</code>", or <var>request</var>'s
+   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
+   "<code title="">same-origin</code>" and the <i>CORS flag</i> is unset, and unset otherwise.
 
    <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of performing an
    <a href="#concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP-network-or-cache fetch</a>
@@ -3940,6 +3944,11 @@ constructor must run these steps:
    <li><p>If <var>r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
    <a href="#concept-request-method" title="concept-request-method">method</a> is not a <a href="#simple-method">simple method</a>,
    <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p>If <var>r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is "
+   <code title="">same-origin</code>", <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+   <code title="">TypeError</code>.
 
    <li><p>If <var>request</var>'s
    <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a> is not
