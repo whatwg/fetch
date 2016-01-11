@@ -2246,101 +2246,25 @@ indicates an attempt to authenticate.
   <dl class=switch>
    <dt><span>redirect status</span>
    <dd>
-    <ol>
-     <li><p>If <var>request</var>'s
-     <span title=concept-request-redirect-mode>redirect mode</span> is
-     "<code title>error</code>", return a
-     <span title=concept-network-error>network error</span>.
+    <p>Switch on <var>request</var>'s
+    <span title=concept-request-redirect-mode>redirect mode</span>:
 
-     <li>
-      <p>Let <var>location</var> be the result of
-      <span title=concept-header-parse>parsing</span> `<code title>Location</code>` in
-      <var>actualResponse</var>'s
-      <span title=concept-response-header-list>header list</span>.
+    <dl class=switch>
+     <dt>"<code title>error</code>"
+     <dd><p>Set <var>response</var> to a <span title=concept-network-error>network error</span>.
 
-     <li><p>If <var>location</var> is null, return <var>response</var>.
-
-     <li><p>If <var>location</var> is failure, return a
-     <span title=concept-network-error>network error</span>.
-     <!-- only Gecko does this; and even that is currently more complicated -->
-
-     <li><p>Let <var>locationURL</var> be the result of
-     <span data-anolis-spec=url title=concept-url-parser>parsing</span>
-     <var>location</var> with <var>request</var>'s
-     <span title=concept-request-current-url>current url</span>.
-
-     <li><p>If <var>locationURL</var> is failure, return a
-     <span title=concept-network-error>network error</span>.
-
-     <li><p>If <var>request</var>'s
-     <span title=concept-request-redirect-count>redirect count</span> is twenty, return a
-     <span title=concept-network-error>network error</span>.
-
-     <li><p>Increase <var>request</var>'s
-     <span title=concept-request-redirect-count>redirect count</span> by one.
-
-     <li><p>Unset <var title>request</var>'s <span>same-origin data-URL flag</span>.
-
-     <li><p>If <var>request</var>'s
-     <span title=concept-request-redirect-mode>redirect mode</span> is
-     "<code title>manual</code>", set <var>response</var> to an
+     <dt>"<code title>manual</code>"
+     <dd><p>Set <var>response</var> to an
      <span title=concept-filtered-response-opaque-redirect>opaque-redirect filtered response</span>
      whose <span title=concept-internal-response>internal response</span> is
      <var>actualResponse</var>.
 
-     <li>
-      <p>Otherwise, <var>request</var>'s
-      <span title=concept-request-redirect-mode>redirect mode</span> is
-      "<code title>follow</code>", run these substeps:
-
-      <ol>
-       <li><p>If <var>request</var>'s <span title=concept-request-mode>mode</span> is
-       "<code>cors</code>", <var>request</var>'s <span title=concept-request-origin>origin</span> is
-       <em>not</em> <span data-anolis-spec=html>same origin</span> with
-       <var>locationURL</var>'s
-       <span data-anolis-spec=url title=concept-url-origin>origin</span>, and
-       <var>locationURL</var>
-       <span data-anolis-spec=url title="include credentials">includes credentials</span>,
-       return a <span title=concept-network-error>network error</span>.
-
-       <li>
-        <p>If the <i>CORS flag</i> is set and <var>locationURL</var>
-        <span data-anolis-spec=url title="include credentials">includes credentials</span>,
-        return a <span title=concept-network-error>network error</span>.
-
-        <p class=note>This catches a cross-origin resource redirecting to a same-origin
-        URL.
-
-       <li><p>If the <i title>CORS flag</i> is set and <var>locationURL</var>'s
-       <span data-anolis-spec=url title=concept-url-origin>origin</span> is <em>not</em>
-       <span data-anolis-spec=html>same origin</span> with <var>request</var>'s
-       <span title=concept-request-current-url>current url</span>'s
-       <span data-analis-spec=url title=concept-url-origin>origin</span>, set
-       <var>request</var>'s <span title=concept-request-origin>origin</span> to an
-       opaque identifier.
-
-       <li><p>If either <var>actualResponse</var>'s
-       <span title=concept-response-status>status</span> is
-       <code title>301</code> or <code title>302</code> and <var>request</var>'s
-       <span title=concept-request-method>method</span> is `<code title>POST</code>`, or
-       <var>actualResponse</var>'s <span title=concept-response-status>status</span> is
-       <code title>303</code>, set <var>request</var>'s
-       <span title=concept-request-method>method</span> to `<code title>GET</code>` and
-       <var>request</var>'s <span title=concept-request-body>body</span> to null.
-
-       <li><p>Append <var>locationURL</var> to <var>request</var>'s
-       <span title=concept-request-url-list>url list</span>.
-
-       <li>
-        <p>Return the result of performing a
-        <span title=concept-main-fetch>main fetch</span> using <var>request</var>,
-        with the <i title>CORS flag</i> set if set.
-
-        <p class="note no-backref">This has to invoke
-        <span title=concept-main-fetch>main fetch</span> to get
-        <span title=concept-request-response-tainting>response tainting</span> correct.
-      </ol>
-    </ol>
+     <dt>"<code title>follow</code>"
+     <dd><p>Set <var>response</var> to the result of performing
+     <span title=concept-http-redirect-fetch>HTTP-redirect fetch</span> using <var>request</var> and
+     <var>response</var>, with the <i>CORS flag</i> set if set.
+    </dl>
+    <!-- not resetting actualResponse since it's no longer used anyway -->
 
    <dt><code title>401</code>
    <dd>
@@ -2419,6 +2343,86 @@ indicates an attempt to authenticate.
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
  <var>actualResponse</var>'s <span title=concept-response-body>body</span> is still being
  pushed to after returning.</span>
+</ol>
+
+
+<h3>HTTP-redirect fetch</h3>
+
+<p class="note no-backref">This algorithm will be used by <cite>HTML</cite>'s "navigate" algorithm
+in addition to <span title=concept-http-fetch>HTTP fetch</span> above.
+<span data-anolis-ref>HTML</span>
+
+<p>To perform an <dfn title=concept-http-redirect-fetch>HTTP-redirect fetch</dfn> using
+<var>request</var> and <var>response</var>, with an optional <i>CORS flag</i>, run these steps:
+
+<ol>
+ <li><p>Let <var>actualResponse</var> be <var>response</var>, if <var>response</var> is not a
+ <span title=concept-filtered-response>filtered response</span>, and <var>response</var>'s
+ <span title=concept-internal-response>internal response</span> otherwise.
+
+ <li><p>Let <var>location</var> be the result of <span title=concept-header-parse>parsing</span>
+ `<code title>Location</code>` in <var>actualResponse</var>'s
+ <span title=concept-response-header-list>header list</span>.
+
+ <li><p>If <var>location</var> is null, return <var>response</var>.
+
+ <li><p>If <var>location</var> is failure, return a
+ <span title=concept-network-error>network error</span>.
+ <!-- only Gecko does this; and even that is currently more complicated -->
+
+ <li><p>Let <var>locationURL</var> be the result of
+ <span data-anolis-spec=url title=concept-url-parser>parsing</span> <var>location</var> with
+ <var>request</var>'s <span title=concept-request-current-url>current url</span>.
+
+ <li><p>If <var>locationURL</var> is failure, return a
+ <span title=concept-network-error>network error</span>.
+
+ <li><p>If <var>request</var>'s <span title=concept-request-redirect-count>redirect count</span> is
+ twenty, return a <span title=concept-network-error>network error</span>.
+
+ <li><p>Increase <var>request</var>'s
+ <span title=concept-request-redirect-count>redirect count</span> by one.
+
+ <li><p>Unset <var title>request</var>'s <span>same-origin data-URL flag</span>.
+
+ <li><p>If <var>request</var>'s <span title=concept-request-mode>mode</span> is "<code>cors</code>",
+ <var>request</var>'s <span title=concept-request-origin>origin</span> is <em>not</em>
+ <span data-anolis-spec=html>same origin</span> with <var>locationURL</var>'s
+ <span data-anolis-spec=url title=concept-url-origin>origin</span>, and <var>locationURL</var>
+ <span data-anolis-spec=url title="include credentials">includes credentials</span>, return a
+ <span title=concept-network-error>network error</span>.
+
+ <li>
+  <p>If the <i>CORS flag</i> is set and <var>locationURL</var>
+  <span data-anolis-spec=url title="include credentials">includes credentials</span>, return a
+  <span title=concept-network-error>network error</span>.
+
+  <p class=note>This catches a cross-origin resource redirecting to a same-origin URL.
+
+ <li><p>If the <i>CORS flag</i> is set and <var>locationURL</var>'s
+ <span data-anolis-spec=url title=concept-url-origin>origin</span> is <em>not</em>
+ <span data-anolis-spec=html>same origin</span> with <var>request</var>'s
+ <span title=concept-request-current-url>current url</span>'s
+ <span data-analis-spec=url title=concept-url-origin>origin</span>, set <var>request</var>'s
+ <span title=concept-request-origin>origin</span> to a globally unique identifier.
+
+ <li><p>If either <var>actualResponse</var>'s <span title=concept-response-status>status</span> is
+ <code title>301</code> or <code title>302</code> and <var>request</var>'s
+ <span title=concept-request-method>method</span> is `<code title>POST</code>`, or
+ <var>actualResponse</var>'s <span title=concept-response-status>status</span> is
+ <code title>303</code>, set <var>request</var>'s <span title=concept-request-method>method</span>
+ to `<code title>GET</code>` and <var>request</var>'s <span title=concept-request-body>body</span>
+ to null.
+
+ <li><p>Append <var>locationURL</var> to <var>request</var>'s
+ <span title=concept-request-url-list>url list</span>.
+
+ <li>
+  <p>Return the result of performing a <span title=concept-main-fetch>main fetch</span> using
+  <var>request</var>, with the <i>CORS flag</i> set if set.
+
+  <p class="note no-backref">This has to invoke <span title=concept-main-fetch>main fetch</span> to
+  get <span title=concept-request-response-tainting>response tainting</span> correct.
 </ol>
 
 
@@ -3441,7 +3445,7 @@ running these steps:
    <li><p>Append <var>name</var>-<var>value</var> to <var>headers</var>.
   </ol>
 
- <li><p>Return <var>headers</var>
+ <li><p>Return <var>headers</var>.
 </ol>
 
 
@@ -4123,7 +4127,7 @@ interface <dfn>Response</dfn> {
   readonly attribute boolean <span title=dom-Response-ok>ok</span>;
   readonly attribute ByteString <span title=dom-Response-statusText>statusText</span>;
   [SameObject] readonly attribute <span>Headers</span> <span title=dom-Response-headers>headers</span>;
-  readonly attribute <code title=concept-ReadableStream>ReadableStream</code>? <span title=dom-Response-body>body</span>;
+  readonly attribute <span title=concept-ReadableStream>ReadableStream</span>? <span title=dom-Response-body>body</span>;
 
   [NewObject] <span>Response</span> <span title=dom-Response-clone>clone</span>();
 };

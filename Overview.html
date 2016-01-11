@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-29-january-2016">Living Standard — Last Updated 29 January 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-february-2016">Living Standard — Last Updated 5 February 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -78,11 +78,12 @@ fetching.
    <li><a href="#main-fetch"><span class="secno">5.1 </span>Main fetch</a></li>
    <li><a href="#basic-fetch"><span class="secno">5.2 </span>Basic fetch</a></li>
    <li><a href="#http-fetch"><span class="secno">5.3 </span>HTTP fetch</a></li>
-   <li><a href="#http-network-or-cache-fetch"><span class="secno">5.4 </span>HTTP-network-or-cache fetch</a></li>
-   <li><a href="#http-network-fetch"><span class="secno">5.5 </span>HTTP-network fetch</a></li>
-   <li><a href="#cors-preflight-fetch"><span class="secno">5.6 </span>CORS-preflight fetch</a></li>
-   <li><a href="#cors-preflight-cache"><span class="secno">5.7 </span>CORS-preflight cache</a></li>
-   <li><a href="#cors-check"><span class="secno">5.8 </span>CORS check</a></ol></li>
+   <li><a href="#http-redirect-fetch"><span class="secno">5.4 </span>HTTP-redirect fetch</a></li>
+   <li><a href="#http-network-or-cache-fetch"><span class="secno">5.5 </span>HTTP-network-or-cache fetch</a></li>
+   <li><a href="#http-network-fetch"><span class="secno">5.6 </span>HTTP-network fetch</a></li>
+   <li><a href="#cors-preflight-fetch"><span class="secno">5.7 </span>CORS-preflight fetch</a></li>
+   <li><a href="#cors-preflight-cache"><span class="secno">5.8 </span>CORS-preflight cache</a></li>
+   <li><a href="#cors-check"><span class="secno">5.9 </span>CORS check</a></ol></li>
  <li><a href="#fetch-api"><span class="secno">6 </span>Fetch API</a>
   <ol>
    <li><a href="#headers-class"><span class="secno">6.1 </span>Headers class</a></li>
@@ -2307,101 +2308,25 @@ indicates an attempt to authenticate.
   <dl class="switch">
    <dt><a href="#redirect-status">redirect status</a>
    <dd>
-    <ol>
-     <li><p>If <var>request</var>'s
-     <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
-     "<code title="">error</code>", return a
-     <a href="#concept-network-error" title="concept-network-error">network error</a>.
+    <p>Switch on <var>request</var>'s
+    <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>:
 
-     <li>
-      <p>Let <var>location</var> be the result of
-      <a href="#concept-header-parse" title="concept-header-parse">parsing</a> `<code title="">Location</code>` in
-      <var>actualResponse</var>'s
-      <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+    <dl class="switch">
+     <dt>"<code title="">error</code>"
+     <dd><p>Set <var>response</var> to a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
-     <li><p>If <var>location</var> is null, return <var>response</var>.
-
-     <li><p>If <var>location</var> is failure, return a
-     <a href="#concept-network-error" title="concept-network-error">network error</a>.
-     <!-- only Gecko does this; and even that is currently more complicated -->
-
-     <li><p>Let <var>locationURL</var> be the result of
-     <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
-     <var>location</var> with <var>request</var>'s
-     <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>.
-
-     <li><p>If <var>locationURL</var> is failure, return a
-     <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
-     <li><p>If <var>request</var>'s
-     <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is twenty, return a
-     <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
-     <li><p>Increase <var>request</var>'s
-     <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> by one.
-
-     <li><p>Unset <var title="">request</var>'s <a href="#same-origin-data-url-flag">same-origin data-URL flag</a>.
-
-     <li><p>If <var>request</var>'s
-     <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
-     "<code title="">manual</code>", set <var>response</var> to an
+     <dt>"<code title="">manual</code>"
+     <dd><p>Set <var>response</var> to an
      <a href="#concept-filtered-response-opaque-redirect" title="concept-filtered-response-opaque-redirect">opaque-redirect filtered response</a>
      whose <a href="#concept-internal-response" title="concept-internal-response">internal response</a> is
      <var>actualResponse</var>.
 
-     <li>
-      <p>Otherwise, <var>request</var>'s
-      <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
-      "<code title="">follow</code>", run these substeps:
-
-      <ol>
-       <li><p>If <var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-       "<code>cors</code>", <var>request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> is
-       <em>not</em> <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with
-       <var>locationURL</var>'s
-       <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a>, and
-       <var>locationURL</var>
-       <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#include-credentials" title="include credentials">includes credentials</a>,
-       return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
-       <li>
-        <p>If the <i>CORS flag</i> is set and <var>locationURL</var>
-        <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#include-credentials" title="include credentials">includes credentials</a>,
-        return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
-
-        <p class="note">This catches a cross-origin resource redirecting to a same-origin
-        URL.
-
-       <li><p>If the <i title="">CORS flag</i> is set and <var>locationURL</var>'s
-       <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> is <em>not</em>
-       <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var>request</var>'s
-       <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
-       <span data-analis-spec="url" title="concept-url-origin">origin</span>, set
-       <var>request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> to an
-       opaque identifier.
-
-       <li><p>If either <var>actualResponse</var>'s
-       <a href="#concept-response-status" title="concept-response-status">status</a> is
-       <code title="">301</code> or <code title="">302</code> and <var>request</var>'s
-       <a href="#concept-request-method" title="concept-request-method">method</a> is `<code title="">POST</code>`, or
-       <var>actualResponse</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
-       <code title="">303</code>, set <var>request</var>'s
-       <a href="#concept-request-method" title="concept-request-method">method</a> to `<code title="">GET</code>` and
-       <var>request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> to null.
-
-       <li><p>Append <var>locationURL</var> to <var>request</var>'s
-       <a href="#concept-request-url-list" title="concept-request-url-list">url list</a>.
-
-       <li>
-        <p>Return the result of performing a
-        <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> using <var>request</var>,
-        with the <i title="">CORS flag</i> set if set.
-
-        <p class="note no-backref">This has to invoke
-        <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> to get
-        <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> correct.
-      </ol>
-    </ol>
+     <dt>"<code title="">follow</code>"
+     <dd><p>Set <var>response</var> to the result of performing
+     <a href="#concept-http-redirect-fetch" title="concept-http-redirect-fetch">HTTP-redirect fetch</a> using <var>request</var> and
+     <var>response</var>, with the <i>CORS flag</i> set if set.
+    </dl>
+    <!-- not resetting actualResponse since it's no longer used anyway -->
 
    <dt><code title="">401</code>
    <dd>
@@ -2483,7 +2408,87 @@ indicates an attempt to authenticate.
 </ol>
 
 
-<h3 id="http-network-or-cache-fetch"><span class="secno">5.4 </span>HTTP-network-or-cache fetch</h3>
+<h3 id="http-redirect-fetch"><span class="secno">5.4 </span>HTTP-redirect fetch</h3>
+
+<p class="note no-backref">This algorithm will be used by <cite>HTML</cite>'s "navigate" algorithm
+in addition to <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> above.
+<a href="#refsHTML">[HTML]</a>
+
+<p>To perform an <dfn id="concept-http-redirect-fetch" title="concept-http-redirect-fetch">HTTP-redirect fetch</dfn> using
+<var>request</var> and <var>response</var>, with an optional <i>CORS flag</i>, run these steps:
+
+<ol>
+ <li><p>Let <var>actualResponse</var> be <var>response</var>, if <var>response</var> is not a
+ <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>, and <var>response</var>'s
+ <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
+
+ <li><p>Let <var>location</var> be the result of <a href="#concept-header-parse" title="concept-header-parse">parsing</a>
+ `<code title="">Location</code>` in <var>actualResponse</var>'s
+ <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+
+ <li><p>If <var>location</var> is null, return <var>response</var>.
+
+ <li><p>If <var>location</var> is failure, return a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
+ <!-- only Gecko does this; and even that is currently more complicated -->
+
+ <li><p>Let <var>locationURL</var> be the result of
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a> <var>location</var> with
+ <var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>.
+
+ <li><p>If <var>locationURL</var> is failure, return a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+ <li><p>If <var>request</var>'s <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> is
+ twenty, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+ <li><p>Increase <var>request</var>'s
+ <a href="#concept-request-redirect-count" title="concept-request-redirect-count">redirect count</a> by one.
+
+ <li><p>Unset <var title="">request</var>'s <a href="#same-origin-data-url-flag">same-origin data-URL flag</a>.
+
+ <li><p>If <var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is "<code>cors</code>",
+ <var>request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> is <em>not</em>
+ <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var>locationURL</var>'s
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a>, and <var>locationURL</var>
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#include-credentials" title="include credentials">includes credentials</a>, return a
+ <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+ <li>
+  <p>If the <i>CORS flag</i> is set and <var>locationURL</var>
+  <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#include-credentials" title="include credentials">includes credentials</a>, return a
+  <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+  <p class="note">This catches a cross-origin resource redirecting to a same-origin URL.
+
+ <li><p>If the <i>CORS flag</i> is set and <var>locationURL</var>'s
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> is <em>not</em>
+ <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var>request</var>'s
+ <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+ <span data-analis-spec="url" title="concept-url-origin">origin</span>, set <var>request</var>'s
+ <a href="#concept-request-origin" title="concept-request-origin">origin</a> to a globally unique identifier.
+
+ <li><p>If either <var>actualResponse</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
+ <code title="">301</code> or <code title="">302</code> and <var>request</var>'s
+ <a href="#concept-request-method" title="concept-request-method">method</a> is `<code title="">POST</code>`, or
+ <var>actualResponse</var>'s <a href="#concept-response-status" title="concept-response-status">status</a> is
+ <code title="">303</code>, set <var>request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
+ to `<code title="">GET</code>` and <var>request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>
+ to null.
+
+ <li><p>Append <var>locationURL</var> to <var>request</var>'s
+ <a href="#concept-request-url-list" title="concept-request-url-list">url list</a>.
+
+ <li>
+  <p>Return the result of performing a <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> using
+  <var>request</var>, with the <i>CORS flag</i> set if set.
+
+  <p class="note no-backref">This has to invoke <a href="#concept-main-fetch" title="concept-main-fetch">main fetch</a> to
+  get <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> correct.
+</ol>
+
+
+<h3 id="http-network-or-cache-fetch"><span class="secno">5.5 </span>HTTP-network-or-cache fetch</h3>
 
 <p>To perform an
 <dfn id="concept-http-network-or-cache-fetch" title="concept-http-network-or-cache-fetch">HTTP-network-or-cache fetch</dfn> using
@@ -2747,7 +2752,7 @@ The <i title="">credentials flag</i> is one too.
 </ol>
 
 
-<h3 id="http-network-fetch"><span class="secno">5.5 </span>HTTP-network fetch</h3>
+<h3 id="http-network-fetch"><span class="secno">5.6 </span>HTTP-network fetch</h3>
 
 <p>To perform an <dfn id="concept-http-network-fetch" title="concept-http-network-fetch">HTTP-network fetch</dfn> using
 <var>request</var> with an optional <i title="">credentials flag</i>, run these steps:
@@ -2914,7 +2919,7 @@ The <i title="">credentials flag</i> is one too.
 </ol>
 
 
-<h3 id="cors-preflight-fetch"><span class="secno">5.6 </span>CORS-preflight fetch</h3>
+<h3 id="cors-preflight-fetch"><span class="secno">5.7 </span>CORS-preflight fetch</h3>
 
 <p class="note no-backref">This is effectively the user agent implementation of the check to see if
 the <a href="#cors-protocol">CORS protocol</a> is understood. The so-called <a href="#cors-preflight-request">CORS-preflight request</a>. If
@@ -3099,7 +3104,7 @@ steps:
 </ol>
 
 
-<h3 id="cors-preflight-cache"><span class="secno">5.7 </span>CORS-preflight cache</h3>
+<h3 id="cors-preflight-cache"><span class="secno">5.8 </span>CORS-preflight cache</h3>
 
 <p>A <dfn id="concept-cache" title="concept-cache">CORS-preflight cache</dfn> consists of a collection of
 entries where each entry has these fields:
@@ -3145,7 +3150,7 @@ Entries may be removed before that moment arrives.
 <a href="#concept-cache-header-name" title="concept-cache-header-name">header name</a> is <var>headerName</var>.
 
 
-<h3 id="cors-check"><span class="secno">5.8 </span>CORS check</h3>
+<h3 id="cors-check"><span class="secno">5.9 </span>CORS check</h3>
 
 <p>To perform a <dfn id="concept-cors-check" title="concept-cors-check">CORS check</dfn> for a
 <var>request</var> and <var>response</var>, run these steps:
@@ -3502,7 +3507,7 @@ running these steps:
    <li><p>Append <var>name</var>-<var>value</var> to <var>headers</var>.
   </ol>
 
- <li><p>Return <var>headers</var>
+ <li><p>Return <var>headers</var>.
 </ol>
 
 
@@ -4184,7 +4189,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute boolean <a href="#dom-response-ok" title="dom-Response-ok">ok</a>;
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
   [SameObject] readonly attribute <a href="#headers">Headers</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
-  readonly attribute <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a>? <a href="#dom-response-body" title="dom-Response-body">body</a>;
+  readonly attribute <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a>? <a href="#dom-response-body" title="dom-Response-body">body</a>;
 
   [NewObject] <a href="#response">Response</a> <a href="#dom-response-clone" title="dom-Response-clone">clone</a>();
 };
