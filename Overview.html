@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-february-2016">Living Standard — Last Updated 5 February 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-13-february-2016">Living Standard — Last Updated 13 February 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -222,7 +222,6 @@ annotated as one of the following:
  <li><dfn id="process-request-body">process request body</dfn>
  <li><dfn id="process-request-end-of-file">process request end-of-file</dfn>
  <li><dfn id="process-response">process response</dfn>
- <li><dfn id="process-response-body">process response body</dfn>
  <li><dfn id="process-response-end-of-file">process response end-of-file</dfn>
 </ul>
 
@@ -252,17 +251,18 @@ annotated as one of the following:
 
 <hr>
 
-<p>To <dfn id="wait-for-a-response">wait for a <var>response</var></dfn>, wait for either end-of-file to have been
-pushed to <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> or for
-<var>response</var> to have a
-<a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>.
+<p>To <dfn id="wait-for-a-response">wait for a <var>response</var></dfn>, if <var>response</var>'s
+<a href="#concept-response-body" title="concept-response-body">body</a> is non-null, wait for <var>response</var>'s
+<a href="#concept-response-body" title="concept-response-body">body</a>'s <a href="#concept-body-stream" title="concept-body-stream">stream</a> to be
+<a href="#concept-readablestream-closed" title="concept-ReadableStream-closed">closed</a> or
+<a href="#concept-readablestream-errored" title="concept-ReadableStream-errored">errored</a>.
 
 <p>To <dfn id="read-a-request">read a <var>request</var></dfn>, if <var>request</var>'s
 <a href="#concept-request-body" title="concept-request-body">body</a> is non-null, whenever
 <var>request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is read from (i.e.
 is transmitted or read by script), increase <var>request</var>'s
 <a href="#concept-request-body" title="concept-request-body">body</a>'s
-<a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted</a> with the amount of payload body
+<a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted bytes</a> with the amount of payload body
 bytes transmitted and then <a href="#queue-a-fetch-task">queue a fetch task</a> on <var>request</var> to
 <a href="#process-request-body">process request body</a> for <var>request</var>.
 <!-- XXX xref "read", "payload body" -->
@@ -528,10 +528,37 @@ steps:
 
 <h4 id="bodies"><span class="secno">3.1.4 </span>Bodies</h4>
 
-<p>A <dfn id="concept-body" title="concept-body">body</dfn> is a byte stream. It has an associated
-<dfn id="concept-body-transmitted" title="concept-body-transmitted">transmitted</dfn> which is an integer and initially 0,
-<dfn id="concept-body-length" title="concept-body-length">length</dfn> which is an integer and initially 0, and
-<dfn id="concept-body-error-flag" title="concept-body-error-flag">error flag</dfn> which is initially unset.
+<p>A <dfn id="concept-body" title="concept-body">body</dfn> consists of:
+
+<ul>
+ <li>
+  <p>A <dfn id="concept-body-stream" title="concept-body-stream">stream</dfn> (a
+  <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object).
+
+  <p class="XXX"><a href="https://github.com/whatwg/streams/issues/379">This might become a
+  <code>ReadableByteStream</code> object</a>. While the type might change, the behavior specified
+  will be equivalent since the hypothetical <code title="">ReadableByteStream</code> object will have
+  the same members as the <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object has today.
+
+ <li><p>A <dfn id="concept-body-transmitted" title="concept-body-transmitted">transmitted bytes</dfn> (an integer), initially 0.
+
+ <li><p>A <dfn id="concept-body-total-bytes" title="concept-body-total-bytes">total bytes</dfn> (an integer), initially 0.
+</ul>
+
+<p>To <dfn id="concept-body-clone" title="concept-body-clone">clone</dfn> a <a href="#concept-body" title="concept-body">body</a>
+<var>body</var>, run these steps:
+
+<ol>
+ <li><p>Let «<var>out1</var>, <var>out2</var>» be the result of
+ <a href="#concept-tee-readablestream" title="concept-tee-ReadableStream">teeing</a> <var>body</var>'s
+ <a href="#concept-body-stream" title="concept-body-stream">stream</a>. Rethrow any exceptions.
+
+ <li><p>Set <var>body</var>'s <a href="#concept-body-stream" title="concept-body-stream">stream</a> to <var>out1</var>.
+
+ <li><p>Return a <a href="#concept-body" title="concept-body">body</a> whose
+ <a href="#concept-body-stream" title="concept-body-stream">stream</a> is <var>out2</var> and other members are copied from
+ <var>body</var>.
+</ol>
 
 <p>To <dfn id="handle-content-codings">handle content codings</dfn> given <var>codings</var> and
 <var>bytes</var>, run these substeps:
@@ -964,6 +991,21 @@ whose <a href="#concept-request-destination" title="concept-request-destination"
 <p class="note">See <a class="external" data-anolis-spec="sw" href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/#on-fetch-request-algorithm">handle fetch</a> for usage of these terms.
 <a href="#refsSW">[SW]</a>
 
+<p>To <dfn id="concept-request-clone" title="concept-request-clone">clone</dfn> a <a href="#concept-request" title="concept-request">request</a>
+<var>request</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>newRequest</var> be a copy of <var>request</var>, except for its
+ <a href="#concept-request-body" title="concept-request-body">body</a>.
+
+ <li><p>If <var>request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is non-null, set
+ <var>newRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> to the result of
+ <a href="#concept-body-clone" title="concept-body-clone">cloning</a> <var>request</var>'s
+ <a href="#concept-request-body" title="concept-request-body">body</a>. Rethrow any exceptions.
+
+ <li><p>Return <var>newRequest</var>.
+</ol>
+
 
 <h4 id="responses"><span class="secno">3.1.6 </span>Responses</h4>
 
@@ -1127,6 +1169,26 @@ introducing new APIs, do not use the
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a> for internal specification
 algorithms as you will leak information.
 
+<p>To <dfn id="concept-response-clone" title="concept-response-clone">clone</dfn> a <a href="#concept-response" title="concept-response">response</a>
+<var>response</var>, run these steps:
+
+<ol>
+ <li><p>If <var>response</var> is a <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>,
+ return a new identical filtered response whose <a href="#concept-internal-response" title="concept-internal-response">internal
+ response</a> is a <a href="#concept-response-clone" title="concept-response-clone">clone</a> of <var>response</var>'s
+ <a href="#concept-internal-response" title="concept-internal-response">internal response</a>. Rethrow any exceptions.
+
+ <li><p>Let <var>newResponse</var> be a copy of <var>response</var>, except for its
+ <a href="#concept-response-body" title="concept-response-body">body</a>.
+
+ <li><p>If <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is non-null, set
+ <var>newResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> to the result of
+ <a href="#concept-body-clone" title="concept-body-clone">cloning</a> <var>response</var>'s
+ <a href="#concept-response-body" title="concept-response-body">body</a>. Rethrow any exceptions.
+
+ <li><p>Return <var>newResponse</var>.
+</ol>
+
 
 <h3 id="authentication-entries"><span class="secno">3.2 </span>Authentication entries</h3>
 
@@ -1254,6 +1316,15 @@ define common operations for ReadableStream. <a href="#refsSTREAMS">[STREAMS]</a
  Rethrow any exceptions.
 </ol>
 
+<p>To <dfn id="concept-error-readablestream" title="concept-error-ReadableStream">error</dfn> a
+<a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object <var>stream</var> with given
+<var>reason</var>, run these steps:
+
+<ol>
+ <li><p>Call <a href="https://streams.spec.whatwg.org/#error-readable-stream"><code class="external" data-anolis-spec="streams">ErrorReadableStream</code></a>(<var>stream</var>,
+ <var>reason</var>). Rethrow any exceptions.
+</ol>
+
 <p>To <dfn id="concept-construct-readablestream" title="concept-construct-ReadableStream">construct</dfn> a
 <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object with given <var>strategy</var>,
 <var>pull</var> action and <var>cancel</var> action, all of which are optional, run these steps:
@@ -1296,23 +1367,7 @@ run these steps:
  <li>Return <var>stream</var>.
 </ol>
 
-<p>To <dfn id="concept-construct-readablestream-with-byte-stream" title="concept-construct-ReadableStream-with-byte-stream">construct</dfn> a
-<a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object, given a byte stream
-<var>byteStream</var>, run these steps:
-
-<p class="XXX">This operation is a workaround and will be deleted when we stop using byte streams.
-
-<ol>
- <li><p>Let <var>stream</var> be a <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object
- such that consuming it will result in chunks each of which is a <code title="">Uint8Array</code>
- object wrapping an <code title="">ArrayBuffer</code> and the result of concatenating them all will be
- equivalent to the byte sequence which would be read from <var>byteStream</var>. Rethrow any
- exceptions.
-
- <li><p>Return <var>stream</var>.
-</ol>
-
-<p>To <dfn id="concept-get-reader" title="concept-get-reader">get</dfn> a reader from a
+<p>To <dfn id="concept-get-reader" title="concept-get-reader">get a reader</dfn> from a
 <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object <var>stream</var>, run these steps:
 
 <ol>
@@ -1323,7 +1378,7 @@ run these steps:
  <li><p>Return <var>reader</var>.
 </ol>
 
-<p>To <dfn id="concept-read-all-bytes-from-readablestream" title="concept-read-all-bytes-from-ReadableStream">read</dfn> all bytes from a
+<p>To <dfn id="concept-read-all-bytes-from-readablestream" title="concept-read-all-bytes-from-ReadableStream">read all bytes</dfn> from a
 <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object with <var>reader</var>, run these
 steps:
 
@@ -1647,8 +1702,7 @@ response <a href="#concept-header" title="concept-header">header</a> can be used
  <p>That is, it either returns a <a href="#concept-response" title="concept-response">response</a> if
  <a href="#concept-request" title="concept-request">request</a>'s <a href="#synchronous-flag">synchronous flag</a> is set, or it
  <a href="#queue-a-fetch-task" title="queue a fetch task">queues tasks</a> annotated
- <a href="#process-response">process response</a>, <a href="#process-response-body">process response body</a>, and
- <a href="#process-response-end-of-file">process response end-of-file</a> for the
+ <a href="#process-response">process response</a>, and <a href="#process-response-end-of-file">process response end-of-file</a> for the
  <a href="#concept-response" title="concept-response">response</a>.
 
  <p>To capture uploads, if <a href="#concept-request" title="concept-request">request</a>'s
@@ -1934,7 +1988,7 @@ redirects.
   `<code title="">HEAD</code>` or `<code title="">CONNECT</code>`, or <var>internalResponse</var>'s
   <a href="#concept-response-status" title="concept-response-status">status</a> is a <a href="#null-body-status">null body status</a>,
   set <var>internalResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> to
-  null and disregard any pushing toward it (if any).
+  null and disregard any enqueuing toward it (if any).
 
   <p class="note">This standardizes the error handling for servers that violate HTTP.
 
@@ -1977,41 +2031,9 @@ redirects.
  <li><p><a href="#queue-a-fetch-task">Queue a fetch task</a> on <var>request</var> to
  <a href="#process-response">process response</a> for <var>response</var>.
 
- <li>
-  <p>If <var>internalResponse</var>'s
-  <a href="#concept-response-body" title="concept-response-body">body</a> is null, run these substeps:
+ <li><p><a href="#wait-for-a-response" title="wait for a response">Wait for</a> <var>internalResponse</var>.
 
-  <ol>
-   <li><a href="#queue-a-fetch-task">Queue a fetch task</a> on <var>request</var> to
-   <a href="#process-response-body">process response body</a> for <var>response</var>.
-
-   <li><p><a href="#queue-a-fetch-done-task">Queue a fetch-done task</a> using <var>request</var> and
-   <var>response</var>.
-  </ol>
-
- <li>
-  <p>Otherwise, if <var>internalResponse</var>'s
-  <a href="#concept-response-body" title="concept-response-body">body</a> is non-null, run these substeps:
-
-  <ol>
-   <li><p>Whenever <var>internalResponse</var>'s
-   <a href="#concept-response-body" title="concept-response-body">body</a>'s is pushed to, for and as long as
-   <var>internalResponse</var> has no
-   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> and
-   end-of-file has not been pushed,
-   <a href="#queue-a-fetch-task">queue a fetch task</a> on <var>request</var> to
-   <a href="#process-response-body">process response body</a> for <var>response</var>.
-
-   <li>
-    <p>Once end-of-file has been pushed to <var>internalResponse</var>'s
-    <a href="#concept-response-body" title="concept-response-body">body</a> or <var>internalResponse</var> has
-    a <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a>,
-    <a href="#queue-a-fetch-done-task">queue a fetch-done task</a> using <var>request</var> and
-    <var>response</var>.
-
-    <p class="note">Ideally FTP/HTTP define this in more detail and this becomes a set of
-    simple hooks.
-  </ol>
+ <li><p><a href="#queue-a-fetch-done-task">Queue a fetch-done task</a> using <var>request</var> and <var>response</var>.
 </ol>
 
 
@@ -2403,8 +2425,8 @@ indicates an attempt to authenticate.
  <a href="#authentication-entry">authentication entry</a> for <var>request</var> and the given realm.
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
- <var>actualResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being
- pushed to after returning.</span>
+ <var>actualResponse</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>'s
+ <a href="#concept-body-stream" title="concept-body-stream">stream</a> is still being enqueued to after returning.</span>
 </ol>
 
 
@@ -2504,9 +2526,8 @@ The <i title="">credentials flag</i> is one too.
   <var>request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
   "<code>no-window</code>" and <var>request</var>'s
   <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is not
-  "<code>follow</code>", and a copy of <var>request</var>, with
-  <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> being a tee
-  of <var>request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a>, otherwise.
+  "<code>follow</code>", and the result of <a href="#concept-request-clone" title="concept-request-clone">cloning</a>
+  <var>request</var> otherwise.
 
   <p class="note no-backref">A <var>request</var> is typically copied as it needs to
   be possible to add <a href="#concept-header" title="concept-header">headers</a> and read its
@@ -2525,7 +2546,7 @@ The <i title="">credentials flag</i> is one too.
  <li><p>If <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
  non-null, set <var>contentLengthValue</var> to <var>httpRequest</var>'s
  <a href="#concept-request-body" title="concept-request-body">body</a>'s
- <a href="#concept-body-length" title="concept-body-length">length</a>,
+ <a href="#concept-body-total-bytes" title="concept-body-total-bytes">total bytes</a>,
  <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#utf-8-encode" title="utf-8 encode">utf-8 encoded</a>.
  <!-- XXX with streams we don't always know the length and so need to do chunked here -->
 
@@ -2747,8 +2768,8 @@ The <i title="">credentials flag</i> is one too.
   </ol>
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
- <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being
- pushed to after returning.</span>
+ <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>'s
+ <a href="#concept-body-stream" title="concept-body-stream">stream</a> is still being enqueued to after returning.</span>
 </ol>
 
 
@@ -2805,6 +2826,30 @@ The <i title="">credentials flag</i> is one too.
   of option.
 
   <p><a href="#read-a-request" title="Read a request">Read <var>request</var></a>.
+
+ <li>
+  <p>Let <var>strategy</var> be an object. The user agent may choose any object.
+
+  <p class="note no-backref"><var>strategy</var> is used to control the queuing strategy of
+  <var>stream</var> constructed below.
+
+ <li><p>Let <var>pull</var> be an action that <a href="#concept-fetch-resume" title="concept-fetch-resume">resumes</a> the
+ ongoing fetch if it is <a href="#concept-fetch-suspend" title="concept-fetch-suspend">suspended</a>.
+
+ <li><p>Let <var>cancel</var> be an action that
+ <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminates</a> the ongoing fetch with reason
+ <i title="">end-user abort</i>.
+
+ <li>
+  <p>Let <var>stream</var> be the result of
+  <a href="#concept-construct-readablestream" title="concept-construct-ReadableStream">constructing</a> a
+  <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object with <var>strategy</var>,
+  <var>pull</var> and <var>cancel</var>.
+  <p class="note no-backref">This construction operation will not throw an exception.
+
+ <li><p>Set <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> to a new
+ <a href="#concept-body" title="concept-body">body</a> whose <a href="#concept-body-stream" title="concept-body-stream">stream</a> is
+ <var>stream</var>.
 
  <li>
   <p><a href="#concept-header-list-delete" title="concept-header-list-delete">Delete</a>
@@ -2866,9 +2911,8 @@ The <i title="">credentials flag</i> is one too.
 
   <ol>
    <li><p>If <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is
-   non-null, set <var>response</var>'s
-   <a href="#concept-response-body" title="concept-response-body">body</a>'s
-   <a href="#concept-body-length" title="concept-body-length">length</a> to <var>response</var>'s
+   non-null, set <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>'s
+   <a href="#concept-body-total-bytes" title="concept-body-total-bytes">total bytes</a> to <var>response</var>'s
    <a href="#concept-response-body" title="concept-response-body">body</a>'s payload body length.
    <!-- XXX xref payload body -->
 
@@ -2879,7 +2923,7 @@ The <i title="">credentials flag</i> is one too.
     <ol>
      <li><p>Increase <var>response</var>'s
      <a href="#concept-response-body" title="concept-response-body">body</a>'s
-     <a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted</a> with <var>bytes</var>'
+     <a href="#concept-body-transmitted" title="concept-body-transmitted">transmitted bytes</a> with <var>bytes</var>'
      length.
 
      <li><p>Let <var>codings</var> be the result of
@@ -2887,25 +2931,40 @@ The <i title="">credentials flag</i> is one too.
      in <var>response</var>'s
      <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
-     <li><p>Set <var>bytes</var> to the result of
-     <a href="#handle-content-codings" title="handle content codings">handling content codings</a> given
-     <var>codings</var> and <var>bytes</var>.
+     <li>
+      <p>Set <var>bytes</var> to the result of <a href="#handle-content-codings" title="handle content codings">handling
+      content codings</a> given <var>codings</var> and <var>bytes</var>.
 
-     <li><p>Push <var>bytes</var> to <var>response</var>'s
-     <a href="#concept-response-body" title="concept-response-body">body</a>.
-     <!-- XXX xref payload body / streams -->
+      <p class="note no-backref">This makes the `<code title="">Content-Length</code>`
+      <a href="#concept-header" title="concept-header">header</a> unreliable to the extent that it was reliable
+      to begin with.
+
+     <li>
+      <p><a href="#concept-enqueue-readablestream" title="concept-enqueue-ReadableStream">Enqueue</a> a <code>Uint8Array</code>
+      object wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>.
+
+     <li><p>If <var>stream</var> doesn't <a href="#concept-readablestream-need-more-data" title="concept-ReadableStream-need-more-data">need more
+     data</a> and <var>request</var>'s <a href="#synchronous-flag">synchronous flag</a> is unset, ask the user agent
+     to <a href="#concept-fetch-suspend" title="concept-fetch-suspend">suspend</a> the ongoing fetch.
     </ol>
 
-    <p class="note no-backref">This means that the `<code title="">Content-Length</code>`
-    <a href="#concept-header" title="concept-header">header</a> is no longer reliable. A
-    <a href="#concept-response" title="concept-response">response</a> will still include it, but it cannot be
-    used, except for debugging and logging purposes.
+   <li><p>If at any point the bytes transmission is done normally and <var>stream</var> is
+   <a href="#concept-readablestream-readable" title="concept-ReadableStream-readable">readable</a>,
+   <a href="#concept-close-readablestream" title="concept-close-ReadableStream">close</a> <var>stream</var>.
 
-   <li>If at any point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
-   <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason
-   <var>reason</var>, set <var>response</var>'s
-   <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination reason</a> to
-   <var>reason</var>.
+   <li>
+    <p>If at any point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
+    <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminated</a> with reason <var>reason</var>,
+    run these subsubsteps:
+
+    <ol>
+     <li><p>Set <var>response</var>'s <a href="#concept-response-termination-reason" title="concept-response-termination-reason">termination
+     reason</a> to <var>reason</var>.
+
+     <li><p>If <var>stream</var> is <a href="#concept-readablestream-readable" title="concept-ReadableStream-readable">readable</a>,
+     <a href="#concept-error-readablestream" title="concept-error-ReadableStream">error</a> <var>stream</var> with a
+     <code>TypeError</code>.
+    </ol>
   </ol>
 
   <p class="note no-backref">These are run <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>
@@ -2914,8 +2973,8 @@ The <i title="">credentials flag</i> is one too.
   might be a redirect).
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
- <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is still being
- pushed to after returning.</span>
+ <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>'s
+ <a href="#concept-body-stream" title="concept-body-stream">stream</a> is still being enqueued to after returning.</span>
 </ol>
 
 
@@ -3516,14 +3575,17 @@ running these steps:
 <pre class="idl">typedef any <dfn id="json">JSON</dfn>;
 typedef (<a class="external" data-anolis-spec="fileapi" href="https://w3c.github.io/FileAPI/#blob">Blob</a> or BufferSource or <a class="external" data-anolis-spec="xhr" href="https://xhr.spec.whatwg.org/#formdata">FormData</a> or <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#urlsearchparams">URLSearchParams</a> or USVString) <dfn id="bodyinit">BodyInit</dfn>;</pre>
 
-<p>To <dfn id="concept-bodyinit-extract" title="concept-BodyInit-extract">extract</dfn> a byte stream and a
+<p>To <dfn id="concept-bodyinit-extract" title="concept-BodyInit-extract">extract</dfn> a <a href="#concept-body" title="concept-body">body</a> and a
 `<code title="">Content-Type</code>` <a href="#concept-header-value" title="concept-header-value">value</a> from
 <var>object</var>, run these steps:
 
 <ol>
- <li><p>Let <var>stream</var> be an empty byte stream.
+ <li><p>Let <var>stream</var> be the result of
+ <a href="#concept-construct-readablestream" title="concept-construct-ReadableStream">constructing</a> a
+ <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object.
 
  <li><p>Let <var>Content-Type</var> be null.
+ <li><p>Let <var>action</var> be null.
 
  <li>
   <p>Switch on <var>object</var>'s type:
@@ -3531,25 +3593,25 @@ typedef (<a class="external" data-anolis-spec="fileapi" href="https://w3c.github
   <dl class="switch">
    <dt><a href="https://w3c.github.io/FileAPI/#blob"><code class="external" data-anolis-spec="fileapi">Blob</code></a>
    <dd>
-    <p>Push a copy of <var>object</var>'s contents to <var>stream</var>.
+    <p>Set <var>action</var> to an action that reads <var>object</var>.
 
-    <p>If <var>object</var>'s
-    <a href="https://w3c.github.io/FileAPI/#dfn-type"><code class="external" data-anolis-spec="fileapi" title="dom-Blob-type">type</code></a> attribute is not the
-    empty byte sequence, set <var>Content-Type</var> to its value.
+    <p>If <var>object</var>'s <a href="https://w3c.github.io/FileAPI/#dfn-type"><code class="external" data-anolis-spec="fileapi" title="dom-Blob-type">type</code></a>
+    attribute is not the empty byte sequence, set <var>Content-Type</var> to its value.
 
    <dt><code title="">BufferSource</code>
    <dd>
-    <p>Push a
-    <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-get-buffer-source-copy" title="get a copy of the bytes held by the buffer source">copy of</a>
-    <var>object</var> to <var>stream</var>.
+    <p><a href="#concept-enqueue-readablestream" title="concept-enqueue-ReadableStream">Enqueue</a> a <code>Uint8Array</code> object
+    wrapping an <code>ArrayBuffer</code> containing a copy of the bytes held by <var>object</var>
+    to <var>stream</var> and <a href="#concept-close-readablestream" title="concept-close-ReadableStream">close</a>
+    <var>stream</var>. If that threw an exception,
+    <a href="#concept-error-readablestream" title="concept-error-ReadableStream">error</a> <var>stream</var> with that exception.
 
    <dt><a href="https://xhr.spec.whatwg.org/#formdata"><code class="external" data-anolis-spec="xhr">FormData</code></a>
    <dd>
-    <p>Push the result of running the
+    <p>Set <var>action</var> to an action that runs the
     <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/forms.html#multipart/form-data-encoding-algorithm"><code>multipart/form-data</code> encoding algorithm</a>,
     with <var>object</var> as <var>form data set</var> and with
-    <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#utf-8">utf-8</a> as the explicit character encoding, to
-    <var>stream</var>.
+    <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#utf-8">utf-8</a> as the explicit character encoding.
     <!-- need to provide explicit character encoding because otherwise the encoding of the
          document is used -->
 
@@ -3561,11 +3623,10 @@ typedef (<a class="external" data-anolis-spec="fileapi" href="https://w3c.github
 
    <dt><a href="https://url.spec.whatwg.org/#urlsearchparams"><code class="external" data-anolis-spec="url">URLSearchParams</code></a>
    <dd>
-    <p>Push the result of running the
-    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-urlencoded-serializer" title="concept-urlencoded-serializer"><code>application/x-www-form-urlencoded</code> serializer</a>,
-    with <var>object</var>'s
-    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-urlsearchparams-list" title="concept-URLSearchParams-list">list</a>, to
-    <var>stream</var>.
+    <p>Set <var>action</var> to an action that runs the
+    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-urlencoded-serializer" title="concept-urlencoded-serializer"><code>application/x-www-form-urlencoded</code>
+    serializer</a> with <var>object</var>'s
+    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-urlsearchparams-list" title="concept-URLSearchParams-list">list</a>.
     <!-- utf-8 implied -->
 
     <p>Set <var>Content-Type</var> to
@@ -3573,12 +3634,31 @@ typedef (<a class="external" data-anolis-spec="fileapi" href="https://w3c.github
 
    <dt><code title="">USVString</code>
    <dd>
-    <p>Push the result of running <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#utf-8-encode">utf-8 encode</a> on
-    <var>object</var> to <var>stream</var>.
+    <p>Set <var>action</var> to an action that runs
+    <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#utf-8-encode">utf-8 encode</a> on <var>object</var>.
+
     <p>Set <var>Content-Type</var> to `<code title="">text/plain;charset=UTF-8</code>`.
   </dl>
 
- <li><p>Return <var>stream</var> and <var>Content-Type</var>.
+ <li>
+  <p>If <var>action</var> is non-null, run <var>action</var> <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in
+  parallel</a>:
+  <ol>
+   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes and
+   <a href="#concept-enqueue-readablestream" title="concept-enqueue-ReadableStream">enqueue</a> a <code>Uint8Array</code> object
+   wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If
+   creating the <code>ArrayBuffer</code> threw an exception,
+   <a href="#concept-error-readablestream" title="concept-error-ReadableStream">error</a> <var>stream</var> with that exception
+   and cancel running <var>action</var>.
+
+   <li><p>When running <var>action</var> is done,
+   <a href="#concept-close-readablestream" title="concept-close-ReadableStream">close</a> <var>stream</var>.
+  </ol>
+
+ <li><p>Let <var>body</var> be a <a href="#concept-body" title="concept-body">body</a> whose
+ <a href="#concept-body-stream" title="concept-body-stream">stream</a> is <var>stream</var>.
+
+ <li><p>Return <var>body</var> and <var>Content-Type</var>.
 </ol>
 
 
@@ -3598,18 +3678,25 @@ HTML, will likely not be exposed here. Rather, an HTML parser API might accept a
 due course.
 <!-- https://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>Objects implementing the <a href="#body"><code>Body</code></a> mixin gain a
-<dfn id="concept-body-mime-type" title="concept-Body-MIME-type">MIME type</dfn> (initially the empty byte sequence).
+<p>Objects implementing the <a href="#body"><code>Body</code></a> mixin gain an associated
+<dfn id="concept-body-body" title="concept-Body-body">body</dfn> (null or a <a href="#concept-body" title="concept-body">body</a>) and
+a <dfn id="concept-body-mime-type" title="concept-Body-MIME-type">MIME type</dfn> (initially the empty byte sequence).
 
-<p>Objects implementing the <a href="#body"><code>Body</code></a> mixin must define an associated
-<dfn id="concept-body-disturbed" title="concept-Body-disturbed">disturbed</dfn> predicate and a
-<dfn id="concept-body-consume-body" title="concept-Body-consume-body">consume body</dfn> algorithm.
+<p>An object implementing the <a href="#body"><code>Body</code></a> mixin is said to be
+<dfn id="concept-body-disturbed" title="concept-Body-disturbed">disturbed</dfn> if <a href="#concept-body-body" title="concept-Body-body">body</a> is
+non-null and its <a href="#concept-body-stream" title="concept-body-stream">stream</a> is
+<a href="#concept-readablestream-disturbed" title="concept-ReadableStream-disturbed">disturbed</a>.
+
+<p>An object implementing the <a href="#body"><code>Body</code></a> mixin is said to be
+<dfn id="concept-body-locked" title="concept-Body-locked">locked</dfn> if <a href="#concept-body-body" title="concept-Body-body">body</a> is
+non-null and its <a href="#concept-body-stream" title="concept-body-stream">stream</a> is
+<a href="#concept-readablestream-locked" title="concept-ReadableStream-locked">locked</a>.
 
 <p>The <dfn id="dom-body-bodyused" title="dom-Body-bodyUsed"><code>bodyUsed</code></dfn> attribute's getter must
 return true if <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>, and false otherwise.
 
 <p>Objects implementing the <a href="#body"><code>Body</code></a> mixin also have an associated
-<dfn id="concept-body-package-data" title="concept-Body-package-data">package data</dfn> algorithm, which given
+<dfn id="concept-body-package-data" title="concept-Body-package-data">package data</dfn> algorithm, given
 <var>bytes</var>, a <var>type</var> and a <var>MIME type</var>, switches on <var>type</var>, and
 runs the associated steps:
 
@@ -3674,6 +3761,36 @@ runs the associated steps:
  <dd><p>Return the result of running <a class="external" data-anolis-spec="encoding" href="https://encoding.spec.whatwg.org/#utf-8-decode">utf-8 decode</a> on
  <var>bytes</var>.
 </dl>
+
+<p>Objects implementing the <a href="#body"><code>Body</code></a> mixin also have an associated
+<dfn id="concept-body-consume-body" title="concept-Body-consume-body">consume body</dfn> algorithm, given a <var>type</var>,
+runs these steps:
+
+<ol>
+ <li><p>If this object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>
+ or <a href="#concept-body-locked" title="concept-Body-locked">locked</a>, return a new promise rejected with a
+ <code>TypeError</code>.
+
+ <li><p>Let <var>stream</var> be <a href="#concept-body-body" title="concept-Body-body">body</a>'s
+ <a href="#concept-body-stream" title="concept-body-stream">stream</a> if <a href="#concept-body-body" title="concept-Body-body">body</a> is
+ non-null, or an <a href="#concept-empty-readablestream" title="concept-empty-ReadableStream">empty</a>
+ <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object otherwise.
+
+ <li><p>Let <var>reader</var> be the result of <a href="#concept-get-reader" title="concept-get-reader">getting
+ a reader</a> from <var>stream</var>. If that threw an exception, return a new promise rejected
+ with that exception.
+
+ <li><p>Let <var>promise</var> be the result of
+ <a href="#concept-read-all-bytes-from-readablestream" title="concept-read-all-bytes-from-ReadableStream">reading all bytes</a> from
+ <var>stream</var> with <var>reader</var>.
+
+ <li><p>Return the result of transforming <var>promise</var> by a fulfillment handler that
+ returns the result of the <a href="#concept-body-package-data" title="concept-body-package-data">package data</a> algorithm
+ with its first argument, <var>type</var> and this object's
+ <a href="#concept-body-mime-type" title="concept-body-mime-type">MIME type</a>.
+ <!-- XXX IDL really needs to define "transforming". For now it is defined in
+          https://www.w3.org/2001/tag/doc/promises-guide -->
+</ol>
 
 <p>The <dfn id="dom-body-arraybuffer" title="dom-Body-arrayBuffer"><code>arrayBuffer()</code></dfn>
 method, when invoked, must return the result of running
@@ -3754,51 +3871,16 @@ enum <dfn id="requestredirect">RequestRedirect</dfn> { "follow", "error", "manua
 will still need to support it as a
 <a href="#concept-request-destination" title="concept-request-destination">destination</a>.
 
-<p>A <a href="#request"><code>Request</code></a> object has an associated
-<dfn id="concept-request-request" title="concept-Request-request">request</dfn> (a
-<a href="#concept-request" title="concept-request">request</a>).
+<p>A <a href="#request"><code>Request</code></a> object has an associated <dfn id="concept-request-request" title="concept-Request-request">request</dfn>
+(a <a href="#concept-request" title="concept-request">request</a>).
 
 <p>A <a href="#request"><code>Request</code></a> object also has an associated <a href="#headers"><code>Headers</code></a> object which
 is itself associated with <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
-<p>A <a href="#request"><code>Request</code></a> object also has an associated
-<dfn id="concept-request-disturbed-flag" title="concept-Request-disturbed-flag">disturbed flag</dfn> which is initially unset.
-
-<p>A <a href="#request"><code>Request</code></a> object's <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a> predicate
-returns true if the associated <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-<a href="#concept-request-body" title="concept-request-body">body</a> is not null and the associated
-<a href="#concept-request-disturbed-flag" title="concept-Request-disturbed-flag">disturbed flag</a> is set.
-
-<p>A <a href="#request"><code>Request</code></a> object's <a href="#concept-body-consume-body" title="concept-body-consume-body">consume body</a>
-algorithm, given a <var>type</var>, runs these steps:
-
-<ol>
- <li><p>If this <a href="#request"><code>Request</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>,
- return a new promise rejected with a <code>TypeError</code>.
-
- <li><p>Set <a href="#concept-request-disturbed-flag" title="concept-Request-disturbed-flag">disturbed flag</a>.
-
- <li><p>Let <var>p</var> be a new promise.
-
- <li>
-  <p>Run these substeps <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>:
-  <ol>
-   <li><p>Let <var>bytes</var> be the empty byte sequence.
-
-   <li><p>If <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-   <a href="#concept-request-body" title="concept-request-body">body</a> is not null, set <var>bytes</var> to the result of
-   reading from <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-   <a href="#concept-request-body" title="concept-request-body">body</a> until it returns end-of-stream.
-
-   <li><p>Resolve <var>p</var> with the result of running the
-   <a href="#concept-body-package-data" title="concept-body-package-data">package data</a> algorithm with <var>bytes</var>,
-   <var>type</var> and <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a>. If that threw an
-   exception, reject <var>p</var> with that exception.
-  </ol>
-
- <li><p>Return <var>p</var>.
-</ol>
+<p>A <a href="#request"><code>Request</code></a> object's <a href="#concept-body-body" title="concept-Body-body">body</a> is its
+<a href="#concept-request-request" title="concept-Request-request">request</a>'s
+<a href="#concept-request-body" title="concept-request-body">body</a>.
 
 <hr>
 
@@ -3808,12 +3890,9 @@ constructor must run these steps:
 
 <ol>
  <li><p>If <var>input</var> is a <a href="#request"><code>Request</code></a> object and it is
- <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>,
- <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
- <li><p>Let <var>temporaryBody</var> be <var>input</var>'s
- <a href="#concept-request-request" title="concept-Request-request">request</a>'s <a href="#concept-request-body" title="concept-request-body">body</a>
- if <var>input</var> is a <a href="#request"><code>Request</code></a> object, and null otherwise.
+ <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a> or
+ <a href="#concept-body-locked" title="concept-Body-locked">locked</a>, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+ <code title="">TypeError</code>.
 
  <li><p>Let <var>request</var> be <var>input</var>'s
  <a href="#concept-request-request" title="concept-Request-request">request</a>, if <var>input</var> is a
@@ -4043,8 +4122,12 @@ constructor must run these steps:
  <li><p><a href="#concept-headers-fill" title="concept-Headers-fill">Fill</a> <var>r</var>'s
  <a href="#headers"><code>Headers</code></a> object with <var>headers</var>. Rethrow any exceptions.
 
+ <li><p>Let <var>inputBody</var> be <var>input</var>'s
+ <a href="#concept-request-request" title="concept-Request-request">request</a>'s <a href="#concept-request-body" title="concept-request-body">body</a>
+ if <var>input</var> is a <a href="#request"><code>Request</code></a> object, and null otherwise.
+
  <li><p>If either <var>init</var>'s <code title="">body</code> member is present and is non-null or
- <var>temporaryBody</var> is non-null, and <var>request</var>'s
+ <var>inputBody</var> is non-null, and <var>request</var>'s
  <a href="#concept-request-method" title="concept-request-method">method</a> is `<code title="">GET</code>` or
  `<code title="">HEAD</code>`, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
  <code title="">TypeError</code>.
@@ -4054,11 +4137,11 @@ constructor must run these steps:
   substeps:
 
   <ol>
-   <li><p>Let <var>stream</var> and <var>Content-Type</var> be the result of
-   <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var>init</var>'s
-   <code title="">body</code> member.
+   <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>temporaryBody</var> to <var>stream</var>.
+   <li><p>Set <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var>init</var>'s
+   <code title="">body</code> member. Rethrow any exceptions.
 
    <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s
    <a href="#concept-request-request" title="concept-Request-request">request</a>'s
@@ -4070,7 +4153,7 @@ constructor must run these steps:
   </ol>
 
  <li><p>Set <var>r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
- <a href="#concept-request-body" title="concept-request-body">body</a> to <var>temporaryBody</var>.
+ <a href="#concept-request-body" title="concept-request-body">body</a> to <var>inputBody</var>.
  <!-- Any steps after this must not throw. -->
 
  <li><p>Set <var>r</var>'s <a href="#concept-body-mime-type" title="concept-Body-MIME-type">MIME type</a> to
@@ -4084,12 +4167,34 @@ constructor must run these steps:
   <a href="#concept-request-body" title="concept-request-body">body</a> is non-null, run these substeps:
 
   <ol>
-   <li><p>Set <var>input</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-   <a href="#concept-request-body" title="concept-request-body">body</a> to an empty byte stream.
+   <li><p>Let <var>dummyStream</var> be an <a href="#concept-empty-readablestream" title="concept-empty-ReadableStream">empty</a>
+   <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object.
 
-   <li><p>Set <var>input</var>'s
-   <a href="#concept-request-disturbed-flag" title="concept-Request-disturbed-flag">disturbed flag</a>.
+   <li><p>Set <var>input</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
+   <a href="#concept-request-body" title="concept-request-body">body</a> to a new <a href="#concept-body" title="concept-body">body</a> whose
+   <a href="#concept-body-stream" title="concept-body-stream">stream</a> is <var>dummyStream</var>.
+
+   <li>
+    <p>Let <var>reader</var> be the result of <a href="#concept-get-reader" title="concept-get-reader">getting a reader</a>
+    from <var>dummyStream</var>.
+    <p class="note no-backref">This operation will not throw an exception.
+
+   <li>
+    <p><a href="#concept-read-all-bytes-from-readablestream" title="concept-read-all-bytes-from-ReadableStream">Read all bytes</a> from
+    <var>dummyStream</var> with <var>reader</var>.
+    <p class="note no-backref">This operation makes <var>dummyStream</var> disturbed.
   </ol>
+
+  <p class="note no-backref">These substeps are meant to produce the observable equivalent of
+  "piping" <var>input</var>'s <a href="#concept-body-body" title="concept-Body-body">body</a>'s
+  <a href="#concept-body-stream" title="concept-body-stream">stream</a> into <var>r</var>. That is, <var>input</var> is
+  left with a <a href="#concept-body" title="concept-body">body</a> with a
+  <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object that is
+  <a href="#concept-readablestream-disturbed" title="concept-ReadableStream-disturbed">disturbed</a> and
+  <a href="#concept-readablestream-locked" title="concept-ReadableStream-locked">locked</a>, while the data readable from
+  <var>r</var>'s <a href="#concept-body-body" title="concept-Body-body">body</a>'s
+  <a href="#concept-body-stream" title="concept-body-stream">stream</a> is now equal to what used to be <var>input</var>'s,
+  if <var>input</var>'s original <a href="#concept-body-body" title="concept-Body-body">body</a> is non-null.
 
  <li><p>Return <var>r</var>.
 </ol>
@@ -4153,23 +4258,16 @@ must return <a href="#concept-request-request" title="concept-Request-request">r
 run these steps:
 
 <ol>
- <li><p>If this <a href="#request"><code>Request</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>,
+ <li><p>If this <a href="#request"><code>Request</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>
+ or <a href="#concept-body-locked" title="concept-Body-locked">locked</a>,
  <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>Let <var>newRequest</var> be a copy of
- <a href="#concept-request-request" title="concept-Request-request">request</a>, with
- <var>newRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> being a tee of
- <a href="#concept-request-request" title="concept-Request-request">request</a>'s
- <a href="#concept-request-body" title="concept-request-body">body</a>.
- <!-- Similar text in: HTTP-network-or-cache fetch -->
-
- <li><p>Let <var>r</var> be a new <a href="#request"><code>Request</code></a> object associated with
- <var>newRequest</var> and a new <a href="#headers"><code>Headers</code></a> object whose
+ <li><p>Return a new <a href="#request"><code>Request</code></a> object associated with the result of
+ <a href="#concept-request-clone" title="concept-request-clone">cloning</a>
+ <a href="#concept-request-request" title="concept-Request-request">request</a> and a new <a href="#headers"><code>Headers</code></a> object whose
  <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
  <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s <a href="#headers"><code>Headers</code></a>'
  <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a>.
-
- <li><p>Return <var>r</var>.
 </ol>
 
 
@@ -4211,52 +4309,8 @@ enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "er
 is itself associated with <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
-<p>A <a href="#response"><code>Response</code></a> object also has an associated
-<dfn id="concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</dfn> which is null or a
-<a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object. Its initial value is null.
-
-<p class="XXX"><a href="https://github.com/whatwg/streams/issues/379">This might become a
-<code>ReadableByteStream</code> object</a>. While the type might change, the behavior specified will
-be equivalent since the hypothetical <code title="">ReadableByteStream</code> object will have the same
-members as the <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object has today.
-
-<p>A <a href="#response"><code>Response</code></a> object is said to be <dfn id="concept-response-locked" title="concept-Response-locked">locked</dfn> if
-the associated <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a> is not null and
-it is <a href="#concept-readablestream-locked" title="concept-ReadableStream-locked">locked</a>.
-
-<p>A <a href="#response"><code>Response</code></a> object's <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a> predicate
-returns true if the associated <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a>
-is not null and it is <a href="#concept-readablestream-disturbed" title="concept-ReadableStream-disturbed">disturbed</a>.
-
-<p>A <a href="#response"><code>Response</code></a> object's <a href="#concept-body-consume-body" title="concept-body-consume-body">consume body</a>
-algorithm, given a <var>type</var>, runs these steps:
-
-<ol>
- <li><p>If this <a href="#response"><code>Response</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>
- or <a href="#concept-response-locked" title="concept-Response-locked">locked</a>, return a new promise rejected with a
- <code>TypeError</code>.
-
- <li><p>Let <var>stream</var> be <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable
- stream</a>.
-
- <li><p>If <var>stream</var> is null, set <var>stream</var> to an
- <a href="#concept-empty-readablestream" title="concept-empty-ReadableStream">empty</a>
- <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object.
-
- <li><p>Let <var>reader</var> be the result of <a href="#concept-get-reader" title="concept-get-reader">getting</a>
- a reader from <var>stream</var>. If that threw an exception, return a new promise rejected
- with that exception.
-
- <li><p>Let <var>promise</var> be the result of
- <a href="#concept-read-all-bytes-from-readablestream" title="concept-read-all-bytes-from-ReadableStream">reading</a> all bytes from
- <var>stream</var> with <var>reader</var>.
-
- <li><p>Return the result of transforming <var>promise</var> by a fulfillment handler that
- returns the result of the <a href="#concept-body-package-data" title="concept-body-package-data">package data</a> algorithm
- with its first argument, <var>type</var> and <a href="#concept-body-mime-type" title="concept-body-mime-type">MIME type</a>.
- <!-- XXX IDL really needs to define "transforming". For now it is defined in
-          https://www.w3.org/2001/tag/doc/promises-guide -->
-</ol>
+<p>A <a href="#response"><code>Response</code></a> object's <a href="#concept-body-body" title="concept-Body-body">body</a> is its
+<a href="#concept-response-response" title="concept-Response-response">response</a>'s <a href="#concept-response-body" title="concept-response-body">body</a>.
 
 <p>The
 <dfn id="dom-response" title="dom-Response"><code>Response(<var>body</var>, <var>init</var>)</code></dfn>
@@ -4309,14 +4363,11 @@ constructor, when invoked, must run these steps:
     <p class="note no-backref"><code title="">101</code> is included in
     <a href="#null-body-status">null body status</a> due to its use elsewhere. It does not affect this step.
 
-   <li><p>Let <var>byteStream</var> and <var>Content-Type</var> be the result of
-   <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var>body</var>.
+   <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>r</var>'s
-   <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a> to the result of
-   <a href="#concept-construct-readablestream-with-byte-stream" title="concept-construct-ReadableStream-with-byte-stream">constructing</a> a
-   <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object with <var>byteStream</var>.
-   Rethrow any exceptions.
+   <li><p>Set <var>r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
+   <a href="#concept-response-body" title="concept-response-body">body</a> and <var>Content-Type</var> to the result of
+   <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var>body</var>. Rethrow any exceptions.
 
    <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s
    <a href="#concept-response-response" title="concept-Response-response">response</a>'s
@@ -4416,8 +4467,9 @@ must return <a href="#concept-response-response" title="concept-Response-respons
 <p>The <dfn id="dom-response-headers" title="dom-Response-headers"><code>headers</code></dfn> attribute's getter must
 return the associated <a href="#headers"><code>Headers</code></a> object.
 
-<p>The <dfn id="dom-response-body" title="dom-Response-body"><code>body</code></dfn> attribute's getter must return the
-associated <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a>.
+<p>The <dfn id="dom-response-body" title="dom-Response-body"><code>body</code></dfn> attribute's getter must return null if
+the associated <a href="#concept-body-body" title="concept-Body-body">body</a> is null and the associated
+<a href="#concept-body-body" title="concept-Body-body">body</a>'s <a href="#concept-body-stream" title="concept-body-stream">stream</a> otherwise.
 
 <hr>
 
@@ -4426,32 +4478,15 @@ run these steps:
 
 <ol>
  <li><p>If this <a href="#response"><code>Response</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>
- or <a href="#concept-response-locked" title="concept-Response-locked">locked</a>, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
- <code>TypeError</code>.
+ or <a href="#concept-body-locked" title="concept-Body-locked">locked</a>,
+ <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>Let <var>newResponse</var> be a copy of
- <a href="#concept-response-response" title="concept-Response-response">response</a> except its
- <a href="#concept-response-body" title="concept-response-body">body</a>.
-
- <li><p>Let <var>r</var> be a new <a href="#response"><code>Response</code></a> object associated with
- <var>newResponse</var> and a new <a href="#headers"><code>Headers</code></a> object whose
+ <li><p>Return a new <a href="#response"><code>Response</code></a> object associated with the result of
+ <a href="#concept-response-clone" title="concept-response-clone">cloning</a>
+ <a href="#concept-response-response" title="concept-Response-response">response</a> and a new <a href="#headers"><code>Headers</code></a> object whose
  <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
  <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s <a href="#headers"><code>Headers</code></a>'
  <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a>.
-
- <li><p>If <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a> is null, Return
- <var>r</var>.
-
- <li><p>Let «<var>out1</var>, <var>out2</var>» be the result of
- <a href="#concept-tee-readablestream" title="concept-tee-ReadableStream">teeing</a>
- <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a>. Rethrow any exceptions.
-
- <li><p>Set <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a> to <var>out1</var>.
-
- <li><p>Set <var>r</var>'s <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable stream</a> to
- <var>out2</var>.
-
- <li><p>Return <var>r</var>.
 </ol>
 
 
@@ -4505,71 +4540,10 @@ method, must run these steps:
    "<code title="">error</code>", reject <var>p</var> with a <code title="">TypeError</code> and terminate
    these substeps.
 
-   <li><p>Let <var>responseObject</var> be a new <a href="#response"><code>Response</code></a> object associated with
+   <li><p>Resolve <var>p</var> with a new <a href="#response"><code>Response</code></a> object associated with
    <var>response</var> and a new <a href="#headers"><code>Headers</code></a> object whose
    <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">immutable</code>".
-
-   <li><p>If <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is null, resolve
-   <var>p</var> with <var>responseObject</var> and terminate these substeps.
-
-   <li><p>Let <var>pull</var> be an action that <a href="#concept-fetch-resume" title="concept-fetch-resume">resumes</a> the
-   ongoing fetch if it is <a href="#concept-fetch-suspend" title="concept-fetch-suspend">suspended</a>.
-
-   <li><p>Let <var>cancel</var> be an action that
-   <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminates</a> the ongoing fetch with reason
-   <i title="">end-user abort</i>.
-
-   <li>
-    <p>Let <var>strategy</var> be an object. The user agent may choose any object.
-    <p class="note no-backref"><var>strategy</var> is used to control the queuing strategy of
-    <var>stream</var> constructed below.
-
-   <li>
-    <p>Set <var>stream</var> to the result of
-    <a href="#concept-construct-readablestream" title="concept-construct-ReadableStream">constructing</a> a
-    <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object with <var>strategy</var>,
-    <var>pull</var> and <var>cancel</var>. If that threw an exception, run the following
-    subsubsteps and terminate these substeps:
-
-    <ol>
-     <li><p>Reject <var>p</var> with that exception.
-
-     <li><p><a href="#concept-fetch-terminate" title="concept-fetch-terminate">Terminate</a> the ongoing fetch with reason
-     <i title="">fatal</i>.
-    </ol>
-
-   <li><p>Set <var>responseObject</var>'s <a href="#concept-response-readable-stream" title="concept-Response-readable-stream">readable
-   stream</a> to <var>stream</var>.
-
-   <li><p>Resolve <var>p</var> with <var>responseObject</var>.
   </ol>
-
-  <p>To <a href="#process-response-body">process response body</a> for <var>response</var>, run these substeps:
-
-  <ol>
-   <li><p>If <var>stream</var> is null, terminate these substeps.
-
-   <li>
-    <p><a href="#concept-enqueue-readablestream" title="concept-enqueue-ReadableStream">Enqueue</a> a <code title="">Uint8Array</code>
-    object wrapping an <code title="">ArrayBuffer</code> containing the result of reading
-    <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> into <var>stream</var>. If
-    that threw an exception, run the following subsubsteps and terminate these substeps:
-
-    <ol>
-     <li><p>Reject <var>p</var> with that exception.
-
-     <li><p><a href="#concept-fetch-terminate" title="concept-fetch-terminate">Terminate</a> the ongoing fetch with reason
-     <i title="">fatal</i>.
-    </ol>
-
-   <li><p>If <var>stream</var> doesn't
-   <a href="#concept-readablestream-need-more-data" title="concept-ReadableStream-need-more-data">need more data</a>, ask the user agent to
-   <a href="#concept-fetch-suspend" title="concept-fetch-suspend">suspend</a> the ongoing fetch.
-  </ol>
-
-  <p>To <a href="#process-response-end-of-file">process response end-of-file</a> for <var>response</var>,
-  <a href="#concept-close-readablestream" title="concept-close-ReadableStream">close</a> <var>stream</var>
-  if <var>stream</var> is not null.
 
  <li><p>Return <var>p</var>.
 </ol>
