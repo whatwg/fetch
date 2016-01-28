@@ -325,6 +325,13 @@ A <span title=concept-header-name>name</span> is a
 <span title=concept-header-value>value</span>, remove any leading and trailing
 <span>HTTP whitespace bytes</span> from it.
 
+<p>A <dfn title=concept-header-value-combined>combined value</dfn>, given a
+<span title=concept-header-name>name</span> (<var>name</var>) and
+<span title=concept-header-list>header list</span> (<var>list</var>), is the
+<span title=concept-header-value>values</span> of all <span title=concept-header>headers</span> in
+<var>list</var> whose <span title=concept-header-name>name</span> is <var>name</var>, separated from
+each other by `<code title>,</code>`, in order.
+
 <hr>
 
 <p>A <dfn>simple header</dfn> is a <span title=concept-header>header</span> whose
@@ -3147,7 +3154,6 @@ interface <dfn>Headers</dfn> {
   void <span title=dom-Headers-append>append</span>(ByteString <var>name</var>, ByteString <var>value</var>);
   void <span title=dom-Headers-delete>delete</span>(ByteString <var>name</var>);
   ByteString? <span title=dom-Headers-get>get</span>(ByteString <var>name</var>);
-  sequence&lt;ByteString> <span title=dom-Headers-getAll>getAll</span>(ByteString <var>name</var>);
   boolean <span title=dom-Headers-has>has</span>(ByteString <var>name</var>);
   void <span title=dom-Headers-set>set</span>(ByteString <var>name</var>, ByteString <var>value</var>);
   iterable&lt;ByteString, ByteString>;
@@ -3295,24 +3301,12 @@ invoked, must run these steps:
  <li><p>If <var>name</var> is not a <span title=concept-header-name>name</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
- <li><p>Return the <span title=concept-header-value>value</span> of the first
- <span title=concept-header>header</span> in
+ <li><p>If there is <em>no</em> <span title=concept-header>header</span> in
  <span title=concept-Headers-header-list>header list</span> whose
- <span title=concept-header-name>name</span> is <var>name</var>, and null otherwise.
-</ol>
+ <span title=concept-header-name>name</span> is <var>name</var>, return null.
 
-<p>The <dfn title=dom-Headers-getAll><code>getAll(<var>name</var>)</code></dfn> method,
-when invoked, must run these steps:
-
-<ol>
- <li><p>If <var>name</var> is not a <span title=concept-header-name>name</span>,
- <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
-
- <li><p>Return the <span title=concept-header-value>values</span> of all
- <span title=concept-header>headers</span> in
- <span title=concept-Headers-header-list>header list</span> whose
- <span title=concept-header-name>name</span> is <var>name</var>, in list order, and
- the empty sequence otherwise.
+ <li><p>Return the <span title=concept-header-value-combined>combined value</span> given
+ <var>name</var> and <span title=concept-Headers-header-list>header list</span>.
 </ol>
 
 <p>The <dfn title=dom-Headers-has><code>has(<var>name</var>)</code></dfn> method,
@@ -3360,11 +3354,33 @@ method, when invoked, must run these steps:
  <span title=concept-Headers-header-list>header list</span>.
 </ol>
 
-<p>The <span data-anolis-spec=webidl>value pairs to iterate over</span> are the
-<span title=concept-header>headers</span> in the
-<span title=concept-Headers-header-list>header list</span> with the key being the
-<span title=concept-header-name>name</span> and value the
-<span title=concept-header-value>value</span>.
+<p>The <span data-anolis-spec=webidl>value pairs to iterate over</span> are the return value of
+running these steps:
+
+<ol>
+ <li><p>Let <var>headers</var> be an empty list of
+ <span title=concept-header-name>name</span>-<span title=concept-header-value>value</span> pairs
+ with the key being the <span title=concept-header-name>name</span> and value the
+ <span title=concept-header-value>value</span>.
+
+ <li><p>Let <var>names</var> be all the <span title=concept-header-name>names</span> of the
+ <span title=concept-header>headers</span> in the
+ <span title=concept-Headers-header-list>header list</span>, with duplicates removed, and sorted
+ lexicographically.
+
+ <li>
+  <p>For each <var>name</var> in <var>names</var>, run these substeps:
+
+  <ol>
+   <li><p>Let <var>value</var> be the
+   <span title=concept-header-value-combined>combined value</span> given <var>name</var> and
+   <span title=concept-Headers-header-list>header list</span>.
+
+   <li><p>Append <var>name</var>-<var>value</var> to <var>headers</var>.
+  </ol>
+
+ <li><p>Return <var>headers</var>
+</ol>
 
 
 <h3>Body mixin</h3>

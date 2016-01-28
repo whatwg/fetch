@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-27-january-2016">Living Standard — Last Updated 27 January 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-28-january-2016">Living Standard — Last Updated 28 January 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -385,6 +385,13 @@ A <a href="#concept-header-name" title="concept-header-name">name</a> is a
 <p>To <dfn id="concept-header-value-normalize" title="concept-header-value-normalize">normalize</dfn> a
 <a href="#concept-header-value" title="concept-header-value">value</a>, remove any leading and trailing
 <a href="#http-whitespace-bytes">HTTP whitespace bytes</a> from it.
+
+<p>A <dfn id="concept-header-value-combined" title="concept-header-value-combined">combined value</dfn>, given a
+<a href="#concept-header-name" title="concept-header-name">name</a> (<var>name</var>) and
+<a href="#concept-header-list" title="concept-header-list">header list</a> (<var>list</var>), is the
+<a href="#concept-header-value" title="concept-header-value">values</a> of all <a href="#concept-header" title="concept-header">headers</a> in
+<var>list</var> whose <a href="#concept-header-name" title="concept-header-name">name</a> is <var>name</var>, separated from
+each other by `<code title="">,</code>`, in order.
 
 <hr>
 
@@ -3208,7 +3215,6 @@ interface <dfn id="headers">Headers</dfn> {
   void <a href="#dom-headers-append" title="dom-Headers-append">append</a>(ByteString <var>name</var>, ByteString <var>value</var>);
   void <a href="#dom-headers-delete" title="dom-Headers-delete">delete</a>(ByteString <var>name</var>);
   ByteString? <a href="#dom-headers-get" title="dom-Headers-get">get</a>(ByteString <var>name</var>);
-  sequence&lt;ByteString&gt; <a href="#dom-headers-getall" title="dom-Headers-getAll">getAll</a>(ByteString <var>name</var>);
   boolean <a href="#dom-headers-has" title="dom-Headers-has">has</a>(ByteString <var>name</var>);
   void <a href="#dom-headers-set" title="dom-Headers-set">set</a>(ByteString <var>name</var>, ByteString <var>value</var>);
   iterable&lt;ByteString, ByteString&gt;;
@@ -3356,24 +3362,12 @@ invoked, must run these steps:
  <li><p>If <var>name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a>,
  <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>Return the <a href="#concept-header-value" title="concept-header-value">value</a> of the first
- <a href="#concept-header" title="concept-header">header</a> in
+ <li><p>If there is <em>no</em> <a href="#concept-header" title="concept-header">header</a> in
  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
- <a href="#concept-header-name" title="concept-header-name">name</a> is <var>name</var>, and null otherwise.
-</ol>
+ <a href="#concept-header-name" title="concept-header-name">name</a> is <var>name</var>, return null.
 
-<p>The <dfn id="dom-headers-getall" title="dom-Headers-getAll"><code>getAll(<var>name</var>)</code></dfn> method,
-when invoked, must run these steps:
-
-<ol>
- <li><p>If <var>name</var> is not a <a href="#concept-header-name" title="concept-header-name">name</a>,
- <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
- <li><p>Return the <a href="#concept-header-value" title="concept-header-value">values</a> of all
- <a href="#concept-header" title="concept-header">headers</a> in
- <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> whose
- <a href="#concept-header-name" title="concept-header-name">name</a> is <var>name</var>, in list order, and
- the empty sequence otherwise.
+ <li><p>Return the <a href="#concept-header-value-combined" title="concept-header-value-combined">combined value</a> given
+ <var>name</var> and <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 </ol>
 
 <p>The <dfn id="dom-headers-has" title="dom-Headers-has"><code>has(<var>name</var>)</code></dfn> method,
@@ -3421,11 +3415,33 @@ method, when invoked, must run these steps:
  <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 </ol>
 
-<p>The <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-value-pairs-to-iterate-over">value pairs to iterate over</a> are the
-<a href="#concept-header" title="concept-header">headers</a> in the
-<a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> with the key being the
-<a href="#concept-header-name" title="concept-header-name">name</a> and value the
-<a href="#concept-header-value" title="concept-header-value">value</a>.
+<p>The <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-value-pairs-to-iterate-over">value pairs to iterate over</a> are the return value of
+running these steps:
+
+<ol>
+ <li><p>Let <var>headers</var> be an empty list of
+ <a href="#concept-header-name" title="concept-header-name">name</a>-<a href="#concept-header-value" title="concept-header-value">value</a> pairs
+ with the key being the <a href="#concept-header-name" title="concept-header-name">name</a> and value the
+ <a href="#concept-header-value" title="concept-header-value">value</a>.
+
+ <li><p>Let <var>names</var> be all the <a href="#concept-header-name" title="concept-header-name">names</a> of the
+ <a href="#concept-header" title="concept-header">headers</a> in the
+ <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>, with duplicates removed, and sorted
+ lexicographically.
+
+ <li>
+  <p>For each <var>name</var> in <var>names</var>, run these substeps:
+
+  <ol>
+   <li><p>Let <var>value</var> be the
+   <a href="#concept-header-value-combined" title="concept-header-value-combined">combined value</a> given <var>name</var> and
+   <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
+
+   <li><p>Append <var>name</var>-<var>value</var> to <var>headers</var>.
+  </ol>
+
+ <li><p>Return <var>headers</var>
+</ol>
 
 
 <h3 id="body-mixin"><span class="secno">6.2 </span>Body mixin</h3>
