@@ -239,7 +239,7 @@ annotated as one of the following:
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#networking-task-source">networking task source</a>.
 </ol>
 
-<p>To <dfn id="queue-a-fetch-done-task">queue a fetch-done task</dfn> given a <var>request</var> and
+<p>To <dfn id="queue-a-fetch-done-task">queue a fetch-done task</dfn>, given a <var>request</var> and
 <var>response</var>, run these steps:
 
 <ol>
@@ -450,6 +450,23 @@ from APIs using <a href="#concept-fetch" title="concept-fetch">fetch</a> that al
 <ul class="brief">
  <li>`<code title="">Set-Cookie</code>`
  <li>`<code title="">Set-Cookie2</code>`
+</ul>
+
+<p>A <dfn id="cors-safelisted-response-header-name">CORS-safelisted response-header name</dfn>, given a
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> <var>list</var>, is a
+<a href="#concept-header" title="concept-header">header</a> <a href="#concept-header-name" title="concept-header-name">name</a> that is one of:
+
+<ul>
+ <li>`<code title="">Cache-Control</code>`
+ <li>`<code title="">Content-Language</code>`
+ <li>`<code title="">Content-Type</code>`
+ <li>`<code title="">Expires</code>`
+ <li>`<code title="">Last-Modified</code>`
+ <li>`<code title="">Pragma</code>`.
+ <li>Any <a href="#concept-header-value" title="concept-header-value">value</a> resulting from
+ <a href="#concept-header-parse" title="concept-header-parse">parsing</a>
+ `<a href="#http-access-control-expose-headers"><code title="http-access-control-expose-headers">Access-Control-Expose-Headers</code></a>` in
+ <var>list</var> that is not a <a href="#forbidden-response-header-name">forbidden response-header name</a>.
 </ul>
 
 <hr>
@@ -1069,19 +1086,12 @@ required, e.g., to feed image data to a decoder, the associated
 <p>A <dfn id="concept-filtered-response-cors" title="concept-filtered-response-cors">CORS filtered response</dfn> is a
 <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> whose
 <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">cors</code>",
-<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> excludes all
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> excludes any
 <a href="#concept-header" title="concept-header">headers</a> in
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
-<a href="#concept-response-header-list" title="concept-response-header-list">header list</a>, except those whose
-<a href="#concept-header-name" title="concept-header-name">name</a> is either one of
-`<code title="">Cache-Control</code>`, `<code title="">Content-Language</code>`,
-`<code title="">Content-Type</code>`, `<code title="">Expires</code>`,
-`<code title="">Last-Modified</code>`, and `<code title="">Pragma</code>`, and except those
-whose <a href="#concept-header-name" title="concept-header-name">name</a> is both not a
-<a href="#forbidden-response-header-name">forbidden response-header name</a> and one of the
-<a href="#concept-header-value" title="concept-header-value">values</a> resulting from
-<a href="#concept-header-parse" title="concept-header-parse">parsing</a>
-`<a href="#http-access-control-expose-headers"><code title="http-access-control-expose-headers">Access-Control-Expose-Headers</code></a>` in
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> whose
+<a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> a
+<a href="#cors-safelisted-response-header-name">CORS-safelisted response-header name</a>, given
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
 <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
 
@@ -1286,7 +1296,7 @@ run these steps:
 </ol>
 
 <p>To <dfn id="concept-construct-readablestream-with-byte-stream" title="concept-construct-ReadableStream-with-byte-stream">construct</dfn> a
-<a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object with given a byte stream
+<a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object, given a byte stream
 <var>byteStream</var>, run these steps:
 
 <p class="XXX">This operation is a workaround and will be deleted when we stop using byte streams.
@@ -3084,7 +3094,7 @@ entries where each entry has these fields:
 <a href="#concept-cache-max-age" title="concept-cache-max-age">max-age</a> field have passed since storing the entry.
 Entries may be removed before that moment arrives.
 
-<p>To <dfn id="concept-cache-clear" title="concept-cache-clear">clear cache entries</dfn> given a
+<p>To <dfn id="concept-cache-clear" title="concept-cache-clear">clear cache entries</dfn>, given a
 <var>request</var>, remove any entries in the
 <a href="#concept-cache" title="concept-cache">CORS-preflight cache</a> whose
 <a href="#concept-cache-origin" title="concept-cache-origin">origin</a> is <var>request</var>'s
@@ -3736,7 +3746,7 @@ returns true if the associated <a href="#concept-request-request" title="concept
 <a href="#concept-request-disturbed-flag" title="concept-Request-disturbed-flag">disturbed flag</a> is set.
 
 <p>A <a href="#request"><code>Request</code></a> object's <a href="#concept-body-consume-body" title="concept-body-consume-body">consume body</a>
-algorithm, which given a <var>type</var>, runs these steps:
+algorithm, given a <var>type</var>, runs these steps:
 
 <ol>
  <li><p>If this <a href="#request"><code>Request</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>,
@@ -4194,7 +4204,7 @@ returns true if the associated <a href="#concept-response-readable-stream" title
 is not null and it is <a href="#concept-readablestream-disturbed" title="concept-ReadableStream-disturbed">disturbed</a>.
 
 <p>A <a href="#response"><code>Response</code></a> object's <a href="#concept-body-consume-body" title="concept-body-consume-body">consume body</a>
-algorithm, which given a <var>type</var>, runs these steps:
+algorithm, given a <var>type</var>, runs these steps:
 
 <ol>
  <li><p>If this <a href="#response"><code>Response</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>
@@ -4793,6 +4803,7 @@ Jonathan Kingston,
 Jonathan Watt,
 최종찬 (Jongchan Choi),
 Jörn Zaefferer,
+Josh Matthews,
 Julian Krispel-Samsel,
 Julian Reschke,
 송정기 (Jungkee Song),
