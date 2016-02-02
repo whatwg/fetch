@@ -593,7 +593,6 @@ not have to explicitly set <span title=concept-request>request</span>'s
 <dfn title=concept-request-initiator>initiator</dfn>, which is one of
 the empty string,
 "<code title>download</code>",
-"<code title>fetch</code>",
 "<code title>imageset</code>",
 "<code title>manifest</code>", and
 "<code title>xslt</code>". Unless stated otherwise it is the empty string.
@@ -619,11 +618,19 @@ the empty string,
 <dfn title=concept-request-destination>destination</dfn>, which is one of
 the empty string,
 "<code title>document</code>",
+"<code title>embed</code>",
+"<code title>font</code>",
+"<code title>image</code>",
+"<code title>manifest</code>",
+"<code title>media</code>",
+"<code title>object</code>",
+"<code title>report</code>",
+"<code title>script</code>",
 "<code title>serviceworker</code>",
 "<code title>sharedworker</code>",
-"<code title>subresource</code>",
-"<code title>unknown</code>", and
-"<code title>worker</code>".
+"<code title>style</code>",
+"<code title>worker</code>", and
+"<code title>xslt</code>". Unless stated otherwise it is the empty string.
 
 <div class=note>
  <p>The following table illustrates the relationship between a
@@ -640,43 +647,52 @@ the empty string,
    <th>CSP directive
    <th>Features
   <tr>
-   <td rowspan=14>""
-   <td rowspan=4>""
-   <td>""
+   <td rowspan=15>""
+   <td rowspan=5>""
+   <td>"<code title>report</code>"
    <td rowspan=2>?
    <td>CSP, NEL reports.
   <tr>
    <td>"<code title>document</code>"
    <td>HTML's navigate algorithm.
   <tr>
-   <td>"<code title>subresource</code>"
+   <td>"<code title>document</code>"
+   <td><code title>child-src</code>
+   <td>HTML's <code>&lt;iframe></code> and <code>&lt;frame></code>
+  <tr>
+   <td>""
    <td><code title>connect-src</code>
    <td><code>navigator.sendBeacon()</code>, <code>EventSource</code>,
-   HTML's <code>ping=""</code>, <code>XMLHttpRequest</code>
+   HTML's <code>ping=""</code>, <code title=dom-global-fetch>fetch()</code>,
+   <code>XMLHttpRequest</code>, Cache API?
   <tr>
-   <td>"<code title>unknown</code>"
+   <td>"<code title>object</code>"
    <td><code title>object-src</code>
-   <td>HTML's <code>&lt;embed></code> and <code>&lt;object></code>
+   <td>HTML's <code>&lt;object></code>
+  <tr>
+   <td>"<code title>embed</code>"
+   <td><code title>object-src</code>
+   <td>HTML's <code>&lt;embed></code>
   <tr>
    <td>"<code title>audio</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>media</code>"
    <td><code title>media-src</code>
    <td>HTML's <code>&lt;audio></code>
   <tr>
    <td>"<code title>font</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>font</code>"
    <td><code title>font-src</code>
    <td>CSS' <code>@font-face</code>
   <tr>
    <td>"<code title>image</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>image</code>"
    <td><code title>img-src</code>
    <td>HTML's <code>&lt;img src></code>, <code title>/favicon.ico</code> resource,
    SVG's <code>&lt;image></code>, CSS' <code>background-image</code>, CSS'
    <code>cursor</code>, CSS' <code>list-style-image</code>, &hellip;
   <tr>
    <td rowspan=4>"<code title>script</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>script</code>"
    <td><code title>script-src</code>
    <td>HTML's <code>&lt;script></code>, <code>importScripts()</code>
   <tr>
@@ -693,17 +709,17 @@ the empty string,
    <td><code>Worker</code>
   <tr>
    <td>"<code title>style</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>style</code>"
    <td><code title>style-src</code>
    <td>HTML's <code>&lt;link rel=stylesheet></code>, CSS' <code>@import</code>
   <tr>
    <td>"<code title>track</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>media</code>"
    <td><code title>media-src</code>
    <td>HTML's <code>&lt;track></code>
   <tr>
    <td>"<code title>video</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>media</code>"
    <td><code title>media-src</code>
    <td>HTML's <code>&lt;video></code> element
   <tr>
@@ -713,27 +729,21 @@ the empty string,
    <td>?
    <td>HTML's <code>download=""</code>, "Save Link As&hellip;" UI
   <tr>
-   <td>"<code title>fetch</code>"
-   <td>""
-   <td>"<code title>subresource</code>"
-   <td><code title>connect-src</code>
-   <td><code title=dom-global-fetch>fetch()</code>, Cache API?
-  <tr>
    <td>"<code title>imageset</code>"
    <td>"<code title>image</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>image</code>"
    <td><code title>img-src</code>
    <td>HTML's <code>&lt;img srcset></code> and <code>&lt;picture></code>
   <tr>
    <td>"<code title>manifest</code>"
    <td>""
-   <td>"<code title>subresource</code>"
+   <td>"<code title>manifest</code>"
    <td><code title>manifest-src</code>
    <td>HTML's <code>&lt;link rel=manifest></code>
   <tr>
    <td>"<code title>xslt</code>"
    <td>"<code title>script</code>"
-   <td>"<code title>subresource</code>"
+   <td>"<code title>xslt</code>"
    <td><code title>script-src</code>
    <td><code>&lt;?xml-stylesheet></code>
  </table>
@@ -910,17 +920,20 @@ Unless stated otherwise, it is unset.
 <hr>
 
 <p>A <dfn>subresource request</dfn> is a <span title=concept-request>request</span>
-whose <span title=concept-request-destination>destination</span> is
-"<code title>subresource</code>".
+whose <span title=concept-request-destination>destination</span> is "<code title>font</code>",
+"<code title>image</code>", "<code title>manifest</code>", "<code title>media</code>",
+"<code title>script</code>", "<code title>style</code>", "<code title>xslt</code>", or the empty
+string.
 
 <p>A <dfn>potential-navigation-or-subresource request</dfn> is a
 <span title=concept-request>request</span> whose
 <span title=concept-request-destination>destination</span> is
-"<code title>unknown</code>".
+"<code title>object</code>" or "<code title>embed</code>".
 
 <p>A <dfn>non-subresource request</dfn> is a <span title=concept-request>request</span>
-whose <span title=concept-request-destination>destination</span> is neither
-"<code title>subresource</code>" nor "<code title>unknown</code>".
+whose <span title=concept-request-destination>destination</span> is "<code title>document</code>",
+"<code title>report</code>", "<code title>serviceworker</code>", "<code title>sharedworker</code>",
+or "<code title>worker</code>".
 
 <p>A <dfn>navigation request</dfn> is a <span title=concept-request>request</span> whose
 <span title=concept-request-destination>destination</span> is
@@ -1712,10 +1725,8 @@ if the ongoing fetch is updating the response in the HTTP cache for the request.
    <span title=concept-request-header-list>header list</span>.
   </ol>
 
- <li><p>If <var>request</var>'s
- <span title=concept-request-initiator>initiator</span> is not "<code title>fetch</code>"
- and <var>request</var>'s <span title=concept-request-header-list>header list</span>
- does not contain a <span title=concept-header>header</span> whose
+ <li><p>If <var>request</var>'s <span title=concept-request-header-list>header list</span> does not
+ contain a <span title=concept-header>header</span> whose
  <span title=concept-header-name>name</span> is
  `<code title=http-accept-language>Accept-Language</code>`, user agents should
  <span title=concept-header-list-append>append</span>
@@ -3798,7 +3809,7 @@ interface <dfn>Request</dfn> {
 };
 
 enum <dfn>RequestType</dfn> { "", "audio", "font", "image", "script", "style", "track", "video" };
-enum <dfn>RequestDestination</dfn> { "", "document", "sharedworker", "subresource", "unknown", "worker" };
+enum <dfn>RequestDestination</dfn> { "", "document", "embed", "font", "image", "manifest", "media", "object", "report", "script", "serviceworker", "sharedworker", "style",  "worker", "xslt" };
 enum <dfn>RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };
 enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache" };
@@ -3872,7 +3883,6 @@ constructor must run these steps:
  <span title=concept-request-referrer-policy>referrer policy</span> is
  <var>request</var>'s
  <span title=concept-request-referrer-policy>referrer policy</span>,
- <span title=concept-request-destination>destination</span> is the empty string,
  <span title=concept-request-mode>mode</span> is <var>request</var>'s
  <span title=concept-request-mode>mode</span>,
  <span title=concept-request-credentials-mode>credentials mode</span> is
@@ -4457,12 +4467,6 @@ method, must run these steps:
  <code title=dom-Request>Request</code> as constructor with <var>input</var> and
  <var>init</var> as arguments. If this throws an exception, reject
  <var>p</var> with it and return <var>p</var>.
-
- <li><p>Set <var>request</var>'s <span title=concept-request-initiator>initiator</span> to
- "<code title>fetch</code>".
-
- <li><p>Set <var>request</var>'s <span title=concept-request-destination>destination</span> to
- "<code title>subresource</code>".
 
  <li><p>Let <var>stream</var> be null.
 
