@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-26-february-2016">Living Standard — Last Updated 26 February 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-29-february-2016">Living Standard — Last Updated 29 February 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -2656,12 +2656,22 @@ The <i title="">credentials flag</i> is one too.
   <p>If <var>credentials flag</var> is set, run these substeps:
 
   <ol>
-   <li><p>Modify <var>httpRequest</var>'s
-   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
-   per HTTP State Management Mechanism.
-   <a href="#refsCOOKIES">[COOKIES]</a>
-   <!-- XXX proper hook? -->
+   <li>
+    <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
+    <a href="https://tools.ietf.org/html/rfc6265#section-7">section 7</a> of
+    <a href="#refsCOOKIES">[COOKIES]</a>), then run these substeps:
 
+    <ol>
+     <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
+     <a href="https://tools.ietf.org/html/rfc6265#section-5.4">section 5.4</a> of
+     <a href="#refsCOOKIES">[COOKIES]</a>) with the user agent's cookie store and
+     <var>httpRequest</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>.
+
+     <li>If <var>cookies</var> is not the empty string, append
+     `<code title="http-cookies">Cookie</code>`/<var>cookies</var> to <var>httpRequest</var>'s
+     <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+    </ol>
+ 
    <li><p>If <var>httpRequest</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>
    contains a <a href="#concept-header" title="concept-header">header</a> whose
    <a href="#concept-header-name" title="concept-header-name">name</a> is
@@ -2909,11 +2919,14 @@ The <i title="">credentials flag</i> is one too.
  <!-- XXX xref HTTP cache -->
 
  <li>
-  <p>If <var>credentials flag</var> is set and <var>response</var>'s
-  <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> contains one or more
-  <a href="#concept-header" title="concept-header">headers</a> <a href="#concept-header-name" title="concept-header-name">named</a>
-  `<code title="">Set-Cookie</code>`, update the cookies. <a href="#refsCOOKIES">[COOKIES]</a>
-  <!-- XXX proper hook? -->
+  <p>If <var>credentials flag</var> is set and the user agent is not configured to block cookies for
+  <var>request</var> (see <a href="https://tools.ietf.org/html/rfc6265#section-7">section 7</a> of
+  <a href="#refsCOOKIES">[COOKIES]</a>), then run the "set-cookie-string" parsing algorithm (see
+  <a href="https://tools.ietf.org/html/rfc6265#section-5.2">section 5.2</a> of
+  <a href="#refsCOOKIES">[COOKIES]</a>) on the <a href="#concept-header-value" title="concept-header-value">value</a>
+  of each <var>header</var> <a href="#concept-header-name" title="concept-header-name">named</a> `<code title="">Set-Cookie</code>`
+  in <var>response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>, if any, and
+  <var>request</var>'s <span title="concept-response-current-url">current url</span>.
 
   <p class="note">This is a fingerprinting vector.
 

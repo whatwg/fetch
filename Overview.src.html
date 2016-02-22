@@ -2594,12 +2594,22 @@ The <i title>credentials flag</i> is one too.
   <p>If <var>credentials flag</var> is set, run these substeps:
 
   <ol>
-   <li><p>Modify <var>httpRequest</var>'s
-   <span title=concept-request-header-list>header list</span>
-   per HTTP State Management Mechanism.
-   <span data-anolis-ref>COOKIES</span>
-   <!-- XXX proper hook? -->
+   <li>
+    <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
+    <a href="https://tools.ietf.org/html/rfc6265#section-7">section 7</a> of
+    <span data-anolis-ref>COOKIES</span>), then run these substeps:
 
+    <ol>
+     <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
+     <a href="https://tools.ietf.org/html/rfc6265#section-5.4">section 5.4</a> of
+     <span data-anolis-ref>COOKIES</span>) with the user agent's cookie store and
+     <var>httpRequest</var>'s <span title=concept-request-current-url>current url</span>.
+
+     <li>If <var>cookies</var> is not the empty string, append
+     `<code title=http-cookies>Cookie</code>`/<var>cookies</var> to <var>httpRequest</var>'s
+     <span title=concept-request-header-list>header list</span>.
+    </ol>
+ 
    <li><p>If <var>httpRequest</var>'s <span title=concept-request-header-list>header list</span>
    contains a <span title=concept-header>header</span> whose
    <span title=concept-header-name>name</span> is
@@ -2847,11 +2857,14 @@ The <i title>credentials flag</i> is one too.
  <!-- XXX xref HTTP cache -->
 
  <li>
-  <p>If <var>credentials flag</var> is set and <var>response</var>'s
-  <span title=concept-response-header-list>header list</span> contains one or more
-  <span title=concept-header>headers</span> <span title=concept-header-name>named</span>
-  `<code title>Set-Cookie</code>`, update the cookies. <span data-anolis-ref>COOKIES</span>
-  <!-- XXX proper hook? -->
+  <p>If <var>credentials flag</var> is set and the user agent is not configured to block cookies for
+  <var>request</var> (see <a href="https://tools.ietf.org/html/rfc6265#section-7">section 7</a> of
+  <span data-anolis-ref>COOKIES</span>), then run the "set-cookie-string" parsing algorithm (see
+  <a href="https://tools.ietf.org/html/rfc6265#section-5.2">section 5.2</a> of
+  <span data-anolis-ref>COOKIES</span>) on the <span title=concept-header-value>value</span>
+  of each <var>header</var> <span title=concept-header-name>named</span> `<code title>Set-Cookie</code>`
+  in <var>response</var>'s <span title=concept-response-header-list>header list</span>, if any, and
+  <var>request</var>'s <span title=concept-response-current-url>current url</span>.
 
   <p class=note>This is a fingerprinting vector.
 
