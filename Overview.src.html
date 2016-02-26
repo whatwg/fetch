@@ -3852,14 +3852,16 @@ constructor must run these steps:
  <code>Request</code> object, and a new <span title=concept-request>request</span>
  otherwise.
 
+ <li><p>Let <var>origin</var> be <span data-anolis-spec=html>entry settings object</span>'s
+ <span data-anolis-spec=html>origin</span>.
+
  <li><p>Let <var>window</var> be "<code>client</code>".
 
  <li><p>If <var>request</var>'s <span title=concept-request-window>window</span> is
  an <span data-anolis-spec=html>environment settings object</span> and its
  <span data-anolis-spec=html>origin</span> is <span data-anolis-spec=html>same origin</span> with
- <span data-anolis-spec=html>entry settings object</span>'s
- <span data-anolis-spec=html>origin</span>, set <var>window</var> to
- <var>request</var>'s <span title=concept-request-window>window</span>.
+ <var>origin</var>, set <var>window</var> to <var>request</var>'s
+ <span title=concept-request-window>window</span>.
 
  <li><p>If <var>init</var>'s <code title>window</code> member is present and it is
  not null, <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
@@ -3952,6 +3954,13 @@ constructor must run these steps:
    <li><p>Set <var>request</var>'s
    <span title=concept-request-referrer-policy>referrer policy</span> to the empty string.
   </ol>
+
+  <p class="note">This is done to ensure that when a service worker "redirects" a request, .e.g.,
+  from an image in a cross-origin stylesheet, and makes modifications, it no longer appears to come
+  from the original source (i.e., the cross-origin stylesheet), but instead from the service worker
+  that "redirected" the request. This is important as the original source might not even be able to
+  generate the same kind of requests as the service worker. Services that trust the original source
+  could therefore be exploited were this not done, although that is somewhat farfetched.
 
  <li>
   <p>If <var>init</var>'s <code>referrer</code> member is present, run these

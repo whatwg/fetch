@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-22-february-2016">Living Standard — Last Updated 22 February 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-26-february-2016">Living Standard — Last Updated 26 February 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -3914,14 +3914,16 @@ constructor must run these steps:
  <a href="#request"><code>Request</code></a> object, and a new <a href="#concept-request" title="concept-request">request</a>
  otherwise.
 
+ <li><p>Let <var>origin</var> be <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>.
+
  <li><p>Let <var>window</var> be "<code>client</code>".
 
  <li><p>If <var>request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
  an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a> and its
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a> is <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>, set <var>window</var> to
- <var>request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a>.
+ <var>origin</var>, set <var>window</var> to <var>request</var>'s
+ <a href="#concept-request-window" title="concept-request-window">window</a>.
 
  <li><p>If <var>init</var>'s <code title="">window</code> member is present and it is
  not null, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
@@ -4014,6 +4016,13 @@ constructor must run these steps:
    <li><p>Set <var>request</var>'s
    <a href="#concept-request-referrer-policy" title="concept-request-referrer-policy">referrer policy</a> to the empty string.
   </ol>
+
+  <p class="note">This is done to ensure that when a service worker "redirects" a request, .e.g.,
+  from an image in a cross-origin stylesheet, and makes modifications, it no longer appears to come
+  from the original source (i.e., the cross-origin stylesheet), but instead from the service worker
+  that "redirected" the request. This is important as the original source might not even be able to
+  generate the same kind of requests as the service worker. Services that trust the original source
+  could therefore be exploited were this not done, although that is somewhat farfetched.
 
  <li>
   <p>If <var>init</var>'s <code>referrer</code> member is present, run these
