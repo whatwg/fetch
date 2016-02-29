@@ -3263,20 +3263,17 @@ fetch(url).then(/* &hellip; */)</pre>
 
  <pre>function consume(reader) {
   var total = 0
-  return new Promise((resolve, reject) => {
-    function pump() {
-      reader.read().then(({done, value}) => {
-        if (done) {
-          resolve()
-          return
-        }
-        total += value.byteLength
-        log(`received ${value.byteLength} bytes (${total} bytes in total)`)
-        pump()
-      }).catch(reject)
-    }
-    pump()
-  })
+  return pump()
+  function pump() {
+    return reader.read().then(({done, value}) => {
+      if (done) {
+        return
+      }
+      total += value.byteLength
+      log(`received ${value.byteLength} bytes (${total} bytes in total)`)
+      return pump()
+    })
+  }
 }
 
 fetch("/music/pk/altes-kamuffel.flac")
