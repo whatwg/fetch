@@ -3358,20 +3358,17 @@ fetch(url).then(/* … */)</pre>
 
  <pre>function consume(reader) {
   var total = 0
-  return new Promise((resolve, reject) =&gt; {
-    function pump() {
-      reader.read().then(({done, value}) =&gt; {
-        if (done) {
-          resolve()
-          return
-        }
-        total += value.byteLength
-        log(`received ${value.byteLength} bytes (${total} bytes in total)`)
-        pump()
-      }).catch(reject)
-    }
-    pump()
-  })
+  return pump()
+  function pump() {
+    return reader.read().then(({done, value}) =&gt; {
+      if (done) {
+        return
+      }
+      total += value.byteLength
+      log(`received ${value.byteLength} bytes (${total} bytes in total)`)
+      return pump()
+    })
+  }
 }
 
 fetch("/music/pk/altes-kamuffel.flac")
@@ -4772,6 +4769,7 @@ a web browser context. For example, consider a host with a WebSocket server at o
 HTTP redirector at another. Suddenly, any script that can be given a particular WebSocket URL can be
 tricked into communicating to (and potentially sharing secrets with) any host on the internet, even
 if the script checks that the URL has the right hostname.
+<!-- https://www.ietf.org/mail-archive/web/hybi/current/msg06951.html -->
 
 
 
