@@ -7,7 +7,7 @@ respect the [WHATWG Code of Conduct](https://wiki.whatwg.org/wiki/Code_of_Conduc
 
 ### Contribution opportunities
 
-Folks notice minor and larger issues with the DOM Standard all the time and we'd love your help
+Folks notice minor and larger issues with the Fetch Standard all the time and we'd love your help
 fixing those. Pull requests for typographical and grammar errors are also most welcome.
 
 We'd be happy to mentor you through this process. If you're interested and need help getting
