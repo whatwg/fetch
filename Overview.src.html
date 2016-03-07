@@ -670,7 +670,7 @@ the empty string,
    <td><code title>connect-src</code>
    <td><code>navigator.sendBeacon()</code>, <code>EventSource</code>,
    HTML's <code>ping=""</code>, <code title=dom-global-fetch>fetch()</code>,
-   <code>XMLHttpRequest</code>, Cache API?
+   <code>XMLHttpRequest</code>, <code>WebSocket</code>, Cache API?
   <tr>
    <td>"<code title>object</code>"
    <td><code title>object-src</code>
@@ -811,14 +811,15 @@ an <span data-anolis-spec=html>environment settings object</span>.
 <dfn>synchronous flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-mode>mode</dfn>, which is "<code title>navigate</code>",
-"<code title>same-origin</code>", "<code title>no-cors</code>", or "<code title>cors</code>".
-Unless stated otherwise, it is "<code title>no-cors</code>".
+<dfn title=concept-request-mode>mode</dfn>, which is "<code title>same-origin</code>",
+"<code title>cors</code>", "<code title>no-cors</code>", "<code title>navigate</code>", or
+"<code title>websocket</code>". Unless stated otherwise, it is "<code title>no-cors</code>".
 
 <p class="note no-backref">Even though the default <span title=concept-request>request</span>
 <span title=concept-request-mode>mode</span> is "<code title>no-cors</code>", standards are highly
-discouraged from using it for new features. It is rather unsafe. "<code title>navigate</code>" is a
-special value for <cite>HTML</cite>. <span data-anolis-ref>HTML</span>
+discouraged from using it for new features. It is rather unsafe. "<code title>navigate</code>" and
+"<code title>websocket</code>" are special values for the HTML Standard.
+<span data-anolis-ref>HTML</span>
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>use-CORS-preflight flag</dfn>. Unless stated otherwise, it is unset.
@@ -1847,7 +1848,7 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
    "<code title>about</code>"
    <dt><var>request</var>'s <span title=concept-request-mode>mode</span> is
-   "<code title>navigate</code>"
+   "<code title>navigate</code>" or "<code title>websocket</code>"
 
    <dd><p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using <var>request</var>.
 
@@ -2755,10 +2756,21 @@ The <i title>credentials flag</i> is one too.
  <li><p>Let <var>credentials</var> be true if <i title>credentials flag</i> is set, and false
  otherwise.
 
- <li><p>Let <var>connection</var> be the result of
- <span title=concept-connection-obtain>obtaining a connection</span>, given <var>request</var>'s
- <span title=concept-request-current-url>current url</span>'s
- <span data-anolis-spec=url title=concept-url-origin>origin</span> and <var>credentials</var>.
+ <li>
+  <p>Switch on <var>request</var>'s <span title=concept-request-mode>mode</span>:
+
+  <dl>
+   <dt>"<code title>websocket</code>"
+   <dd><p>Let <var>connection</var> be the result of
+   <span title=concept-websocket-connection-obtain>obtaining a WebSocket connection</span>, given
+   <var>request</var>'s <span title=concept-request-current-url>current url</span>.
+
+   <dt>Otherwise
+   <dd><p>Let <var>connection</var> be the result of
+   <span title=concept-connection-obtain>obtaining a connection</span>, given <var>request</var>'s
+   <span title=concept-request-current-url>current url</span>'s
+   <span data-anolis-spec=url title=concept-url-origin>origin</span> and <var>credentials</var>.
+  </dl>
 
  <li><p>If <var>connection</var> is failure, return a
  <span title=concept-network-error>network error</span>.
@@ -3852,7 +3864,8 @@ enum <dfn>RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
 <code>RequestDestination</code> as it cannot be observed from JavaScript. Implementations
 will still need to support it as a
-<span title=concept-request-destination>destination</span>.
+<span title=concept-request-destination>destination</span>. "<code title>websocket</code>" is
+omitted from <code>RequestMode</code> as it cannot be used nor observed from JavaScript.
 
 <p>A <code>Request</code> object has an associated <dfn title=concept-Request-request>request</dfn>
 (a <span title=concept-request>request</span>).
@@ -4544,7 +4557,7 @@ reason <i title>garbage collection</i> if that termination is not observable thr
 communicating with the server through a side-channel are not included.
 
 <p class="note no-backref">The server being able to observe garbage collection has precedent, e.g.,
-with <code>WebSocket</code> and <code>XMLHttpRequest</code>.
+with <code>WebSocket</code> and <code>XMLHttpRequest</code> objects.
 
 <div class="example no-backref">
  <p>The user agent can terminate the fetch because the termination cannot be observed.
@@ -4572,6 +4585,127 @@ with <code>WebSocket</code> and <code>XMLHttpRequest</code>.
     res.body.getReader().closed.then(() => console.log("stream closed!"))
   })</pre>
 </div>
+
+
+
+<h2 id=websocket-protocol>WebSocket protocol alterations</h2>
+
+<div class="note">
+ <p>This section replaces part of the WebSocket protocol opening handshake client requirement to
+ integrate it with algorithms defined in Fetch. This way CSP, cookies, HSTS, and other Fetch-related
+ protocols are handled in a single location. Ideally the RFC would be updated with this language,
+ but it is never that easy. The WebSocket API, defined in the HTML Standard, has been updated to use
+ this language. <span data-anolis-ref>WSP</span> <span data-anolis-ref>HTML</span>
+
+ <p>The way this works is by replacing The WebSocket Protocol's "establish a WebSocket connection"
+ algorithm with a new one that integrates with Fetch. "Establish a WebSocket connection" consists of
+ three algorithms: setting up a connection, creating and transmiting a handshake request, and
+ validating the handshake response. That layering is different from Fetch, which first creates a
+ handshake, then sets up a connection and transmits the handshake, and finally validates the
+ response. Keep that in mind while reading these alterations.
+</div>
+
+
+<h3 id=websocket-connections>Connections</h3>
+
+<p>To <dfn title=concept-websocket-connection-obtain>obtain a WebSocket connection</dfn>, given a
+<var>url</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>host</var> be <var>url</var>'s
+ <span data-anolis-spec=url title=concept-url-host>host</span>.
+
+ <li><p>Let <var>port</var> be <var>url</var>'s
+ <span data-anolis-spec=url title=concept-url-port>port</span>.
+
+ <li><p>Let <var>secure</var> be false, if <var>url</var>'s
+ <span title=concept-url-scheme>scheme</span> is "<code title>http</code>", and true otherwise.
+
+ <li><p>Follow the requirements stated in step 2 to 5, inclusive, of the first set of steps in
+ <a href="http://tools.ietf.org/html/rfc6455#section-4.1">section 4.1</a> of The WebSocket Protocol
+ to establish a <span title=concept-websocket-connection>WebSocket connection</span>.
+ <span data-anolis-ref>WSP</span>
+
+ <li><p>If that established a connection, return it, and return failure otherwise.
+</ol>
+
+<p class="note">Although structured a little differently, carrying different properties, and
+therefore not shareable, a WebSocket connection is very close to identical to an "ordinary"
+<span title=concept-connection>connection</span>.
+
+
+<h3 id=websocket-opening-handshake>Opening handshake</h3>
+
+<p>To <dfn title=concept-websocket-establish>establish a WebSocket connection</dfn>, given a
+<var>url</var>, <var>protocols</var>, and <var>client</var>, run these steps:</p>
+
+<ol>
+ <li><p>Let <var>requestURL</var> be a copy of <var>url</var>, with its
+ <span data-anolis-spec=url title=concept-url-scheme>scheme</span> set to "<code title>http</code>",
+ if <var>url</var>'s <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
+ "<code title>ws</code>", and to "<code title>https</code>" otherwise.
+
+ <li><p>Let <var>request</var> be a new <span title=concept-request>request</span>, whose
+ <span title=concept-request-url>url</span> is <var>url</var>,
+ <span title=concept-request-client>client</span> is <var>client</var>,
+ <span>skip-service-worker flag</span> is set,
+ <span>synchronous flag</span> is set,
+ <span title=concept-request-mode>mode</span> is "<code title>websocket</code>",
+ <span title=concept-request-credentials-mode>credentials mode</span> is
+ "<code title>include</code>", and
+ <span title=concept-request-redirect-mode>redirect mode</span> is "<code title>error</code>".
+
+ <li><p><span title=concept-header-list-append>Append</span>
+ `<code title=http-upgrade>Upgrade</code>`/`<code title>websocket</code>` to
+ <var>request</var>'s <span title=concept-request-header-list>header list</span>.
+
+ <li><p><span title=concept-header-list-append>Append</span>
+ `<code title=http-connection>Connection</code>`/`<code title>Upgrade</code>` to
+ <var>request</var>'s <span title=concept-request-header-list>header list</span>.
+
+ <li>
+  <p>Let <var>keyValue</var> be nonce consisting of a randomly selected 16-byte value that has been
+  base64-encoded (see <a href="https://tools.ietf.org/html/rfc4648#section-4">section 4</a> of
+  <span data-anolis-ref>RFC4648</span>).</p>
+
+  <p class="example">If the randomly selected value was the byte sequence 0x01 0x02 0x03 0x04 0x05
+  0x06 0x07 0x08 0x09 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f 0x10, <var>keyValue</var> would be
+  `<code title>AQIDBAUGBwgJCgsMDQ4PEC==</code>`.
+
+ <li><p><span title=concept-header-list-append>Append</span>
+ `<code title=http-sec-websocket-key>Sec-WebSocket-Key</code>`/<var>keyValue</var> to
+ <var>request</var>'s <span title=concept-request-header-list>header list</span>.
+
+ <li><p><span title=concept-header-list-append>Append</span>
+ `<code title=http-sec-websocket-version>Sec-WebSocket-Version</code>`/`<code title>13</code>` to
+ <var>request</var>'s <span title=concept-request-header-list>header list</span>.
+
+ <li><p>For each <var>protocol</var> in <var>protocols</var>,
+ <span title=concept-header-list-combine>combine</span>
+ `<code title=http-sec-websocket-protocol>Sec-WebSocket-Protocol</code>`/<var>protocol</var>.
+
+ <li><p>Let <var>response</var> be the result of <span title=concept-fetch>fetching</span>
+ <var>request</var>.</p></li>
+
+ <li><p>If <var>response</var> is a <span title=concept-network-error>network error</span> or its
+ <span title=concept-response-status>status</span> is not <code title>101</code>,
+ <span>fail the WebSocket connection</span>.
+
+ <li><p>Follow the requirements stated step 2 to step 6, inclusive, of the last set of steps in
+ <a href="http://tools.ietf.org/html/rfc6455#section-4.1">section 4.1</a> of The WebSocket Protocol
+ to validate <var>response</var>. This either results in <span>fail the WebSocket connection</span>
+ or <span>the WebSocket connection is established</span>.
+</ol>
+
+<p><dfn>Fail the WebSocket connection</dfn> and <dfn>the WebSocket connection is established</dfn>
+are defined by The WebSocket Protocol. <span data-anolis-ref>WSP</span>
+
+<p class="warning">The reason redirects are not followed, HTTP authentication will not function, and
+this handshake is generally restricted is because that could introduce serious security problems in
+a web browser context. For example, consider a host with a WebSocket server at one path and an open
+HTTP redirector at another. Suddenly, any script that can be given a particular WebSocket URL can be
+tricked into communicating to (and potentially sharing secrets with) any host on the internet, even
+if the script checks that the URL has the right hostname.
 
 
 

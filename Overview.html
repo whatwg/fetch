@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-8-march-2016">Living Standard — Last Updated 8 March 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-march-2016">Living Standard — Last Updated 9 March 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -93,6 +93,10 @@ fetching.
    <li><a href="#structured-cloning-of-headers,-request,-and-response-objects"><span class="secno">6.5 </span>Structured cloning of <code>Headers</code>, <code>Request</code>, and <code>Response</code> objects</a></li>
    <li><a href="#fetch-method"><span class="secno">6.6 </span>Fetch method</a></li>
    <li><a href="#garbage-collection"><span class="secno">6.7 </span>Garbage collection</a></ol></li>
+ <li><a href="#websocket-protocol"><span class="secno">7 </span>WebSocket protocol alterations</a>
+  <ol>
+   <li><a href="#websocket-connections"><span class="secno">7.1 </span>Connections</a></li>
+   <li><a href="#websocket-opening-handshake"><span class="secno">7.2 </span>Opening handshake</a></ol></li>
  <li><a class="no-num" href="#background-reading">Background reading</a>
   <ol>
    <li><a class="no-num" href="#http-header-layer-division">HTTP header layer division</a></li>
@@ -732,7 +736,7 @@ the empty string,
    <td><code title="">connect-src</code>
    <td><code>navigator.sendBeacon()</code>, <code>EventSource</code>,
    HTML's <code>ping=""</code>, <a href="#dom-global-fetch"><code title="dom-global-fetch">fetch()</code></a>,
-   <code>XMLHttpRequest</code>, Cache API?
+   <code>XMLHttpRequest</code>, <code>WebSocket</code>, Cache API?
   <tr>
    <td>"<code title="">object</code>"
    <td><code title="">object-src</code>
@@ -873,14 +877,15 @@ an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.or
 <dfn id="synchronous-flag">synchronous flag</dfn>. Unless stated otherwise it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-mode" title="concept-request-mode">mode</dfn>, which is "<code title="">navigate</code>",
-"<code title="">same-origin</code>", "<code title="">no-cors</code>", or "<code title="">cors</code>".
-Unless stated otherwise, it is "<code title="">no-cors</code>".
+<dfn id="concept-request-mode" title="concept-request-mode">mode</dfn>, which is "<code title="">same-origin</code>",
+"<code title="">cors</code>", "<code title="">no-cors</code>", "<code title="">navigate</code>", or
+"<code title="">websocket</code>". Unless stated otherwise, it is "<code title="">no-cors</code>".
 
 <p class="note no-backref">Even though the default <a href="#concept-request" title="concept-request">request</a>
 <a href="#concept-request-mode" title="concept-request-mode">mode</a> is "<code title="">no-cors</code>", standards are highly
-discouraged from using it for new features. It is rather unsafe. "<code title="">navigate</code>" is a
-special value for <cite>HTML</cite>. <a href="#refsHTML">[HTML]</a>
+discouraged from using it for new features. It is rather unsafe. "<code title="">navigate</code>" and
+"<code title="">websocket</code>" are special values for the HTML Standard.
+<a href="#refsHTML">[HTML]</a>
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="use-cors-preflight-flag">use-CORS-preflight flag</dfn>. Unless stated otherwise, it is unset.
@@ -1909,7 +1914,7 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
    "<code title="">about</code>"
    <dt><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-   "<code title="">navigate</code>"
+   "<code title="">navigate</code>" or "<code title="">websocket</code>"
 
    <dd><p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var>request</var>.
 
@@ -2817,10 +2822,21 @@ The <i title="">credentials flag</i> is one too.
  <li><p>Let <var>credentials</var> be true if <i title="">credentials flag</i> is set, and false
  otherwise.
 
- <li><p>Let <var>connection</var> be the result of
- <a href="#concept-connection-obtain" title="concept-connection-obtain">obtaining a connection</a>, given <var>request</var>'s
- <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
- <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> and <var>credentials</var>.
+ <li>
+  <p>Switch on <var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a>:
+
+  <dl>
+   <dt>"<code title="">websocket</code>"
+   <dd><p>Let <var>connection</var> be the result of
+   <a href="#concept-websocket-connection-obtain" title="concept-websocket-connection-obtain">obtaining a WebSocket connection</a>, given
+   <var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>.
+
+   <dt>Otherwise
+   <dd><p>Let <var>connection</var> be the result of
+   <a href="#concept-connection-obtain" title="concept-connection-obtain">obtaining a connection</a>, given <var>request</var>'s
+   <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> and <var>credentials</var>.
+  </dl>
 
  <li><p>If <var>connection</var> is failure, return a
  <a href="#concept-network-error" title="concept-network-error">network error</a>.
@@ -3914,7 +3930,8 @@ enum <dfn id="requestredirect">RequestRedirect</dfn> { "follow", "error", "manua
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
 <a href="#requestdestination"><code>RequestDestination</code></a> as it cannot be observed from JavaScript. Implementations
 will still need to support it as a
-<a href="#concept-request-destination" title="concept-request-destination">destination</a>.
+<a href="#concept-request-destination" title="concept-request-destination">destination</a>. "<code title="">websocket</code>" is
+omitted from <a href="#requestmode"><code>RequestMode</code></a> as it cannot be used nor observed from JavaScript.
 
 <p>A <a href="#request"><code>Request</code></a> object has an associated <dfn id="concept-request-request" title="concept-Request-request">request</dfn>
 (a <a href="#concept-request" title="concept-request">request</a>).
@@ -4606,7 +4623,7 @@ reason <i title="">garbage collection</i> if that termination is not observable 
 communicating with the server through a side-channel are not included.
 
 <p class="note no-backref">The server being able to observe garbage collection has precedent, e.g.,
-with <code>WebSocket</code> and <code>XMLHttpRequest</code>.
+with <code>WebSocket</code> and <code>XMLHttpRequest</code> objects.
 
 <div class="example no-backref">
  <p>The user agent can terminate the fetch because the termination cannot be observed.
@@ -4634,6 +4651,127 @@ with <code>WebSocket</code> and <code>XMLHttpRequest</code>.
     res.body.getReader().closed.then(() =&gt; console.log("stream closed!"))
   })</pre>
 </div>
+
+
+
+<h2 id="websocket-protocol"><span class="secno">7 </span>WebSocket protocol alterations</h2>
+
+<div class="note">
+ <p>This section replaces part of the WebSocket protocol opening handshake client requirement to
+ integrate it with algorithms defined in Fetch. This way CSP, cookies, HSTS, and other Fetch-related
+ protocols are handled in a single location. Ideally the RFC would be updated with this language,
+ but it is never that easy. The WebSocket API, defined in the HTML Standard, has been updated to use
+ this language. <a href="#refsWSP">[WSP]</a> <a href="#refsHTML">[HTML]</a>
+
+ <p>The way this works is by replacing The WebSocket Protocol's "establish a WebSocket connection"
+ algorithm with a new one that integrates with Fetch. "Establish a WebSocket connection" consists of
+ three algorithms: setting up a connection, creating and transmiting a handshake request, and
+ validating the handshake response. That layering is different from Fetch, which first creates a
+ handshake, then sets up a connection and transmits the handshake, and finally validates the
+ response. Keep that in mind while reading these alterations.
+</div>
+
+
+<h3 id="websocket-connections"><span class="secno">7.1 </span>Connections</h3>
+
+<p>To <dfn id="concept-websocket-connection-obtain" title="concept-websocket-connection-obtain">obtain a WebSocket connection</dfn>, given a
+<var>url</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>host</var> be <var>url</var>'s
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-host" title="concept-url-host">host</a>.
+
+ <li><p>Let <var>port</var> be <var>url</var>'s
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-port" title="concept-url-port">port</a>.
+
+ <li><p>Let <var>secure</var> be false, if <var>url</var>'s
+ <span title="concept-url-scheme">scheme</span> is "<code title="">http</code>", and true otherwise.
+
+ <li><p>Follow the requirements stated in step 2 to 5, inclusive, of the first set of steps in
+ <a href="http://tools.ietf.org/html/rfc6455#section-4.1">section 4.1</a> of The WebSocket Protocol
+ to establish a <span title="concept-websocket-connection">WebSocket connection</span>.
+ <a href="#refsWSP">[WSP]</a>
+
+ <li><p>If that established a connection, return it, and return failure otherwise.
+</ol>
+
+<p class="note">Although structured a little differently, carrying different properties, and
+therefore not shareable, a WebSocket connection is very close to identical to an "ordinary"
+<a href="#concept-connection" title="concept-connection">connection</a>.
+
+
+<h3 id="websocket-opening-handshake"><span class="secno">7.2 </span>Opening handshake</h3>
+
+<p>To <dfn id="concept-websocket-establish" title="concept-websocket-establish">establish a WebSocket connection</dfn>, given a
+<var>url</var>, <var>protocols</var>, and <var>client</var>, run these steps:</p>
+
+<ol>
+ <li><p>Let <var>requestURL</var> be a copy of <var>url</var>, with its
+ <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> set to "<code title="">http</code>",
+ if <var>url</var>'s <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
+ "<code title="">ws</code>", and to "<code title="">https</code>" otherwise.
+
+ <li><p>Let <var>request</var> be a new <a href="#concept-request" title="concept-request">request</a>, whose
+ <a href="#concept-request-url" title="concept-request-url">url</a> is <var>url</var>,
+ <a href="#concept-request-client" title="concept-request-client">client</a> is <var>client</var>,
+ <a href="#skip-service-worker-flag">skip-service-worker flag</a> is set,
+ <a href="#synchronous-flag">synchronous flag</a> is set,
+ <a href="#concept-request-mode" title="concept-request-mode">mode</a> is "<code title="">websocket</code>",
+ <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
+ "<code title="">include</code>", and
+ <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is "<code title="">error</code>".
+
+ <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+ `<code title="http-upgrade">Upgrade</code>`/`<code title="">websocket</code>` to
+ <var>request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+
+ <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+ `<code title="http-connection">Connection</code>`/`<code title="">Upgrade</code>` to
+ <var>request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+
+ <li>
+  <p>Let <var>keyValue</var> be nonce consisting of a randomly selected 16-byte value that has been
+  base64-encoded (see <a href="https://tools.ietf.org/html/rfc4648#section-4">section 4</a> of
+  <a href="#refsRFC4648">[RFC4648]</a>).</p>
+
+  <p class="example">If the randomly selected value was the byte sequence 0x01 0x02 0x03 0x04 0x05
+  0x06 0x07 0x08 0x09 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f 0x10, <var>keyValue</var> would be
+  `<code title="">AQIDBAUGBwgJCgsMDQ4PEC==</code>`.
+
+ <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+ `<code title="http-sec-websocket-key">Sec-WebSocket-Key</code>`/<var>keyValue</var> to
+ <var>request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+
+ <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+ `<code title="http-sec-websocket-version">Sec-WebSocket-Version</code>`/`<code title="">13</code>` to
+ <var>request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+
+ <li><p>For each <var>protocol</var> in <var>protocols</var>,
+ <a href="#concept-header-list-combine" title="concept-header-list-combine">combine</a>
+ `<code title="http-sec-websocket-protocol">Sec-WebSocket-Protocol</code>`/<var>protocol</var>.
+
+ <li><p>Let <var>response</var> be the result of <a href="#concept-fetch" title="concept-fetch">fetching</a>
+ <var>request</var>.</li>
+
+ <li><p>If <var>response</var> is a <a href="#concept-network-error" title="concept-network-error">network error</a> or its
+ <a href="#concept-response-status" title="concept-response-status">status</a> is not <code title="">101</code>,
+ <a href="#fail-the-websocket-connection">fail the WebSocket connection</a>.
+
+ <li><p>Follow the requirements stated step 2 to step 6, inclusive, of the last set of steps in
+ <a href="http://tools.ietf.org/html/rfc6455#section-4.1">section 4.1</a> of The WebSocket Protocol
+ to validate <var>response</var>. This either results in <a href="#fail-the-websocket-connection">fail the WebSocket connection</a>
+ or <a href="#the-websocket-connection-is-established">the WebSocket connection is established</a>.
+</ol>
+
+<p><dfn id="fail-the-websocket-connection">Fail the WebSocket connection</dfn> and <dfn id="the-websocket-connection-is-established">the WebSocket connection is established</dfn>
+are defined by The WebSocket Protocol. <a href="#refsWSP">[WSP]</a>
+
+<p class="warning">The reason redirects are not followed, HTTP authentication will not function, and
+this handshake is generally restricted is because that could introduce serious security problems in
+a web browser context. For example, consider a host with a WebSocket server at one path and an open
+HTTP redirector at another. Suddenly, any script that can be given a particular WebSocket URL can be
+tricked into communicating to (and potentially sharing secrets with) any host on the internet, even
+if the script checks that the URL has the right hostname.
 
 
 
@@ -4771,6 +4909,9 @@ however, it is perfectly fine to do so.
 <dt id="refsRFC2388">[RFC2388]
 <dd><cite><a href="https://tools.ietf.org/html/rfc2388">Returning Values from Forms: multipart/form-data</a></cite>, L. Masinter. IETF.
 
+<dt id="refsRFC4648">[RFC4648]
+<dd><cite><a href="https://tools.ietf.org/html/rfc4648">The Base16, Base32, and Base64 Data Encodings</a></cite>, S. Josefsson. IETF.
+
 <dt id="refsSRI">[SRI]
 <dd><cite><a href="https://w3c.github.io/webappsec-subresource-integrity/">Subresource Integrity</a></cite>, Devdatta Akhawe, Francois Marier, Frederik Braun et al.. W3C.
 
@@ -4791,6 +4932,9 @@ however, it is perfectly fine to do so.
 
 <dt id="refsWEBIDL">[WEBIDL]
 <dd><cite><a href="https://heycam.github.io/webidl/">Web IDL</a></cite>, Cameron McCormack. W3C.
+
+<dt id="refsWSP">[WSP]
+<dd><cite><a href="https://tools.ietf.org/html/rfc6455">The WebSocket Protocol</a></cite>, I. Fette and A. Melnikov. IETF.
 
 <dt id="refsXHR">[XHR]
 <dd>(Non-normative) <cite><a href="https://xhr.spec.whatwg.org/">XMLHttpRequest</a></cite>, Anne van Kesteren. WHATWG.
