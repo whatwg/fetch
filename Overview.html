@@ -2566,11 +2566,15 @@ The <i title="">credentials flag</i> is one too.
      <li>If <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is <em>not</em>
      null, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
-     <li>Let <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> and
-     <var>Content-Type</var> be the result of running the
+     <li>Let <var>body</var> and <var>type</var>be the result of running the
      <a href="https://w3c.github.io/webappsec-credential-management/#body-extraction">Credential
-     body extraction</a> algorithm on <var>httpRequest</var>'s
-     <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a>.
+     body extraction</a> algorithm on <var>httpRequest</var>.
+
+     <li>If <var>type</var> is "<code title="">error</code>", return a
+     <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+     <li>Let <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> be
+     <var>body</var> and <var>Content-Type</var> be <var>type</var>.
    </ol>   
 
  <li><p>If <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
@@ -4012,10 +4016,13 @@ constructor must run these steps:
  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>,
  <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
  <var>request</var>'s
- <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>, and
+ <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>, 
  <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a> is
  <var>request</var>'s
- <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a>.
+ <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a>, and
+ <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a> is
+ <var>request</var>'s
+ <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a>.
 
  <li><p>Let <var>fallbackMode</var> be null.
 
@@ -4129,9 +4136,18 @@ constructor must run these steps:
  <code title="">credentials</code> member if it is present, and
  <var>fallbackCredentials</var> otherwise.
 
- <li><p>If <var>credentials</var> is non-null, set <var>request</var>'s
- <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
- <var>credentials</var>.
+ <li><p>If <var>credentials</var> is non-null:
+   
+   <ol>
+     <li>If <var>credentials</var> is a
+     <a href="https://w3c.github.io/webappsec-credential-management/#interfaces-credential-types-passwordcredential">PasswordCredential</a>,
+     set <var>request</var>'s <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
+     "<code title="">attached-credential</code>", and <var>request</var>'s
+     <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a> to
+     <var>credentials</var>.
+
+     <li>Otherwise, set <var>request</var>'s
+     <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to <var>credentials</var>.
 
  <li><p>If <var>init</var>'s <code title="">cache</code> member is present, set
  <var>request</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to
@@ -4201,10 +4217,11 @@ constructor must run these steps:
  if <var>input</var> is a <a href="#request"><code>Request</code></a> object, and null otherwise.
 
  <li><p>If either <var>init</var>'s <code title="">body</code> member is present and is non-null or
- <var>inputBody</var> is non-null, and <var>request</var>'s
+ <var>inputBody</var> is non-null, then <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+ <code title="">TypeError</code> if either <var>request</var>'s
  <a href="#concept-request-method" title="concept-request-method">method</a> is `<code title="">GET</code>` or
- `<code title="">HEAD</code>`, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
- <code title="">TypeError</code>.
+ `<code title="">HEAD</code>`, or <var>request</var>'s
+ <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a> is non-null.
 
  <li>
   <p>If <var>init</var>'s <code title="">body</code> member is present and is non-null, run these
@@ -4943,3 +4960,4 @@ for being awesome.
 <p>Per <a href="https://creativecommons.org/publicdomain/zero/1.0/" rel="license">CC0</a>, to
 the extent possible under law, the editor has waived all copyright and related or
 neighboring rights to this work.
+</ol>
