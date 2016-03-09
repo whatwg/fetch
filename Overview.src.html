@@ -60,6 +60,7 @@ fetching.
 <ul class=brief>
  <li>URL schemes
  <li>Redirects
+ <li>Credential Management <span data-anolis-ref>CREDENTIAL</span>
  <li>Cross-origin semantics
  <li>CSP <span data-anolis-ref>CSP</span>
  <li>Service workers <span data-anolis-ref>SW</span>
@@ -825,14 +826,19 @@ special value for <cite>HTML</cite>. <span data-anolis-ref>HTML</span>
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-credentials-mode>credentials mode</dfn>, which is
-"<code title>omit</code>", "<code title>same-origin</code>", or
-"<code title>include</code>". Unless stated otherwise, it is "<code title>omit</code>".
+"<code title>omit</code>", "<code title>same-origin</code>", "<code title>include</code>", or
+"<code title>attached-credential</code>". Unless stated otherwise, it is "<code title>omit</code>".
 
 <p class="note no-backref">When <span title=concept-request>request</span>'s
 <span title=concept-request-mode>mode</span> is "<code title>navigate</code>", its
 <span title=concept-request-credentials-mode>credentials mode</span> is assumed to be
 "<code title>include</code>" and <span title=concept-fetch>fetch</span> does not currently account
 for other values. If <cite>HTML</cite> changes here, this standard will need corresponding changes.
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-attached-credential>attached credential</dfn> (null or a
+<a href="https://w3c.github.io/webappsec-credential-management/#interfaces-credential-types-passwordcredential">PasswordCredential</a>).
+Unless stated otherwise, it is null.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-use-url-credentials-flag>use-URL-credentials flag</dfn>.
@@ -1518,7 +1524,7 @@ these <span title=concept-header>headers</span>:
   <p>Indicates whether a resource can be shared when
   <span title=concept-request>request</span>'s
   <span title=concept-request-credentials-mode>credentials mode</span> is
-  "<code title>include</code>".
+  "<code title>include</code>" or "<code title>attached-credential</code>".
 
   <p class=note>For a <span>CORS-preflight request</span>,
   <span title=concept-request>request</span>'s
@@ -2255,7 +2261,7 @@ indicates an attempt to authenticate.
 
     <ul>
      <li><var>request</var>'s <span title=concept-request-credentials-mode>credentials mode</span>
-     is "<code title>include</code>"
+     is "<code title>include</code>" or "<code title>attached-credential</code>"
      <li><var>request</var>'s  <span title=concept-request-credentials-mode>credentials mode</span>
      is "<code title>same-origin</code>" and <var>request</var>'s
      <span title=concept-request-response-tainting>response tainting</span> is
@@ -2314,7 +2320,7 @@ indicates an attempt to authenticate.
       <ul>
        <li>The <i title>CORS flag</i> is set.
        <li><var>request</var>'s <span title=concept-request-credentials-mode>credentials mode</span>
-       is <em>not</em> "<code>include</code>".
+       is <em>neither</em> "<code>include</code>" <em>nor</em> "<code>attached-credential</code>".
        <li><var>request</var>'s <span title=concept-request-window>window</span> is
        "<code>no-window</code>".
       </ul>
@@ -2489,6 +2495,25 @@ The <i title>credentials flag</i> is one too.
   <var>request</var> is reused with redirects, authentication, and proxy authentication.
 
  <li><p>Let <var>contentLengthValue</var> be null.
+
+ <li>
+   <p>If <var>httpRequest</var>'s <span title=concept-request-attached-credential>attached
+   credential</span> is <em>not</em> null, run these substeps:
+
+   <ol>
+     <li>If <var>httpRequest</var>'s <span title=concept-request-body>body</span> is <em>not</em>
+     null, return a <span title=concept-network-error>network error</span>.
+
+     <li>Let <var>body</var> and <var>type</var>be the result of running the
+     <a href="https://w3c.github.io/webappsec-credential-management/#body-extraction">Credential
+     body extraction</a> algorithm on <var>httpRequest</var>.
+
+     <li>If <var>type</var> is "<code title>error</code>", return a
+     <span title=concept-network-error>network error</span>.
+
+     <li>Let <var>httpRequest</var>'s <span title=concept-request-body>body</span> be
+     <var>body</var> and <var>Content-Type</var> be <var>type</var>.
+   </ol>   
 
  <li><p>If <var>httpRequest</var>'s <span title=concept-request-body>body</span> is
  null and <var>httpRequest</var>'s <span title=concept-request-method>method</span>
@@ -3816,7 +3841,7 @@ interface <dfn>Request</dfn> {
   readonly attribute USVString <span title=dom-Request-referrer>referrer</span>;
   readonly attribute <span>ReferrerPolicy</span> <span title=dom-Request-referrerPolicy>referrerPolicy</span>;
   readonly attribute <span>RequestMode</span> <span title=dom-Request-mode>mode</span>;
-  readonly attribute <span>RequestCredentials</span> <span title=dom-Request-credentials>credentials</span>;
+  readonly attribute <span>RequestCredentialsMode</span> <span title=dom-Request-credentials>credentials</span>;
   readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;
   readonly attribute <span>RequestRedirect</span> <span title=dom-Request-redirect>redirect</span>;
   readonly attribute DOMString <span title=dom-Request-integrity>integrity</span>;
@@ -3824,7 +3849,7 @@ interface <dfn>Request</dfn> {
   [NewObject] <span>Request</span> <span title=dom-Request-clone>clone</span>();
 };
 <span>Request</span> implements <span>Body</span>;
-
+typedef (PasswordCredential or RequestCredentialsMode) CredentialInfo;
 <!--
   Careful: defaults can only be set in prose, otherwise the Request() constructor
            algorithm breaks down.
@@ -3835,7 +3860,7 @@ interface <dfn>Request</dfn> {
   USVString referrer;
   <span>ReferrerPolicy</span> referrerPolicy;
   <span>RequestMode</span> mode;
-  <span>RequestCredentials</span> credentials;
+  <span>CredentialInfo</span> credentials;
   <span>RequestCache</span> cache;
   <span>RequestRedirect</span> redirect;
   DOMString integrity;
@@ -3845,7 +3870,7 @@ interface <dfn>Request</dfn> {
 enum <dfn>RequestType</dfn> { "", "audio", "font", "image", "script", "style", "track", "video" };
 enum <dfn>RequestDestination</dfn> { "", "document", "embed", "font", "image", "manifest", "media", "object", "report", "script", "serviceworker", "sharedworker", "style",  "worker", "xslt" };
 enum <dfn>RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
-enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };
+enum <dfn>RequestCredentialsMode</dfn> { "omit", "same-origin", "include", "attached-credential" };
 enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache" };
 enum <dfn>RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
@@ -3929,10 +3954,13 @@ constructor must run these steps:
  <span title=concept-request-cache-mode>cache mode</span>,
  <span title=concept-request-redirect-mode>redirect mode</span> is
  <var>request</var>'s
- <span title=concept-request-redirect-mode>redirect mode</span>, and
+ <span title=concept-request-redirect-mode>redirect mode</span>, 
  <span title=concept-request-integrity-metadata>integrity metadata</span> is
  <var>request</var>'s
- <span title=concept-request-integrity-metadata>integrity metadata</span>.
+ <span title=concept-request-integrity-metadata>integrity metadata</span>, and
+ <span title=concept-request-attached-credential>attached credential</span> is
+ <var>request</var>'s
+ <span title=concept-request-attached-credential>attached credential</span>.
 
  <li><p>Let <var>fallbackMode</var> be null.
 
@@ -4046,9 +4074,18 @@ constructor must run these steps:
  <code title>credentials</code> member if it is present, and
  <var>fallbackCredentials</var> otherwise.
 
- <li><p>If <var>credentials</var> is non-null, set <var>request</var>'s
- <span title=concept-request-credentials-mode>credentials mode</span> to
- <var>credentials</var>.
+ <li><p>If <var>credentials</var> is non-null:
+   
+   <ol>
+     <li>If <var>credentials</var> is a
+     <a href="https://w3c.github.io/webappsec-credential-management/#interfaces-credential-types-passwordcredential">PasswordCredential</a>,
+     set <var>request</var>'s <span title=concept-request-credentials-mode>credentials mode</span> to
+     "<code title>attached-credential</code>", and <var>request</var>'s
+     <span title=concept-request-attached-credential>attached credential</span> to
+     <var>credentials</var>.
+
+     <li>Otherwise, set <var>request</var>'s
+     <span title=concept-request-credentials-mode>credentials mode</span> to <var>credentials</var>.
 
  <li><p>If <var>init</var>'s <code title>cache</code> member is present, set
  <var>request</var>'s <span title=concept-request-cache-mode>cache mode</span> to
@@ -4118,10 +4155,11 @@ constructor must run these steps:
  if <var>input</var> is a <code>Request</code> object, and null otherwise.
 
  <li><p>If either <var>init</var>'s <code title>body</code> member is present and is non-null or
- <var>inputBody</var> is non-null, and <var>request</var>'s
+ <var>inputBody</var> is non-null, then <span data-anolis-spec=webidl>throw</span> a
+ <code title>TypeError</code> if either <var>request</var>'s
  <span title=concept-request-method>method</span> is `<code title>GET</code>` or
- `<code title>HEAD</code>`, <span data-anolis-spec=webidl>throw</span> a
- <code title>TypeError</code>.
+ `<code title>HEAD</code>`, or <var>request</var>'s
+ <span title=concept-request-attached-credential>attached credential</span> is non-null.
 
  <li>
   <p>If <var>init</var>'s <code title>body</code> member is present and is non-null, run these

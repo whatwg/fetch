@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-8-march-2016">Living Standard — Last Updated 8 March 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-march-2016">Living Standard — Last Updated 9 March 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -122,6 +122,7 @@ fetching.
 <ul class="brief">
  <li>URL schemes
  <li>Redirects
+ <li>Credential Management <a href="#refsCREDENTIAL">[CREDENTIAL]</a>
  <li>Cross-origin semantics
  <li>CSP <a href="#refsCSP">[CSP]</a>
  <li>Service workers <a href="#refsSW">[SW]</a>
@@ -887,14 +888,19 @@ special value for <cite>HTML</cite>. <a href="#refsHTML">[HTML]</a>
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</dfn>, which is
-"<code title="">omit</code>", "<code title="">same-origin</code>", or
-"<code title="">include</code>". Unless stated otherwise, it is "<code title="">omit</code>".
+"<code title="">omit</code>", "<code title="">same-origin</code>", "<code title="">include</code>", or
+"<code title="">attached-credential</code>". Unless stated otherwise, it is "<code title="">omit</code>".
 
 <p class="note no-backref">When <a href="#concept-request" title="concept-request">request</a>'s
 <a href="#concept-request-mode" title="concept-request-mode">mode</a> is "<code title="">navigate</code>", its
 <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is assumed to be
 "<code title="">include</code>" and <a href="#concept-fetch" title="concept-fetch">fetch</a> does not currently account
 for other values. If <cite>HTML</cite> changes here, this standard will need corresponding changes.
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-attached-credential" title="concept-request-attached-credential">attached credential</dfn> (null or a
+<a href="https://w3c.github.io/webappsec-credential-management/#interfaces-credential-types-passwordcredential">PasswordCredential</a>).
+Unless stated otherwise, it is null.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-use-url-credentials-flag" title="concept-request-use-url-credentials-flag">use-URL-credentials flag</dfn>.
@@ -1580,7 +1586,7 @@ these <a href="#concept-header" title="concept-header">headers</a>:
   <p>Indicates whether a resource can be shared when
   <a href="#concept-request" title="concept-request">request</a>'s
   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-  "<code title="">include</code>".
+  "<code title="">include</code>" or "<code title="">attached-credential</code>".
 
   <p class="note">For a <a href="#cors-preflight-request">CORS-preflight request</a>,
   <a href="#concept-request" title="concept-request">request</a>'s
@@ -2317,7 +2323,7 @@ indicates an attempt to authenticate.
 
     <ul>
      <li><var>request</var>'s <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
-     is "<code title="">include</code>"
+     is "<code title="">include</code>" or "<code title="">attached-credential</code>"
      <li><var>request</var>'s  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
      is "<code title="">same-origin</code>" and <var>request</var>'s
      <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> is
@@ -2376,7 +2382,7 @@ indicates an attempt to authenticate.
       <ul>
        <li>The <i title="">CORS flag</i> is set.
        <li><var>request</var>'s <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
-       is <em>not</em> "<code>include</code>".
+       is <em>neither</em> "<code>include</code>" <em>nor</em> "<code>attached-credential</code>".
        <li><var>request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
        "<code>no-window</code>".
       </ul>
@@ -2551,6 +2557,21 @@ The <i title="">credentials flag</i> is one too.
   <var>request</var> is reused with redirects, authentication, and proxy authentication.
 
  <li><p>Let <var>contentLengthValue</var> be null.
+
+ <li>
+   <p>If <var>httpRequest</var>'s <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached
+   credential</a> is <em>not</em> null, run these substeps:
+
+   <ol>
+     <li>If <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is <em>not</em>
+     null, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+     <li>Let <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> and
+     <var>Content-Type</var> be the result of running the
+     <a href="https://w3c.github.io/webappsec-credential-management/#body-extraction">Credential
+     body extraction</a> algorithm on <var>httpRequest</var>'s
+     <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a>.
+   </ol>   
 
  <li><p>If <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
  null and <var>httpRequest</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
@@ -3878,7 +3899,7 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute USVString <a href="#dom-request-referrer" title="dom-Request-referrer">referrer</a>;
   readonly attribute <a href="#referrerpolicy">ReferrerPolicy</a> <a href="#dom-request-referrerpolicy" title="dom-Request-referrerPolicy">referrerPolicy</a>;
   readonly attribute <a href="#requestmode">RequestMode</a> <a href="#dom-request-mode" title="dom-Request-mode">mode</a>;
-  readonly attribute <a href="#requestcredentials">RequestCredentials</a> <a href="#dom-request-credentials" title="dom-Request-credentials">credentials</a>;
+  readonly attribute <a href="#requestcredentialsmode">RequestCredentialsMode</a> <a href="#dom-request-credentials" title="dom-Request-credentials">credentials</a>;
   readonly attribute <a href="#requestcache">RequestCache</a> <a href="#dom-request-cache" title="dom-Request-cache">cache</a>;
   readonly attribute <a href="#requestredirect">RequestRedirect</a> <a href="#dom-request-redirect" title="dom-Request-redirect">redirect</a>;
   readonly attribute DOMString <a href="#dom-request-integrity" title="dom-Request-integrity">integrity</a>;
@@ -3886,7 +3907,7 @@ interface <dfn id="request">Request</dfn> {
   [NewObject] <a href="#request">Request</a> <a href="#dom-request-clone" title="dom-Request-clone">clone</a>();
 };
 <a href="#request">Request</a> implements <a href="#body">Body</a>;
-
+typedef (PasswordCredential or RequestCredentialsMode) CredentialInfo;
 <!--
   Careful: defaults can only be set in prose, otherwise the Request() constructor
            algorithm breaks down.
@@ -3897,7 +3918,7 @@ interface <dfn id="request">Request</dfn> {
   USVString referrer;
   <a href="#referrerpolicy">ReferrerPolicy</a> referrerPolicy;
   <a href="#requestmode">RequestMode</a> mode;
-  <a href="#requestcredentials">RequestCredentials</a> credentials;
+  <span>CredentialInfo</span> credentials;
   <a href="#requestcache">RequestCache</a> cache;
   <a href="#requestredirect">RequestRedirect</a> redirect;
   DOMString integrity;
@@ -3907,7 +3928,7 @@ interface <dfn id="request">Request</dfn> {
 enum <dfn id="requesttype">RequestType</dfn> { "", "audio", "font", "image", "script", "style", "track", "video" };
 enum <dfn id="requestdestination">RequestDestination</dfn> { "", "document", "embed", "font", "image", "manifest", "media", "object", "report", "script", "serviceworker", "sharedworker", "style",  "worker", "xslt" };
 enum <dfn id="requestmode">RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
-enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };
+enum <dfn id="requestcredentialsmode">RequestCredentialsMode</dfn> { "omit", "same-origin", "include", "attached-credential" };
 enum <dfn id="requestcache">RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache" };
 enum <dfn id="requestredirect">RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
@@ -4722,6 +4743,9 @@ however, it is perfectly fine to do so.
 
 <dt id="refsCORS">[CORS]
 <dd>(Non-normative) <cite><a href="https://www.w3.org/TR/cors/">CORS (obsolete)</a></cite>, Anne van Kesteren. W3C.
+
+<dt id="refsCREDENTIAL">[CREDENTIAL]
+<dd><cite><a href="https://w3c.github.io/webappsec-credential-management/">Credential Management</a></cite>, Mike West. W3C.
 
 <dt id="refsCSP">[CSP]
 <dd><cite><a href="https://w3c.github.io/webappsec-csp/">Content Security Policy</a></cite>, Mike West, Adam Barth and Dan Veditz. W3C.
