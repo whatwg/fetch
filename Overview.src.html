@@ -1230,6 +1230,104 @@ clearly stipulates that <span title=concept-connection>connections</span> are ke
      WebSocket saner -->
 
 
+<h3>Port blocking</h3>
+
+<p>To determine whether fetching a <span title=concept-request>request</span> <var>request</var>
+<dfn title="block bad ports">should be blocked due to a bad port</dfn>, run these steps:
+
+<ol>
+ <li><p>Let <var>url</var> be <var>request</var>'s
+ <span title=concept-request-current-url>current url</span>.
+
+ <li><p>Let <var>scheme</var> be <var>url</var>'s
+ <span data-anolis-spec=url title=concept-url-scheme>scheme</span>.
+
+ <li><p>Let <var>port</var> be <var>url</var>'s
+ <span data-anolis-spec=url title=concept-url-port>port</span>.
+
+ <li><p>If <var>scheme</var> is "<code title>ftp</code>" and <var>port</var> is 20 or 21, then
+ return <b>allowed</b>.
+
+ <li><p>Otherwise, if <var>scheme</var> is "<code title>ftp</code>", "<code title>http</code>",
+ or "<code title>https</code>", and <var>port</var> is a <span>bad port</span>, then return
+ <b>blocked</b>.
+
+ <li><p>Return <b>allowed</b>.
+</ol>
+
+<p>A <span data-anolis-spec=url title=concept-url-port>port</span> is a <dfn>bad port</dfn> if it
+is listed in the first column of the following table.</p>
+
+<table>
+ <tr><th>Port<th>Usage note
+ <tr><td>1<td>tcpmux
+ <tr><td>7<td>echo
+ <tr><td>9<td>discard
+ <tr><td>11<td>systat
+ <tr><td>13<td>daytime
+ <tr><td>15<td>netstat
+ <tr><td>17<td>qotd
+ <tr><td>19<td>chargen
+ <tr><td>20<td>ftp data
+ <tr><td>21<td>ftp access
+ <tr><td>22<td>ssh
+ <tr><td>23<td>telnet
+ <tr><td>25<td>smtp
+ <tr><td>37<td>time
+ <tr><td>42<td>name
+ <tr><td>43<td>nicname
+ <tr><td>53<td>domain
+ <tr><td>77<td>priv-rjs
+ <tr><td>79<td>finger
+ <tr><td>87<td>ttylink
+ <tr><td>95<td>supdup
+ <tr><td>101<td>hostriame
+ <tr><td>102<td>iso-tsap
+ <tr><td>103<td>gppitnp
+ <tr><td>104<td>acr-nema
+ <tr><td>109<td>pop2
+ <tr><td>110<td>pop3
+ <tr><td>111<td>sunrpc
+ <tr><td>113<td>auth
+ <tr><td>115<td>sftp
+ <tr><td>117<td>uucp-path
+ <tr><td>119<td>nntp
+ <tr><td>123<td>NTP
+ <tr><td>135<td>loc-srv / epmap
+ <tr><td>139<td>netbios
+ <tr><td>143<td>imap2
+ <tr><td>179<td>bgp
+ <tr><td>389<td>ldap
+ <tr><td>465<td>smtp+ssl
+ <tr><td>512<td>print / exec
+ <tr><td>513<td>login
+ <tr><td>514<td>shell
+ <tr><td>515<td>printer
+ <tr><td>526<td>tempo
+ <tr><td>530<td>courier
+ <tr><td>531<td>chat
+ <tr><td>532<td>netnews
+ <tr><td>540<td>uucp
+ <tr><td>556<td>remotefs
+ <tr><td>563<td>nntp+ssl
+ <tr><td>587<td>stmp?
+ <tr><td>601<td>?
+ <tr><td>636<td>ldap+ssl
+ <tr><td>993<td>ldap+ssl
+ <tr><td>995<td>pop3+ssl
+ <tr><td>2049<td>nfs
+ <tr><td>3659<td>apple-sasl<!-- not in Gecko, Apple addition adopted by Chrome -->
+ <tr><td>4045<td>lockd
+ <tr><td>6000<td>x11
+ <tr><td>6665<td>alternate irc<!-- not in Gecko, Apple addition adopted by Chrome -->
+ <tr><td>6666<td>alternate irc<!-- not in Gecko, Apple addition adopted by Chrome -->
+ <tr><td>6667<td>irc<!-- not in Gecko, Apple addition adopted by Chrome -->
+ <tr><td>6668<td>alternate irc<!-- not in Gecko, Apple addition adopted by Chrome -->
+ <tr><td>6669<td>alternate irc<!-- not in Gecko, Apple addition adopted by Chrome -->
+</table>
+<!-- http://www-archive.mozilla.org/projects/netlib/PortBanning.html -->
+
+
 <h3>Referrer policies</h3>
 
 <p>A <dfn title=concept-referrer-policy>referrer policy</dfn> is the empty string,
@@ -1798,7 +1896,8 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
  <span data-anolis-ref>UPGRADE</span>
 
  <li><p>If
- <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>
+ <span title="block bad ports">should fetching <var>request</var> be blocked due to bad ports</span>,
+ <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
  or
  <a href="https://w3c.github.io/webappsec-csp/#should-block-request">should fetching <var>request</var> be blocked by Content Security Policy</a>
  returns <b title>blocked</b>, set <var>response</var> to a
@@ -4818,6 +4917,7 @@ David H&aring;s&auml;ther,
 David Orchard,
 Domenic Denicola,
 Dean Jackson,
+Doug Turner,
 Ehsan Akhgari,
 Eric Lawrence,
 Frank Ellerman,
