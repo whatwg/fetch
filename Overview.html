@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-march-2016">Living Standard — Last Updated 9 March 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-march-2016">Living Standard — Last Updated 10 March 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -889,7 +889,7 @@ special value for <cite>HTML</cite>. <a href="#refsHTML">[HTML]</a>
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</dfn>, which is
 "<code title="">omit</code>", "<code title="">same-origin</code>", "<code title="">include</code>", or
-"<code title="">attached-credential</code>". Unless stated otherwise, it is "<code title="">omit</code>".
+"<code title="">credential</code>". Unless stated otherwise, it is "<code title="">omit</code>".
 
 <p class="note no-backref">When <a href="#concept-request" title="concept-request">request</a>'s
 <a href="#concept-request-mode" title="concept-request-mode">mode</a> is "<code title="">navigate</code>", its
@@ -1586,7 +1586,7 @@ these <a href="#concept-header" title="concept-header">headers</a>:
   <p>Indicates whether a resource can be shared when
   <a href="#concept-request" title="concept-request">request</a>'s
   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
-  "<code title="">include</code>" or "<code title="">attached-credential</code>".
+  "<code title="">include</code>" or "<code title="">credential</code>".
 
   <p class="note">For a <a href="#cors-preflight-request">CORS-preflight request</a>,
   <a href="#concept-request" title="concept-request">request</a>'s
@@ -2323,7 +2323,7 @@ indicates an attempt to authenticate.
 
     <ul>
      <li><var>request</var>'s <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
-     is "<code title="">include</code>" or "<code title="">attached-credential</code>"
+     is "<code title="">include</code>" or "<code title="">credential</code>"
      <li><var>request</var>'s  <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
      is "<code title="">same-origin</code>" and <var>request</var>'s
      <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> is
@@ -2382,7 +2382,7 @@ indicates an attempt to authenticate.
       <ul>
        <li>The <i title="">CORS flag</i> is set.
        <li><var>request</var>'s <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a>
-       is <em>neither</em> "<code>include</code>" <em>nor</em> "<code>attached-credential</code>".
+       is <em>neither</em> "<code>include</code>" <em>nor</em> "<code>credential</code>".
        <li><var>request</var>'s <a href="#concept-request-window" title="concept-request-window">window</a> is
        "<code>no-window</code>".
       </ul>
@@ -2563,19 +2563,20 @@ The <i title="">credentials flag</i> is one too.
    credential</a> is <em>not</em> null, run these substeps:
 
    <ol>
-     <li>If <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is <em>not</em>
-     null, return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+     <li>Assert: <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+     <em>not</em> null.
 
-     <li>Let <var>body</var> and <var>type</var>be the result of running the
+     <li>Let <var>body</var> and <var>type</var> be the result of running the
      <a href="https://w3c.github.io/webappsec-credential-management/#body-extraction">Credential
      body extraction</a> algorithm on <var>httpRequest</var>.
 
-     <li>If <var>type</var> is "<code title="">error</code>", return a
-     <a href="#concept-network-error" title="concept-network-error">network error</a>.
+     <li>If <var>type</var> is the empty string, return a <a href="#concept-network-error" title="concept-network-error">network
+     error</a>.
 
      <li>Let <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> be
-     <var>body</var> and <var>Content-Type</var> be <var>type</var>.
-   </ol>   
+     <var>body</var>, <var>Content-Type</var> be <var>type</var>, and
+     <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> be "<code title="">error</code>".
+   </ol>
 
  <li><p>If <var>httpRequest</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
  null and <var>httpRequest</var>'s <a href="#concept-request-method" title="concept-request-method">method</a>
@@ -3932,7 +3933,7 @@ typedef (PasswordCredential or RequestCredentialsMode) CredentialInfo;
 enum <dfn id="requesttype">RequestType</dfn> { "", "audio", "font", "image", "script", "style", "track", "video" };
 enum <dfn id="requestdestination">RequestDestination</dfn> { "", "document", "embed", "font", "image", "manifest", "media", "object", "report", "script", "serviceworker", "sharedworker", "style",  "worker", "xslt" };
 enum <dfn id="requestmode">RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
-enum <dfn id="requestcredentialsmode">RequestCredentialsMode</dfn> { "omit", "same-origin", "include", "attached-credential" };
+enum <dfn id="requestcredentialsmode">RequestCredentialsMode</dfn> { "omit", "same-origin", "include", "credential" };
 enum <dfn id="requestcache">RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache" };
 enum <dfn id="requestredirect">RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
@@ -4142,7 +4143,7 @@ constructor must run these steps:
      <li>If <var>credentials</var> is a
      <a href="https://w3c.github.io/webappsec-credential-management/#interfaces-credential-types-passwordcredential">PasswordCredential</a>,
      set <var>request</var>'s <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> to
-     "<code title="">attached-credential</code>", and <var>request</var>'s
+     "<code title="">credential</code>", and <var>request</var>'s
      <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a> to
      <var>credentials</var>.
 
@@ -4216,12 +4217,18 @@ constructor must run these steps:
  <a href="#concept-request-request" title="concept-Request-request">request</a>'s <a href="#concept-request-body" title="concept-request-body">body</a>
  if <var>input</var> is a <a href="#request"><code>Request</code></a> object, and null otherwise.
 
- <li><p>If either <var>init</var>'s <code title="">body</code> member is present and is non-null or
- <var>inputBody</var> is non-null, then <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
- <code title="">TypeError</code> if either <var>request</var>'s
- <a href="#concept-request-method" title="concept-request-method">method</a> is `<code title="">GET</code>` or
- `<code title="">HEAD</code>`, or <var>request</var>'s
- <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a> is non-null.
+ <li>
+  <p>If <var>request</var>'s <a href="#concept-request-method" title="concept-request-method">method</a> is
+  `<code title="">GET</code>` or `<code title="">HEAD</code>`, then
+  <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code> any of the following
+  are true:
+
+  <ul class="brief">
+   <li><p><var>init</var>'s <code title="">body</code> member is present and is non-null
+   <li><p><var>inputBody</var> is non-null
+   <li><var>request</var>'s
+   <a href="#concept-request-attached-credential" title="concept-request-attached-credential">attached credential</a> is non-null
+  </ul>
 
  <li>
   <p>If <var>init</var>'s <code title="">body</code> member is present and is non-null, run these
