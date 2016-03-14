@@ -1984,11 +1984,24 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
   <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to "<code>no-referrer</code>" or
   have it expose less sensitive information.
 
- <li><p>If <var>request</var>'s
- <a href="#concept-request-current-url" title="concept-request-current-url">current url</a> contains a Known HSTS Host,
- modify it per the requirements of the
- <a href="https://tools.ietf.org/html/rfc6797#section-8.3">"URI [sic] Loading and Port Mapping" chapter of HTTP Strict Transport Security</a>.
- <a href="#refsHSTS">[HSTS]</a>
+ <li>
+  <p>Set <var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+  <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> to "<code title="">https</code>" if
+  all of the following conditions are true:
+
+  <ul class="brief">
+   <li><var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is "<code title="">http</code>"
+   <li><var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-host" title="concept-url-host">host</a> is a
+   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-domain" title="concept-domain">domain</a>
+   <li>Matching <var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-host" title="concept-url-host">host</a> per
+   <a href="https://tools.ietf.org/html/rfc6797#section-8.2">Known HSTS Host Domain Name Matching</a>
+   results in either a superdomain match with an asserted <code title="">includeSubDomains</code>
+   directive or a congruent match (with or without an asserted <code title="">includeSubDomains</code>
+   directive) <a href="#refsHSTS">[HSTS]</a>
+  </ul>
  <!-- Per Mike West HSTS happens "probably after" Referrer -->
 
  <li><p>If <var>request</var>'s <a href="#synchronous-flag">synchronous flag</a> is unset and
@@ -4804,10 +4817,17 @@ therefore not shareable, a WebSocket connection is very close to identical to an
 <var>url</var>, <var>protocols</var>, and <var>client</var>, run these steps:</p>
 
 <ol>
- <li><p>Let <var>requestURL</var> be a copy of <var>url</var>, with its
- <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> set to "<code title="">http</code>",
- if <var>url</var>'s <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
- "<code title="">ws</code>", and to "<code title="">https</code>" otherwise.
+ <li>
+  <p>Let <var>requestURL</var> be a copy of <var>url</var>, with its
+  <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> set to
+  "<code title="">http</code>", if <var>url</var>'s
+  <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is "<code title="">ws</code>", and
+  to "<code title="">https</code>" otherwise.
+
+  <p class="note no-backref">This change of scheme is essential to integrate well with
+  <a href="#concept-fetch" title="concept-fetch">fetching</a>. E.g., HSTS would not work without it. There is no real
+  reason for WebSocket to have distinct schemes, it's a legacy artefact.
+  <a href="#refsHSTS">[HSTS]</a>
 
  <li><p>Let <var>request</var> be a new <a href="#concept-request" title="concept-request">request</a>, whose
  <a href="#concept-request-url" title="concept-request-url">url</a> is <var>url</var>,

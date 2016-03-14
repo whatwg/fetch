@@ -1917,11 +1917,24 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
   <span title=concept-request-referrer>referrer</span> to "<code>no-referrer</code>" or
   have it expose less sensitive information.
 
- <li><p>If <var>request</var>'s
- <span title=concept-request-current-url>current url</span> contains a Known HSTS Host,
- modify it per the requirements of the
- <a href=https://tools.ietf.org/html/rfc6797#section-8.3>"URI [sic] Loading and Port Mapping" chapter of HTTP Strict Transport Security</a>.
- <span data-anolis-ref>HSTS</span>
+ <li>
+  <p>Set <var>request</var>'s <span title=concept-request-current-url>current url</span>'s
+  <span data-anolis-spec=url title=concept-url-scheme>scheme</span> to "<code title>https</code>" if
+  all of the following conditions are true:
+
+  <ul class=brief>
+   <li><var>request</var>'s <span title=concept-request-current-url>current url</span>'s
+   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is "<code title>http</code>"
+   <li><var>request</var>'s <span title=concept-request-current-url>current url</span>'s
+   <span data-anolis-spec=url title=concept-url-host>host</span> is a
+   <span data-anolis-spec=url title=concept-domain>domain</span>
+   <li>Matching <var>request</var>'s <span title=concept-request-current-url>current url</span>'s
+   <span data-anolis-spec=url title=concept-url-host>host</span> per
+   <a href="https://tools.ietf.org/html/rfc6797#section-8.2">Known HSTS Host Domain Name Matching</a>
+   results in either a superdomain match with an asserted <code title>includeSubDomains</code>
+   directive or a congruent match (with or without an asserted <code title>includeSubDomains</code>
+   directive) <span data-anolis-ref>HSTS</span>
+  </ul>
  <!-- Per Mike West HSTS happens "probably after" Referrer -->
 
  <li><p>If <var>request</var>'s <span>synchronous flag</span> is unset and
@@ -4737,10 +4750,17 @@ therefore not shareable, a WebSocket connection is very close to identical to an
 <var>url</var>, <var>protocols</var>, and <var>client</var>, run these steps:</p>
 
 <ol>
- <li><p>Let <var>requestURL</var> be a copy of <var>url</var>, with its
- <span data-anolis-spec=url title=concept-url-scheme>scheme</span> set to "<code title>http</code>",
- if <var>url</var>'s <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
- "<code title>ws</code>", and to "<code title>https</code>" otherwise.
+ <li>
+  <p>Let <var>requestURL</var> be a copy of <var>url</var>, with its
+  <span data-anolis-spec=url title=concept-url-scheme>scheme</span> set to
+  "<code title>http</code>", if <var>url</var>'s
+  <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is "<code title>ws</code>", and
+  to "<code title>https</code>" otherwise.
+
+  <p class="note no-backref">This change of scheme is essential to integrate well with
+  <span title=concept-fetch>fetching</span>. E.g., HSTS would not work without it. There is no real
+  reason for WebSocket to have distinct schemes, it's a legacy artefact.
+  <span data-anolis-ref>HSTS</span>
 
  <li><p>Let <var>request</var> be a new <span title=concept-request>request</span>, whose
  <span title=concept-request-url>url</span> is <var>url</var>,
