@@ -324,16 +324,34 @@ each other by `<code title>,</code>`, in order.
 <hr>
 
 <p>A <dfn>simple header</dfn> is a <span title=concept-header>header</span> whose
-<span title=concept-header-name>name</span> is `<code title>Accept</code>`,
-`<code title>Accept-Language</code>`, or `<code title>Content-Language</code>`, or whose
-<span title=concept-header-name>name</span> is `<code title>Content-Type</code>` and
-<span title=concept-header-value>value</span>, <span title=concept-header-parse>once parsed</span>,
-has a MIME type (ignoring parameters) that is
-`<code title>application/x-www-form-urlencoded</code>`, `<code title>multipart/form-data</code>`, or
-`<code title>text/plain</code>`.
+<span title=concept-header-name>name</span> is one of
+
+<ul class=brief>
+ <li>`<code title>Accept</code>`
+ <li>`<code title>Accept-Language</code>`
+ <li>`<code title>Content-Language</code>`
+ <li>`<code title>Content-Type</code>` and whose <span title=concept-header-value>value</span>,
+ <span title=concept-header-parse>once parsed</span>, has a MIME type (ignoring parameters)
+ that is `<code title>application/x-www-form-urlencoded</code>`,
+ `<code title>multipart/form-data</code>`, or `<code title>text/plain</code>`
+</ul>
+
 <!-- XXX * needs better xref
          * ignoring parameters has been the standard for a long time now
          * interesting test: "Content-Type: text/plain;" -->
+
+<p>or whose <span title=concept-header-name>name</span> is one of
+
+<ul class=brief>
+ <li>`<code title><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
+ <li>`<code title><a href=http://httpwg.org/http-extensions/client-hints.html#downlink>Downlink</a></code>`
+ <li>`<code title><a href=http://httpwg.org/http-extensions/client-hints.html#save-data>Save-Data</a></code>`
+ <li>`<code title><a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>Viewport-Width</a></code>`
+ <li>`<code title><a href=http://httpwg.org/http-extensions/client-hints.html#width>Width</a></code>`
+</ul>
+
+<p>and whose <span title=concept-header-value>value</span>,
+<span title=concept-header-parse>once parsed</span>, is not a failure.
 
 <p>A <dfn>forbidden header name</dfn> is a <span title=concept-header>header</span>
 <span title=concept-header-name>name</span> that is one of
@@ -803,6 +821,15 @@ the empty string.
 <p class="note no-backref">This can be used to override a referrer policy associated with
 an <span data-anolis-spec=html>environment settings object</span>.
 <span data-anolis-ref>REFERRER</span>
+
+<p>A <span title=concept-request>request</span> has an associated
+<dfn title=concept-request-client-hints-list>client hints list</dfn>, which is a
+<span title=concept-client-hints-list>client-hints list</span>. Unless stated otherwise, it is
+the empty list.
+
+<p class="note no-backref">This will be used to override a client hints list associated with
+an <span data-anolis-spec=html>environment settings object</span>.
+<span data-anolis-ref>CLIENT-HINTS</span>
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>synchronous flag</dfn>. Unless stated otherwise it is unset.
@@ -1387,6 +1414,19 @@ is listed in the first column of the following table.</p>
 <span data-anolis-ref>REFERRER</span>
 
 
+<h3>Client hints list</h3>
+
+<p class="note">This section will be integrated into HTTP Client Hints.
+<span data-anolis-ref>CLIENT-HINTS</span>
+<!-- XXX -->
+
+<p>A <dfn title=concept-client-hints-list>client hints list</dfn> is a list of
+<a href=http://httpwg.org/http-extensions/client-hints.html#accept-ch>Client hint tokens</a>,
+each of which is one of `<code title>dpr</code>`,
+`<code title>save-data</code>`, `<code title>viewport-width</code>`, or
+`<code title>width</code>`.
+
+
 <h3>Streams</h3>
 
 <p class="note no-backref">This section might be integrated into other standards, such as IDL.
@@ -1888,10 +1928,60 @@ if the ongoing fetch is updating the response in the HTTP cache for the request.
   for HTTP/2, and equivalent information used to prioritize dispatch and processing of
   HTTP/1 fetches.
 
+
+ <li>
+  <p>If <var>request</var> is a <span>navigation request</span>, a user agent should, for each
+  <span title=concept-header>header</span> <span title=concept-header-name>name</span>
+  (<var>hint-name</var>) in the first column of the following table, if <var>hint-name</var>
+  is not in <var>request</var>'s <span title=concept-request-header-list>header list</span>,
+  <span title=concept-header-list-append>append</span>
+  <var>hint-name</var>/<var>hint-value</var> given in the same row on the second column, to
+  <var>request</var>'s <span title=concept-request-header-list>header list</span>.
+
+  <table>
+   <tr>
+    <th><span title=hint-name>hint-name</span>
+    <th><span title=hint-value>hint-value</span>
+   <tr>
+    <td>`<code title=http-dpr>dpr</a></code>`
+    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
+   <tr>
+    <td>`<code title=http-save-data>save-data</code>`
+    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+   <tr>
+    <td>`<code title=http-viewport-width>viewport-width</code>`
+    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
+  </table>
+
  <li>
   <p>If <var>request</var> is a <span>subresource request</span>, run these substeps:
 
   <ol>
+   <li>
+    <p>If the <var>request</var>'s <span title=concept-client-hint-list>client hints list</span> is
+    not empty, then run these substeps for each <var>hint-name</var> in the list:
+
+    <ol>
+     <li>
+      <p>Set <var>value</var> to the first matching statement, if any, switching on
+      <var>hint-name</var>:
+
+      <dl class=switch>
+       <dt>"<code title>dpr</code>"
+       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
+       <dt>"<code title>save-data</code>"
+       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+       <dt>"<code title>viewport-width</code>"
+       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
+       <dt>"<code title>width</code>"
+       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#width>width value</a></code>
+      </dl>
+
+     <li><p><span title=concept-header-list-append>Append</span>
+     <var>hint-name</var>/<var>value</var> to <var>request</var>'s
+     <span title=concept-request-header-list>header list</span>.
+    </ol>
+
    <li><p>Let <var>record</var> be a new
    <span title=concept-fetch-record>fetch record</span> consisting of
    <var>request</var> and this instance of the

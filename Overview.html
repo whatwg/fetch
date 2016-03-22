@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-april-2016">Living Standard — Last Updated 5 April 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-10-april-2016">Living Standard — Last Updated 10 April 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -60,9 +60,10 @@ fetching.
    <li><a href="#should-response-to-request-be-blocked-due-to-mime-type?"><span class="secno">3.6 </span>Should
 <var>response</var> to <var>request</var> be blocked due to its MIME type?</a></li>
    <li><a href="#referrer-policies"><span class="secno">3.7 </span>Referrer policies</a></li>
-   <li><a href="#streams"><span class="secno">3.8 </span>Streams</a>
+   <li><a href="#client-hints-list"><span class="secno">3.8 </span>Client hints list</a></li>
+   <li><a href="#streams"><span class="secno">3.9 </span>Streams</a>
     <ol>
-     <li><a href="#readablestream"><span class="secno">3.8.1 </span>ReadableStream</a></ol></ol></li>
+     <li><a href="#readablestream"><span class="secno">3.9.1 </span>ReadableStream</a></ol></ol></li>
  <li><a href="#http-extensions"><span class="secno">4 </span>HTTP extensions</a>
   <ol>
    <li><a href="#origin-header"><span class="secno">4.1 </span>`<code title="">Origin</code>` header</a></li>
@@ -393,16 +394,34 @@ each other by `<code title="">,</code>`, in order.
 <hr>
 
 <p>A <dfn id="simple-header">simple header</dfn> is a <a href="#concept-header" title="concept-header">header</a> whose
-<a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Accept</code>`,
-`<code title="">Accept-Language</code>`, or `<code title="">Content-Language</code>`, or whose
-<a href="#concept-header-name" title="concept-header-name">name</a> is `<code title="">Content-Type</code>` and
-<a href="#concept-header-value" title="concept-header-value">value</a>, <a href="#concept-header-parse" title="concept-header-parse">once parsed</a>,
-has a MIME type (ignoring parameters) that is
-`<code title="">application/x-www-form-urlencoded</code>`, `<code title="">multipart/form-data</code>`, or
-`<code title="">text/plain</code>`.
+<a href="#concept-header-name" title="concept-header-name">name</a> is one of
+
+<ul class="brief">
+ <li>`<code title="">Accept</code>`
+ <li>`<code title="">Accept-Language</code>`
+ <li>`<code title="">Content-Language</code>`
+ <li>`<code title="">Content-Type</code>` and whose <a href="#concept-header-value" title="concept-header-value">value</a>,
+ <a href="#concept-header-parse" title="concept-header-parse">once parsed</a>, has a MIME type (ignoring parameters)
+ that is `<code title="">application/x-www-form-urlencoded</code>`,
+ `<code title="">multipart/form-data</code>`, or `<code title="">text/plain</code>`
+</ul>
+
 <!-- XXX * needs better xref
          * ignoring parameters has been the standard for a long time now
          * interesting test: "Content-Type: text/plain;" -->
+
+<p>or whose <a href="#concept-header-name" title="concept-header-name">name</a> is one of
+
+<ul class="brief">
+ <li>`<code title=""><a href="http://httpwg.org/http-extensions/client-hints.html#dpr">DPR</a></code>`
+ <li>`<code title=""><a href="http://httpwg.org/http-extensions/client-hints.html#downlink">Downlink</a></code>`
+ <li>`<code title=""><a href="http://httpwg.org/http-extensions/client-hints.html#save-data">Save-Data</a></code>`
+ <li>`<code title=""><a href="http://httpwg.org/http-extensions/client-hints.html#viewport-width">Viewport-Width</a></code>`
+ <li>`<code title=""><a href="http://httpwg.org/http-extensions/client-hints.html#width">Width</a></code>`
+</ul>
+
+<p>and whose <a href="#concept-header-value" title="concept-header-value">value</a>,
+<a href="#concept-header-parse" title="concept-header-parse">once parsed</a>, is not a failure.
 
 <p>A <dfn id="forbidden-header-name">forbidden header name</dfn> is a <a href="#concept-header" title="concept-header">header</a>
 <a href="#concept-header-name" title="concept-header-name">name</a> that is one of
@@ -872,6 +891,15 @@ the empty string.
 <p class="note no-backref">This can be used to override a referrer policy associated with
 an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>.
 <a href="#refsREFERRER">[REFERRER]</a>
+
+<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="concept-request-client-hints-list" title="concept-request-client-hints-list">client hints list</dfn>, which is a
+<a href="#concept-client-hints-list" title="concept-client-hints-list">client-hints list</a>. Unless stated otherwise, it is
+the empty list.
+
+<p class="note no-backref">This will be used to override a client hints list associated with
+an <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>.
+<a href="#refsCLIENT-HINTS">[CLIENT-HINTS]</a>
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn id="synchronous-flag">synchronous flag</dfn>. Unless stated otherwise it is unset.
@@ -1456,11 +1484,24 @@ is listed in the first column of the following table.</p>
 <a href="#refsREFERRER">[REFERRER]</a>
 
 
-<h3 id="streams"><span class="secno">3.8 </span>Streams</h3>
+<h3 id="client-hints-list"><span class="secno">3.8 </span>Client hints list</h3>
+
+<p class="note">This section will be integrated into HTTP Client Hints.
+<a href="#refsCLIENT-HINTS">[CLIENT-HINTS]</a>
+<!-- XXX -->
+
+<p>A <dfn id="concept-client-hints-list" title="concept-client-hints-list">client hints list</dfn> is a list of
+<a href="http://httpwg.org/http-extensions/client-hints.html#accept-ch">Client hint tokens</a>,
+each of which is one of `<code title="">dpr</code>`,
+`<code title="">save-data</code>`, `<code title="">viewport-width</code>`, or
+`<code title="">width</code>`.
+
+
+<h3 id="streams"><span class="secno">3.9 </span>Streams</h3>
 
 <p class="note no-backref">This section might be integrated into other standards, such as IDL.
 
-<h4 id="readablestream"><span class="secno">3.8.1 </span>ReadableStream</h4>
+<h4 id="readablestream"><span class="secno">3.9.1 </span>ReadableStream</h4>
 
 <p>A <dfn id="concept-readablestream" title="concept-ReadableStream">ReadableStream</dfn> object represents a
 <a class="external" data-anolis-spec="streams" href="https://streams.spec.whatwg.org/#rs-class" title="readablestream">stream of data</a>. In this section, we
@@ -1957,10 +1998,60 @@ if the ongoing fetch is updating the response in the HTTP cache for the request.
   for HTTP/2, and equivalent information used to prioritize dispatch and processing of
   HTTP/1 fetches.
 
+
+ <li>
+  <p>If <var>request</var> is a <a href="#navigation-request">navigation request</a>, a user agent should, for each
+  <a href="#concept-header" title="concept-header">header</a> <a href="#concept-header-name" title="concept-header-name">name</a>
+  (<var>hint-name</var>) in the first column of the following table, if <var>hint-name</var>
+  is not in <var>request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>,
+  <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
+  <var>hint-name</var>/<var>hint-value</var> given in the same row on the second column, to
+  <var>request</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+
+  <table>
+   <tr>
+    <th><span title="hint-name">hint-name</span>
+    <th><span title="hint-value">hint-value</span>
+   <tr>
+    <td>`<code title="http-dpr">dpr</code>`
+    <td>a suitable <a href="http://httpwg.org/http-extensions/client-hints.html#dpr">dpr value</a>
+   <tr>
+    <td>`<code title="http-save-data">save-data</code>`
+    <td>a suitable <a href="http://httpwg.org/http-extensions/client-hints.html#save-data">save-data value</a>
+   <tr>
+    <td>`<code title="http-viewport-width">viewport-width</code>`
+    <td>a suitable <a href="http://httpwg.org/http-extensions/client-hints.html#viewport-width">viewport-width value</a>
+  </table>
+
  <li>
   <p>If <var>request</var> is a <a href="#subresource-request">subresource request</a>, run these substeps:
 
   <ol>
+   <li>
+    <p>If the <var>request</var>'s <span title="concept-client-hint-list">client hints list</span> is
+    not empty, then run these substeps for each <var>hint-name</var> in the list:
+
+    <ol>
+     <li>
+      <p>Set <var>value</var> to the first matching statement, if any, switching on
+      <var>hint-name</var>:
+
+      <dl class="switch">
+       <dt>"<code title="">dpr</code>"
+       <dd>a suitable <a href="http://httpwg.org/http-extensions/client-hints.html#dpr">dpr value</a>
+       <dt>"<code title="">save-data</code>"
+       <dd>a suitable <a href="http://httpwg.org/http-extensions/client-hints.html#save-data">save-data value</a>
+       <dt>"<code title="">viewport-width</code>"
+       <dd>a suitable <a href="http://httpwg.org/http-extensions/client-hints.html#viewport-width">viewport-width value</a>
+       <dt>"<code title="">width</code>"
+       <dd>a suitable <a href="http://httpwg.org/http-extensions/client-hints.html#width">width value</a>
+      </dl>
+
+     <li><p><a href="#concept-header-list-append" title="concept-header-list-append">Append</a>
+     <var>hint-name</var>/<var>value</var> to <var>request</var>'s
+     <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+    </ol>
+
    <li><p>Let <var>record</var> be a new
    <a href="#concept-fetch-record" title="concept-fetch-record">fetch record</a> consisting of
    <var>request</var> and this instance of the
@@ -5073,6 +5164,9 @@ however, it is perfectly fine to do so.
 <h2 class="no-num" id="references">References</h2>
 <div id="anolis-references"><dl><dt id="refsABNF">[ABNF]
 <dd><cite><a href="http://tools.ietf.org/html/rfc5234">Augmented BNF for Syntax Specifications: ABNF</a></cite>, D. Crocker and P. Overell. IETF.
+
+<dt id="refsCLIENT-HINTS">[CLIENT-HINTS]
+<dd><cite><a href="https://tools.ietf.org/html/draft-ietf-httpbis-client-hints">HTTP Client Hints</a></cite>, Ilya Grigorik. IETF.
 
 <dt id="refsCOOKIES">[COOKIES]
 <dd><cite><a href="https://tools.ietf.org/html/rfc6265">HTTP State Management Mechanism</a></cite>, Adam Barth. IETF.
