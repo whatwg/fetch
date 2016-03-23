@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-18-march-2016">Living Standard — Last Updated 18 March 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-24-march-2016">Living Standard — Last Updated 24 March 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -57,10 +57,12 @@ fetching.
    <li><a href="#fetch-groups"><span class="secno">3.3 </span>Fetch groups</a></li>
    <li><a href="#connections"><span class="secno">3.4 </span>Connections</a></li>
    <li><a href="#port-blocking"><span class="secno">3.5 </span>Port blocking</a></li>
-   <li><a href="#referrer-policies"><span class="secno">3.6 </span>Referrer policies</a></li>
-   <li><a href="#streams"><span class="secno">3.7 </span>Streams</a>
+   <li><a href="#should-response-to-request-be-blocked-due-to-mime-type?"><span class="secno">3.6 </span>Should
+<var>response</var> to <var>request</var> be blocked due to its MIME type?</a></li>
+   <li><a href="#referrer-policies"><span class="secno">3.7 </span>Referrer policies</a></li>
+   <li><a href="#streams"><span class="secno">3.8 </span>Streams</a>
     <ol>
-     <li><a href="#readablestream"><span class="secno">3.7.1 </span>ReadableStream</a></ol></ol></li>
+     <li><a href="#readablestream"><span class="secno">3.8.1 </span>ReadableStream</a></ol></ol></li>
  <li><a href="#http-extensions"><span class="secno">4 </span>HTTP extensions</a>
   <ol>
    <li><a href="#origin-header"><span class="secno">4.1 </span>`<code title="">Origin</code>` header</a></li>
@@ -1397,7 +1399,26 @@ is listed in the first column of the following table.</p>
 <!-- http://www-archive.mozilla.org/projects/netlib/PortBanning.html -->
 
 
-<h3 id="referrer-policies"><span class="secno">3.6 </span>Referrer policies</h3>
+<h3 id="should-response-to-request-be-blocked-due-to-mime-type?"><span class="secno">3.6 </span><dfn title="should response to request be blocked due to mime type">Should
+<var>response</var> to <var>request</var> be blocked due to its MIME type?</dfn></h3>
+
+<p>Run these steps:
+
+<ol>
+ <li><p>Let <var>MIMEType</var> be the result of
+ <a href="#concept-header-extract-mime-type" title="concept-header-extract-mime-type">extracting a MIME type</a> from
+ <var>response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+
+ <li><p>Let <var>type</var> be <var>request</var>'s <a href="#concept-request-type" title="concept-request-type">type</a>.
+
+ <li><p>If <var>type</var> is "<code title="">script</code>", and <var>MIMEType</var> starts with
+ `<code title="">image/</code>`, then return <b title="">blocked</b>.
+
+ <li><p>Return <b title="">allowed</b>.
+</ol>
+
+
+<h3 id="referrer-policies"><span class="secno">3.7 </span>Referrer policies</h3>
 
 <p>A <dfn id="concept-referrer-policy" title="concept-referrer-policy">referrer policy</dfn> is the empty string,
 "<code>no-referrer</code>", "<code>no-referrer-when-downgrade</code>",
@@ -1417,11 +1438,11 @@ is listed in the first column of the following table.</p>
 <a href="#refsREFERRER">[REFERRER]</a>
 
 
-<h3 id="streams"><span class="secno">3.7 </span>Streams</h3>
+<h3 id="streams"><span class="secno">3.8 </span>Streams</h3>
 
 <p class="note no-backref">This section might be integrated into other standards, such as IDL.
 
-<h4 id="readablestream"><span class="secno">3.7.1 </span>ReadableStream</h4>
+<h4 id="readablestream"><span class="secno">3.8.1 </span>ReadableStream</h4>
 
 <p>A <dfn id="concept-readablestream" title="concept-ReadableStream">ReadableStream</dfn> object represents a
 <a class="external" data-anolis-spec="streams" href="https://streams.spec.whatwg.org/#rs-class" title="readablestream">stream of data</a>. In this section, we
@@ -2107,15 +2128,19 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
  <a href="#concept-network-error" title="concept-network-error">network error</a>, and <var>response</var>'s
  <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
 
- <li><p>If <var>response</var> is not a <a href="#concept-network-error" title="concept-network-error">network error</a> and
- <a href="https://w3c.github.io/webappsec-mixed-content/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
- <a href="https://w3c.github.io/webappsec-csp/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>,
- or
- <a href="#should-response-to-request-be-blocked-due-to-nosniff?" title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>,
- returns <b title="">blocked</b>, set <var>response</var> and <var>internalResponse</var> to a
- <a href="#concept-network-error" title="concept-network-error">network error</a>.
- <a href="#refsMIX">[MIX]</a>
- <a href="#refsCSP">[CSP]</a>
+ <li>
+  <p>If <var>response</var> is not a <a href="#concept-network-error" title="concept-network-error">network error</a> and any
+  of the following algorithms returns <b title="">blocked</b>, then set <var>response</var> and
+  <var>internalResponse</var> to a <a href="#concept-network-error" title="concept-network-error">network error</a>:
+
+  <ul class="brief">
+   <li><a href="https://w3c.github.io/webappsec-mixed-content/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>
+   <a href="#refsMIX">[MIX]</a>
+   <li><a href="https://w3c.github.io/webappsec-csp/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>
+   <a href="#refsCSP">[CSP]</a>
+   <li><a href="#should-response-to-request-be-blocked-due-to-mime-type?" title="should response to request be blocked due to mime type">should <var>internalResponse</var> to <var>request</var> be blocked due to its MIME type</a>
+   <li><a href="#should-response-to-request-be-blocked-due-to-nosniff?" title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>
+  </ul>
 
  <li>
   <p>If <var>response</var> is not a <a href="#concept-network-error" title="concept-network-error">network error</a> and

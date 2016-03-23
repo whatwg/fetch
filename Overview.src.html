@@ -1330,6 +1330,25 @@ is listed in the first column of the following table.</p>
 <!-- http://www-archive.mozilla.org/projects/netlib/PortBanning.html -->
 
 
+<h3 id="should-response-to-request-be-blocked-due-to-mime-type?"><dfn title="should response to request be blocked due to mime type">Should
+<var>response</var> to <var>request</var> be blocked due to its MIME type?</dfn></h3>
+
+<p>Run these steps:
+
+<ol>
+ <li><p>Let <var>MIMEType</var> be the result of
+ <span title=concept-header-extract-mime-type>extracting a MIME type</span> from
+ <var>response</var>'s <span title=concept-response-header-list>header list</span>.
+
+ <li><p>Let <var>type</var> be <var>request</var>'s <span title=concept-request-type>type</span>.
+
+ <li><p>If <var>type</var> is "<code title>script</code>", and <var>MIMEType</var> starts with
+ `<code title>image/</code>`, then return <b title>blocked</b>.
+
+ <li><p>Return <b title>allowed</b>.
+</ol>
+
+
 <h3>Referrer policies</h3>
 
 <p>A <dfn title=concept-referrer-policy>referrer policy</dfn> is the empty string,
@@ -2040,15 +2059,19 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
  <span title=concept-network-error>network error</span>, and <var>response</var>'s
  <span title=concept-internal-response>internal response</span> otherwise.
 
- <li><p>If <var>response</var> is not a <span title=concept-network-error>network error</span> and
- <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
- <a href=https://w3c.github.io/webappsec-csp/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>,
- or
- <span title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</span>,
- returns <b title>blocked</b>, set <var>response</var> and <var>internalResponse</var> to a
- <span title=concept-network-error>network error</span>.
- <span data-anolis-ref>MIX</span>
- <span data-anolis-ref>CSP</span>
+ <li>
+  <p>If <var>response</var> is not a <span title=concept-network-error>network error</span> and any
+  of the following algorithms returns <b title>blocked</b>, then set <var>response</var> and
+  <var>internalResponse</var> to a <span title=concept-network-error>network error</span>:
+
+  <ul class="brief">
+   <li><a href=https://w3c.github.io/webappsec-mixed-content/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>
+   <span data-anolis-ref>MIX</span>
+   <li><a href=https://w3c.github.io/webappsec-csp/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>
+   <span data-anolis-ref>CSP</span>
+   <li><span title="should response to request be blocked due to mime type">should <var>internalResponse</var> to <var>request</var> be blocked due to its MIME type</span>
+   <li><span title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</span>
+  </ul>
 
  <li>
   <p>If <var>response</var> is not a <span title=concept-network-error>network error</span> and
