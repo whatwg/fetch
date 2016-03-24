@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-18-march-2016">Living Standard — Last Updated 18 March 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-24-march-2016">Living Standard — Last Updated 24 March 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -84,7 +84,9 @@ fetching.
    <li><a href="#http-network-fetch"><span class="secno">5.6 </span>HTTP-network fetch</a></li>
    <li><a href="#cors-preflight-fetch"><span class="secno">5.7 </span>CORS-preflight fetch</a></li>
    <li><a href="#cors-preflight-cache"><span class="secno">5.8 </span>CORS-preflight cache</a></li>
-   <li><a href="#cors-check"><span class="secno">5.9 </span>CORS check</a></ol></li>
+   <li><a href="#cors-check"><span class="secno">5.9 </span>CORS check</a></li>
+   <li><a href="#should-response-to-request-be-blocked-due-to-mime-type?"><span class="secno">5.10 </span>Should
+<var>response</var> to <var>request</var> be blocked due to its MIME type?</a></ol></li>
  <li><a href="#fetch-api"><span class="secno">6 </span>Fetch API</a>
   <ol>
    <li><a href="#headers-class"><span class="secno">6.1 </span>Headers class</a></li>
@@ -1815,7 +1817,6 @@ response <a href="#concept-header" title="concept-header">header</a> can be used
  <li><p>Return <b title="">allowed</b>.
 </ol>
 
-
 <h2 id="fetching"><span class="secno">5 </span>Fetching</h2>
 
 <div class="note no-backref">
@@ -2107,15 +2108,23 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
  <a href="#concept-network-error" title="concept-network-error">network error</a>, and <var>response</var>'s
  <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
 
- <li><p>If <var>response</var> is not a <a href="#concept-network-error" title="concept-network-error">network error</a> and
- <a href="https://w3c.github.io/webappsec-mixed-content/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>,
- <a href="https://w3c.github.io/webappsec-csp/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>,
- or
- <a href="#should-response-to-request-be-blocked-due-to-nosniff?" title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>,
- returns <b title="">blocked</b>, set <var>response</var> and <var>internalResponse</var> to a
- <a href="#concept-network-error" title="concept-network-error">network error</a>.
- <a href="#refsMIX">[MIX]</a>
- <a href="#refsCSP">[CSP]</a>
+ <li>
+  <p>If <var>response</var> is not a <a href="#concept-network-error" title="concept-network-error">network error</a> and
+  any of the following algorithms returns <b title="">blocked</b>, then set <var>response</var> and
+  <var>internalResponse</var> to a <a href="#concept-network-error" title="concept-network-error">network error</a>:
+
+  <ul class="brief">
+   <li>
+    <a href="https://w3c.github.io/webappsec-mixed-content/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>
+    <a href="#refsMIX">[MIX]</a>
+   <li>
+    <a href="https://w3c.github.io/webappsec-csp/#should-block-response">should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>
+    <a href="#refsCSP">[CSP]</a>
+   <li>
+    <a href="#should-response-to-request-be-blocked-due-to-nosniff?" title="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>
+   <li>
+    <a href="#should-response-to-request-be-blocked-due-to-mime-type?" title="should response to request be blocked due to mime type">should <var>internalResponse</var> to <var>request</var> be blocked due to its MIME type</a>
+  </ul>
 
  <li>
   <p>If <var>response</var> is not a <a href="#concept-network-error" title="concept-network-error">network error</a> and
@@ -3423,6 +3432,25 @@ Entries may be removed before that moment arrives.
   `<code title="">*</code>` which is also forbidden.
 
  <li><p>Return failure.
+</ol>
+
+<h3 id="should-response-to-request-be-blocked-due-to-mime-type?"><span class="secno">5.10 </span><dfn title="should response to request be blocked due to mime type">Should
+<var>response</var> to <var>request</var> be blocked due to its MIME type?</dfn></h3>
+
+<p>Run these steps:
+
+<ol>
+ <li><p>Let <var>MIMEType</var> be the result of
+ <a href="#concept-header-extract-mime-type" title="concept-header-extract-mime-type">extracting a MIME type</a> from
+ <var>response</var>'s <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+
+ <li><p>Let <var>type</var> be <var>request</var>'s
+ <a href="#concept-request-type" title="concept-request-type">type</a>.
+
+ <li><p>If <var>type</var> is "<code title="">script</code>", and <var>MIMEType</var>
+ starts with `<code title="">image/</code>`, then return <b title="">blocked</b>.
+
+ <li><p>Return <b title="">allowed</b>.
 </ol>
 
 
