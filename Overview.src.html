@@ -177,15 +177,9 @@ of:
  <span data-anolis-spec=html>networking task source</span>.
 </ol>
 
-<p>To <dfn>queue a fetch-done task</dfn>, given a <var>request</var> and
-<var>response</var>, run these steps:
-
-<ol>
- <li><p>Set <var>request</var>'s <span>done flag</span>.
-
- <li><p><span>Queue a fetch task</span> on <var>request</var> to
- <span>process response end-of-file</span> for <var>response</var>.
-</ol>
+<p>To <dfn>queue a fetch-request-done task</dfn>, given a <var>request</var>,
+<span>queue a fetch task</span> on <var>request</var> to <span>process request end-of-file</span>
+for <var>request</var>.
 
 <hr>
 
@@ -485,11 +479,14 @@ user-agent-defined <span title=concept-header-value>value</span> for the
  <li><p>A <dfn title=concept-body-total-bytes>total bytes</dfn> (an integer), initially 0.
 </ul>
 
-<p>To <dfn title=concept-body-wait>wait</dfn> for a <span title=concept-body>body</span>
-<var>body</var>, if <var>body</var> is non-null, wait for <var>body</var>'s
-<span title=concept-body-stream>stream</span> to be
+<p>A <span title=concept-body>body</span> <var>body</var> is said to be
+<dfn title=concept-body-done>done</dfn> if <var>body</var> is null or <var>body</var>'s
+<span title=concept-body-stream>stream</span> is
 <span title=concept-ReadableStream-closed>closed</span> or
 <span title=concept-ReadableStream-errored>errored</span>.
+
+<p>To <dfn title=concept-body-wait>wait</dfn> for a <span title=concept-body>body</span>
+<var>body</var>, wait for <var>body</var> to be <span title=concept-body-done>done</span>.
 
 <p>To <dfn title=concept-body-clone>clone</dfn> a <span title=concept-body>body</span>
 <var>body</var>, run these steps:
@@ -2112,13 +2109,21 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
 
   <p class="note no-backref">This terminates <span title=concept-fetch>fetch</span>.
 
- <li><p>If <var>request</var>'s <span title=concept-request-body>body</span> is
- non-null and <var>request</var>'s
- <span title=concept-request-current-url>current url</span>'s
- <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
- "<code title>http</code>" or "<code title>https</code>",
- <span>queue a fetch task</span> on <var>request</var> to
- <span>process request end-of-file</span> for <var>request</var>.
+ <li>
+  <p>If <var>request</var>'s <span title=concept-request-current-url>current url</span>'s
+  <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is "<code title>http</code>" or
+  "<code title>https</code>", run these substeps:</p>
+
+  <ol>
+   <li><p>If <var>request</var>'s <span title=concept-request-body>body</span> is
+   <span title=concept-body-done>done</span>, <span>queue a fetch-request-done task</span> for
+   <var>request</var>.
+
+   <li><p>Otherwise, <span data-anolis-spec=html>in parallel</span>,
+   <span title=concept-body-wait>wait</span> for <var>request</var>'s
+   <span title=concept-request-body>body</span>, and then
+   <span>queue a fetch-request-done task</span> for <var>request</var>.
+  </ol>
 
  <li><p><span>Queue a fetch task</span> on <var>request</var> to
  <span>process response</span> for <var>response</var>.
@@ -2126,7 +2131,10 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
  <li><p><span title=concept-body-wait>Wait</span> for <var>internalResponse</var>'s
  <span title=concept-response-body>body</span>.
 
- <li><p><span>Queue a fetch-done task</span> using <var>request</var> and <var>response</var>.
+ <li><p>Set <var>request</var>'s <span>done flag</span>.
+
+ <li><p><span>Queue a fetch task</span> on <var>request</var> to
+ <span>process response end-of-file</span> for <var>response</var>.
 </ol>
 
 
@@ -5019,6 +5027,7 @@ Jxck,
 Keith Yeung,
 Kenji Baheux,
 Lachlan Hunt,
+Louis Ryan,
 Lucas Gonze,
 呂康豪 (Kang-Hao Lu),
 Maciej Stachowiak,

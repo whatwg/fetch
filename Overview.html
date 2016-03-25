@@ -246,15 +246,9 @@ of:
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#networking-task-source">networking task source</a>.
 </ol>
 
-<p>To <dfn id="queue-a-fetch-done-task">queue a fetch-done task</dfn>, given a <var>request</var> and
-<var>response</var>, run these steps:
-
-<ol>
- <li><p>Set <var>request</var>'s <a href="#done-flag">done flag</a>.
-
- <li><p><a href="#queue-a-fetch-task">Queue a fetch task</a> on <var>request</var> to
- <a href="#process-response-end-of-file">process response end-of-file</a> for <var>response</var>.
-</ol>
+<p>To <dfn id="queue-a-fetch-request-done-task">queue a fetch-request-done task</dfn>, given a <var>request</var>,
+<a href="#queue-a-fetch-task">queue a fetch task</a> on <var>request</var> to <a href="#process-request-end-of-file">process request end-of-file</a>
+for <var>request</var>.
 
 <hr>
 
@@ -554,11 +548,14 @@ user-agent-defined <a href="#concept-header-value" title="concept-header-value">
  <li><p>A <dfn id="concept-body-total-bytes" title="concept-body-total-bytes">total bytes</dfn> (an integer), initially 0.
 </ul>
 
-<p>To <dfn id="concept-body-wait" title="concept-body-wait">wait</dfn> for a <a href="#concept-body" title="concept-body">body</a>
-<var>body</var>, if <var>body</var> is non-null, wait for <var>body</var>'s
-<a href="#concept-body-stream" title="concept-body-stream">stream</a> to be
+<p>A <a href="#concept-body" title="concept-body">body</a> <var>body</var> is said to be
+<dfn id="concept-body-done" title="concept-body-done">done</dfn> if <var>body</var> is null or <var>body</var>'s
+<a href="#concept-body-stream" title="concept-body-stream">stream</a> is
 <a href="#concept-readablestream-closed" title="concept-ReadableStream-closed">closed</a> or
 <a href="#concept-readablestream-errored" title="concept-ReadableStream-errored">errored</a>.
+
+<p>To <dfn id="concept-body-wait" title="concept-body-wait">wait</dfn> for a <a href="#concept-body" title="concept-body">body</a>
+<var>body</var>, wait for <var>body</var> to be <a href="#concept-body-done" title="concept-body-done">done</a>.
 
 <p>To <dfn id="concept-body-clone" title="concept-body-clone">clone</dfn> a <a href="#concept-body" title="concept-body">body</a>
 <var>body</var>, run these steps:
@@ -2181,13 +2178,21 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
 
   <p class="note no-backref">This terminates <a href="#concept-fetch" title="concept-fetch">fetch</a>.
 
- <li><p>If <var>request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
- non-null and <var>request</var>'s
- <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
- <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
- "<code title="">http</code>" or "<code title="">https</code>",
- <a href="#queue-a-fetch-task">queue a fetch task</a> on <var>request</var> to
- <a href="#process-request-end-of-file">process request end-of-file</a> for <var>request</var>.
+ <li>
+  <p>If <var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
+  <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is "<code title="">http</code>" or
+  "<code title="">https</code>", run these substeps:</p>
+
+  <ol>
+   <li><p>If <var>request</var>'s <a href="#concept-request-body" title="concept-request-body">body</a> is
+   <a href="#concept-body-done" title="concept-body-done">done</a>, <a href="#queue-a-fetch-request-done-task">queue a fetch-request-done task</a> for
+   <var>request</var>.
+
+   <li><p>Otherwise, <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>,
+   <a href="#concept-body-wait" title="concept-body-wait">wait</a> for <var>request</var>'s
+   <a href="#concept-request-body" title="concept-request-body">body</a>, and then
+   <a href="#queue-a-fetch-request-done-task">queue a fetch-request-done task</a> for <var>request</var>.
+  </ol>
 
  <li><p><a href="#queue-a-fetch-task">Queue a fetch task</a> on <var>request</var> to
  <a href="#process-response">process response</a> for <var>response</var>.
@@ -2195,7 +2200,10 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
  <li><p><a href="#concept-body-wait" title="concept-body-wait">Wait</a> for <var>internalResponse</var>'s
  <a href="#concept-response-body" title="concept-response-body">body</a>.
 
- <li><p><a href="#queue-a-fetch-done-task">Queue a fetch-done task</a> using <var>request</var> and <var>response</var>.
+ <li><p>Set <var>request</var>'s <a href="#done-flag">done flag</a>.
+
+ <li><p><a href="#queue-a-fetch-task">Queue a fetch task</a> on <var>request</var> to
+ <a href="#process-response-end-of-file">process response end-of-file</a> for <var>response</var>.
 </ol>
 
 
@@ -5177,6 +5185,7 @@ Jxck,
 Keith Yeung,
 Kenji Baheux,
 Lachlan Hunt,
+Louis Ryan,
 Lucas Gonze,
 呂康豪 (Kang-Hao Lu),
 Maciej Stachowiak,
