@@ -382,8 +382,9 @@ from APIs using <span title=concept-fetch>fetch</span> that allow control over
 </ul>
 
 <p>A <dfn>CORS-safelisted response-header name</dfn>, given a
-<span title=concept-response-header-list>header list</span> <var>list</var>, is a
-<span title=concept-header>header</span> <span title=concept-header-name>name</span> that is one of:
+<span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
+<var>list</var>, is a <span title=concept-header>header</span>
+<span title=concept-header-name>name</span> that is one of:
 
 <ul>
  <li>`<code title>Cache-Control</code>`
@@ -391,11 +392,9 @@ from APIs using <span title=concept-fetch>fetch</span> that allow control over
  <li>`<code title>Content-Type</code>`
  <li>`<code title>Expires</code>`
  <li>`<code title>Last-Modified</code>`
- <li>`<code title>Pragma</code>`.
- <li>Any <span title=concept-header-value>value</span> resulting from
- <span title=concept-header-parse>parsing</span>
- `<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>` in
- <var>list</var> that is not a <span>forbidden response-header name</span>.
+ <li>`<code title>Pragma</code>`
+ <li>Any <span title=concept-header-value>value</span> in <var>list</var> that is not a
+ <span>forbidden response-header name</span>.
 </ul>
 
 <hr>
@@ -1042,6 +1041,18 @@ this specification.
 for the <span title=concept-response>response</span>. The list is empty unless otherwise
 specified. <span data-anolis-ref>CSP</span>
 
+<p>A <span title=concept-response>response</span> has an associated
+<dfn title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</dfn> (a
+list of zero or more <span title=concept-header>header</span>
+<span title=concept-header-name>names</span>). The list is empty unless otherwise specified.
+
+<p class="note no-backref">A <span title=concept-response>response</span> will typically get its
+<span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
+set by <span title=concept-header-parse>parsing</span> the
+`<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>` header. This
+list is used by a <span title=concept-filtered-response-cors>CORS filtered response</span> to
+determine which headers to expose.
+
 <hr>
 
 <p>A <span title=concept-response>response</span> whose
@@ -1093,7 +1104,7 @@ required, e.g., to feed image data to a decoder, the associated
 <span title=concept-header-name>name</span> is <em>not</em> a
 <span>CORS-safelisted response-header name</span>, given
 <span title=concept-internal-response>internal response</span>'s
-<span title=concept-response-header-list>header list</span>.
+<span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>.
 
 <p>An <dfn title=concept-filtered-response-opaque>opaque filtered response</dfn> is a
 <span title=concept-filtered-response>filtered response</span> whose
@@ -2032,25 +2043,34 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
  <li><p>If the <i>recursive flag</i> is set, return <var>response</var>.
 
  <li>
-  <p>If <var>response</var> is not a
-  <span title=concept-network-error>network error</span> and
-  <var>response</var> is not a
-  <span title=concept-filtered-response>filtered response</span>, set
-  <var>response</var> to the following
-  <span title=concept-filtered-response>filtered response</span> with
-  <var>response</var> as its
-  <span title=concept-internal-response>internal response</span>, depending on
-  <var>request</var>'s
-  <span title=concept-request-response-tainting>response tainting</span>:
+  <p>If <var>response</var> is not a <span title=concept-network-error>network error</span> and
+  <var>response</var> is not a <span title=concept-filtered-response>filtered response</span>, then
+  run these substeps:
 
-  <dl class="switch compact">
-   <dt>"<code title>basic</code>"
-   <dd><span title=concept-filtered-response-basic>basic filtered response</span>
-   <dt>"<code title>cors</code>"
-   <dd><span title=concept-filtered-response-cors>CORS filtered response</span>
-   <dt>"<code title>opaque</code>"
-   <dd><span title=concept-filtered-response-opaque>opaque filtered response</span>
-  </dl>
+  <ol>
+   <li><p>If <var>request</var>'s
+   <span title=concept-request-response-tainting>response tainting</span> is
+   "<code title>cors</code>", then set <var>response</var>'s
+   <span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
+   to the result of <span title=concept-header-parse>parsing</span>
+   `<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>` in
+   <var>response</var>'s <span title=concept-response-header-list>header list</span>.
+
+   <li>
+    <p>Set <var>response</var> to the following
+    <span title=concept-filtered-response>filtered response</span> with <var>response</var> as its
+    <span title=concept-internal-response>internal response</span>, depending on
+    <var>request</var>'s <span title=concept-request-response-tainting>response tainting</span>:
+
+    <dl class="switch compact">
+     <dt>"<code title>basic</code>"
+     <dd><span title=concept-filtered-response-basic>basic filtered response</span>
+     <dt>"<code title>cors</code>"
+     <dd><span title=concept-filtered-response-cors>CORS filtered response</span>
+     <dt>"<code title>opaque</code>"
+     <dd><span title=concept-filtered-response-opaque>opaque filtered response</span>
+    </dl>
+  </ol>
 
  <li><p>Let <var>internalResponse</var> be <var>response</var>, if <var>response</var> is a
  <span title=concept-network-error>network error</span>, and <var>response</var>'s
@@ -5047,6 +5067,7 @@ Manfred Stock,
 Manish Goregaokar,
 Marc Silbey,
 Marcos Caceres,
+Marijn Kruisselbrink,
 Mark Nottingham,
 Mark S. Miller,
 Martin D&uuml;rst,
