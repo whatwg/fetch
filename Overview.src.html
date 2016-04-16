@@ -323,8 +323,8 @@ each other by `<code title>,</code>`, in order.
 
 <hr>
 
-<p>A <dfn>simple header</dfn> is a <span title=concept-header>header</span> whose
-<span title=concept-header-name>name</span> is one of
+<p id=simple-header>A <dfn>CORS-safelisted request-header</dfn> is a
+<span title=concept-header>header</span> whose <span title=concept-header-name>name</span> is one of
 
 <ul class=brief>
  <li>`<code title>Accept</code>`
@@ -335,7 +335,6 @@ each other by `<code title>,</code>`, in order.
  that is `<code title>application/x-www-form-urlencoded</code>`,
  `<code title>multipart/form-data</code>`, or `<code title>text/plain</code>`
 </ul>
-
 <!-- XXX * needs better xref
          * ignoring parameters has been the standard for a long time now
          * interesting test: "Content-Type: text/plain;" -->
@@ -352,6 +351,22 @@ each other by `<code title>,</code>`, in order.
 
 <p>and whose <span title=concept-header-value>value</span>,
 <span title=concept-header-parse>once parsed</span>, is not a failure.
+
+<p>A <dfn>CORS-safelisted response-header name</dfn>, given a
+<span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
+<var>list</var>, is a <span title=concept-header>header</span>
+<span title=concept-header-name>name</span> that is one of
+
+<ul class=brief>
+ <li>`<code title>Cache-Control</code>`
+ <li>`<code title>Content-Language</code>`
+ <li>`<code title>Content-Type</code>`
+ <li>`<code title>Expires</code>`
+ <li>`<code title>Last-Modified</code>`
+ <li>`<code title>Pragma</code>`
+ <li>Any <span title=concept-header-value>value</span> in <var>list</var> that is not a
+ <span>forbidden response-header name</span>.
+</ul>
 
 <p>A <dfn>forbidden header name</dfn> is a <span title=concept-header>header</span>
 <span title=concept-header-name>name</span> that is one of
@@ -397,22 +412,6 @@ from APIs using <span title=concept-fetch>fetch</span> that allow control over
 <ul class=brief>
  <li>`<code title>Set-Cookie</code>`
  <li>`<code title>Set-Cookie2</code>`
-</ul>
-
-<p>A <dfn>CORS-safelisted response-header name</dfn>, given a
-<span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
-<var>list</var>, is a <span title=concept-header>header</span>
-<span title=concept-header-name>name</span> that is one of:
-
-<ul>
- <li>`<code title>Cache-Control</code>`
- <li>`<code title>Content-Language</code>`
- <li>`<code title>Content-Type</code>`
- <li>`<code title>Expires</code>`
- <li>`<code title>Last-Modified</code>`
- <li>`<code title>Pragma</code>`
- <li>Any <span title=concept-header-value>value</span> in <var>list</var> that is not a
- <span>forbidden response-header name</span>.
 </ul>
 
 <hr>
@@ -2140,7 +2139,7 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
    <var>request</var>'s <span title=concept-request-method>method</span> is not
    a <span>simple method</span> or a <span title=concept-header>header</span> in
    <var>request</var>'s <span title=concept-header-list>header list</span> is not a
-   <span>simple header</span>
+   <span>CORS-safelisted request-header</span>
    <dd>
     <p>Set <var>request</var>'s
     <span title=concept-request-response-tainting>response tainting</span> to
@@ -2509,7 +2508,7 @@ indicates an attempt to authenticate.
      <var>request</var>'s <span title=concept-request-header-list>header list</span>
      for whose <span title=concept-header-name>name</span> there is no
      <span title=concept-cache-match-header>header-name cache match</span> using
-     <var>request</var> and which is not a <span>simple header</span>.
+     <var>request</var> and which is not a <span>CORS-safelisted request-header</span>.
     </ul>
 
     <p>Then run these subsubsteps:
@@ -3307,8 +3306,8 @@ steps:
  <li><p>Let <var>headers</var> be the <span title=concept-header-name>names</span> of
  <var>request</var>'s <span title=concept-request-header-list>header list</span>'s
  <span title=concept-header>headers</span>, excluding
- <span title="simple header">simple headers</span> and duplicates, sorted lexicographically, and
- <span title="byte-lowercase">byte-lowercased</span>.
+ <span title="cors-safelisted request-header">CORS-safelisted request-headers</span> and duplicates,
+ sorted lexicographically, and <span title="byte-lowercase">byte-lowercased</span>.
 
  <li><p>Let <var>value</var> be the items in <var>headers</var> separated from each other by 0x2C.
 
@@ -3366,7 +3365,8 @@ steps:
    <span title=concept-request-header-list>header list</span>'
    <span title=concept-header-name>names</span> is not in <var>headerNames</var> and
    its corresponding <span title=concept-header>header</span> is not a
-   <span>simple header</span>, return a <span title=concept-network-error>network error</span>.
+   <span>CORS-safelisted request-header</span>, return a
+   <span title=concept-network-error>network error</span>.
 
    <li><p>Let <var>max-age</var> be the result of
    <span title=concept-header-parse>parsing</span>
@@ -3673,7 +3673,7 @@ interface <dfn>Headers</dfn> {
 
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  "<code title>request-no-cors</code>" and <var>name</var>/<var>value</var> is not a
- <span>simple header</span>, return.
+ <span>CORS-safelisted request-header</span>, return.
 
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  "<code title>response</code>" and <var>name</var> is a
@@ -3763,7 +3763,7 @@ method, when invoked, must run these steps:
 
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  "<code title>request-no-cors</code>" and <var>name</var>/`<code title>invalid</code>` is
- not a <span>simple header</span>, return.
+ not a <span>CORS-safelisted request-header</span>, return.
 
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  "<code title>response</code>" and <var>name</var> is a
@@ -3822,7 +3822,7 @@ method, when invoked, must run these steps:
 
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  "<code title>request-no-cors</code>" and <var>name</var>/<var>value</var> is not a
- <span>simple header</span>, return.
+ <span>CORS-safelisted request-header</span>, return.
 
  <li><p>Otherwise, if <span title=concept-Headers-guard>guard</span> is
  "<code title>response</code>" and <var>name</var> is a
@@ -5225,6 +5225,7 @@ Tobie Langel,
 Tomás Aparicio,
 保呂毅 (Tsuyoshi Horo),
 Tyler Close,
+Vignesh Shanmugam,
 Vladimir Dzhuvinov,
 Wayne Carr,
 Xabier Rodríguez,
