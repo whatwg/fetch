@@ -155,6 +155,11 @@ the <i title>exclude fragment flag</i> is set, meaning implementations can store
 
 <hr>
 
+<p><dfn>Credentials</dfn> are HTTP cookies, TLS client certificates, and
+<span title="authentication entry">authentication entries</span>.
+
+<hr>
+
 <p><span data-anolis-spec=html title=concept-task>Tasks</span> that are
 <span data-anolis-spec=html title="queue a task">queued</span> by this standard are annotated as one
 of:
@@ -883,8 +888,11 @@ discouraged from using it for new features. It is rather unsafe. "<code title>na
 "<code title>omit</code>", "<code title>same-origin</code>", or
 "<code title>include</code>". Unless stated otherwise, it is "<code title>omit</code>".
 
-<p class="note no-backref">When <span title=concept-request>request</span>'s
-<span title=concept-request-mode>mode</span> is "<code title>navigate</code>", its
+<p class="note no-backref"><span title=concept-request>Request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> controls the flow of
+<span>credentials</span> during a <span title=concept-fetch>fetch</span>. When
+<span title=concept-request>request</span>'s <span title=concept-request-mode>mode</span> is
+"<code title>navigate</code>", its
 <span title=concept-request-credentials-mode>credentials mode</span> is assumed to be
 "<code title>include</code>" and <span title=concept-fetch>fetch</span> does not currently account
 for other values. If <cite>HTML</cite> changes here, this standard will need corresponding changes.
@@ -1670,6 +1678,7 @@ opt-in to prevent leaking potentially-sensitive data.
 Requirements for user agents are part of the <span title=concept-fetch>fetch</span>
 algorithm.
 
+
 <h4>General</h4>
 
 <p>The <span>CORS protocol</span> consists of a set of headers that indicates whether a
@@ -1780,6 +1789,76 @@ Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span
 Access-Control-Max-Age           = <span data-anolis-spec=http-caching>delta-seconds</span>
 Access-Control-Allow-Methods     = #<span data-anolis-spec=http>method</span>
 Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span></pre>
+
+
+<h4>CORS protocol and credentials</h4>
+
+<!-- non-normative -->
+
+<p>When <span title=concept-request>request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> is "<code>include</code>" it
+has an impact on the functioning of <span>CORS protocol</span> other than including
+<span>credentials</span> in the <span title=concept-fetch>fetch</span>.
+
+<div class="example">
+ <p>In the old days, <code data-anolis-spec=xhr>XMLHttpRequest</code> could be used to set
+ <span title=concept-request>request</span>'s
+ <span title=concept-request-credentials-mode>credentials mode</span> to "<code>include</code>":
+
+ <pre>var client = new XMLHttpRequest()
+client.open("GET", "./")
+client.withCredentials = true
+/* &hellip; */</pre>
+
+ <p>Nowadays, <code title>fetch("./", { credentials:"include" }).then(/* &hellip; */)</code>
+ suffices.
+</div>
+
+<p><span title=concept-request>Request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> is not necessarily observable
+on the server, only when <span>credentials</span> exist for
+<span title=concept-request>request</span> can it be observed. In such a scenario the
+<span>CORS request</span> would include <span>credentials</span>, but the
+<span>CORS-preflight request</span> would not. It never does.
+
+<p>The server developer therefore needs to decide whether or not resources "tainted" with
+<span>credentials</span> can be shared. Generally speaking, this is rather unsafe and extreme care
+has to be taken to avoid the confused deputy problem.
+
+<p>To share resources with <span>credentials</span>, the
+`<code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>` and
+`<code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>`
+<span title=concept-header>headers</span> are important. The following table serves to illustrate
+the various legal and illegal combinations for a request to <code>https://rabbit.invalid/</code>:
+
+<table>
+ <tr>
+  <th>Request's credentials mode
+  <th>`<code title>Access-Control-Allow-Origin</code>`
+  <th>`<code title>Access-Control-Allow-Credentials</code>`
+  <th>Shared?
+  <th>Notes
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>*</code>`
+  <td>Omitted
+  <td>✅
+  <td>&mdash;
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>*</code>`
+  <td>`<code>true</code>`
+  <td>✅
+  <td>If credentials mode is not "<code>include</code>", then
+  `<code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>` is
+  ignored.
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>https://rabbit.invalid/`</td>
+  <td>Omitted
+  <td>❌
+  <td>A serialized origin has no trailing slash.
+</table>
 
 
 <h3>`<code title>X-Content-Type-Options</code>` header</h3>
@@ -5240,6 +5319,7 @@ Ondřej Žára,
 Philip Jägenstedt,
 R. Auburn,
 Ryan Sleevi,
+Rory Hewitt,
 Sébastien Cevey,
 Shao-xuan Kang,
 Sharath Udupa,
