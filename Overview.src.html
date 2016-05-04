@@ -903,10 +903,10 @@ for other values. If <cite>HTML</cite> changes here, this standard will need cor
 Unless stated otherwise, it is unset.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-cache-mode>cache mode</dfn>, which is
-"<code title>default</code>", "<code title>no-store</code>", "<code title>reload</code>",
-"<code title>no-cache</code>", or "<code title>force-cache</code>". Unless stated otherwise, it is
-"<code title>default</code>".
+<dfn title=concept-request-cache-mode>cache mode</dfn>, which is "<code title>default</code>",
+"<code title>no-store</code>", "<code title>reload</code>", "<code title>no-cache</code>",
+"<code title>force-cache</code>", or "<code title>only-if-cached</code>". Unless stated otherwise,
+it is "<code title>default</code>".
 
 <div class="note no-backref">
  <dl>
@@ -929,8 +929,14 @@ Unless stated otherwise, it is unset.
 
   <dt>"<code title>force-cache</code>"
   <dd>Fetch uses any response in the HTTP cache matching the request, not paying attention to
-  staleness. If there was no response, it creates a normal request updates the HTTP cache with the
-  response.
+  staleness. If there was no response, it creates a normal request and updates the HTTP cache with
+  the response.
+
+  <dt>"<code title>only-if-cached</code>"
+  <dd>Fetches uses any response in the HTTP cache matching the request, not paying attention to
+  staleness. If there was no response, it returns a network error. (Can only be used when
+  <span title=concept-request>request</span>'s <span tilte=concept-request-mode>mode</span> is
+  "<code title>same-origin</code>".)
  </dl>
 
  <p>If <span title=concept-request-header-list>header list</span> contains a
@@ -3185,8 +3191,9 @@ The <i title>credentials flag</i> is one too.
   <ol>
    <li>
    	<p>If <var>httpRequest</var>'s <span title=concept-request-cache-mode>cache mode</span> is
-   	"<code title>force-cache</code>", set <var>response</var> to the
-   	<span title=concept-response>response</span> in the HTTP cache for <var>httpRequest</var>.
+   	"<code title>force-cache</code>" or "<code title>only-if-cached</code>", then set
+    <var>response</var> to the <span title=concept-response>response</span> in the HTTP cache for
+    <var>httpRequest</var>.
 
    	<p class="note">As mandated by HTTP, this still takes the `<code title=http-vary>Vary</code>`
    	<span title=concept-header>header</span> into account.
@@ -3217,9 +3224,18 @@ The <i title>credentials flag</i> is one too.
  <span title=concept-header>headers</span>.
  <!-- XXX xref partial, modify, resume headers -->
 
- <li><p>If <var>response</var> is null, set <var>response</var> to the result of making an
- <span title=concept-http-network-fetch>HTTP-network fetch</span> using <var>httpRequest</var> with
- the <i title>credentials flag</i> set if set.
+ <li>
+  <p>If <var>response</var> is null, run these substeps:
+
+  <ol>
+   <li><p>If <var>httpRequest</var>'s <span title=concept-request-cache-mode>cache mode</span> is
+   "<code title>only-if-cached</code>", then return a
+   <span title=concept-network-error>network error</span>.
+
+   <li><p>Set <var>response</var> to the result of making an
+   <span title=concept-http-network-fetch>HTTP-network fetch</span> using <var>httpRequest</var>
+   with the <i title>credentials flag</i> set if set.
+  </ol>
 
  <li>
   <p>If <var>response</var>'s <span title=status>status</span> is <code>304</code> and
@@ -4374,7 +4390,7 @@ enum <dfn>RequestType</dfn> { "", "audio", "font", "image", "script", "style", "
 enum <dfn>RequestDestination</dfn> { "", "document", "embed", "font", "image", "manifest", "media", "object", "report", "script", "serviceworker", "sharedworker", "style",  "worker", "xslt" };
 enum <dfn>RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
 enum <dfn>RequestCredentials</dfn> { "omit", "same-origin", "include" };
-enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache" };
+enum <dfn>RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum <dfn>RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -4582,6 +4598,11 @@ constructor must run these steps:
  <li><p>If <var>init</var>'s <code title>cache</code> member is present, set
  <var>request</var>'s <span title=concept-request-cache-mode>cache mode</span> to
  it.
+
+ <li><p>If <var>request</var>'s <span title=concept-request-cache-mode>cache mode</span> is
+ "<code title>only-if-cached</code>" and <var>request</var>'s
+ <span title=concept-request-mode>mode</span> is <em>not</em> "<code title>same-origin</code>", then
+ <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
  <li><p>If <var>init</var>'s <code title>redirect</code> member is present, set
  <var>request</var>'s <span title=concept-request-redirect-mode>redirect mode</span>
