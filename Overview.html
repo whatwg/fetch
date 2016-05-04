@@ -1735,36 +1735,36 @@ origin                           = <a class="external" data-anolis-spec="url" hr
 
 <h3 id="http-cors-protocol"><span class="secno">4.2 </span>CORS protocol</h3>
 
-<p>To allow sharing resources cross-origin and allow for more versatile HTTP requests than
-possible with HTML's <a href="https://html.spec.whatwg.org/multipage/forms.html#the-form-element"><code class="external" data-anolis-spec="html">form</code></a> element, the platform has
-a <dfn id="cors-protocol">CORS protocol</dfn> layered on top of HTTP. It allows resources to declare they
-can be shared with resources residing on a different
+<p>To allow sharing responses cross-origin and allow for more versatile
+<a href="#concept-fetch" title="concept-fetch">fetches</a> than possible with HTML's
+<a href="https://html.spec.whatwg.org/multipage/forms.html#the-form-element"><code class="external" data-anolis-spec="html">form</code></a> element, the platform has a <dfn id="cors-protocol">CORS protocol</dfn> layered
+on top of HTTP. It allows responses to declare they can be shared different
 <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>.
 
-<p class="note">It needs to be an opt-in mechanism to prevent leaking data from resources
-behind a firewall (intranets). Additionally, for credentialed HTTP requests it needs to be
-opt-in to prevent leaking potentially-sensitive data.
+<p class="note">It needs to be an opt-in mechanism to prevent leaking data from responses behind a
+firewall (intranets). Additionally, for <a href="#concept-request" title="concept-request">requests</a> including
+<a href="#credentials">credentials</a> it needs to be opt-in to prevent leaking potentially-sensitive data.
 
-<p>This section explains the <a href="#cors-protocol">CORS protocol</a> as it pertains to servers.
-Requirements for user agents are part of the <a href="#concept-fetch" title="concept-fetch">fetch</a>
-algorithm.
+<p>This section explains the <a href="#cors-protocol">CORS protocol</a> as it pertains to server developers.
+Requirements for user agents are part of the <a href="#concept-fetch" title="concept-fetch">fetch</a> algorithm,
+except for the <a href="#http-new-header-syntax">new HTTP header syntax</a>.
 
 
 <h4 id="general"><span class="secno">4.2.1 </span>General</h4>
 
-<p>The <a href="#cors-protocol">CORS protocol</a> consists of a set of headers that indicates whether a
-particular resource can be shared cross-origin.
+<p>The <a href="#cors-protocol">CORS protocol</a> consists of a set of headers that indicates whether a response can
+be shared cross-origin.
 
-<p>For HTTP requests that are more involved than what is possible with HTML's
-<a href="https://html.spec.whatwg.org/multipage/forms.html#the-form-element"><code class="external" data-anolis-spec="html">form</code></a> element, a <a href="#cors-preflight-fetch-0">CORS-preflight fetch</a> is
-performed, to ensure the resource understands the <a href="#cors-protocol">CORS protocol</a>.
+<p>For <a href="#concept-request" title="concept-request">requests</a> that are more involved than what is possible with
+HTML's <a href="https://html.spec.whatwg.org/multipage/forms.html#the-form-element"><code class="external" data-anolis-spec="html">form</code></a> element, a <a href="#cors-preflight-fetch-0">CORS-preflight fetch</a> is
+performed, to ensure <a href="#concept-request" title="concept-request">request</a>'s
+<a href="#concept-request-current-url" title="concept-request-current-url">current url</a> supports the <a href="#cors-protocol">CORS protocol</a>.
 
 
 <h4 id="http-requests"><span class="secno">4.2.2 </span>HTTP requests</h4>
 
-<p>An HTTP request can be identified as pertaining in the <a href="#cors-protocol">CORS protocol</a> if it
-includes an `<a href="#http-origin"><code title="http-origin">Origin</code></a>` header. This is named a
-<dfn id="cors-request">CORS request</dfn>.
+<p>An HTTP request can be identified as using the <a href="#cors-protocol">CORS protocol</a> if it includes an
+`<a href="#http-origin"><code title="http-origin">Origin</code></a>` header. This is named a <dfn id="cors-request">CORS request</dfn>.
 
 <p>An HTTP request can be identified as being a check to see if the
 <a href="#cors-protocol">CORS protocol</a> is understood if it is a <a href="#cors-request">CORS request</a>, uses
@@ -1791,15 +1791,14 @@ these <a href="#concept-header" title="concept-header">headers</a>:
 
 <dl>
  <dt>`<dfn id="http-access-control-allow-origin" title="http-access-control-allow-origin"><code>Access-Control-Allow-Origin</code></dfn>`
- <dd><p>Indicates whether a resource can be shared, via returning the literal
+ <dd><p>Indicates whether the response can be shared, via returning the literal
  <a href="#concept-header-value" title="concept-header-value">value</a> of the
  `<a href="#http-origin"><code title="http-origin">Origin</code></a>` request <a href="#concept-header" title="concept-header">header</a>
  (which can be `<code title="">null</code>`) or `<code title="">*</code>` in a response.
 
  <dt>`<dfn id="http-access-control-allow-credentials" title="http-access-control-allow-credentials"><code>Access-Control-Allow-Credentials</code></dfn>`
  <dd>
-  <p>Indicates whether a resource can be shared when
-  <a href="#concept-request" title="concept-request">request</a>'s
+  <p>Indicates whether the response can be shared when <a href="#concept-request" title="concept-request">request</a>'s
   <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is
   "<code title="">include</code>".
 
@@ -1819,14 +1818,16 @@ these <a href="#concept-header" title="concept-header">headers</a>:
  <dt>`<dfn id="http-access-control-allow-methods" title="http-access-control-allow-methods"><code>Access-Control-Allow-Methods</code></dfn>`
  <dd>
   <p>Indicates which <a href="#concept-method" title="concept-method">methods</a> are supported by the
-  resource for the purposes of the <a href="#cors-protocol">CORS protocol</a>.
+  <a href="#concept-response" title="concept-response">response</a>'s <a href="#concept-response-url" title="concept-response-url">url</a> for the
+  purposes of the <a href="#cors-protocol">CORS protocol</a>.
 
   <p class="note">The `<code title="">Allow</code>` <a href="#concept-header" title="concept-header">header</a> is
   not relevant for the purposes of the <a href="#cors-protocol">CORS protocol</a>.
 
  <dt>`<dfn id="http-access-control-allow-headers" title="http-access-control-allow-headers"><code>Access-Control-Allow-Headers</code></dfn>`
  <dd><p>Indicates which <a href="#concept-header" title="concept-header">headers</a> are supported by the
- resource for the purposes of the <a href="#cors-protocol">CORS protocol</a>.
+ <a href="#concept-response" title="concept-response">response</a>'s <a href="#concept-response-url" title="concept-response-url">url</a> for the
+ purposes of the <a href="#cors-protocol">CORS protocol</a>.
 
  <dt>`<dfn id="http-access-control-max-age" title="http-access-control-max-age"><code>Access-Control-Max-Age</code></dfn>`
  <dd><p>Indicates how long the information provided by the
@@ -1842,7 +1843,7 @@ these <a href="#concept-header" title="concept-header">headers</a>:
 <dl>
  <dt>`<dfn id="http-access-control-expose-headers" title="http-access-control-expose-headers"><code>Access-Control-Expose-Headers</code></dfn>`
  <dd><p>Indicates which <a href="#concept-header" title="concept-header">headers</a> can be exposed as part
- of the HTTP response, via listing their <a href="#concept-header-name" title="concept-header-name">names</a>.
+ of the response by listing their <a href="#concept-header-name" title="concept-header-name">names</a>.
 </dl>
 
 
@@ -1887,16 +1888,18 @@ client.withCredentials = true
 
 <p><a href="#concept-request" title="concept-request">Request</a>'s
 <a href="#concept-request-credentials-mode" title="concept-request-credentials-mode">credentials mode</a> is not necessarily observable
-on the server, only when <a href="#credentials">credentials</a> exist for
+on the server; only when <a href="#credentials">credentials</a> exist for
 <a href="#concept-request" title="concept-request">request</a> can it be observed. In such a scenario the
 <a href="#cors-request">CORS request</a> would include <a href="#credentials">credentials</a>, but the
 <a href="#cors-preflight-request">CORS-preflight request</a> would not. It never does.
 
-<p>The server developer therefore needs to decide whether or not resources "tainted" with
-<a href="#credentials">credentials</a> can be shared. Generally speaking, this is rather unsafe and extreme care
-has to be taken to avoid the confused deputy problem.
+<p>The server developer therefore needs to decide whether or not responses "tainted" with
+<a href="#credentials">credentials</a> can be shared. Generally speaking, this is rather unsafe, and extreme care
+has to be taken to avoid the
+<a href="https://en.wikipedia.org/wiki/Confused_deputy_problem">confused deputy problem</a>.
+<!-- Turn into a reference? Meh. -->
 
-<p>To share resources with <a href="#credentials">credentials</a>, the
+<p>To share responses with <a href="#credentials">credentials</a>, the
 `<a href="#http-access-control-allow-origin"><code title="http-access-control-allow-origin">Access-Control-Allow-Origin</code></a>` and
 `<a href="#http-access-control-allow-credentials"><code title="http-access-control-allow-credentials">Access-Control-Allow-Credentials</code></a>`
 <a href="#concept-header" title="concept-header">headers</a> are important. The following table serves to illustrate

@@ -1664,41 +1664,43 @@ origin                           = <span data-anolis-spec=url title=concept-url-
 
 <h3 id=http-cors-protocol>CORS protocol</h3>
 
-<p>To allow sharing resources cross-origin and allow for more versatile HTTP requests than
-possible with HTML's <code data-anolis-spec=html>form</code> element, the platform has
-a <dfn>CORS protocol</dfn> layered on top of HTTP. It allows resources to declare they
-can be shared with resources residing on a different
+<p>To allow sharing responses cross-origin and allow for more versatile
+<span title=concept-fetch>fetches</span> than possible with HTML's
+<code data-anolis-spec=html>form</code> element, the platform has a <dfn>CORS protocol</dfn> layered
+on top of HTTP. It allows responses to declare they can be shared different
 <span data-anolis-spec=html>origin</span>.
 
-<p class=note>It needs to be an opt-in mechanism to prevent leaking data from resources
-behind a firewall (intranets). Additionally, for credentialed HTTP requests it needs to be
-opt-in to prevent leaking potentially-sensitive data.
+<p class=note>It needs to be an opt-in mechanism to prevent leaking data from responses behind a
+firewall (intranets). Additionally, for <span title=concept-request>requests</span> including
+<span>credentials</span> it needs to be opt-in to prevent leaking potentially-sensitive data.
 
-<p>This section explains the <span>CORS protocol</span> as it pertains to servers.
-Requirements for user agents are part of the <span title=concept-fetch>fetch</span>
-algorithm.
+<p>This section explains the <span>CORS protocol</span> as it pertains to server developers.
+Requirements for user agents are part of the <span title=concept-fetch>fetch</span> algorithm,
+except for the <a href=#http-new-header-syntax>new HTTP header syntax</a>.
 
 
 <h4>General</h4>
 
-<p>The <span>CORS protocol</span> consists of a set of headers that indicates whether a
-particular resource can be shared cross-origin.
+<p>The <span>CORS protocol</span> consists of a set of headers that indicates whether a response can
+be shared cross-origin.
 
-<p>For HTTP requests that are more involved than what is possible with HTML's
-<code data-anolis-spec=html>form</code> element, a <span>CORS-preflight fetch</span> is
-performed, to ensure the resource understands the <span>CORS protocol</span>.
+<p>For <span title=concept-request>requests</span> that are more involved than what is possible with
+HTML's <code data-anolis-spec=html>form</code> element, a <span>CORS-preflight request</span> is
+performed, to ensure <span title=concept-request>request</span>'s
+<span title=concept-request-current-url>current url</span> supports the <span>CORS protocol</span>.
 
 
 <h4>HTTP requests</h4>
 
-<p>An HTTP request can be identified as pertaining in the <span>CORS protocol</span> if it
-includes an `<code title=http-origin>Origin</code>` header. This is named a
-<dfn>CORS request</dfn>.
+<p>A <dfn>CORS request</dfn> is an HTTP request that includes an
+`<code title=http-origin>Origin</code>` header. It cannot be reliably identified as particpating in
+the <span>CORS protocol</span> as the `<code title=http-origin>Origin</code>` header is sometimes
+included for other purposes too.
 
-<p>An HTTP request can be identified as being a check to see if the
-<span>CORS protocol</span> is understood if it is a <span>CORS request</span>, uses
-`<code title>OPTIONS</code>` as <span title=concept-method>method</span>, and includes
-these <span title=concept-header>headers</span>:
+<p>A <dfn>CORS-preflight request</dfn> is a <span>CORS request</span> that is check to see if the
+<span>CORS protocol</span> is understood. It uses `<code title>OPTIONS</code>` as
+<span title=concept-method>method</span> and includes these
+<span title=concept-header>headers</span>:
 
 <dl>
  <dt>`<dfn title=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>`
@@ -1710,8 +1712,6 @@ these <span title=concept-header>headers</span>:
  <span>CORS request</span> to the same resource might use.
 </dl>
 
-<p>This is named a <dfn>CORS-preflight request</dfn>.
-
 
 <h4>HTTP responses</h4>
 
@@ -1720,15 +1720,14 @@ these <span title=concept-header>headers</span>:
 
 <dl>
  <dt>`<dfn title=http-access-control-allow-origin><code>Access-Control-Allow-Origin</code></dfn>`
- <dd><p>Indicates whether a resource can be shared, via returning the literal
+ <dd><p>Indicates whether the response can be shared, via returning the literal
  <span title=concept-header-value>value</span> of the
  `<code title=http-origin>Origin</code>` request <span title=concept-header>header</span>
  (which can be `<code title>null</code>`) or `<code title>*</code>` in a response.
 
  <dt>`<dfn title=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>`
  <dd>
-  <p>Indicates whether a resource can be shared when
-  <span title=concept-request>request</span>'s
+  <p>Indicates whether the response can be shared when <span title=concept-request>request</span>'s
   <span title=concept-request-credentials-mode>credentials mode</span> is
   "<code title>include</code>".
 
@@ -1748,14 +1747,16 @@ these <span title=concept-header>headers</span>:
  <dt>`<dfn title=http-access-control-allow-methods><code>Access-Control-Allow-Methods</code></dfn>`
  <dd>
   <p>Indicates which <span title=concept-method>methods</span> are supported by the
-  resource for the purposes of the <span>CORS protocol</span>.
+  <span title=concept-response>response</span>'s <span title=concept-response-url>url</span> for the
+  purposes of the <span>CORS protocol</span>.
 
   <p class=note>The `<code title>Allow</code>` <span title=concept-header>header</span> is
   not relevant for the purposes of the <span>CORS protocol</span>.
 
  <dt>`<dfn title=http-access-control-allow-headers><code>Access-Control-Allow-Headers</code></dfn>`
  <dd><p>Indicates which <span title=concept-header>headers</span> are supported by the
- resource for the purposes of the <span>CORS protocol</span>.
+ <span title=concept-response>response</span>'s <span title=concept-response-url>url</span> for the
+ purposes of the <span>CORS protocol</span>.
 
  <dt>`<dfn title=http-access-control-max-age><code>Access-Control-Max-Age</code></dfn>`
  <dd><p>Indicates how long the information provided by the
@@ -1771,11 +1772,11 @@ these <span title=concept-header>headers</span>:
 <dl>
  <dt>`<dfn title=http-access-control-expose-headers><code>Access-Control-Expose-Headers</code></dfn>`
  <dd><p>Indicates which <span title=concept-header>headers</span> can be exposed as part
- of the HTTP response, via listing their <span title=concept-header-name>names</span>.
+ of the response by listing their <span title=concept-header-name>names</span>.
 </dl>
 
 
-<h4>HTTP new-header syntax</h4>
+<h4 id=http-new-header-syntax>HTTP new-header syntax</h4>
 
 <p>ABNF for the <span title=concept-header-value>values</span> of the
 <span title=concept-header>headers</span> used by the <span>CORS protocol</span>:
@@ -1816,16 +1817,18 @@ client.withCredentials = true
 
 <p><span title=concept-request>Request</span>'s
 <span title=concept-request-credentials-mode>credentials mode</span> is not necessarily observable
-on the server, only when <span>credentials</span> exist for
+on the server; only when <span>credentials</span> exist for
 <span title=concept-request>request</span> can it be observed. In such a scenario the
 <span>CORS request</span> would include <span>credentials</span>, but the
 <span>CORS-preflight request</span> would not. It never does.
 
-<p>The server developer therefore needs to decide whether or not resources "tainted" with
-<span>credentials</span> can be shared. Generally speaking, this is rather unsafe and extreme care
-has to be taken to avoid the confused deputy problem.
+<p>The server developer therefore needs to decide whether or not responses "tainted" with
+<span>credentials</span> can be shared. Generally speaking, this is rather unsafe, and extreme care
+has to be taken to avoid the
+<a href="https://en.wikipedia.org/wiki/Confused_deputy_problem">confused deputy problem</a>.
+<!-- Turn into a reference? Meh. -->
 
-<p>To share resources with <span>credentials</span>, the
+<p>To share responses with <span>credentials</span>, the
 `<code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>` and
 `<code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>`
 <span title=concept-header>headers</span> are important. The following table serves to illustrate
