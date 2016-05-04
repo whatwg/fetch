@@ -1756,20 +1756,22 @@ except for the <a href="#http-new-header-syntax">new HTTP header syntax</a>.
 be shared cross-origin.
 
 <p>For <a href="#concept-request" title="concept-request">requests</a> that are more involved than what is possible with
-HTML's <a href="https://html.spec.whatwg.org/multipage/forms.html#the-form-element"><code class="external" data-anolis-spec="html">form</code></a> element, a <a href="#cors-preflight-fetch-0">CORS-preflight fetch</a> is
+HTML's <a href="https://html.spec.whatwg.org/multipage/forms.html#the-form-element"><code class="external" data-anolis-spec="html">form</code></a> element, a <a href="#cors-preflight-request">CORS-preflight request</a> is
 performed, to ensure <a href="#concept-request" title="concept-request">request</a>'s
 <a href="#concept-request-current-url" title="concept-request-current-url">current url</a> supports the <a href="#cors-protocol">CORS protocol</a>.
 
 
 <h4 id="http-requests"><span class="secno">4.2.2 </span>HTTP requests</h4>
 
-<p>An HTTP request can be identified as using the <a href="#cors-protocol">CORS protocol</a> if it includes an
-`<a href="#http-origin"><code title="http-origin">Origin</code></a>` header. This is named a <dfn id="cors-request">CORS request</dfn>.
+<p>A <dfn id="cors-request">CORS request</dfn> is an HTTP request that includes an
+`<a href="#http-origin"><code title="http-origin">Origin</code></a>` header. It cannot be reliably identified as particpating in
+the <a href="#cors-protocol">CORS protocol</a> as the `<a href="#http-origin"><code title="http-origin">Origin</code></a>` header is sometimes
+included for other purposes too.
 
-<p>An HTTP request can be identified as being a check to see if the
-<a href="#cors-protocol">CORS protocol</a> is understood if it is a <a href="#cors-request">CORS request</a>, uses
-`<code title="">OPTIONS</code>` as <a href="#concept-method" title="concept-method">method</a>, and includes
-these <a href="#concept-header" title="concept-header">headers</a>:
+<p>A <dfn id="cors-preflight-request">CORS-preflight request</dfn> is a <a href="#cors-request">CORS request</a> that is check to see if the
+<a href="#cors-protocol">CORS protocol</a> is understood. It uses `<code title="">OPTIONS</code>` as
+<a href="#concept-method" title="concept-method">method</a> and includes these
+<a href="#concept-header" title="concept-header">headers</a>:
 
 <dl>
  <dt>`<dfn id="http-access-control-request-method" title="http-access-control-request-method"><code>Access-Control-Request-Method</code></dfn>`
@@ -1780,8 +1782,6 @@ these <a href="#concept-header" title="concept-header">headers</a>:
  <dd><p>Indicates which <a href="#concept-header" title="concept-header">headers</a> a future
  <a href="#cors-request">CORS request</a> to the same resource might use.
 </dl>
-
-<p>This is named a <dfn id="cors-preflight-request">CORS-preflight request</dfn>.
 
 
 <h4 id="http-responses"><span class="secno">4.2.3 </span>HTTP responses</h4>
@@ -1932,6 +1932,32 @@ the various legal and illegal combinations for a request to <code>https://rabbit
   <td>Omitted
   <td>❌
   <td>A serialized origin has no trailing slash.
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>https://rabbit.invalid`</code></td>
+  <td>Omitted
+  <td>✅
+  <td>—
+ <tr>
+  <td>"<code>include</code>"
+  <td>`<code>*</code>`
+  <td>`<code>true</code>`
+  <td>❌
+  <td>If credentials mode is "<code>include</code>", then
+  `<a href="#http-access-control-allow-origin"><code title="http-access-control-allow-origin">Access-Control-Allow-Origin</code></a>` cannot be
+  `<code>*</code>`.
+ <tr>
+  <td>"<code>include</code>"
+  <td>`<code>https://rabbit.invalid`</code></td>
+  <td>`<code>true</code>`
+  <td>✅
+  <td>—
+ <tr>
+  <td>"<code>include</code>"
+  <td>`<code>https://rabbit.invalid`</code></td>
+  <td>`<code>True</code>`
+  <td>❌
+  <td>`<code>true</code>` is (byte) case-sensitive.
 </table>
 
 
