@@ -76,7 +76,8 @@ fetching.
      <li><a href="#http-requests"><span class="secno">4.2.2 </span>HTTP requests</a></li>
      <li><a href="#http-responses"><span class="secno">4.2.3 </span>HTTP responses</a></li>
      <li><a href="#http-new-header-syntax"><span class="secno">4.2.4 </span>HTTP new-header syntax</a></li>
-     <li><a href="#cors-protocol-and-credentials"><span class="secno">4.2.5 </span>CORS protocol and credentials</a></ol></li>
+     <li><a href="#cors-protocol-and-credentials"><span class="secno">4.2.5 </span>CORS protocol and credentials</a></li>
+     <li><a href="#cors-protocol-examples"><span class="secno">4.2.6 </span>Examples</a></ol></li>
    <li><a href="#x-content-type-options-header"><span class="secno">4.3 </span>`<code title="">X-Content-Type-Options</code>` header</a>
     <ol>
      <li><a href="#should-response-to-request-be-blocked-due-to-nosniff?"><span class="secno">4.3.1 </span>Should
@@ -1962,6 +1963,83 @@ the various legal and illegal combinations for a request to <code>https://rabbit
   <td>❌
   <td>`<code>true</code>` is (byte) case-sensitive.
 </table>
+
+<h4 id="cors-protocol-examples"><span class="secno">4.2.6 </span>Examples</h4>
+
+<div class="example">
+ <p>A script at <code>https://foo.invalid/</code> wants to fetch some data from
+ <code>https://bar.invalid/</code>. (Neither <a href="#credentials">credentials</a> nor response header access is
+ important.)
+
+ <pre>var url = "https://bar.invalid/api?key=730d67a37d7f3d802e96396d00280768773813fbe726d116944d814422fc1a45&amp;data=about:unicorn";
+fetch(url).then(success, failure)</pre>
+
+ <p>This will use the <a href="#cors-protocol">CORS protocol</a>, though this is entirely transparent to the
+ developer from <code>foo.invalid</code>. As part of the <a href="#cors-protocol">CORS protocol</a>, the user agent
+ will include the `<a href="#http-origin"><code title="http-origin">Origin</code></a>` header in the request:
+
+ <pre>Origin: https://foo.invalid</pre>
+
+ <p>Upon receiving a response from <code>bar.com</code>, the user agent will verify the
+ `<a href="#http-access-control-allow-origin"><code title="http-access-control-allow-origin">Access-Control-Allow-Origin</code></a>` response header.
+ If its value is either `<code>https://foo.invalid</code>` or `<code>*</code>`, the user agent will
+ invoke the <code>success</code> callback. If it has any other value, or is simply missing, the user
+ agent will invoke the <code>failure</code> callback.</p>
+</div>
+
+<div class="example">
+ <p>The developer of <code>foo.invalid</code> is back, and now wants to fetch some data from
+ <code>bar.invalid</code> while also accessing a response header.
+
+ <pre>fetch(url).then(response =&gt; {
+  var hsts = response.headers.get("strict-transport-security"),
+      csp = response.headers.get("content-security-policy")
+  log(hsts, csp)
+})</pre>
+
+ <p><code>bar.invalid</code> provides a correct
+ `<a href="#http-access-control-allow-origin"><code title="http-access-control-allow-origin">Access-Control-Allow-Origin</code></a>` response header
+ per the earlier example. The values of <code>hsts</code> and <code>csp</code> will depend on the
+ `<a href="#http-access-control-expose-headers"><code title="http-access-control-expose-headers">Access-Control-Expose-Headers</code></a>` response
+ header. For example, if the response included the following headers
+
+ <pre>Content-Security-Policy: default-src 'self'
+Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+Access-Control-Expose-Headers: Content-Security-Policy</pre>
+
+ <p>then <code>hsts</code> would be null and <code>csp</code> would be
+ "<code>default-src 'self'</code>", even though the response did include both headers. This is
+ because <code>bar.invalid</code> needs to explicitly share each header by listing their names in
+ the `<a href="#http-access-control-expose-headers"><code title="http-access-control-expose-headers">Access-Control-Expose-Headers</code></a>` response
+ header.
+</div>
+
+<div class="example">
+ <p>The developer of <code>foo.invalid</code> returns, now fetching some data from
+ <code>bar.invalid</code> while including <a href="#credentials">credentials</a>. This time around the
+ <a href="#cors-protocol">CORS protocol</a> is no longer transparent to the developer as <a href="#credentials">credentials</a>
+ require an explicit opt-in:
+
+ <pre>fetch(url, { credentials:"include" }).then(success, failure)</pre>
+
+ <p>This also makes any `<code title="">Set-Cookie</code>` response headers <code>bar.invalid</code>
+ includes fully functional (they are ignored otherwise).
+
+ <p>The user agent will make sure to include any relevant <a href="#credentials">credentials</a> in the request.
+ It will also put stricter requirements on the response. Not only will <code>bar.invalid</code> be
+ required to list `<code>https://foo.invalid</code>` as value for
+ `<a href="#http-access-control-allow-origin"><code title="http-access-control-allow-origin">Access-Control-Allow-Origin</code></a>` (`<code>*</code>`
+ is not allowed when <a href="#credentials">credentials</a> are involved), the
+ `<a href="#http-access-control-allow-credentials"><code title="http-access-control-allow-credentials">Access-Control-Allow-Credentials</code></a>` has to
+ be present too:
+
+ <pre>Access-Control-Allow-Origin: https://foo.invalid
+Access-Control-Allow-Credentials: true</pre>
+
+ <p>If the response does not include those two headers with those values, the <code>failure</code>
+ callback will be invoked and any `<code title="">Set-Cookie</code>` response headers will end up being
+ ignored.
+</div>
 
 
 <h3 id="x-content-type-options-header"><span class="secno">4.3 </span>`<code title="">X-Content-Type-Options</code>` header</h3>
