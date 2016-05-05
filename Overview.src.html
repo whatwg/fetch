@@ -48,7 +48,8 @@ fetching.
 
 <h2 class="no-num short">Goals</h2>
 
-<p>To unify fetching across the web platform this specification supplants a number of algorithms and specifications:
+<p>To unify fetching across the web platform this specification supplants a number of algorithms and
+specifications:
 
 <ul class="brief no-backref">
  <li>HTML Standard's fetch and potentially CORS-enabled fetch algorithms
@@ -152,6 +153,11 @@ which implementations need not store the
 exposed. When <span data-anolis-spec=url title=concept-url-serializer>serialized</span>,
 the <i title>exclude fragment flag</i> is set, meaning implementations can store the
 <span data-anolis-spec=url title=concept-url-fragment>fragment</span> nonetheless.
+
+<hr>
+
+<p><dfn>Credentials</dfn> are HTTP cookies, TLS client certificates, and
+<span title="authentication entry">authentication entries</span>.
 
 <hr>
 
@@ -883,8 +889,11 @@ discouraged from using it for new features. It is rather unsafe. "<code title>na
 "<code title>omit</code>", "<code title>same-origin</code>", or
 "<code title>include</code>". Unless stated otherwise, it is "<code title>omit</code>".
 
-<p class="note no-backref">When <span title=concept-request>request</span>'s
-<span title=concept-request-mode>mode</span> is "<code title>navigate</code>", its
+<p class="note no-backref"><span title=concept-request>Request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> controls the flow of
+<span>credentials</span> during a <span title=concept-fetch>fetch</span>. When
+<span title=concept-request>request</span>'s <span title=concept-request-mode>mode</span> is
+"<code title>navigate</code>", its
 <span title=concept-request-credentials-mode>credentials mode</span> is assumed to be
 "<code title>include</code>" and <span title=concept-fetch>fetch</span> does not currently account
 for other values. If <cite>HTML</cite> changes here, this standard will need corresponding changes.
@@ -1656,40 +1665,43 @@ origin                           = <span data-anolis-spec=url title=concept-url-
 
 <h3 id=http-cors-protocol>CORS protocol</h3>
 
-<p>To allow sharing resources cross-origin and allow for more versatile HTTP requests than
-possible with HTML's <code data-anolis-spec=html>form</code> element, the platform has
-a <dfn>CORS protocol</dfn> layered on top of HTTP. It allows resources to declare they
-can be shared with resources residing on a different
+<p>To allow sharing responses cross-origin and allow for more versatile
+<span title=concept-fetch>fetches</span> than possible with HTML's
+<code data-anolis-spec=html>form</code> element, the <dfn>CORS protocol</dfn> exists. It is layered
+on top of HTTP and allows responses to declare they can be shared with other
 <span data-anolis-spec=html>origin</span>.
 
-<p class=note>It needs to be an opt-in mechanism to prevent leaking data from resources
-behind a firewall (intranets). Additionally, for credentialed HTTP requests it needs to be
-opt-in to prevent leaking potentially-sensitive data.
+<p class=note>It needs to be an opt-in mechanism to prevent leaking data from responses behind a
+firewall (intranets). Additionally, for <span title=concept-request>requests</span> including
+<span>credentials</span> it needs to be opt-in to prevent leaking potentially-sensitive data.
 
-<p>This section explains the <span>CORS protocol</span> as it pertains to servers.
-Requirements for user agents are part of the <span title=concept-fetch>fetch</span>
-algorithm.
+<p>This section explains the <span>CORS protocol</span> as it pertains to server developers.
+Requirements for user agents are part of the <span title=concept-fetch>fetch</span> algorithm,
+except for the <a href=#http-new-header-syntax>new HTTP header syntax</a>.
+
 
 <h4>General</h4>
 
-<p>The <span>CORS protocol</span> consists of a set of headers that indicates whether a
-particular resource can be shared cross-origin.
+<p>The <span>CORS protocol</span> consists of a set of headers that indicates whether a response can
+be shared cross-origin.
 
-<p>For HTTP requests that are more involved than what is possible with HTML's
-<code data-anolis-spec=html>form</code> element, a <span>CORS-preflight fetch</span> is
-performed, to ensure the resource understands the <span>CORS protocol</span>.
+<p>For <span title=concept-request>requests</span> that are more involved than what is possible with
+HTML's <code data-anolis-spec=html>form</code> element, a <span>CORS-preflight request</span> is
+performed, to ensure <span title=concept-request>request</span>'s
+<span title=concept-request-current-url>current url</span> supports the <span>CORS protocol</span>.
 
 
 <h4>HTTP requests</h4>
 
-<p>An HTTP request can be identified as pertaining in the <span>CORS protocol</span> if it
-includes an `<code title=http-origin>Origin</code>` header. This is named a
-<dfn>CORS request</dfn>.
+<p>A <dfn>CORS request</dfn> is an HTTP request that includes an
+`<code title=http-origin>Origin</code>` header. It cannot be reliably identified as particpating in
+the <span>CORS protocol</span> as the `<code title=http-origin>Origin</code>` header is sometimes
+included for other purposes too.
 
-<p>An HTTP request can be identified as being a check to see if the
-<span>CORS protocol</span> is understood if it is a <span>CORS request</span>, uses
-`<code title>OPTIONS</code>` as <span title=concept-method>method</span>, and includes
-these <span title=concept-header>headers</span>:
+<p>A <dfn>CORS-preflight request</dfn> is a <span>CORS request</span> that is check to see if the
+<span>CORS protocol</span> is understood. It uses `<code title>OPTIONS</code>` as
+<span title=concept-method>method</span> and includes these
+<span title=concept-header>headers</span>:
 
 <dl>
  <dt>`<dfn title=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>`
@@ -1701,8 +1713,6 @@ these <span title=concept-header>headers</span>:
  <span>CORS request</span> to the same resource might use.
 </dl>
 
-<p>This is named a <dfn>CORS-preflight request</dfn>.
-
 
 <h4>HTTP responses</h4>
 
@@ -1711,15 +1721,14 @@ these <span title=concept-header>headers</span>:
 
 <dl>
  <dt>`<dfn title=http-access-control-allow-origin><code>Access-Control-Allow-Origin</code></dfn>`
- <dd><p>Indicates whether a resource can be shared, via returning the literal
+ <dd><p>Indicates whether the response can be shared, via returning the literal
  <span title=concept-header-value>value</span> of the
  `<code title=http-origin>Origin</code>` request <span title=concept-header>header</span>
  (which can be `<code title>null</code>`) or `<code title>*</code>` in a response.
 
  <dt>`<dfn title=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>`
  <dd>
-  <p>Indicates whether a resource can be shared when
-  <span title=concept-request>request</span>'s
+  <p>Indicates whether the response can be shared when <span title=concept-request>request</span>'s
   <span title=concept-request-credentials-mode>credentials mode</span> is
   "<code title>include</code>".
 
@@ -1739,14 +1748,16 @@ these <span title=concept-header>headers</span>:
  <dt>`<dfn title=http-access-control-allow-methods><code>Access-Control-Allow-Methods</code></dfn>`
  <dd>
   <p>Indicates which <span title=concept-method>methods</span> are supported by the
-  resource for the purposes of the <span>CORS protocol</span>.
+  <span title=concept-response>response</span>'s <span title=concept-response-url>url</span> for the
+  purposes of the <span>CORS protocol</span>.
 
   <p class=note>The `<code title>Allow</code>` <span title=concept-header>header</span> is
   not relevant for the purposes of the <span>CORS protocol</span>.
 
  <dt>`<dfn title=http-access-control-allow-headers><code>Access-Control-Allow-Headers</code></dfn>`
  <dd><p>Indicates which <span title=concept-header>headers</span> are supported by the
- resource for the purposes of the <span>CORS protocol</span>.
+ <span title=concept-response>response</span>'s <span title=concept-response-url>url</span> for the
+ purposes of the <span>CORS protocol</span>.
 
  <dt>`<dfn title=http-access-control-max-age><code>Access-Control-Max-Age</code></dfn>`
  <dd><p>Indicates how long the information provided by the
@@ -1762,11 +1773,11 @@ these <span title=concept-header>headers</span>:
 <dl>
  <dt>`<dfn title=http-access-control-expose-headers><code>Access-Control-Expose-Headers</code></dfn>`
  <dd><p>Indicates which <span title=concept-header>headers</span> can be exposed as part
- of the HTTP response, via listing their <span title=concept-header-name>names</span>.
+ of the response by listing their <span title=concept-header-name>names</span>.
 </dl>
 
 
-<h4>HTTP new-header syntax</h4>
+<h4 id=http-new-header-syntax>HTTP new-header syntax</h4>
 
 <p>ABNF for the <span title=concept-header-value>values</span> of the
 <span title=concept-header>headers</span> used by the <span>CORS protocol</span>:
@@ -1780,6 +1791,106 @@ Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span
 Access-Control-Max-Age           = <span data-anolis-spec=http-caching>delta-seconds</span>
 Access-Control-Allow-Methods     = #<span data-anolis-spec=http>method</span>
 Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span></pre>
+
+
+<h4>CORS protocol and credentials</h4>
+
+<!-- non-normative -->
+
+<p>When <span title=concept-request>request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> is "<code>include</code>" it
+has an impact on the functioning of the <span>CORS protocol</span> other than including
+<span>credentials</span> in the <span title=concept-fetch>fetch</span>.
+
+<div class="example">
+ <p>In the old days, <code data-anolis-spec=xhr>XMLHttpRequest</code> could be used to set
+ <span title=concept-request>request</span>'s
+ <span title=concept-request-credentials-mode>credentials mode</span> to "<code>include</code>":
+
+ <pre>var client = new XMLHttpRequest()
+client.open("GET", "./")
+client.withCredentials = true
+/* &hellip; */</pre>
+
+ <p>Nowadays, <code title>fetch("./", { credentials:"include" }).then(/* &hellip; */)</code>
+ suffices.
+</div>
+
+<p>A <span title=concept-request>request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> is not necessarily observable
+on the server; only when <span>credentials</span> exist for a
+<span title=concept-request>request</span> can it be observed by virtue of the
+<span>credentials</span> being included. Note that even so, a <span>CORS-preflight request</span>
+never includes <span>credentials</span>.
+
+<p>The server developer therefore needs to decide whether or not responses "tainted" with
+<span>credentials</span> can be shared. And also needs to decide if
+<span title=concept-request>requests</span> necessitating a <span>CORS-preflight request</span> can
+include <span>credentials</span>. Generally speaking, both sharing responses and allowing requests
+with <span>credentials</span> is rather unsafe, and extreme care has to be taken to avoid the
+<a href="https://en.wikipedia.org/wiki/Confused_deputy_problem">confused deputy problem</a>.
+<!-- Turn into a reference? Meh. -->
+
+<p>To share responses with <span>credentials</span>, the
+`<code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>` and
+`<code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>`
+<span title=concept-header>headers</span> are important. The following table serves to illustrate
+the various legal and illegal combinations for a request to <code>https://rabbit.invalid/</code>:
+
+<table>
+ <tr>
+  <th>Request's credentials mode
+  <th>`<code title>Access-Control-Allow-Origin</code>`
+  <th>`<code title>Access-Control-Allow-Credentials</code>`
+  <th>Shared?
+  <th>Notes
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>*</code>`
+  <td>Omitted
+  <td>✅
+  <td>&mdash;
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>*</code>`
+  <td>`<code>true</code>`
+  <td>✅
+  <td>If credentials mode is not "<code>include</code>", then
+  `<code title=http-access-control-allow-credentials>Access-Control-Allow-Credentials</code>` is
+  ignored.
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>https://rabbit.invalid/`</td>
+  <td>Omitted
+  <td>❌
+  <td>A serialized origin has no trailing slash.
+ <tr>
+  <td>"<code>omit</code>"
+  <td>`<code>https://rabbit.invalid`</td>
+  <td>Omitted
+  <td>✅
+  <td>&mdash;
+ <tr>
+  <td>"<code>include</code>"
+  <td>`<code>*</code>`
+  <td>`<code>true</code>`
+  <td>❌
+  <td>If credentials mode is "<code>include</code>", then
+  `<code title=http-access-control-allow-origin>Access-Control-Allow-Origin</code>` cannot be
+  `<code>*</code>`.
+ <tr>
+  <td>"<code>include</code>"
+  <td>`<code>https://rabbit.invalid`</td>
+  <td>`<code>true</code>`
+  <td>✅
+  <td>&mdash;
+ <tr>
+  <td>"<code>include</code>"
+  <td>`<code>https://rabbit.invalid`</td>
+  <td>`<code>True</code>`
+  <td>❌
+  <td>`<code>true</code>` is (byte) case-sensitive.
+</table>
 
 
 <h3>`<code title>X-Content-Type-Options</code>` header</h3>
@@ -5071,7 +5182,7 @@ if the script checks that the URL has the right hostname.
 
 <h3 class=no-num><dfn>HTTP header layer division</dfn></h3>
 
-<p>For the purposes of fetching, the platform has an API layer (HTML's
+<p>For the purposes of fetching, there is an API layer (HTML's
 <code title>img</code>, CSS' <code title>background-image</code>), early fetch layer,
 service worker layer, and network &amp; cache layer.
 `<code title=http-accept>Accept</code>` and
@@ -5089,13 +5200,12 @@ Developers have almost no control over
 
 <h3 class=no-num><dfn>Atomic HTTP redirect handling</dfn></h3>
 
-<p>Throughout the platform, redirects (a
-<span title=concept-response>response</span> whose
+<p>Redirects (a <span title=concept-response>response</span> whose
 <span title=concept-response-status>status</span> or
 <span title=concept-internal-response>internal response</span>'s (if any)
-<span title=concept-response-status>status</span> is a <span>redirect status</span>)
-are not exposed to APIs. Exposing redirects might leak information not otherwise available
-through a cross-site scripting attack.
+<span title=concept-response-status>status</span> is a <span>redirect status</span>) are not exposed
+to APIs. Exposing redirects might leak information not otherwise available through a cross-site
+scripting attack.
 
 <p class=example>A fetch to <code>https://example.org/auth</code> that includes a
 <code title>Cookie</code> marked <code title>HttpOnly</code> could result in a redirect to
@@ -5240,6 +5350,7 @@ Ondřej Žára,
 Philip Jägenstedt,
 R. Auburn,
 Ryan Sleevi,
+Rory Hewitt,
 Sébastien Cevey,
 Shao-xuan Kang,
 Sharath Udupa,
