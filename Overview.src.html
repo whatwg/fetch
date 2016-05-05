@@ -384,6 +384,8 @@ each other by `<code title>,</code>`, in order.
 <p>and whose <span title=concept-header-value>value</span>,
 <span title=concept-header-parse>once parsed</span>, is not a failure.
 
+<p>A <dfn>CORS non-wildcard request-header name</dfn> is `<code title>Authorization</code>`.
+
 <p>A <dfn>CORS-safelisted response-header name</dfn>, given a
 <span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
 <var>list</var>, is a <span title=concept-header>header</span>
@@ -1791,12 +1793,14 @@ included for other purposes too.
 <pre>Access-Control-Request-Method    = <span data-anolis-spec=http>method</span>
 Access-Control-Request-Headers   = #<span data-anolis-spec=http>field-name</span>
 
-Access-Control-Allow-Origin      = origin-or-null / "*"
+wilrdcard                        = "*"
+Access-Control-Allow-Origin      = origin-or-null / wildcard
 Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
-Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span>
+Access-Control-Expose-Headers    = field-name-or-wildcard
+field-name-or-wildcard           = <span data-anolis-spec=http>field-name</span> / wildcard
 Access-Control-Max-Age           = <span data-anolis-spec=http-caching>delta-seconds</span>
-Access-Control-Allow-Methods     = #<span data-anolis-spec=http>method</span>
-Access-Control-Allow-Headers     = #<span data-anolis-spec=http>field-name</span></pre>
+Access-Control-Allow-Methods     = #<span data-anolis-spec=http>method</span> / wildcard
+Access-Control-Allow-Headers     = #field-name-or-wildcard</pre>
 
 
 <h4>CORS protocol and credentials</h4>
@@ -1897,6 +1901,13 @@ the various legal and illegal combinations for a request to <code>https://rabbit
   <td>❌
   <td>`<code>true</code>` is (byte) case-sensitive.
 </table>
+
+<p>Similarly, `<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>`,
+`<code title=http-access-control-allow-methods>Access-Control-Allow-Methods</code>`, and
+`<code title=http-access-control-allow-headers>Access-Control-Allow-Headers</code>` response
+headers can only use `<code>*</code>` as value when <span title=concept-request>request</span>'s
+<span title=concept-request-credentials-mode>credentials mode</span> is not "<code>include</code>".
+
 
 <h4 id=cors-protocol-examples>Examples</h4>
 
@@ -2386,13 +2397,29 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
   run these substeps:
 
   <ol>
-   <li><p>If <var>request</var>'s
-   <span title=concept-request-response-tainting>response tainting</span> is
-   "<code title>cors</code>", then set <var>response</var>'s
-   <span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
-   to the result of <span title=concept-header-parse>parsing</span>
-   `<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>` in
-   <var>response</var>'s <span title=concept-response-header-list>header list</span>.
+   <li>
+   	<p>If <var>request</var>'s
+    <span title=concept-request-response-tainting>response tainting</span> is
+    "<code title>cors</code>", then run these substeps:</p>
+
+    <ol>
+     <li><p>Let <var>headerNames</var> be the result <span title=concept-header-parse>parsing</span>
+     `<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>` in
+     <var>response</var>'s <span title=concept-response-header-list>header list</span>.
+
+     <li><p>If <var>headerNames</var> contains `<code title>*</code>` and <var>request</var>'s
+     <span title=concept-request-credentials-mode>credentials mode</span> is not
+     "<code>include</code>", then set <var>response</var>'s
+     <span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
+     to all unique <span title=concept-header>header</span>
+     <span title=concept-header-name>names</span> in <var>response</var>'s
+     <span title=concept-response-header-list>header list</span>.</p></li>
+
+     <li><p>Otherwise, if <var>headerNames</var> does <em>not</em> contain `<code title>*</code>`,
+     then set <var>response</var>'s
+     <span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
+     to <var>headerNames</var>.</p>
+    </ol>
 
    <li>
     <p>Set <var>response</var> to the following
@@ -3574,9 +3601,21 @@ steps:
    <li><p>If either <var>methods</var> or <var>headerNames</var> is failure,
    return a <span title=concept-network-error>network error</span>.
 
+   <li><p>If <var>methods</var> is `<code>*</code>` or <var>headerNames</var> contains
+   `<code>*</code>`, and <var>request</var>'s
+   <span title=concept-request-credentials-mode>credentials mode</span> is "<code>include</code>",
+   then return a <span title=concept-network-error>network error</span>.
+
    <li>
-    <p>If <var>methods</var> is null and <var>request</var>'s <span>use-CORS-preflight flag</span>
-    is set, set <var>methods</var> to <var>request</var>'s
+    <p>If one of the following is true
+
+    <ul class=brief>
+     <li><var>methods</var> is null and <var>request</var>'s <span>use-CORS-preflight flag</span> is
+     set
+     <li><var>methods</var> is `<code>*</code>`
+    </ul>
+
+    <p>then set <var>methods</var> to a new list containing <var>request</var>'s
     <span title=concept-request-method>method</span>.
 
     <p class="note no-backref">This ensures that a <span>CORS-preflight fetch</span> that
@@ -3586,6 +3625,18 @@ steps:
    <li><p>If <var>request</var>'s <span title=concept-request-method>method</span>
    is not in <var>methods</var> and is not a <span>simple method</span>, return a
    <span title=concept-network-error>network error</span>.
+
+   <li><p>If one of <var>request</var>'s
+   <span title=concept-request-header-list>header list</span>'s
+   <span title=concept-header-name>names</span> is a
+   <span>CORS non-wildcard request-header name</span> and is not in <var>headerNames</var>, then
+   return a <span title=concept-network-error>network error</span>.
+
+   <li><p>If <var>headerNames</var> contains `<code>*</code>`, then remove all occurances of
+   `<code>*</code>` from <var>headerNames</var> and append all unique
+   <span title=concept-header>header</span> <span title=concept-header-name>names</span> from
+   <var>request</var>'s <span title=concept-request-header-list>header list</span> to
+   <var>headerNames</var>.
 
    <li><p>If one of <var>request</var>'s
    <span title=concept-request-header-list>header list</span>'
@@ -5379,6 +5430,7 @@ Cameron McCormack,
 Clement Pellerin,
 Collin Jackson,
 Daniel Robertson,
+Daniel Veditz,
 David H&aring;s&auml;ther,
 David Orchard,
 Domenic Denicola,
