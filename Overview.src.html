@@ -1796,11 +1796,15 @@ Access-Control-Request-Headers   = #<span data-anolis-spec=http>field-name</span
 wildcard                         = "*"
 Access-Control-Allow-Origin      = origin-or-null / wildcard
 Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
-Access-Control-Expose-Headers    = field-name-or-wildcard
-field-name-or-wildcard           = <span data-anolis-spec=http>field-name</span> / wildcard
+Access-Control-Expose-Headers    = #<span data-anolis-spec=http>field-name</span> / wildcard
 Access-Control-Max-Age           = <span data-anolis-spec=http-caching>delta-seconds</span>
 Access-Control-Allow-Methods     = #<span data-anolis-spec=http>method</span> / wildcard
-Access-Control-Allow-Headers     = #field-name-or-wildcard</pre>
+Access-Control-Allow-Headers     = #field-name-or-wildcard
+field-name-or-wildcard           = <span data-anolis-spec=http>field-name</span> / wildcard</pre>
+
+<p class="note">The difference between the <code title>Access-Control-Expose-Headers</code> and
+<code title>Access-Control-Allow-Headers</code> production is that the latter needs to be able to
+handle `<code title>*, Authorization</code>` as header value whereas the former does not.
 
 
 <h4>CORS protocol and credentials</h4>
@@ -2398,16 +2402,17 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
 
   <ol>
    <li>
-   	<p>If <var>request</var>'s
+    <p>If <var>request</var>'s
     <span title=concept-request-response-tainting>response tainting</span> is
     "<code title>cors</code>", then run these substeps:</p>
 
     <ol>
-     <li><p>Let <var>headerNames</var> be the result <span title=concept-header-parse>parsing</span>
+     <li><p>Let <var>headerNames</var> be the result of
+     <span title=concept-header-parse>parsing</span>
      `<code title=http-access-control-expose-headers>Access-Control-Expose-Headers</code>` in
      <var>response</var>'s <span title=concept-response-header-list>header list</span>.
 
-     <li><p>If <var>headerNames</var> contains `<code title>*</code>` and <var>request</var>'s
+     <li><p>If <var>headerNames</var> is `<code title>*</code>` and <var>request</var>'s
      <span title=concept-request-credentials-mode>credentials mode</span> is not
      "<code>include</code>", then set <var>response</var>'s
      <span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
@@ -2415,8 +2420,8 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
      <span title=concept-header-name>names</span> in <var>response</var>'s
      <span title=concept-response-header-list>header list</span>.</p></li>
 
-     <li><p>Otherwise, if <var>headerNames</var> does <em>not</em> contain `<code title>*</code>`,
-     then set <var>response</var>'s
+     <li><p>Otherwise, if <var>headerNames</var> is <em>not</em> `<code title>*</code>`, then set
+     <var>response</var>'s
      <span title=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</span>
      to <var>headerNames</var>.</p>
     </ol>
@@ -3222,8 +3227,8 @@ The <i title>credentials flag</i> is one too.
     <var>response</var> to the <span title=concept-response>response</span> in the HTTP cache for
     <var>httpRequest</var>.
 
-   	<p class="note">As mandated by HTTP, this still takes the `<code title=http-vary>Vary</code>`
-   	<span title=concept-header>header</span> into account.
+    <p class="note">As mandated by HTTP, this still takes the `<code title=http-vary>Vary</code>`
+    <span title=concept-header>header</span> into account.
 
    <li><p>Otherwise, if <var>httpRequest</var>'s
    <span title=concept-request-cache-mode>cache mode</span> is "<code title>default</code>" and
@@ -3632,7 +3637,7 @@ steps:
    <span>CORS non-wildcard request-header name</span> and is not in <var>headerNames</var>, then
    return a <span title=concept-network-error>network error</span>.
 
-   <li><p>If <var>headerNames</var> contains `<code>*</code>`, then remove all occurances of
+   <li><p>If <var>headerNames</var> contains `<code>*</code>`, then remove all occurrences of
    `<code>*</code>` from <var>headerNames</var> and append all unique
    <span title=concept-header>header</span> <span title=concept-header-name>names</span> from
    <var>request</var>'s <span title=concept-request-header-list>header list</span> to
