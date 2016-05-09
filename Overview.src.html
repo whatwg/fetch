@@ -3597,6 +3597,9 @@ steps:
    <var>response</var>'s
    <span title=concept-response-header-list>header list</span>.
 
+   <li><p>If <var>methods</var> is `<code>*</code>`, then set <var>methods</var> to a new list
+   containing `<code>*</code>`.
+
    <li><p>Let <var>headerNames</var> be the result of
    <span title=concept-header-parse>parsing</span>
    `<code title=http-access-control-allow-headers>Access-Control-Allow-Headers</code>` in
@@ -3606,21 +3609,13 @@ steps:
    <li><p>If either <var>methods</var> or <var>headerNames</var> is failure,
    return a <span title=concept-network-error>network error</span>.
 
-   <li><p>If <var>methods</var> is `<code>*</code>` or <var>headerNames</var> contains
-   `<code>*</code>`, and <var>request</var>'s
-   <span title=concept-request-credentials-mode>credentials mode</span> is "<code>include</code>",
-   then return a <span title=concept-network-error>network error</span>.
+   <li><p>If <var>methods</var> or <var>headerNames</var> contains `<code>*</code>`, and
+   <var>request</var>'s <span title=concept-request-credentials-mode>credentials mode</span> is
+   "<code>include</code>", then return a <span title=concept-network-error>network error</span>.
 
    <li>
-    <p>If one of the following is true
-
-    <ul class=brief>
-     <li><var>methods</var> is null and <var>request</var>'s <span>use-CORS-preflight flag</span> is
-     set
-     <li><var>methods</var> is `<code>*</code>`
-    </ul>
-
-    <p>then set <var>methods</var> to a new list containing <var>request</var>'s
+    <p>If <var>methods</var> is null and <var>request</var>'s <span>use-CORS-preflight flag</span>
+    is set, then set <var>methods</var> to a new list containing <var>request</var>'s
     <span title=concept-request-method>method</span>.
 
     <p class="note no-backref">This ensures that a <span>CORS-preflight fetch</span> that
@@ -3628,7 +3623,8 @@ steps:
     <span title=concept-cache>cached</span>.
 
    <li><p>If <var>request</var>'s <span title=concept-request-method>method</span>
-   is not in <var>methods</var> and is not a <span>simple method</span>, return a
+   is not in <var>methods</var>, is not a <span>simple method</span>, and <var>methods</var> does
+   <em>not</em> contain `<code>*</code>`, then return a
    <span title=concept-network-error>network error</span>.
 
    <li><p>If one of <var>request</var>'s
@@ -3637,17 +3633,11 @@ steps:
    <span>CORS non-wildcard request-header name</span> and is not in <var>headerNames</var>, then
    return a <span title=concept-network-error>network error</span>.
 
-   <li><p>If <var>headerNames</var> contains `<code>*</code>`, then remove all occurrences of
-   `<code>*</code>` from <var>headerNames</var> and append all unique
-   <span title=concept-header>header</span> <span title=concept-header-name>names</span> from
-   <var>request</var>'s <span title=concept-request-header-list>header list</span> to
-   <var>headerNames</var>.
-
    <li><p>If one of <var>request</var>'s
    <span title=concept-request-header-list>header list</span>'
-   <span title=concept-header-name>names</span> is not in <var>headerNames</var> and
-   its corresponding <span title=concept-header>header</span> is not a
-   <span>CORS-safelisted request-header</span>, return a
+   <span title=concept-header-name>names</span> is not in <var>headerNames</var>, its corresponding
+   <span title=concept-header>header</span> is not a <span>CORS-safelisted request-header</span>,
+   and <var>headerNames</var> does <em>not</em> contain `<code>*</code>`, then return a
    <span title=concept-network-error>network error</span>.
 
    <li><p>Let <var>max-age</var> be the result of
@@ -3656,14 +3646,13 @@ steps:
    <var>response</var>'s
    <span title=concept-response-header-list>header list</span>.
 
-   <li><p>If <var>max-age</var> is failure or null, set <var>max-age</var> to
-   zero.
+   <li><p>If <var>max-age</var> is failure or null, then set <var>max-age</var> to zero.
 
    <li><p>If <var>max-age</var> is greater than an imposed limit on
-   <span title=concept-cache-max-age>max-age</span>, set <var>max-age</var> to the imposed
+   <span title=concept-cache-max-age>max-age</span>, then set <var>max-age</var> to the imposed
    limit.
 
-   <li><p>If the user agent does not provide for a <span title=concept-cache>cache</span>,
+   <li><p>If the user agent does not provide for a <span title=concept-cache>cache</span>, then
    return <var>response</var>.
 
    <li><p>For each <var>method</var> in <var>methods</var> for which there is
@@ -3671,63 +3660,20 @@ steps:
    <var>request</var>, set matching entry's
    <span title=concept-cache-max-age>max-age</span> to <var>max-age</var>.
 
-   <li>
-    <p>For each <var>method</var> in <var>methods</var> for which there is
-    <em>no</em>  <span title=concept-cache-match-method>method cache match</span> using
-    <var>request</var>, create a new entry in
-    <span title=concept-cache>CORS-preflight cache</span> as follows:
-
-    <dl>
-     <dt><span title=concept-cache-origin>origin</span>
-     <dd><var>request</var>'s <span title=concept-request-origin>origin</span>
-
-     <dt><span title=concept-cache-url>url</span>
-     <dd><var>request</var>'s
-     <span title=concept-request-current-url>current url</span>
-
-     <dt><span title=concept-cache-max-age>max-age</span>
-     <dd><var>max-age</var>
-
-     <dt><span title=concept-cache-credentials>credentials</span>
-     <dd>True if <var>request</var>'s
-     <span title=concept-request-credentials-mode>credentials mode</span> is
-     "<code title>include</code>", and false otherwise
-
-     <dt><span title=concept-cache-method>method</span></dt>
-     <dd><var>method</var>
-    </dl>
+   <li><p>For each <var>method</var> in <var>methods</var> for which there is <em>no</em>
+   <span title=concept-cache-match-method>method cache match</span> using <var>request</var>,
+   <span title=concept-cache-create-entry>create a new entry</span> with <var>request</var>,
+   <var>max-age</var>, <var>method</var>, and null.
 
    <li><p>For each <var>headerName</var> in <var>headerNames</var> for which
    there is a <span title=concept-cache-match-header>header-name cache match</span> using
    <var>request</var>, set matching entry's
    <span title=concept-cache-max-age>max-age</span> to <var>max-age</var>.
 
-   <li>
-    <p>For each <var>headerName</var> in <var>headerNames</var> for which
-    there is <em>no</em>
-    <span title=concept-cache-match-header>header-name cache match</span> using
-    <var>request</var>, create a new entry in
-    <span title=concept-cache>CORS-preflight cache</span> as follows:
-
-    <dl>
-     <dt><span title=concept-cache-origin>origin</span>
-     <dd><var>request</var>'s <span title=concept-request-origin>origin</span>
-
-     <dt><span title=concept-cache-url>url</span>
-     <dd><var>request</var>'s
-     <span title=concept-request-current-url>current url</span>
-
-     <dt><span title=concept-cache-max-age>max-age</span>
-     <dd><var>max-age</var>
-
-     <dt><span title=concept-cache-credentials>credentials</span>
-     <dd>True if <var>request</var>'s
-     <span title=concept-request-credentials-mode>credentials mode</span> is
-     "<code title>include</code>", and false otherwise
-
-     <dt><span title=concept-cache-header-name>header name</span></dt>
-     <dd><var>headerName</var>
-    </dl>
+   <li><p>For each <var>headerName</var> in <var>headerNames</var> for which there is <em>no</em>
+   <span title=concept-cache-match-header>header-name cache match</span> using <var>request</var>,
+   <span title=concept-cache-create-entry>create a new entry</span> with <var>request</var>,
+   <var>max-age</var>, null, and <var>headerName</var>.
 
    <li><p>Return <var>response</var>.
   </ol>
@@ -3740,16 +3686,47 @@ steps:
 
 <p>A <dfn title=concept-cache>CORS-preflight cache</dfn> consists of a collection of
 entries where each entry has these fields:
-<dfn title=concept-cache-origin>origin</dfn>,
-<dfn title=concept-cache-url>url</dfn>,
-<dfn title=concept-cache-max-age>max-age</dfn>,
-<dfn title=concept-cache-credentials>credentials</dfn>,
-<dfn title=concept-cache-method>method</dfn>, and
-<dfn title=concept-cache-header-name>header name</dfn>.
+
+<ul class=brief>
+ <li><dfn title=concept-cache-origin>origin</dfn> (an <span data-anolis-spec=html>origin</span>)
+ <li><dfn title=concept-cache-url>url</dfn> (a <span data-anolis-spec=url>URL</span>
+ <li><dfn title=concept-cache-max-age>max-age</dfn> (a number of seconds)
+ <li><dfn title=concept-cache-credentials>credentials</dfn> (a boolean)
+ <li><dfn title=concept-cache-method>method</dfn> (null, `<code>*</code>`, or a
+ <span title=concept-method>method</span>)
+ <li><dfn title=concept-cache-header-name>header name</dfn> (null, `<code>*</code>`, or a
+ <span title=concept-header>header</span> <span title=concept-header-name>name</span>)
+</ul>
 
 <p>Entries must be removed after the seconds specified in the
 <span title=concept-cache-max-age>max-age</span> field have passed since storing the entry.
 Entries may be removed before that moment arrives.
+
+<p>To <dfn title=concept-cache-create-entry>create a new entry</dfn> in the
+<span title=concept-cache>CORS-preflight cache</span>, given <var>request</var>, <var>max-age</var>,
+<var>method</var>, and <var>headerName</var>, do so as follows:
+
+<dl>
+ <dt><span title=concept-cache-origin>origin</span>
+ <dd><var>request</var>'s <span title=concept-request-origin>origin</span>
+
+ <dt><span title=concept-cache-url>url</span>
+ <dd><var>request</var>'s <span title=concept-request-current-url>current url</span>
+
+ <dt><span title=concept-cache-max-age>max-age</span>
+ <dd><var>max-age</var>
+
+ <dt><span title=concept-cache-credentials>credentials</span>
+ <dd>True if <var>request</var>'s
+ <span title=concept-request-credentials-mode>credentials mode</span> is
+ "<code title>include</code>", and false otherwise
+
+ <dt><span title=concept-cache-method>method</span></dt>
+ <dd><var>method</var>
+
+ <dt><span title=concept-cache-header-name>header name</span></dt>
+ <dd><var>headerName</var>
+</dl>
 
 <p>To <dfn title=concept-cache-clear>clear cache entries</dfn>, given a
 <var>request</var>, remove any entries in the
@@ -3768,7 +3745,7 @@ Entries may be removed before that moment arrives.
 <ul class=brief>
  <li><span title=concept-cache-credentials>credentials</span> is true
  <li><span title=concept-cache-credentials>credentials</span> is false and <var>request</var>'s
- <span title=concept-request-credentials-mode>credentials mode</span> is not
+ <span title=concept-request-credentials-mode>credentials mode</span> is <em>not</em>
  "<code title>include</code>"
 </ul>
 
@@ -3778,13 +3755,20 @@ Entries may be removed before that moment arrives.
 <var>method</var> using <var>request</var> when there is an entry in
 <span title=concept-cache>CORS-preflight cache</span> for which there is a
 <span title=concept-cache-match>cache match</span> for <var>request</var> and its
-<span title=concept-cache-method>method</span> is <var>method</var>.
+<span title=concept-cache-method>method</span> is <var>method</var> or `<code>*</code>`.
 
 <p>There is a <dfn title=concept-cache-match-header>header-name cache match</dfn> for
 <var>headerName</var> using <var>request</var> when there is an entry in
 <span title=concept-cache>CORS-preflight cache</span> for which there is a
-<span title=concept-cache-match>cache match</span> for <var>request</var> and its
-<span title=concept-cache-header-name>header name</span> is <var>headerName</var>.
+<span title=concept-cache-match>cache match</span> for <var>request</var> and one of
+
+<ul class=brief>
+ <li><span title=concept-cache-header-name>header name</span> is <var>headerName</var>
+ <li><span title=concept-cache-header-name>header name</span> is `<code>*</code>` and
+ <var>headerName</var> is <em>not</em> a <span>CORS non-wildcard request-header name</span>
+</ul>
+
+<p>is true.
 
 
 <h3>CORS check</h3>
