@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-may-2016">Living Standard — Last Updated 5 May 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-18-may-2016">Living Standard — Last Updated 18 May 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -975,10 +975,10 @@ for other values. If <cite>HTML</cite> changes here, this standard will need cor
 Unless stated otherwise, it is unset.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="concept-request-cache-mode" title="concept-request-cache-mode">cache mode</dfn>, which is
-"<code title="">default</code>", "<code title="">no-store</code>", "<code title="">reload</code>",
-"<code title="">no-cache</code>", or "<code title="">force-cache</code>". Unless stated otherwise, it is
-"<code title="">default</code>".
+<dfn id="concept-request-cache-mode" title="concept-request-cache-mode">cache mode</dfn>, which is "<code title="">default</code>",
+"<code title="">no-store</code>", "<code title="">reload</code>", "<code title="">no-cache</code>",
+"<code title="">force-cache</code>", or "<code title="">only-if-cached</code>". Unless stated otherwise,
+it is "<code title="">default</code>".
 
 <div class="note no-backref">
  <dl>
@@ -1001,8 +1001,14 @@ Unless stated otherwise, it is unset.
 
   <dt>"<code title="">force-cache</code>"
   <dd>Fetch uses any response in the HTTP cache matching the request, not paying attention to
-  staleness. If there was no response, it creates a normal request updates the HTTP cache with the
-  response.
+  staleness. If there was no response, it creates a normal request and updates the HTTP cache with
+  the response.
+
+  <dt>"<code title="">only-if-cached</code>"
+  <dd>Fetch uses any response in the HTTP cache matching the request, not paying attention to
+  staleness. If there was no response, it returns a network error. (Can only be used when
+  <a href="#concept-request" title="concept-request">request</a>'s <span tilte="concept-request-mode">mode</span> is
+  "<code title="">same-origin</code>".)
  </dl>
 
  <p>If <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> contains a
@@ -3257,8 +3263,9 @@ The <i title="">credentials flag</i> is one too.
   <ol>
    <li>
    	<p>If <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
-   	"<code title="">force-cache</code>", set <var>response</var> to the
-   	<a href="#concept-response" title="concept-response">response</a> in the HTTP cache for <var>httpRequest</var>.
+   	"<code title="">force-cache</code>" or "<code title="">only-if-cached</code>", then set
+    <var>response</var> to the <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+    <var>httpRequest</var>.
 
    	<p class="note">As mandated by HTTP, this still takes the `<code title="http-vary">Vary</code>`
    	<a href="#concept-header" title="concept-header">header</a> into account.
@@ -3289,9 +3296,18 @@ The <i title="">credentials flag</i> is one too.
  <a href="#concept-header" title="concept-header">headers</a>.
  <!-- XXX xref partial, modify, resume headers -->
 
- <li><p>If <var>response</var> is null, set <var>response</var> to the result of making an
- <a href="#concept-http-network-fetch" title="concept-http-network-fetch">HTTP-network fetch</a> using <var>httpRequest</var> with
- the <i title="">credentials flag</i> set if set.
+ <li>
+  <p>If <var>response</var> is null, run these substeps:
+
+  <ol>
+   <li><p>If <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
+   "<code title="">only-if-cached</code>", then return a
+   <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+   <li><p>Set <var>response</var> to the result of making an
+   <a href="#concept-http-network-fetch" title="concept-http-network-fetch">HTTP-network fetch</a> using <var>httpRequest</var>
+   with the <i title="">credentials flag</i> set if set.
+  </ol>
 
  <li>
   <p>If <var>response</var>'s <a href="#concept-status" title="status">status</a> is <code>304</code> and
@@ -4446,7 +4462,7 @@ enum <dfn id="requesttype">RequestType</dfn> { "", "audio", "font", "image", "sc
 enum <dfn id="requestdestination">RequestDestination</dfn> { "", "document", "embed", "font", "image", "manifest", "media", "object", "report", "script", "serviceworker", "sharedworker", "style",  "worker", "xslt" };
 enum <dfn id="requestmode">RequestMode</dfn> { "navigate", "same-origin", "no-cors", "cors" };
 enum <dfn id="requestcredentials">RequestCredentials</dfn> { "omit", "same-origin", "include" };
-enum <dfn id="requestcache">RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache" };
+enum <dfn id="requestcache">RequestCache</dfn> { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum <dfn id="requestredirect">RequestRedirect</dfn> { "follow", "error", "manual" };</pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -4654,6 +4670,11 @@ constructor must run these steps:
  <li><p>If <var>init</var>'s <code title="">cache</code> member is present, set
  <var>request</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> to
  it.
+
+ <li><p>If <var>request</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
+ "<code title="">only-if-cached</code>" and <var>request</var>'s
+ <a href="#concept-request-mode" title="concept-request-mode">mode</a> is <em>not</em> "<code title="">same-origin</code>", then
+ <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>If <var>init</var>'s <code title="">redirect</code> member is present, set
  <var>request</var>'s <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>
@@ -5453,7 +5474,7 @@ however, it is perfectly fine to do so.
 <dd>(Non-normative) <cite><a href="https://tools.ietf.org/html/rfc6454">The Web Origin Concept</a></cite>, Adam Barth. IETF.
 
 <dt id="refsREFERRER">[REFERRER]
-<dd><cite><a href="https://w3c.github.io/webappsec-referrer-policy/">Referrer Policy</a></cite>, Jochen Eisinger and Mike West. W3C.
+<dd><cite><a href="https://w3c.github.io/webappsec-referrer-policy/">Referrer Policy</a></cite>, Jochen Eisinger and Emily Stark. W3C.
 
 <dt id="refsRFC2119">[RFC2119]
 <dd><cite><a href="https://tools.ietf.org/html/rfc2119">Key words for use in RFCs to Indicate Requirement Levels</a></cite>, Scott Bradner. IETF.
