@@ -147,11 +147,11 @@ range 0x61 to 0x7A, inclusive, by 0x20.
 
 <hr>
 
-<p>A <dfn>fetch URL</dfn> is a <span data-anolis-spec=url title=concept-url>URL</span> for
-which implementations need not store the
-<span data-anolis-spec=url title=concept-url-fragment>fragment</span> as it is never
-exposed. When <span data-anolis-spec=url title=concept-url-serializer>serialized</span>,
-the <i title>exclude fragment flag</i> is set, meaning implementations can store the
+<p id="fetch-url">A <dfn>response URL</dfn> is a
+<span data-anolis-spec=url title=concept-url>URL</span> for which implementations need not store the
+<span data-anolis-spec=url title=concept-url-fragment>fragment</span> as it is never exposed. When
+<span data-anolis-spec=url title=concept-url-serializer>serialized</span>, the
+<i title>exclude fragment flag</i> is set, meaning implementations can store the
 <span data-anolis-spec=url title=concept-url-fragment>fragment</span> nonetheless.
 
 <hr>
@@ -606,12 +606,13 @@ user-agent-defined <span title=concept-header-value>value</span> for the
 described in <span title=concept-http-fetch>HTTP fetch</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
-<dfn title=concept-request-url>url</dfn> (a <span>fetch URL</span>).
+<dfn title=concept-request-url>url</dfn> (a
+<span data-anolis-spec=url title=concept-url>URL</span>).
 
 <p class="note no-backref">Implementations are encouraged to make this a pointer to the first
-<span>fetch URL</span> in <span title=concept-request>request</span>'s
-<span title=concept-request-url-list>url list</span>. It is provided as a distinct field solely for
-the convenience of other standards hooking into Fetch.
+<span data-anolis-spec=url title=concept-url>URL</span> in
+<span title=concept-request>request</span>'s <span title=concept-request-url-list>url list</span>.
+It is provided as a distinct field solely for the convenience of other standards hooking into Fetch.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn>local-URLs-only flag</dfn>. Unless stated otherwise it is unset.
@@ -1015,14 +1016,14 @@ should be blocked in a given context.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-url-list>url list</dfn> (a list of one or more
-<span title="fetch URL">fetch URLs</span>). Unless stated otherwise, it is a list
+<span data-anolis-spec=url title=concept-url>URLs</span>). Unless stated otherwise, it is a list
 containing a copy of <span title=concept-request>request</span>'s
 <span title=concept-request-url>url</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-current-url>current url</dfn>. It is a pointer to the last
-<span>fetch URL</span> in <span title=concept-request>request</span>'s
-<span title=concept-request-url-list>url list</span>.
+<span data-anolis-spec=url title=concept-url>URL</span> in
+<span title=concept-request>request</span>'s <span title=concept-request-url-list>url list</span>.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn title=concept-request-redirect-count>redirect count</dfn>. Unless stated otherwise,
@@ -1106,20 +1107,18 @@ Unless stated otherwise, it is "<code title>default</code>".
 <i title>end-user abort</i>, <i title>fatal</i>, or <i title>timeout</i>.
 
 <p>A <span title=concept-response>response</span> has an associated
-<dfn title=concept-response-url>url</dfn>. It is a pointer to the last
-<span>fetch URL</span> in <span title=concept-response>response</span>'s
-<span title=concept-response-url-list>url list</span> and null if
-<span title=concept-response>response</span>'s
+<dfn title=concept-response-url>url</dfn>. It is a pointer to the last <span>response URL</span> in
+<span title=concept-response>response</span>'s <span title=concept-response-url-list>url list</span>
+and null if <span title=concept-response>response</span>'s
 <span title=concept-response-url-list>url list</span> is the empty list.
 
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-url-list>url list</dfn> (a list of zero or more
-<span title="fetch URL">fetch URLs</span>). Unless stated otherwise, it is the empty list.
+<span title="response URL">response URLs</span>). Unless stated otherwise, it is the empty list.
 
-<p class="note no-backref">Except for the last <span>fetch URL</span>, if any, a
-<span title=concept-response>response</span>'s
-<span title=concept-response-url-list>url list</span> cannot be exposed to script. That
-would violate <span>atomic HTTP redirect handling</span>.
+<p class="note no-backref">Except for the last <span>response URL</span>, if any, a
+<span title=concept-response>response</span>'s <span title=concept-response-url-list>url list</span>
+cannot be exposed to script. That would violate <span>atomic HTTP redirect handling</span>.
 
 <p>A <span title=concept-response>response</span> has an associated
 <dfn title=concept-response-status>status</dfn>, which is a <span>status</span>. Unless stated
@@ -3729,7 +3728,8 @@ entries where each entry has these fields:
 
 <ul class=brief>
  <li><dfn title=concept-cache-origin>origin</dfn> (an <span data-anolis-spec=html>origin</span>)
- <li><dfn title=concept-cache-url>url</dfn> (a <span data-anolis-spec=url>URL</span>
+ <li><dfn title=concept-cache-url>url</dfn> (a
+ <span data-anolis-spec=url title=concept-url>URL</span>)
  <li><dfn title=concept-cache-max-age>max-age</dfn> (a number of seconds)
  <li><dfn title=concept-cache-credentials>credentials</dfn> (a boolean)
  <li><dfn title=concept-cache-method>method</dfn> (null, `<code>*</code>`, or a
@@ -4803,8 +4803,7 @@ return <span title=concept-Request-request>request</span>'s
 <p>The <dfn title=dom-Request-url><code>url</code></dfn> attribute's getter must
 return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-url>url</span>,
-<span data-anolis-spec=url title=concept-url-serializer>serialized</span> with the
-<i title>exclude-fragment flag</i> set.
+<span data-anolis-spec=url title=concept-url-serializer>serialized</span>.
 
 <p>The <dfn title=dom-Request-headers><code>headers</code></dfn> attribute's getter must
 return the associated <code>Headers</code> object.
