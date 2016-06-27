@@ -1166,6 +1166,17 @@ set by <span title=concept-header-parse>parsing</span> the
 list is used by a <span title=concept-filtered-response-cors>CORS filtered response</span> to
 determine which headers to expose.
 
+<p>A <span title=concept-response>response</span> can have an associated
+<dfn title=concept-response-location-url>location URL</dfn> (null, failure, or a
+<span data-anolis-spec=url title=concept-url>URL</span>). Unless specified otherwise, a
+<span title=concept-response>response</span> has no
+<span title=concept-response-location-url>location URL</span>.
+
+<p class="note no-backref">This concept is used for redirect handling in Fetch and in HTML's
+navigate algorithm. It ensures `<code title>Location</code>` is
+<span title=concept-header-parse>parsed</span> consistently and only once.
+<span data-anolis-ref>HTML</span>
+
 <hr>
 
 <p>A <span title=concept-response>response</span> whose
@@ -2875,6 +2886,18 @@ indicates an attempt to authenticate.
       <p class="note"><code>303</code> is excluded as certain communities ascribe special status to
       it.
 
+     <li><p>Let <var>location</var> be the result of <span title=concept-header-parse>parsing</span>
+     `<code title>Location</code>` in <var>actualResponse</var>'s
+     <span title=concept-response-header-list>header list</span>.
+
+     <li><p>If <var>location</var> is a <span title=concept-header-value>value</span>, then set
+     <var>location</var> to the result of
+     <span data-anolis-spec=url title=concept-url-parser>parsing</span> <var>location</var> with
+     <var>actualResponse</var>'s <span title=concept-response-url>url</span>.
+
+     <li><p>Set<var>actualResponse</var>'s
+     <span title=concept-response-location-url>location URL</span> to <var>location</var>.
+
      <li>
       <p>Switch on <var>request</var>'s
       <span title=concept-request-redirect-mode>redirect mode</span>:
@@ -2990,22 +3013,12 @@ in addition to <span title=concept-http-fetch>HTTP fetch</span> above.
  <span title=concept-filtered-response>filtered response</span>, and <var>response</var>'s
  <span title=concept-internal-response>internal response</span> otherwise.
 
- <li><p>Let <var>location</var> be the result of <span title=concept-header-parse>parsing</span>
- `<code title>Location</code>` in <var>actualResponse</var>'s
- <span title=concept-response-header-list>header list</span>.
+ <li><p>If <var>actualResponse</var>'s <span title=concept-response-location-url>location URL</span>
+ is null, then return <var>response</var>.
 
- <li><p>If <var>location</var> is null, return <var>response</var>.
-
- <li><p>If <var>location</var> is failure, return a
- <span title=concept-network-error>network error</span>.
+ <li><p>If <var>actualResponse</var>'s <span title=concept-response-location-url>location URL</span>
+ is failure, then return a <span title=concept-network-error>network error</span>.
  <!-- only Gecko does this; and even that is currently more complicated -->
-
- <li><p>Let <var>locationURL</var> be the result of
- <span data-anolis-spec=url title=concept-url-parser>parsing</span> <var>location</var> with
- <var>actualResponse</var>'s <span title=concept-response-url>url</span>.
-
- <li><p>If <var>locationURL</var> is failure, return a
- <span title=concept-network-error>network error</span>.
 
  <li><p>If <var>locationURL</var>'s
  <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is <em>not</em> an

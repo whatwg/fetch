@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-june-2016">Living Standard — Last Updated 9 June 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-27-june-2016">Living Standard — Last Updated 27 June 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -1237,6 +1237,17 @@ set by <a href="#concept-header-parse" title="concept-header-parse">parsing</a> 
 `<a href="#http-access-control-expose-headers"><code title="http-access-control-expose-headers">Access-Control-Expose-Headers</code></a>` header. This
 list is used by a <a href="#concept-filtered-response-cors" title="concept-filtered-response-cors">CORS filtered response</a> to
 determine which headers to expose.
+
+<p>A <a href="#concept-response" title="concept-response">response</a> can have an associated
+<dfn id="concept-response-location-url" title="concept-response-location-url">location URL</dfn> (null, failure, or a
+<a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>). Unless specified otherwise, a
+<a href="#concept-response" title="concept-response">response</a> has no
+<a href="#concept-response-location-url" title="concept-response-location-url">location URL</a>.
+
+<p class="note no-backref">This concept is used for redirect handling in Fetch and in HTML's
+navigate algorithm. It ensures `<code title="">Location</code>` is
+<a href="#concept-header-parse" title="concept-header-parse">parsed</a> consistently and only once.
+<a href="#refsHTML">[HTML]</a>
 
 <hr>
 
@@ -2947,6 +2958,18 @@ indicates an attempt to authenticate.
       <p class="note"><code>303</code> is excluded as certain communities ascribe special status to
       it.
 
+     <li><p>Let <var>location</var> be the result of <a href="#concept-header-parse" title="concept-header-parse">parsing</a>
+     `<code title="">Location</code>` in <var>actualResponse</var>'s
+     <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+
+     <li><p>If <var>location</var> is a <a href="#concept-header-value" title="concept-header-value">value</a>, then set
+     <var>location</var> to the result of
+     <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a> <var>location</var> with
+     <var>actualResponse</var>'s <a href="#concept-response-url" title="concept-response-url">url</a>.
+
+     <li><p>Set<var>actualResponse</var>'s
+     <a href="#concept-response-location-url" title="concept-response-location-url">location URL</a> to <var>location</var>.
+
      <li>
       <p>Switch on <var>request</var>'s
       <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>:
@@ -3062,22 +3085,12 @@ in addition to <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fet
  <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>, and <var>response</var>'s
  <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
 
- <li><p>Let <var>location</var> be the result of <a href="#concept-header-parse" title="concept-header-parse">parsing</a>
- `<code title="">Location</code>` in <var>actualResponse</var>'s
- <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+ <li><p>If <var>actualResponse</var>'s <a href="#concept-response-location-url" title="concept-response-location-url">location URL</a>
+ is null, then return <var>response</var>.
 
- <li><p>If <var>location</var> is null, return <var>response</var>.
-
- <li><p>If <var>location</var> is failure, return a
- <a href="#concept-network-error" title="concept-network-error">network error</a>.
+ <li><p>If <var>actualResponse</var>'s <a href="#concept-response-location-url" title="concept-response-location-url">location URL</a>
+ is failure, then return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
  <!-- only Gecko does this; and even that is currently more complicated -->
-
- <li><p>Let <var>locationURL</var> be the result of
- <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a> <var>location</var> with
- <var>actualResponse</var>'s <a href="#concept-response-url" title="concept-response-url">url</a>.
-
- <li><p>If <var>locationURL</var> is failure, return a
- <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
  <li><p>If <var>locationURL</var>'s
  <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is <em>not</em> an
