@@ -2767,6 +2767,48 @@ indicates an attempt to authenticate.
   </ol>
 
  <li>
+  <p>If <var>response</var> is null and <var>request</var>'s
+  <span>skip-service-worker flag</span> is unset, run these substeps:
+
+  <ol>
+   <li>
+    <p>Set <var>response</var> to the result of invoking
+    <span data-anolis-spec=sw>handle foreign fetch</span> for <var>request</var>.
+    <span data-anolis-ref>SW</span>
+
+    <p><span title="Read a request">Read <var>request</var></span>.
+
+   <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
+   <span title=concept-filtered-response>filtered response</span>, and to <var>response</var>'s
+   <span title=concept-internal-response>internal response</span> otherwise.
+
+   <li>
+    <p>If one of the following conditions is true, return a
+    <span title=concept-network-error>network error</span>:
+
+    <ul class=brief>
+     <li><var>response</var>'s
+     <span title=concept-response-type>type</span> is "<code title>error</code>".
+
+     <li><var>request</var>'s <span title=concept-request-mode>mode</span> is not
+     "<code title>no-cors</code>" and <var>response</var>'s
+     <span title=concept-response-type>type</span> is "<code title>opaque</code>".
+
+     <li><var>request</var>'s <span title=concept-request-redirect-mode>redirect mode</span> is not
+     "<code title>manual</code>" and <var>response</var>'s
+     <span title=concept-response-type>type</span> is "<code title>opaqueredirect</code>".
+
+     <li><var>request</var>'s <span title=concept-request-redirect-mode>redirect mode</span> is not
+     "<code title>follow</code>" and <var>response</var>'s
+     <span title=concept-response-url-list>url list</span> has more than one item.
+    </ul>
+
+   <li><p>Execute
+   <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
+   on <var>actualResponse</var>. <span data-anolis-ref>CSP</span>
+  </ol>
+
+ <li>
   <p>Let <var>credentials flag</var> be set if one of
 
   <ul class=brief>
