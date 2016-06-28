@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-27-july-2016">Living Standard — Last Updated 27 July 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-4-august-2016">Living Standard — Last Updated 4 August 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -2792,50 +2792,62 @@ indicates an attempt to authenticate.
  <li><p>Let <var>actualResponse</var> be null.
 
  <li>
-  <p>If <var>request</var>'s <a href="#skip-service-worker-flag">skip-service-worker flag</a> is unset and
-  either <var>request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a> is
-  null or <var>request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a>'s
-  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-settings-object-global" title="concept-settings-object-global">global object</a> is not a
-  <a href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/#service-worker-global-scope-interface"><code class="external" data-anolis-spec="sw">ServiceWorkerGlobalScope</code></a> object, run these substeps:
-  <a href="#refsHTML">[HTML]</a>
-  <a href="#refsSW">[SW]</a>
+  <p>If <var>request</var>'s <a href="#skip-service-worker-flag">skip-service-worker flag</a> is unset, then run these
+  substeps:
 
   <ol>
    <li>
-    <p>Set <var>response</var> to the result of invoking
-    <a class="external" data-anolis-spec="sw" href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/#on-fetch-request-algorithm">handle fetch</a> for <var>request</var>.
-    <a href="#refsSW">[SW]</a>
-
-    <p><a href="#read-a-request" title="Read a request">Read <var>request</var></a>.
-
-   <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
-   <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>, and to <var>response</var>'s
-   <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
+    <p>If <var>request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a> is null or
+    <var>request</var>'s <a href="#concept-request-client" title="concept-request-client">client</a>'s
+    <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-settings-object-global" title="concept-settings-object-global">global object</a> is not a
+    <a href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/#service-worker-global-scope-interface"><code class="external" data-anolis-spec="sw">ServiceWorkerGlobalScope</code></a> object, then set <var>response</var>
+    to the result of invoking <a class="external" data-anolis-spec="sw" href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/#on-fetch-request-algorithm">handle fetch</a> for <var>request</var>.
+    <a href="#refsHTML">[HTML]</a> <a href="#refsSW">[SW]</a>
 
    <li>
-    <p>If one of the following conditions is true, return a
-    <a href="#concept-network-error" title="concept-network-error">network error</a>:
+    <p>If <var>response</var> is null, <var>request</var> is a <a href="#subresource-request">subresource request</a>, and
+    <var>request</var>'s <a href="#concept-request-origin" title="concept-request-origin">origin</a> is not
+    <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var>request</var>'s
+    <a href="#concept-request-url" title="concept-request-url">url</a>'s
+    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a>, then set <var>response</var>
+    to the result of invoking <a class="external" data-anolis-spec="sw" href="https://slightlyoff.github.io/ServiceWorker/spec/service_worker/#on-foreign-fetch-request-algorithm">handle foreign fetch</a> for
+    <var>request</var>. <a href="#refsSW">[SW]</a>
 
-    <ul class="brief">
-     <li><var>response</var>'s
-     <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">error</code>".
+   <li>
+    <p>If <var>response</var> is not null, then run these substeps:
 
-     <li><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is not
-     "<code title="">no-cors</code>" and <var>response</var>'s
-     <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaque</code>".
+    <ol>
+     <li><p><a href="#read-a-request" title="Read a request">Read <var>request</var></a>.
 
-     <li><var>request</var>'s <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is not
-     "<code title="">manual</code>" and <var>response</var>'s
-     <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaqueredirect</code>".
+     <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
+     <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a>, and to <var>response</var>'s
+     <a href="#concept-internal-response" title="concept-internal-response">internal response</a> otherwise.
 
-     <li><var>request</var>'s <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is not
-     "<code title="">follow</code>" and <var>response</var>'s
-     <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> has more than one item.
-    </ul>
+     <li>
+      <p>If one of the following conditions is true, then return a
+      <a href="#concept-network-error" title="concept-network-error">network error</a>:
 
-   <li><p>Execute
-   <a href="https://w3c.github.io/webappsec-csp/#set-response-csp-list">set <var>response</var>'s CSP list</a>
-   on <var>actualResponse</var>. <a href="#refsCSP">[CSP]</a>
+      <ul class="brief">
+       <li><var>response</var>'s
+       <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">error</code>".
+
+       <li><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is not
+       "<code title="">no-cors</code>" and <var>response</var>'s
+       <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaque</code>".
+
+       <li><var>request</var>'s <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
+       not "<code title="">manual</code>" and <var>response</var>'s
+       <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaqueredirect</code>".
+
+       <li><var>request</var>'s <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
+       not "<code title="">follow</code>" and <var>response</var>'s
+       <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> has more than one item.
+      </ul>
+
+     <li><p>Execute
+     <a href="https://w3c.github.io/webappsec-csp/#set-response-csp-list">set <var>response</var>'s CSP list</a>
+     on <var>actualResponse</var>. <a href="#refsCSP">[CSP]</a>
+    </ol>
   </ol>
 
  <li>
