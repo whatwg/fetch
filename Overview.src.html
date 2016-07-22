@@ -3257,12 +3257,29 @@ The <i title>credentials flag</i> is one too.
  <li><p>Let <var>response</var> be null.
 
  <li>
-  <p>If <var>httpRequest</var>'s
-  <span title=concept-request-cache-mode>cache mode</span> is neither
-  "<code title>no-store</code>" nor "<code title>reload</code>", and there is a <em>complete</em>
-  <span title=concept-response>response</span> in the HTTP cache for
-  <var>httpRequest</var> run these substeps:
-  <!-- XXX xref "HTTP cache" -->
+  <p>If <var>httpRequest</var>'s <span title=concept-request-cache-mode>cache mode</span> is
+  "<code title>default</code>", then follow the normal procedures to determine whether the
+  HTTP cache has a <span title=concept-response>response</span> for <var>httpRequest</var>.
+
+  <p class="note">Including taking into account any
+  `<code title=http-cache-control>Cache-Control</code>` and `<code title=http-pragma>Pragma</code>`
+  <span title=concept-header>headers</span>.
+
+  <p>If there is such a <span title=concept-response>response</span>, then set <var>response</var>
+  to it. Otherwise, if necessary, modify <var>httpRequest</var>'s
+  <span title=concept-request-header-list>header list</span> with revalidation or resume
+  <span title=concept-header>headers</span>.
+  <!-- XXX modify, revalidation headers, resume headers -->
+
+  <p class="note">Unfortunately this is vaguer than intended. The HTTP cache specification does not
+  provide the necessary hooks to make this (or indeed, what follows) crystal clear.
+  <!-- XXX HTTP cache -->
+
+ <li>
+  <p>Otherwise, if <var>httpRequest</var>'s <span title=concept-request-cache-mode>cache mode</span>
+  is neither "<code title>no-store</code>" nor "<code title>reload</code>", and there is a
+  <em>complete</em> <span title=concept-response>response</span> in the HTTP cache for
+  <var>httpRequest</var>, then run these substeps:
 
   <ol>
    <li>
@@ -3275,28 +3292,19 @@ The <i title>credentials flag</i> is one too.
     <span title=concept-header>header</span> into account.
 
    <li><p>Otherwise, if <var>httpRequest</var>'s
-   <span title=concept-request-cache-mode>cache mode</span> is "<code title>default</code>" and the
-   <span title=concept-response>response</span> in the HTTP cache for <var>httpRequest</var> does
-   not require revalidation, then set <var>response</var> to that
-   <span title=concept-response>response</span>.
-   <!-- XXX xref "revalidation" -->
-
-   <li><p>Otherwise, if <var>httpRequest</var>'s
-   <span title=concept-request-cache-mode>cache mode</span> is either "<code title>default</code>"
-   or "<code title>no-cache</code>", modify <var>httpRequest</var>'s
-   <span title=concept-request-header-list>header list</span> with revalidation
-   <span title=concept-header>headers</span>.
+   <span title=concept-request-cache-mode>cache mode</span> is "<code title>no-cache</code>", then
+   modify <var>httpRequest</var>'s <span title=concept-request-header-list>header list</span> with
+   revalidation <span title=concept-header>headers</span>.
    <!-- XXX modify, revalidation headers -->
   </ol>
 
  <li><p>Otherwise, if <var>httpRequest</var>'s
- <span title=concept-request-cache-mode>cache mode</span> is either
- "<code title>default</code>" or "<code title>force-cache</code>", and there is a
- <em>partial</em> <span title=concept-response>response</span> in the HTTP cache for
- <var>httpRequest</var>, modify <var>httpRequest</var>'s
+ <span title=concept-request-cache-mode>cache mode</span> is "<code title>force-cache</code>", and
+ there is a <em>partial</em> <span title=concept-response>response</span> in the HTTP cache for
+ <var>httpRequest</var>, then modify <var>httpRequest</var>'s
  <span title=concept-request-header-list>header list</span> with resume
  <span title=concept-header>headers</span>.
- <!-- XXX xref partial, modify, resume headers -->
+ <!-- XXX partial, modify, resume headers -->
 
  <li>
   <p>If <var>response</var> is null, run these substeps:
