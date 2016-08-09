@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-5-august-2016">Living Standard — Last Updated 5 August 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-9-august-2016">Living Standard — Last Updated 9 August 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -4556,15 +4556,49 @@ is itself associated with <a href="#concept-request-request" title="concept-Requ
 constructor must run these steps:
 
 <ol>
- <li><p>If <var>input</var> is a <a href="#request"><code>Request</code></a> object and it is
- <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a> or
- <a href="#concept-body-locked" title="concept-Body-locked">locked</a>, <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
- <code title="">TypeError</code>.
+ <li><p>Let <var>request</var> be null.
 
- <li><p>Let <var>request</var> be <var>input</var>'s
- <a href="#concept-request-request" title="concept-Request-request">request</a>, if <var>input</var> is a
- <a href="#request"><code>Request</code></a> object, and a new <a href="#concept-request" title="concept-request">request</a>
- otherwise.
+ <li><p>Let <var>fallbackMode</var> be null.
+
+ <li><p>Let <var>fallbackCredentials</var> be null.
+
+ <li><p>Let <var>baseURL</var> be <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
+ <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url">API base URL</a>.
+
+ <li>
+  <p>If <var>input</var> is a string, then run these substeps:
+
+  <ol>
+   <li><p>Let <var>parsedURL</var> be the result of
+   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a> <var>input</var> with
+   <var>baseURL</var>.
+
+   <li><p>If <var>parsedURL</var> is failure, then <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+   <code title="">TypeError</code>.
+
+   <li><p>If <var>parsedURL</var>
+   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#include-credentials" title="include credentials">includes credentials</a>, then
+   <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+
+   <li><p>Set <var>request</var> to a new <a href="#concept-request" title="concept-request">request</a> whose
+   <a href="#concept-request-url" title="concept-request-url">url</a> is <var>parsedURL</var>.
+
+   <li><p>Set <var>fallbackMode</var> to "<code title="">cors</code>".
+
+   <li><p>Set <var>fallbackCredentials</var> to "<code title="">omit</code>".
+  </ol>
+
+ <li>
+  <p>Otherwise (<var>input</var> is a <a href="#request"><code>Request</code></a> object), run these steps:
+
+  <ol>
+   <li><p>If <var>input</var> is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a> or
+   <a href="#concept-body-locked" title="concept-Body-locked">locked</a>, then <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+   <code title="">TypeError</code>.
+
+   <li><p>Set <var>request</var> to <var>input</var>'s
+   <a href="#concept-request-request" title="concept-Request-request">request</a>.
+  </ol>
 
  <li><p>Let <var>origin</var> be <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">origin</a>.
@@ -4617,40 +4651,6 @@ constructor must run these steps:
  <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a> is
  <var>request</var>'s
  <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a>.
-
- <li><p>Let <var>fallbackMode</var> be null.
-
- <li><p>Let <var>fallbackCredentials</var> be null.
-
- <li><p>Let <var>baseURL</var> be
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
- <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url">API base URL</a>.
-
- <li>
-  <p>If <var>input</var> is a string, run these substeps:
-
-  <ol>
-   <li><p>Let <var>parsedURL</var> be the result of
-   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
-   <var>input</var> with <var>baseURL</var>.
-
-   <li><p>If <var>parsedURL</var> is failure,
-   <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
-   <li><p>If <var>parsedURL</var>
-   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#include-credentials" title="include credentials">includes credentials</a>,
-   <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
-
-   <li><p>Set <var>request</var>'s <a href="#concept-request-url" title="concept-request-url">url</a> to
-   <var>parsedURL</var> and replace <var>request</var>'s
-   <a href="#concept-request-url-list" title="concept-request-url-list">url list</a> single
-   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a> with a copy of
-   <var>parsedURL</var>.
-
-   <li><p>Set <var>fallbackMode</var> to "<code title="">cors</code>".
-
-   <li><p>Set <var>fallbackCredentials</var> to "<code title="">omit</code>".
-  </ol>
 
  <li>
   <p>If any of <var>init</var>'s members are present, run these substeps:
