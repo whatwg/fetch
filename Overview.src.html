@@ -4484,15 +4484,49 @@ is itself associated with <span title=concept-Request-request>request</span>'s
 constructor must run these steps:
 
 <ol>
- <li><p>If <var>input</var> is a <code>Request</code> object and it is
- <span title=concept-Body-disturbed>disturbed</span> or
- <span title=concept-Body-locked>locked</span>, <span data-anolis-spec=webidl>throw</span> a
- <code title>TypeError</code>.
+ <li><p>Let <var>request</var> be null.
 
- <li><p>Let <var>request</var> be <var>input</var>'s
- <span title=concept-Request-request>request</span>, if <var>input</var> is a
- <code>Request</code> object, and a new <span title=concept-request>request</span>
- otherwise.
+ <li><p>Let <var>fallbackMode</var> be null.
+
+ <li><p>Let <var>fallbackCredentials</var> be null.
+
+ <li><p>Let <var>baseURL</var> be <span data-anolis-spec=html>entry settings object</span>'s
+ <span data-anolis-spec=html>API base URL</span>.
+
+ <li>
+  <p>If <var>input</var> is a string, then run these substeps:
+
+  <ol>
+   <li><p>Let <var>parsedURL</var> be the result of
+   <span data-anolis-spec=url title=concept-url-parser>parsing</span> <var>input</var> with
+   <var>baseURL</var>.
+
+   <li><p>If <var>parsedURL</var> is failure, then <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
+
+   <li><p>If <var>parsedURL</var>
+   <span data-anolis-spec=url title="include credentials">includes credentials</span>, then
+   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+
+   <li><p>Set <var>request</var> to a new <span title=concept-request>request</span> whose
+   <span title=concept-request-url>url</span> is <var>parsedURL</var>.
+
+   <li><p>Set <var>fallbackMode</var> to "<code title>cors</code>".
+
+   <li><p>Set <var>fallbackCredentials</var> to "<code title>omit</code>".
+  </ol>
+
+ <li>
+  <p>Otherwise (<var>input</var> is a <code>Request</code> object), run these steps:
+
+  <ol>
+   <li><p>If <var>input</var> is <span title=concept-Body-disturbed>disturbed</span> or
+   <span title=concept-Body-locked>locked</span>, then <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
+
+   <li><p>Set <var>request</var> to <var>input</var>'s
+   <span title=concept-Request-request>request</span>.
+  </ol>
 
  <li><p>Let <var>origin</var> be <span data-anolis-spec=html>entry settings object</span>'s
  <span data-anolis-spec=html>origin</span>.
@@ -4545,40 +4579,6 @@ constructor must run these steps:
  <span title=concept-request-integrity-metadata>integrity metadata</span> is
  <var>request</var>'s
  <span title=concept-request-integrity-metadata>integrity metadata</span>.
-
- <li><p>Let <var>fallbackMode</var> be null.
-
- <li><p>Let <var>fallbackCredentials</var> be null.
-
- <li><p>Let <var>baseURL</var> be
- <span data-anolis-spec=html>entry settings object</span>'s
- <span data-anolis-spec=html>API base URL</span>.
-
- <li>
-  <p>If <var>input</var> is a string, run these substeps:
-
-  <ol>
-   <li><p>Let <var>parsedURL</var> be the result of
-   <span data-anolis-spec=url title=concept-url-parser>parsing</span>
-   <var>input</var> with <var>baseURL</var>.
-
-   <li><p>If <var>parsedURL</var> is failure,
-   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
-
-   <li><p>If <var>parsedURL</var>
-   <span data-anolis-spec=url title="include credentials">includes credentials</span>,
-   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
-
-   <li><p>Set <var>request</var>'s <span title=concept-request-url>url</span> to
-   <var>parsedURL</var> and replace <var>request</var>'s
-   <span title=concept-request-url-list>url list</span> single
-   <span data-anolis-spec=url title=concept-url>URL</span> with a copy of
-   <var>parsedURL</var>.
-
-   <li><p>Set <var>fallbackMode</var> to "<code title>cors</code>".
-
-   <li><p>Set <var>fallbackCredentials</var> to "<code title>omit</code>".
-  </ol>
 
  <li>
   <p>If any of <var>init</var>'s members are present, run these substeps:
