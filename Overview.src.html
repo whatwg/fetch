@@ -3991,7 +3991,10 @@ interface <dfn>Headers</dfn> {
 
 <p>A <code>Headers</code> object has an associated
 <dfn title=concept-Headers-header-list>header list</dfn> (a
-<span title=concept-header-list>header list</span>), which is initially empty.
+<span title=concept-header-list>header list</span>), which is initially empty. <span class=note>This
+can be a pointer to the <span title=concept-header-list>header list</span> of something else, e.g.,
+of a <span title=concept-request>request</span> as demonstrated by <code>Request</code>
+objects.</span>
 
 <p>A <code>Headers</code> object also has an associated
 <dfn title=concept-Headers-guard>guard</dfn>, which is
@@ -4722,19 +4725,19 @@ constructor must run these steps:
    to <var>method</var>.
   </ol>
 
- <li><p>Let <var>r</var> be a new <code>Request</code> object associated with
- <var>request</var> and a new <code>Headers</code> object whose
- <span title=concept-Headers-guard>guard</span> is "<code title>request</code>".
+ <li><p>Let <var>r</var> be a new <code>Request</code> object associated with <var>request</var> and
+ a new associated <code>Headers</code> object whose <span title=concept-Headers-guard>guard</span>
+ is "<code title>request</code>".
 
- <li><p>Let <var>headers</var> be a copy of <var>r</var>'s
- <code>Headers</code> object.
+ <li><p>Let <var>headers</var> be a copy of <var>r</var>'s <code>Headers</code> object and its
+ associated <span title=concept-Headers-header-list>header list</span>.
  <!-- it might contain a header that is no longer allowed per the mode change -->
 
  <li><p>If <var>init</var>'s <code title>headers</code> member is present, set
  <var>headers</var> to <var>init</var>'s <code title>headers</code> member.
 
- <li><p>Empty <var>r</var>'s <span title=concept-Request-request>request</span>'s
- <span title=concept-request-header-list>header list</span>.
+ <li><p>Empty <var>r</var>'s <code>Headers</code> object's
+ <span title=concept-Headers-header-list>header list</span>.
 
  <li>
   <p>If <var>r</var>'s <span title=concept-Request-request>request</span>'s
@@ -4779,11 +4782,10 @@ constructor must run these steps:
    <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s
    <code title>body</code> member. Rethrow any exceptions.
 
-   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s
-   <span title=concept-Request-request>request</span>'s
-   <span title=concept-request-header-list>header list</span> contains no
+   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <code>Headers</code> object's
+   <span title=concept-Headers-header-list>header list</span> contains no
    <span title=concept-header>header</span> <span title=concept-header-name>named</span>
-   `<code title>Content-Type</code>`, <span title=concept-Headers-append>append</span>
+   `<code title>Content-Type</code>`, then <span title=concept-Headers-append>append</span>
    `<code title>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s
    <code>Headers</code> object. Rethrow any exception.
   </ol>
@@ -4898,10 +4900,10 @@ run these steps:
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
  <li><p>Return a new <code>Request</code> object associated with the result of
- <span title=concept-request-clone>cloning</span>
- <span title=concept-Request-request>request</span> and a new <code>Headers</code> object whose
+ <span title=concept-request-clone>cloning</span> <span title=concept-Request-request>request</span>
+ and a new associated <code>Headers</code> object whose
  <span title=concept-Headers-guard>guard</span> is
- <span data-anolis-spec=dom>context object</span>'s <code>Headers</code>'
+ <span data-anolis-spec=dom>context object</span>'s <code>Headers</code> object's
  <span title=concept-Headers-guard>guard</span>.
 </ol>
 
@@ -4965,9 +4967,9 @@ constructor, when invoked, must run these steps:
  <span data-anolis-spec=http>reason-phrase</span> token production,
  <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
 
- <li><p>Let <var>r</var> be a new <code>Response</code> object, associated with a
- new <span title=concept-response>response</span> and a new <code>Headers</code> object
- whose <span title=concept-Headers-guard>guard</span> is "<code title>response</code>".
+ <li><p>Let <var>r</var> be a new <code>Response</code> object, associated with a new
+ <span title=concept-response>response</span> and a new associated <code>Headers</code> object whose
+ <span title=concept-Headers-guard>guard</span> is "<code title>response</code>".
 
  <li><p>Set <var>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var>init</var>'s
@@ -5036,11 +5038,10 @@ constructor, when invoked, must run these steps:
  <li><p>Return <var>r</var>.
 </ol>
 
-<p>The static <dfn title=dom-Response-error><code>error()</code></dfn> method, when
-invoked, must return a new <code>Response</code> object, associated with a new
-<span title=concept-network-error>network error</span> and a new <code>Headers</code>
-object whose <span title=concept-Headers-guard>guard</span> is
-"<code title>immutable</code>".
+<p>The static <dfn title=dom-Response-error><code>error()</code></dfn> method, when invoked, must
+return a new <code>Response</code> object, associated with a new
+<span title=concept-network-error>network error</span> and a new associated <code>Headers</code>
+object whose <span title=concept-Headers-guard>guard</span> is "<code title>immutable</code>".
 
 <p>The static
 <dfn title=dom-Response-redirect><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
@@ -5058,9 +5059,9 @@ method, when invoked, must run these steps:
  <li><p>If <var>status</var> is not a <span>redirect status</span>,
  <span data-anolis-spec=webidl>throw</span> a <code title>RangeError</code>.
 
- <li><p>Let <var>r</var> be a new <code>Response</code> object, associated with a
- new <span title=concept-response>response</span> and a new <code>Headers</code> object
- whose <span title=concept-Headers-guard>guard</span> is "<code title>immutable</code>".
+ <li><p>Let <var>r</var> be a new <code>Response</code> object, associated with a new
+ <span title=concept-response>response</span> and a new associated <code>Headers</code> object whose
+ <span title=concept-Headers-guard>guard</span> is "<code title>immutable</code>".
 
  <li><p>Set <var>r</var>'s <span title=concept-Response-response>response</span>'s
  <span title=concept-response-status>status</span> to <var>status</var>.
@@ -5174,7 +5175,7 @@ method, must run these steps:
  <var>init</var> as arguments. If this throws an exception, reject
  <var>p</var> with it and return <var>p</var>.
 
- <li><p>Let <var>responseObject</var> be a new <code>Response</code> object and a new
+ <li><p>Let <var>responseObject</var> be a new <code>Response</code> object and a new associated
  <code>Headers</code> object whose <span title=concept-Headers-guard>guard</span> is
  "<code>immutable</code>".
 
@@ -5562,6 +5563,7 @@ Louis Ryan,
 Lucas Gonze,
 呂康豪 (Kang-Hao Lu),
 Maciej Stachowiak,
+Malisa<!-- malisas; GitHub -->,
 Manfred Stock,
 Manish Goregaokar,
 Marc Silbey,
@@ -5611,7 +5613,7 @@ Vladimir Dzhuvinov,
 Wayne Carr,
 Xabier Rodríguez,
 Yoav Weiss,
-Youenn Fablet<!-- youennf -->,
+Youenn Fablet<!-- youennf; GitHub -->,
 平野裕 (Yutaka Hirano), and
 Zhenbin Xu
 for being awesome.

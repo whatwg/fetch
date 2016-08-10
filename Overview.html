@@ -4063,7 +4063,10 @@ interface <dfn id="headers">Headers</dfn> {
 
 <p>A <a href="#headers"><code>Headers</code></a> object has an associated
 <dfn id="concept-headers-header-list" title="concept-Headers-header-list">header list</dfn> (a
-<a href="#concept-header-list" title="concept-header-list">header list</a>), which is initially empty.
+<a href="#concept-header-list" title="concept-header-list">header list</a>), which is initially empty. <span class="note">This
+can be a pointer to the <a href="#concept-header-list" title="concept-header-list">header list</a> of something else, e.g.,
+of a <a href="#concept-request" title="concept-request">request</a> as demonstrated by <a href="#request"><code>Request</code></a>
+objects.</span>
 
 <p>A <a href="#headers"><code>Headers</code></a> object also has an associated
 <dfn id="concept-headers-guard" title="concept-Headers-guard">guard</dfn>, which is
@@ -4794,19 +4797,19 @@ constructor must run these steps:
    to <var>method</var>.
   </ol>
 
- <li><p>Let <var>r</var> be a new <a href="#request"><code>Request</code></a> object associated with
- <var>request</var> and a new <a href="#headers"><code>Headers</code></a> object whose
- <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">request</code>".
+ <li><p>Let <var>r</var> be a new <a href="#request"><code>Request</code></a> object associated with <var>request</var> and
+ a new associated <a href="#headers"><code>Headers</code></a> object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a>
+ is "<code title="">request</code>".
 
- <li><p>Let <var>headers</var> be a copy of <var>r</var>'s
- <a href="#headers"><code>Headers</code></a> object.
+ <li><p>Let <var>headers</var> be a copy of <var>r</var>'s <a href="#headers"><code>Headers</code></a> object and its
+ associated <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
  <!-- it might contain a header that is no longer allowed per the mode change -->
 
  <li><p>If <var>init</var>'s <code title="">headers</code> member is present, set
  <var>headers</var> to <var>init</var>'s <code title="">headers</code> member.
 
- <li><p>Empty <var>r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
- <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
+ <li><p>Empty <var>r</var>'s <a href="#headers"><code>Headers</code></a> object's
+ <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a>.
 
  <li>
   <p>If <var>r</var>'s <a href="#concept-request-request" title="concept-Request-request">request</a>'s
@@ -4851,11 +4854,10 @@ constructor must run these steps:
    <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var>init</var>'s
    <code title="">body</code> member. Rethrow any exceptions.
 
-   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s
-   <a href="#concept-request-request" title="concept-Request-request">request</a>'s
-   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> contains no
+   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a href="#headers"><code>Headers</code></a> object's
+   <a href="#concept-headers-header-list" title="concept-Headers-header-list">header list</a> contains no
    <a href="#concept-header" title="concept-header">header</a> <a href="#concept-header-name" title="concept-header-name">named</a>
-   `<code title="">Content-Type</code>`, <a href="#concept-headers-append" title="concept-Headers-append">append</a>
+   `<code title="">Content-Type</code>`, then <a href="#concept-headers-append" title="concept-Headers-append">append</a>
    `<code title="">Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s
    <a href="#headers"><code>Headers</code></a> object. Rethrow any exception.
   </ol>
@@ -4970,10 +4972,10 @@ run these steps:
  <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
  <li><p>Return a new <a href="#request"><code>Request</code></a> object associated with the result of
- <a href="#concept-request-clone" title="concept-request-clone">cloning</a>
- <a href="#concept-request-request" title="concept-Request-request">request</a> and a new <a href="#headers"><code>Headers</code></a> object whose
+ <a href="#concept-request-clone" title="concept-request-clone">cloning</a> <a href="#concept-request-request" title="concept-Request-request">request</a>
+ and a new associated <a href="#headers"><code>Headers</code></a> object whose
  <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
- <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s <a href="#headers"><code>Headers</code></a>'
+ <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s <a href="#headers"><code>Headers</code></a> object's
  <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a>.
 </ol>
 
@@ -5037,9 +5039,9 @@ constructor, when invoked, must run these steps:
  <a class="external" data-anolis-spec="http" href="https://tools.ietf.org/html/rfc7230#section-3.1.2">reason-phrase</a> token production,
  <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
 
- <li><p>Let <var>r</var> be a new <a href="#response"><code>Response</code></a> object, associated with a
- new <a href="#concept-response" title="concept-response">response</a> and a new <a href="#headers"><code>Headers</code></a> object
- whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">response</code>".
+ <li><p>Let <var>r</var> be a new <a href="#response"><code>Response</code></a> object, associated with a new
+ <a href="#concept-response" title="concept-response">response</a> and a new associated <a href="#headers"><code>Headers</code></a> object whose
+ <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">response</code>".
 
  <li><p>Set <var>r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var>init</var>'s
@@ -5108,11 +5110,10 @@ constructor, when invoked, must run these steps:
  <li><p>Return <var>r</var>.
 </ol>
 
-<p>The static <dfn id="dom-response-error" title="dom-Response-error"><code>error()</code></dfn> method, when
-invoked, must return a new <a href="#response"><code>Response</code></a> object, associated with a new
-<a href="#concept-network-error" title="concept-network-error">network error</a> and a new <a href="#headers"><code>Headers</code></a>
-object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
-"<code title="">immutable</code>".
+<p>The static <dfn id="dom-response-error" title="dom-Response-error"><code>error()</code></dfn> method, when invoked, must
+return a new <a href="#response"><code>Response</code></a> object, associated with a new
+<a href="#concept-network-error" title="concept-network-error">network error</a> and a new associated <a href="#headers"><code>Headers</code></a>
+object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">immutable</code>".
 
 <p>The static
 <dfn id="dom-response-redirect" title="dom-Response-redirect"><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
@@ -5130,9 +5131,9 @@ method, when invoked, must run these steps:
  <li><p>If <var>status</var> is not a <a href="#redirect-status">redirect status</a>,
  <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">RangeError</code>.
 
- <li><p>Let <var>r</var> be a new <a href="#response"><code>Response</code></a> object, associated with a
- new <a href="#concept-response" title="concept-response">response</a> and a new <a href="#headers"><code>Headers</code></a> object
- whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">immutable</code>".
+ <li><p>Let <var>r</var> be a new <a href="#response"><code>Response</code></a> object, associated with a new
+ <a href="#concept-response" title="concept-response">response</a> and a new associated <a href="#headers"><code>Headers</code></a> object whose
+ <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">immutable</code>".
 
  <li><p>Set <var>r</var>'s <a href="#concept-response-response" title="concept-Response-response">response</a>'s
  <a href="#concept-response-status" title="concept-response-status">status</a> to <var>status</var>.
@@ -5246,7 +5247,7 @@ method, must run these steps:
  <var>init</var> as arguments. If this throws an exception, reject
  <var>p</var> with it and return <var>p</var>.
 
- <li><p>Let <var>responseObject</var> be a new <a href="#response"><code>Response</code></a> object and a new
+ <li><p>Let <var>responseObject</var> be a new <a href="#response"><code>Response</code></a> object and a new associated
  <a href="#headers"><code>Headers</code></a> object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
  "<code>immutable</code>".
 
@@ -5726,6 +5727,7 @@ Louis Ryan,
 Lucas Gonze,
 呂康豪 (Kang-Hao Lu),
 Maciej Stachowiak,
+Malisa<!-- malisas; GitHub -->,
 Manfred Stock,
 Manish Goregaokar,
 Marc Silbey,
@@ -5775,7 +5777,7 @@ Vladimir Dzhuvinov,
 Wayne Carr,
 Xabier Rodríguez,
 Yoav Weiss,
-Youenn Fablet<!-- youennf -->,
+Youenn Fablet<!-- youennf; GitHub -->,
 平野裕 (Yutaka Hirano), and
 Zhenbin Xu
 for being awesome.
