@@ -2464,8 +2464,8 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>.
 
  <li>
-  <p>If <var>response</var> is null, set <var>response</var> to the value
-  corresponding to the first matching statement:
+  <p>If <var>response</var> is null, then set <var>response</var> to the result of running the
+  substeps corresponding to the first matching statement:
 
   <dl class="switch">
    <dt><var>request</var>'s
@@ -2485,28 +2485,32 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
    <dt><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "<code title="">navigate</code>" or "<code title="">websocket</code>"
 
-   <dd><p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using <var>request</var>.
+   <dd><p>Return the result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
+   <var>request</var>.
 
    <dt><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "<code title="">same-origin</code>"
 
-   <dd><p>A <a href="#concept-network-error" title="concept-network-error">network error</a>.
+   <dd><p>Return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
    <dt><var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
    "<code title="">no-cors</code>"
    <dd>
-    <p>Set <var>request</var>'s
-    <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
-    "<code title="">opaque</code>".
-    <p>The result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a> using
-    <var>request</var>.
-    <!-- file URLs end up here as they are not same-origin typically. -->
+    <ol>
+     <li><p>Set <var>request</var>'s
+     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
+     "<code title="">opaque</code>".
+
+     <li><p>Return the result of performing a <a href="#concept-basic-fetch" title="concept-basic-fetch">basic fetch</a>
+     using <var>request</var>.
+     <!-- file URLs end up here as they are not same-origin typically. -->
+    </ol>
 
    <dt><var>request</var>'s <a href="#concept-request-current-url" title="concept-request-current-url">current url</a>'s
    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is <em>not</em> an
    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#http-scheme">HTTP(S) scheme</a>
 
-   <dd><p>A <a href="#concept-network-error" title="concept-network-error">network error</a>.
+   <dd><p>Return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
 
    <dt><var>request</var>'s <a href="#use-cors-preflight-flag">use-CORS-preflight flag</a> is set
    <dt><var>request</var>'s <a href="#unsafe-request-flag">unsafe-request flag</a> is set and either <var>request</var>'s
@@ -2515,23 +2519,32 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
    <a href="#concept-header-list" title="concept-header-list">header list</a> is not a
    <a href="#cors-safelisted-request-header">CORS-safelisted request-header</a>
    <dd>
-    <p>Set <var>request</var>'s
-    <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
-    "<code title="">cors</code>".
-    <p>The result of performing an <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using
-    <var>request</var> with the <i title="">CORS flag</i> and
-    <i title="">CORS-preflight flag</i> set. If the result is a
-    <a href="#concept-network-error" title="concept-network-error">network error</a>,
-    <a href="#concept-cache-clear" title="concept-cache-clear">clear cache entries</a> using
-    <var>request</var>.
+    <ol>
+     <li><p>Set <var>request</var>'s
+     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
+     "<code title="">cors</code>".
+
+     <li><p>Let <var>corsWithPreflightResponse</var> be the result of performing an
+     <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using <var>request</var> with the
+     <i title="">CORS flag</i> and <i title="">CORS-preflight flag</i> set.
+
+     <li><p>If <var>corsWithPreflightResponse</var> is a
+     <a href="#concept-network-error" title="concept-network-error">network error</a>, then
+     <a href="#concept-cache-clear" title="concept-cache-clear">clear cache entries</a> using <var>request</var>.
+
+     <li><p>Return <var>corsWithPreflightResponse</var>.
+    </ol>
 
    <dt>Otherwise
    <dd>
-    <p>Set <var>request</var>'s
-    <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
-    "<code title="">cors</code>".
-    <p>The result of performing an <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a> using
-    <var>request</var> with the <i title="">CORS flag</i> set.
+    <ol>
+     <li><p>Set <var>request</var>'s
+     <a href="#concept-request-response-tainting" title="concept-request-response-tainting">response tainting</a> to
+     "<code title="">cors</code>".
+
+     <li><p>Return the result of performing an <a href="#concept-http-fetch" title="concept-http-fetch">HTTP fetch</a>
+     using <var>request</var> with the <i title="">CORS flag</i> set.
+    </ol>
   </dl>
 
  <li><p>If the <i>recursive flag</i> is set, return <var>response</var>.
@@ -4624,7 +4637,7 @@ constructor must run these steps:
   </ol>
 
  <li>
-  <p>Otherwise (<var>input</var> is a <a href="#request"><code>Request</code></a> object), run these steps:
+  <p>Otherwise (<var>input</var> is a <a href="#request"><code>Request</code></a> object), run these substeps:
 
   <ol>
    <li><p>If <var>input</var> is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a> or

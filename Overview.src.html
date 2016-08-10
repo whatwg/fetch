@@ -2392,8 +2392,8 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
  <span data-anolis-spec=html>in parallel</span>.
 
  <li>
-  <p>If <var>response</var> is null, set <var>response</var> to the value
-  corresponding to the first matching statement:
+  <p>If <var>response</var> is null, then set <var>response</var> to the result of running the
+  substeps corresponding to the first matching statement:
 
   <dl class=switch>
    <dt><var>request</var>'s
@@ -2413,28 +2413,32 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
    <dt><var>request</var>'s <span title=concept-request-mode>mode</span> is
    "<code title>navigate</code>" or "<code title>websocket</code>"
 
-   <dd><p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using <var>request</var>.
+   <dd><p>Return the result of performing a <span title=concept-basic-fetch>basic fetch</span> using
+   <var>request</var>.
 
    <dt><var>request</var>'s <span title=concept-request-mode>mode</span> is
    "<code title>same-origin</code>"
 
-   <dd><p>A <span title=concept-network-error>network error</span>.
+   <dd><p>Return a <span title=concept-network-error>network error</span>.
 
    <dt><var>request</var>'s <span title=concept-request-mode>mode</span> is
    "<code title>no-cors</code>"
    <dd>
-    <p>Set <var>request</var>'s
-    <span title=concept-request-response-tainting>response tainting</span> to
-    "<code title>opaque</code>".
-    <p>The result of performing a <span title=concept-basic-fetch>basic fetch</span> using
-    <var>request</var>.
-    <!-- file URLs end up here as they are not same-origin typically. -->
+    <ol>
+     <li><p>Set <var>request</var>'s
+     <span title=concept-request-response-tainting>response tainting</span> to
+     "<code title>opaque</code>".
+
+     <li><p>Return the result of performing a <span title=concept-basic-fetch>basic fetch</span>
+     using <var>request</var>.
+     <!-- file URLs end up here as they are not same-origin typically. -->
+    </ol>
 
    <dt><var>request</var>'s <span title=concept-request-current-url>current url</span>'s
    <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is <em>not</em> an
    <span data-anolis-spec=url>HTTP(S) scheme</span>
 
-   <dd><p>A <span title=concept-network-error>network error</span>.
+   <dd><p>Return a <span title=concept-network-error>network error</span>.
 
    <dt><var>request</var>'s <span>use-CORS-preflight flag</span> is set
    <dt><var>request</var>'s <span>unsafe-request flag</span> is set and either <var>request</var>'s
@@ -2443,23 +2447,32 @@ with a <i title>CORS flag</i> and <i title>recursive flag</i>, run these steps:
    <span title=concept-header-list>header list</span> is not a
    <span>CORS-safelisted request-header</span>
    <dd>
-    <p>Set <var>request</var>'s
-    <span title=concept-request-response-tainting>response tainting</span> to
-    "<code title>cors</code>".
-    <p>The result of performing an <span title=concept-http-fetch>HTTP fetch</span> using
-    <var>request</var> with the <i title>CORS flag</i> and
-    <i title>CORS-preflight flag</i> set. If the result is a
-    <span title=concept-network-error>network error</span>,
-    <span title=concept-cache-clear>clear cache entries</span> using
-    <var>request</var>.
+    <ol>
+     <li><p>Set <var>request</var>'s
+     <span title=concept-request-response-tainting>response tainting</span> to
+     "<code title>cors</code>".
+
+     <li><p>Let <var>corsWithPreflightResponse</var> be the result of performing an
+     <span title=concept-http-fetch>HTTP fetch</span> using <var>request</var> with the
+     <i title>CORS flag</i> and <i title>CORS-preflight flag</i> set.
+
+     <li><p>If <var>corsWithPreflightResponse</var> is a
+     <span title=concept-network-error>network error</span>, then
+     <span title=concept-cache-clear>clear cache entries</span> using <var>request</var>.
+
+     <li><p>Return <var>corsWithPreflightResponse</var>.
+    </ol>
 
    <dt>Otherwise
    <dd>
-    <p>Set <var>request</var>'s
-    <span title=concept-request-response-tainting>response tainting</span> to
-    "<code title>cors</code>".
-    <p>The result of performing an <span title=concept-http-fetch>HTTP fetch</span> using
-    <var>request</var> with the <i title>CORS flag</i> set.
+    <ol>
+     <li><p>Set <var>request</var>'s
+     <span title=concept-request-response-tainting>response tainting</span> to
+     "<code title>cors</code>".
+
+     <li><p>Return the result of performing an <span title=concept-http-fetch>HTTP fetch</span>
+     using <var>request</var> with the <i title>CORS flag</i> set.
+    </ol>
   </dl>
 
  <li><p>If the <i>recursive flag</i> is set, return <var>response</var>.
@@ -4552,7 +4565,7 @@ constructor must run these steps:
   </ol>
 
  <li>
-  <p>Otherwise (<var>input</var> is a <code>Request</code> object), run these steps:
+  <p>Otherwise (<var>input</var> is a <code>Request</code> object), run these substeps:
 
   <ol>
    <li><p>If <var>input</var> is <span title=concept-Body-disturbed>disturbed</span> or
