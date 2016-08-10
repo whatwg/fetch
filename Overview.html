@@ -242,6 +242,7 @@ of:
  <li id="process-request-end-of-file"><dfn id="process-request-end-of-body">process request end-of-body</dfn>
  <li><dfn id="process-response">process response</dfn>
  <li id="process-response-end-of-file"><dfn id="process-response-end-of-body">process response end-of-body</dfn>
+ <li><dfn id="process-response-done">process response done</dfn>
 </ul>
 
 <p>To <dfn id="queue-a-fetch-task">queue a fetch task</dfn> on <a href="#concept-request" title="concept-request">request</a>
@@ -1215,6 +1216,10 @@ it is `<code title="">OK</code>`.
 <a href="#concept-body" title="concept-body">body</a>). Unless stated otherwise it is null.
 
 <p>A <a href="#concept-response" title="concept-response">response</a> has an associated
+<dfn id="concept-response-trailer" title="concept-response-trailer">trailer</dfn> (a
+<a href="#concept-header-list" title="concept-header-list">header list</a>). Unless stated otherwise it is empty.
+
+<p>A <a href="#concept-response" title="concept-response">response</a> has an associated
 <dfn id="concept-response-https-state" title="concept-response-https-state">HTTPS state</dfn> (an
 <a href="#concept-https-state-value" title="concept-https-state-value">HTTPS state value</a>). Unless stated otherwise, it is
 "<code title="">none</code>".
@@ -1258,8 +1263,9 @@ navigate algorithm. It ensures `<code title="">Location</code>` is
 <a href="#concept-response" title="concept-response">response</a> whose
 <a href="#concept-response-status" title="concept-response-status">status</a> is always <code title="">0</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is always the empty byte sequence,
-<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is always empty, and
-<a href="#concept-response-body" title="concept-response-body">body</a> is always null.
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is always empty,
+<a href="#concept-response-body" title="concept-response-body">body</a> is always null, and
+<a href="#concept-response-trailer" title="concept-response-trailer">trailer</a> is always empty.
 
 <hr>
 
@@ -1278,7 +1284,7 @@ required, e.g., to feed image data to a decoder, the associated
 
 <p>A <dfn id="concept-filtered-response-basic" title="concept-filtered-response-basic">basic filtered response</dfn> is a
 <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> whose
-<a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">basic</code>",
+<a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">basic</code>" and
 <a href="#concept-response-header-list" title="concept-response-header-list">header list</a> excludes any
 <a href="#concept-header" title="concept-header">headers</a> in
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
@@ -1296,7 +1302,8 @@ required, e.g., to feed image data to a decoder, the associated
 <a href="#concept-header-name" title="concept-header-name">name</a> is <em>not</em> a
 <a href="#cors-safelisted-response-header-name">CORS-safelisted response-header name</a>, given
 <a href="#concept-internal-response" title="concept-internal-response">internal response</a>'s
-<a href="#concept-response-cors-exposed-header-name-list" title="concept-response-cors-exposed-header-name-list">CORS-exposed header-name list</a>.
+<a href="#concept-response-cors-exposed-header-name-list" title="concept-response-cors-exposed-header-name-list">CORS-exposed header-name list</a>, and
+<span tilte="concept-response-trailer">trailer</span> is empty.
 
 <p>An <dfn id="concept-filtered-response-opaque" title="concept-filtered-response-opaque">opaque filtered response</dfn> is a
 <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> whose
@@ -1304,16 +1311,18 @@ required, e.g., to feed image data to a decoder, the associated
 <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> is the empty list,
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">0</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
-<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is the empty list, and
-<a href="#concept-response-body" title="concept-response-body">body</a> is null.
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is empty,
+<a href="#concept-response-body" title="concept-response-body">body</a> is null, and
+<a href="#concept-response-trailer" title="concept-response-trailer">trailer</a> is empty.
 
 <p>An <dfn id="concept-filtered-response-opaque-redirect" title="concept-filtered-response-opaque-redirect">opaque-redirect filtered response</dfn>
 is a <a href="#concept-filtered-response" title="concept-filtered-response">filtered response</a> whose
 <a href="#concept-response-type" title="concept-response-type">type</a> is "<code title="">opaqueredirect</code>",
 <a href="#concept-response-status" title="concept-response-status">status</a> is <code title="">0</code>,
 <a href="#concept-response-status-message" title="concept-response-status-message">status message</a> is the empty byte sequence,
-<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is the empty list, and
-<a href="#concept-response-body" title="concept-response-body">body</a> is null.
+<a href="#concept-response-header-list" title="concept-response-header-list">header list</a> is empty,
+<a href="#concept-response-body" title="concept-response-body">body</a> is null, and
+<a href="#concept-response-trailer" title="concept-response-trailer">trailer</a> is empty.
 
 <div class="note no-backref">
  <p>Exposing the <a href="#concept-response-url-list" title="concept-response-url-list">url list</a> for
@@ -1325,7 +1334,7 @@ is a <a href="#concept-filtered-response" title="concept-filtered-response">filt
  <a href="#concept-filtered-response-opaque-redirect" title="concept-filtered-response-opaque-redirect">opaque-redirect filtered response</a> are
  nearly indistinguishable from a <a href="#concept-network-error" title="concept-network-error">network error</a>. When
  introducing new APIs, do not use the <a href="#concept-internal-response" title="concept-internal-response">internal response</a>
- for internal specification algorithms as you will leak information.
+ for internal specification algorithms as that will leak information.
 
  <p>This also means that JavaScript APIs, such as <a href="#dom-response-ok"><code title="dom-Response-ok">response.ok</code></a>,
  will return rather useless results.</p>
@@ -2203,8 +2212,8 @@ response <a href="#concept-header" title="concept-header">header</a> can be used
 
  <p>That is, it either returns a <a href="#concept-response" title="concept-response">response</a> if
  <a href="#concept-request" title="concept-request">request</a>'s <a href="#synchronous-flag">synchronous flag</a> is set, or it
- <a href="#queue-a-fetch-task" title="queue a fetch task">queues tasks</a> annotated
- <a href="#process-response">process response</a>, and <a href="#process-response-end-of-body">process response end-of-body</a> for the
+ <a href="#queue-a-fetch-task" title="queue a fetch task">queues tasks</a> annotated <a href="#process-response">process response</a>,
+ <a href="#process-response-end-of-body">process response end-of-body</a>, and <a href="#process-response-done">process response done</a> for the
  <a href="#concept-response" title="concept-response">response</a>.
 
  <p>To capture uploads, if <a href="#concept-request" title="concept-request">request</a>'s
@@ -2665,10 +2674,18 @@ with a <i title="">CORS flag</i> and <i title="">recursive flag</i>, run these s
  <li><p><a href="#concept-body-wait" title="concept-body-wait">Wait</a> for <var>internalResponse</var>'s
  <a href="#concept-response-body" title="concept-response-body">body</a>.
 
- <li><p>Set <var>request</var>'s <a href="#done-flag">done flag</a>.
-
  <li><p><a href="#queue-a-fetch-task">Queue a fetch task</a> on <var>request</var> to
  <a href="#process-response-end-of-body">process response end-of-body</a> for <var>response</var>.
+
+ <li><p>Wait for <var>internalResponse</var>'s <a href="#concept-response-trailer" title="concept-response-trailer">trailer</a>,
+ if any. <span class="note">See
+ <a href="https://tools.ietf.org/html/rfc7230#section-4.1.2">section 4.1.2</a> of
+ <a href="#refsHTTP">[HTTP]</a>.</span>
+
+ <li><p>Set <var>request</var>'s <a href="#done-flag">done flag</a>.
+
+ <li><p><a href="#queue-a-fetch-task">Queue a fetch task</a> on <var>request</var> to <a href="#process-response-done">process response done</a>
+ for <var>response</var>.
 </ol>
 
 
@@ -3486,6 +3503,10 @@ The <i title="">credentials flag</i> is one too.
   <var>reason</var>.
   <a href="#refsHTTP">[HTTP]</a>
 
+  <p class="note">The exact layering between Fetch and HTTP still needs to be sorted through and
+  therefore <var>response</var> represents both a <a href="#concept-response" title="concept-response">response</a> and
+  an HTTP response here.
+
   <p>If the HTTP request results in a TLS client certificate dialog, run these substeps:
 
   <ol>
@@ -3534,6 +3555,11 @@ The <i title="">credentials flag</i> is one too.
  <li><p>Set <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> to a new
  <a href="#concept-body" title="concept-body">body</a> whose <a href="#concept-body-stream" title="concept-body-stream">stream</a> is
  <var>stream</var>.
+
+ <li><p>If <var>response</var> has a payload body length, then set <var>response</var>'s
+ <a href="#concept-response-body" title="concept-response-body">body</a>'s
+ <a href="#concept-body-total-bytes" title="concept-body-total-bytes">total bytes</a> to that payload body length.
+ <!-- XXX xref payload body -->
 
  <li>
   <p><a href="#concept-header-list-delete" title="concept-header-list-delete">Delete</a>
@@ -3594,15 +3620,10 @@ The <i title="">credentials flag</i> is one too.
   <p>Run these substeps <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>:
 
   <ol>
-   <li><p>If <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a> is
-   non-null, set <var>response</var>'s <a href="#concept-response-body" title="concept-response-body">body</a>'s
-   <a href="#concept-body-total-bytes" title="concept-body-total-bytes">total bytes</a> to <var>response</var>'s
-   <a href="#concept-response-body" title="concept-response-body">body</a>'s payload body length.
-   <!-- XXX xref payload body -->
-
    <li>
-    <p>Whenever one or more bytes are transmitted, let <var>bytes</var> be the
-    transmitted bytes and run these subsubsteps:
+    <p>Whenever one or more bytes are transmitted from <var>response</var>'s message body, let
+    <var>bytes</var> be the transmitted bytes and run these subsubsteps:
+    <!-- XXX xref message body -->
 
     <ol>
      <li><p>Increase <var>response</var>'s
@@ -3635,9 +3656,10 @@ The <i title="">credentials flag</i> is one too.
      to <a href="#concept-fetch-suspend" title="concept-fetch-suspend">suspend</a> the ongoing fetch.
     </ol>
 
-   <li><p>If at any point the bytes transmission is done normally and <var>stream</var> is
-   <a href="#concept-readablestream-readable" title="concept-ReadableStream-readable">readable</a>,
-   <a href="#concept-close-readablestream" title="concept-close-ReadableStream">close</a> <var>stream</var>.
+   <li><p>If at any point the bytes transmission for <var>response</var>'s message body is done
+   normally and <var>stream</var> is <a href="#concept-readablestream-readable" title="concept-ReadableStream-readable">readable</a>,
+   then <a href="#concept-close-readablestream" title="concept-close-ReadableStream">close</a> <var>stream</var>.
+   <!-- XXX xref message body -->
 
    <li>
     <p>If at any point <a href="#concept-fetch" title="concept-fetch">fetch</a> is
@@ -4982,6 +5004,7 @@ interface <dfn id="response">Response</dfn> {
   readonly attribute ByteString <a href="#dom-response-statustext" title="dom-Response-statusText">statusText</a>;
   [SameObject] readonly attribute <a href="#headers">Headers</a> <a href="#dom-response-headers" title="dom-Response-headers">headers</a>;
   readonly attribute <a href="#concept-readablestream" title="concept-ReadableStream">ReadableStream</a>? <a href="#dom-response-body" title="dom-Response-body">body</a>;
+  [SameObject] readonly attribute Promise&lt;<a href="#headers">Headers</a>&gt; <a href="#dom-response-trailer" title="dom-Response-trailer">trailer</a>;
 
   [NewObject] <a href="#response">Response</a> <a href="#dom-response-clone" title="dom-Response-clone">clone</a>();
 };
@@ -5002,6 +5025,10 @@ enum <dfn id="responsetype">ResponseType</dfn> { "basic", "cors", "default", "er
 <p>A <a href="#response"><code>Response</code></a> object also has an associated <a href="#headers"><code>Headers</code></a> object which
 is itself associated with <a href="#concept-response-response" title="concept-Response-response">response</a>'s
 <a href="#concept-response-header-list" title="concept-response-header-list">header list</a>.
+
+<p>A <a href="#response"><code>Response</code></a> object also has an associated
+<dfn id="concept-response-trailer-promise" title="concept-Response-trailer-promise">trailer promise</dfn> (a promise). <span class="note">Used
+for the <a href="#dom-response-trailer"><code title="dom-Response-trailer">trailer</code></a> attribute.</span>
 
 <p>A <a href="#response"><code>Response</code></a> object's <a href="#concept-body-body" title="concept-Body-body">body</a> is its
 <a href="#concept-response-response" title="concept-Response-response">response</a>'s <a href="#concept-response-body" title="concept-response-body">body</a>.
@@ -5082,6 +5109,10 @@ constructor, when invoked, must run these steps:
  <a href="#concept-response-https-state" title="concept-response-https-state">HTTPS state</a> to
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#entry-settings-object">entry settings object</a>'s
  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#https-state">HTTPS state</a>.
+
+ <li><p>Resolve <var>r</var>'s <a href="#concept-response-trailer-promise" title="concept-Response-trailer-promise">trailer promise</a>
+ with a new <a href="#headers"><code>Headers</code></a> object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ "<code>immutable</code>".
 
  <li><p>Return <var>r</var>.
 </ol>
@@ -5165,22 +5196,36 @@ return the associated <a href="#headers"><code>Headers</code></a> object.
 the associated <a href="#concept-body-body" title="concept-Body-body">body</a> is null and the associated
 <a href="#concept-body-body" title="concept-Body-body">body</a>'s <a href="#concept-body-stream" title="concept-body-stream">stream</a> otherwise.
 
+<p>The <dfn id="dom-response-trailer" title="dom-Response-trailer"><code>trailer</code></dfn> attribute's getter must return the
+associated <a href="#concept-response-trailer-promise" title="concept-Response-trailer-promise">trailer promise</a>.
+
 <hr>
 
 <p>The <dfn id="dom-response-clone" title="dom-Response-clone"><code>clone()</code></dfn> method, when invoked, must
 run these steps:
 
 <ol>
- <li><p>If this <a href="#response"><code>Response</code></a> object is <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a>
- or <a href="#concept-body-locked" title="concept-Body-locked">locked</a>,
- <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+ <li><p>If <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a> is
+ <a href="#concept-body-disturbed" title="concept-Body-disturbed">disturbed</a> or
+ <a href="#concept-body-locked" title="concept-Body-locked">locked</a>, then <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+ <code title="">TypeError</code>.
 
- <li><p>Return a new <a href="#response"><code>Response</code></a> object associated with the result of
- <a href="#concept-response-clone" title="concept-response-clone">cloning</a>
- <a href="#concept-response-response" title="concept-Response-response">response</a> and a new <a href="#headers"><code>Headers</code></a> object whose
- <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
- <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s <a href="#headers"><code>Headers</code></a>'
+ <li><p>Let <var>clonedResponse</var> be a new <a href="#response"><code>Response</code></a> object associated with the
+ result of <a href="#concept-response-clone" title="concept-response-clone">cloning</a>
+ <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s
+ <a href="#concept-response-response" title="concept-Response-response">response</a> and a new associated <a href="#headers"><code>Headers</code></a>
+ object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s <a href="#headers"><code>Headers</code></a> object's
  <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a>.
+
+ <li><p>Upon fulfillment of <a class="external" data-anolis-spec="dom" href="https://dom.spec.whatwg.org/#context-object">context object</a>'s
+ <a href="#concept-response-trailer-promise" title="concept-Response-trailer-promise">trailer promise</a>, resolve
+ <var>clonedResponse</var>'s <a href="#concept-response-trailer-promise" title="concept-Response-trailer-promise">trailer promise</a>
+ with a new <a href="#headers"><code>Headers</code></a> object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ "<code>immutable</code>" that is associated with <var>clonedResponse</var>'s
+ <a href="#concept-response-trailer" title="concept-response-trailer">trailer</a>.
+
+ <li><p>Return <var>clonedResponse</var>.
 </ol>
 
 
@@ -5210,6 +5255,10 @@ method, must run these steps:
  <var>init</var> as arguments. If this throws an exception, reject
  <var>p</var> with it and return <var>p</var>.
 
+ <li><p>Let <var>responseObject</var> be a new <a href="#response"><code>Response</code></a> object and a new
+ <a href="#headers"><code>Headers</code></a> object whose <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is
+ "<code>immutable</code>".
+
  <li>
   <p>Run the following <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>:
 
@@ -5222,9 +5271,23 @@ method, must run these steps:
    "<code title="">error</code>", reject <var>p</var> with a <code title="">TypeError</code> and terminate
    these substeps.
 
-   <li><p>Resolve <var>p</var> with a new <a href="#response"><code>Response</code></a> object associated with
-   <var>response</var> and a new <a href="#headers"><code>Headers</code></a> object whose
-   <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code title="">immutable</code>".
+   <li><p>Associate <var>responseObject</var> with <var>response</var>.
+
+   <li><p>Resolve <var>p</var> with <var>responseObject</var>.
+  </ol>
+
+  <p>To <a href="#process-response-done">process response done</a> for <var>response</var>, run these substeps:
+
+  <ol>
+   <li><p>Let <var>trailerObject</var> be a new <a href="#headers"><code>Headers</code></a> object whose
+   <a href="#concept-headers-guard" title="concept-Headers-guard">guard</a> is "<code>immutable</code>".
+
+   <li><p>Associate <var>trailerObject</var> with <var>response</var>'s
+   <a href="#concept-response-trailer" title="concept-response-trailer">trailer</a>.
+
+   <li><p>Resolve <var>responseObject</var>'s
+   <a href="#concept-response-trailer-promise" title="concept-Response-trailer-promise">trailer promise</a> with
+   <var>trailerObject</var>.
   </ol>
 
  <li><p>Return <var>p</var>.
