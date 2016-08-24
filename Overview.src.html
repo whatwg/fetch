@@ -1557,7 +1557,10 @@ this section, we define common operations for ReadableStream. <span data-anolis-
 <var>stream</var>, run these steps:
 
 <ol>
- <li><p>Call <code data-anolis-spec=streams>EnqueueInReadableStream</code>(<var>stream</var>,
+ <li><p>Let <var>controller</var> be <var>stream</var>.[[readableStreamController]].
+
+ <li><p>Call
+ <span data-anolis-spec=streams>ReadableStreamDefaultControllerEnqueue</span>(<var>controller</var>,
  <var>chunk</var>). Rethrow any exceptions.
 </ol>
 
@@ -1565,7 +1568,10 @@ this section, we define common operations for ReadableStream. <span data-anolis-
 <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var>, run these steps:
 
 <ol>
- <li><p>Call <code data-anolis-spec=streams>CloseReadableStream</code>(<var>stream</var>).
+ <li><p>Let <var>controller</var> be <var>stream</var>.[[readableStreamController]].
+
+ <li><p>Call
+ <span data-anolis-spec=streams>ReadableStreamDefaultControllerClose</span>(<var>controller</var>).
  Rethrow any exceptions.
 </ol>
 
@@ -1574,14 +1580,17 @@ this section, we define common operations for ReadableStream. <span data-anolis-
 <var>reason</var>, run these steps:
 
 <ol>
- <li><p>Call <code data-anolis-spec=streams>ErrorReadableStream</code>(<var>stream</var>,
+ <li><p>Let <var>controller</var> be <var>stream</var>.[[readableStreamController]].
+
+ <li><p>Call
+ <span data-anolis-spec=streams>ReadableStreamDefaultControllerError</span>(<var>controller</var>,
  <var>reason</var>). Rethrow any exceptions.
 </ol>
 
 <p>To
-<dfn title=concept-construct-ReadableStream data-export data-dfn-for=ReadableStream>construct a <code title=concept-ReadableStream>ReadableStream</code> object</dfn>
-with given<var>strategy</var>, <var>pull</var> action and <var>cancel</var> action, all of which
-are optional, run these steps:
+<dfn title=concept-construct-ReadableStream data-export data-dfn-for=ReadableStream>construct a
+<code title=concept-ReadableStream>ReadableStream</code> object</dfn> with given<var>strategy</var>,
+<var>pull</var> action and <var>cancel</var> action, all of which are optional, run these steps:
 
 <ol>
  <li><p>Let <var>init</var> be a new object.
@@ -1600,8 +1609,9 @@ are optional, run these steps:
 </ol>
 
 <p>To
-<dfn title=concept-construct-fixed-ReadableStream data-export data-dfn-for=ReadableStream>construct a fixed <code title=concept-ReadableStream>ReadableStream</code> object</dfn>
-with given <var>chunks</var>, run these steps:
+<dfn title=concept-construct-fixed-ReadableStream data-export data-dfn-for=ReadableStream>construct
+a fixed <code title=concept-ReadableStream>ReadableStream</code> object</dfn> with given
+<var>chunks</var>, run these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be the result of
@@ -1624,7 +1634,7 @@ steps:
 
 <ol>
  <li><p>Let <var>reader</var> be the result of calling
- <code data-anolis-spec=streams>AcquireReadableStreamReader</code>(<var>stream</var>).
+ <span data-anolis-spec=streams>AcquireReadableStreamDefaultReader</span>(<var>stream</var>).
  Rethrow any exceptions.
 
  <li><p>Return <var>reader</var>.
@@ -1634,7 +1644,7 @@ steps:
 <dfn title=concept-read-chunk-from-ReadableStream data-export data-dfn-for=ReadableStream>read a chunk</dfn>
 from a <code title=concept-ReadableStream>ReadableStream</code> object with <var>reader</var>,
 return the result of calling
-<code data-anolis-spec=streams>ReadFromReadableStreamReader</code>(<var>reader</var>).
+<span data-anolis-spec=streams>ReadableStreamDefaultReaderRead</span>(<var>reader</var>).
 
 <p>To
 <dfn title=concept-read-all-bytes-from-ReadableStream data-export data-dfn-for=ReadableStream>read all bytes</dfn>
@@ -1648,7 +1658,7 @@ these steps:
 
  <li>
  <p>Let <var>read</var> be the result of calling
- <code data-anolis-spec=streams>ReadFromReadableStreamReader</code>(<var>reader</var>).
+ <span data-anolis-spec=streams>ReadableStreamDefaultReaderRead</span>(<var>reader</var>).
 
  <ul>
   <li><p>When <var>read</var> is fulfilled with an object whose <code title>done</code>
@@ -1672,8 +1682,7 @@ these steps:
 <p>To <dfn title=concept-cancel-ReadableStream data-export data-dfn-for=ReadableStream>cancel</dfn>
 a <code title=concept-ReadableStream>ReadableStream</code> object with <var>reader</var> and
 <var>reason</var>, return the result of calling
-<code data-anolis-spec=streams>ReadableStreamReaderGenericCancel</code>(<var>reader</var>,
-<var>reason</var>).
+<span data-anolis-spec=streams>ReadableStreamCancel</span>(<var>reader</var>, <var>reason</var>).
 
 <p class="note no-backref">Because the reader grants exclusive access, the actual mechanism of how
 to read cannot be observed. Implementations could use more direct mechanism if convenient.
@@ -1683,7 +1692,7 @@ to read cannot be observed. Implementations could use more direct mechanism if c
 
 <ol>
  <li><p>Return the result of calling
- <code data-anolis-spec=streams>TeeReadableStream</code>(<var>stream</var>, true).
+ <span data-anolis-spec=streams>ReadableStreamTee</span>(<var>stream</var>, true).
  Rethrow any exception.
 </ol>
 
@@ -1697,19 +1706,19 @@ to read cannot be observed. Implementations could use more direct mechanism if c
 
 <p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
 <dfn title=concept-ReadableStream-readable data-export data-dfn-for=ReadableStream>readable</dfn> if
-<var>stream</var>@[[state]] is "readable".
+<var>stream</var>.[[state]] is "readable".
 
 <p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
 <dfn title=concept-ReadableStream-closed data-export data-dfn-for=ReadableStream>closed</dfn> if
-<var>stream</var>@[[state]] is "closed".
+<var>stream</var>.[[state]] is "closed".
 
 <p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
 <dfn title=concept-ReadableStream-errored data-export data-dfn-for=ReadableStream>errored</dfn> if
-<var>stream</var>@[[state]] is "errored".
+<var>stream</var>.[[state]] is "errored".
 
 <p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
 <dfn title=concept-ReadableStream-locked data-export data-dfn-for=ReadableStream>locked</dfn> if the
-result of calling <code data-anolis-spec=streams>IsReadableStreamLocked</code>(<var>stream</var>) is
+result of calling <span data-anolis-spec=streams>IsReadableStreamLocked</span>(<var>stream</var>) is
 true.
 
 <p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to
@@ -1720,14 +1729,14 @@ if the following conditions hold:
  <li><p><var>stream</var> is <span title=concept-ReadableStream-readable>readable</span>.
 
  <li><p>The result of calling
- <code data-anolis-spec=streams>GetReadableStreamDesiredSize</code>(<var>stream</var>) is
- positive.
+ <span data-anolis-spec=streams>ReadableStreamDefaultControllerGetDesiredSize</span>(<var>controller</var>)
+ is positive.
 </ul>
 
 <p>A <code title=concept-ReadableStream>ReadableStream</code> object <var>stream</var> is said to be
 <dfn title=concept-ReadableStream-disturbed data-export data-dfn-for=ReadableStream>disturbed</dfn>
 if the result of calling
-<code data-anolis-spec=streams>IsReadableStreamDisturbed</code>(<var>stream</var>) is true.
+<span data-anolis-spec=streams>IsReadableStreamDisturbed</span>(<var>stream</var>) is true.
 
 
 
