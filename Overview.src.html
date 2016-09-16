@@ -4223,7 +4223,7 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
 
 <p>To <dfn title=concept-BodyInit-extract>extract</dfn> a <span title=concept-body>body</span> and a
 `<code title>Content-Type</code>` <span title=concept-header-value>value</span> from
-<var>object</var>, run these steps:
+<var>object</var> with optional <var>maximum-body-size</var>, run these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be the result of
@@ -4232,6 +4232,7 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
 
  <li><p>Let <var>Content-Type</var> be null.
  <li><p>Let <var>action</var> be null.
+ <li><p>Let <var>body-size</var> be zero.
 
  <li>
   <p>Switch on <var>object</var>'s type:
@@ -4293,12 +4294,20 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
   <p>If <var>action</var> is non-null, run <var>action</var> <span data-anolis-spec=html>in
   parallel</span>:
   <ol>
-   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes and
+   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes,
    <span title=concept-enqueue-ReadableStream>enqueue</span> a <code>Uint8Array</code> object
-   wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If
-   creating the <code>ArrayBuffer</code> threw an exception,
-   <span title=concept-error-ReadableStream>error</span> <var>stream</var> with that exception
-   and cancel running <var>action</var>.
+   wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>, and
+   increment <var>body-size</var> by the number of consumed <var>bytes</var>.
+
+   <ol>
+    <li><p>If creating the <code>ArrayBuffer</code> threw an exception,
+    <span title=concept-error-ReadableStream>error</span> <var>stream</var> with that exception
+    and cancel running <var>action</var>.
+
+    <li>If <var>maximum-body-size</var> is provided and <var>body-size</var> is equal or greater
+    than the provided value, throw (TODO: ???)Error and cancel running <var>action</var>.
+    TODO: is there a way to bound how long the stream is allowed to stay alive?
+   </ol>
 
    <li><p>When running <var>action</var> is done,
    <span title=concept-close-ReadableStream>close</span> <var>stream</var>.
@@ -4486,6 +4495,7 @@ interface <dfn>Request</dfn> {
   readonly attribute <span>RequestCache</span> <span title=dom-Request-cache>cache</span>;
   readonly attribute <span>RequestRedirect</span> <span title=dom-Request-redirect>redirect</span>;
   readonly attribute DOMString <span title=dom-Request-integrity>integrity</span>;
+  readonly attribute boolean <span title=dom-Request-keepAlive>keepAlive</span>;
 
   [NewObject] <span>Request</span> <span title=dom-Request-clone>clone</span>();
 };
@@ -4505,6 +4515,7 @@ interface <dfn>Request</dfn> {
   <span>RequestCache</span> cache;
   <span>RequestRedirect</span> redirect;
   DOMString integrity;
+  boolean keepAlive;
   any window; // can only be set to null
 };
 
@@ -4629,10 +4640,14 @@ constructor must run these steps:
  <span title=concept-request-cache-mode>cache mode</span>,
  <span title=concept-request-redirect-mode>redirect mode</span> is
  <var>request</var>'s
- <span title=concept-request-redirect-mode>redirect mode</span>, and
+ <span title=concept-request-redirect-mode>redirect mode</span>,
  <span title=concept-request-integrity-metadata>integrity metadata</span> is
  <var>request</var>'s
- <span title=concept-request-integrity-metadata>integrity metadata</span>.
+ <span title=concept-request-integrity-metadata>integrity metadata</span>, and
+ <span title=concept-request-keep-alive-flag>keep-alive flag</span> is
+ <var>request</var>'s
+ <span title=concept-request-keep-alive-flag>keep-alive flag</span>
+ .
 
  <li>
   <p>If any of <var>init</var>'s members are present, run these substeps:
@@ -4737,6 +4752,10 @@ constructor must run these steps:
  <var>request</var>'s
  <span title=concept-request-integrity-metadata>integrity metadata</span> to it.
 
+ <li><p>If <var>init</var>'s <code title>keepAlive</code> member is present, set
+ <var>request</var>'s
+ <span title=concept-request-keepAlive>keepAlive flag</span> to it.
+
  <li>
   <p>If <var>init</var>'s <code title>method</code> member is present, let
   <var>method</var> be it and run these substeps:
@@ -4805,7 +4824,17 @@ constructor must run these steps:
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <li><p>If <var>init</var>'s <code title>keepAlive</code> member is present and is set to
+   <code>true</code>, then set <var>inputBody</var> and <var>Content-Type</var> to the
+   result of <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s
+   <code title>body</code> member with <var>maximum-body-size</var> set by user agent policy.
+   Rethrow any exceptions.
+   <p class="note no-backref">This step ensures that requests that are allowed to outlive the
+   environment settings object and contain a body have bounded size and are not allowed to stay
+   alive indefinitely. The maximum body size for such requests, and the timeout, is subject to
+   user agent policy.
+
+   <li><p>Otherwise, set <var>inputBody</var> and <var>Content-Type</var> to the result of
    <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s
    <code title>body</code> member. Rethrow any exceptions.
 
