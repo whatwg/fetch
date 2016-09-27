@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-15-september-2016">Living Standard — Last Updated 15 September 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-27-september-2016">Living Standard — Last Updated 27 September 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -4710,8 +4710,8 @@ constructor must run these steps:
 
   <ol>
    <li><p>If <var>request</var>'s <a href="#concept-request-mode" title="concept-request-mode">mode</a> is
-   "<code title="">navigate</code>", <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
-   <code title="">TypeError</code>.
+   "<code title="">navigate</code>", then set it to "<code>same-origin</code>".
+   <!-- This works because we have reset request's client too. -->
 
    <li><p>Unset <var>request</var>'s <a href="#omit-origin-header-flag">omit-<code>Origin</code>-header flag</a>.
 
@@ -4745,25 +4745,29 @@ constructor must run these steps:
    <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-parser" title="concept-url-parser">parsing</a>
    <var>referrer</var> with <var>baseURL</var>.
 
-   <li><p>If <var>parsedReferrer</var> is failure,
-   <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+   <li><p>If <var>parsedReferrer</var> is failure, then <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a
+   <code title="">TypeError</code>.
 
-   <li><p>If <var>parsedReferrer</var>'s
-   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#non-relative-flag">non-relative flag</a> is set,
-   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is
-   "<code>about</code>", and
-   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> contains a single string
-   "<code>client</code>", set <var>request</var>'s
-   <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to "<code>client</code>" and
-   terminate these substeps.
+   <li>
+    <p>If one of the following conditions is true, then set <var>request</var>'s
+    <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to "<code>client</code>":
 
-   <li><p>If <var>parsedReferrer</var>'s
-   <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> is not
-   <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var>origin</var>,
-   <a class="external" data-anolis-spec="webidl" href="https://heycam.github.io/webidl/#dfn-throw">throw</a> a <code title="">TypeError</code>.
+    <ul class="brief">
+     <li><var>parsedReferrer</var>'s <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#non-relative-flag">non-relative flag</a> is set,
+     <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-scheme" title="concept-url-scheme">scheme</a> is "<code>about</code>", and
+     <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-path" title="concept-url-path">path</a> contains a single string
+     "<code>client</code>".
 
-   <li><p>Set <var>request</var>'s
-   <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> to <var>parsedReferrer</var>.
+     <li><var>parsedReferrer</var>'s
+     <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url-origin" title="concept-url-origin">origin</a> is not
+     <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin">same origin</a> with <var>origin</var>
+    </ul>
+    <!-- This can happen when you create a fresh request with values from an older request. Throwing
+         would be rather hostile as preventing it requires implementing the same-origin check in
+         developer space. -->
+
+   <li><p>Otherwise, set <var>request</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a>
+   to <var>parsedReferrer</var>.
   </ol>
 
  <li><p>If <var>init</var>'s <code title="">referrerPolicy</code> member is present, set

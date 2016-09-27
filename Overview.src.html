@@ -4640,8 +4640,8 @@ constructor must run these steps:
 
   <ol>
    <li><p>If <var>request</var>'s <span title=concept-request-mode>mode</span> is
-   "<code title>navigate</code>", <span data-anolis-spec=webidl>throw</span> a
-   <code title>TypeError</code>.
+   "<code title>navigate</code>", then set it to "<code>same-origin</code>".
+   <!-- This works because we have reset request's client too. -->
 
    <li><p>Unset <var>request</var>'s <span>omit-<code>Origin</code>-header flag</span>.
 
@@ -4675,25 +4675,29 @@ constructor must run these steps:
    <span data-anolis-spec=url title=concept-url-parser>parsing</span>
    <var>referrer</var> with <var>baseURL</var>.
 
-   <li><p>If <var>parsedReferrer</var> is failure,
-   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+   <li><p>If <var>parsedReferrer</var> is failure, then <span data-anolis-spec=webidl>throw</span> a
+   <code title>TypeError</code>.
 
-   <li><p>If <var>parsedReferrer</var>'s
-   <span data-anolis-spec=url>non-relative flag</span> is set,
-   <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is
-   "<code>about</code>", and
-   <span data-anolis-spec=url title=concept-url-path>path</span> contains a single string
-   "<code>client</code>", set <var>request</var>'s
-   <span title=concept-request-referrer>referrer</span> to "<code>client</code>" and
-   terminate these substeps.
+   <li>
+    <p>If one of the following conditions is true, then set <var>request</var>'s
+    <span title=concept-request-referrer>referrer</span> to "<code>client</code>":
 
-   <li><p>If <var>parsedReferrer</var>'s
-   <span data-anolis-spec=url title=concept-url-origin>origin</span> is not
-   <span data-anolis-spec=html>same origin</span> with <var>origin</var>,
-   <span data-anolis-spec=webidl>throw</span> a <code title>TypeError</code>.
+    <ul class=brief>
+     <li><var>parsedReferrer</var>'s <span data-anolis-spec=url>non-relative flag</span> is set,
+     <span data-anolis-spec=url title=concept-url-scheme>scheme</span> is "<code>about</code>", and
+     <span data-anolis-spec=url title=concept-url-path>path</span> contains a single string
+     "<code>client</code>".
 
-   <li><p>Set <var>request</var>'s
-   <span title=concept-request-referrer>referrer</span> to <var>parsedReferrer</var>.
+     <li><var>parsedReferrer</var>'s
+     <span data-anolis-spec=url title=concept-url-origin>origin</span> is not
+     <span data-anolis-spec=html>same origin</span> with <var>origin</var>
+    </ul>
+    <!-- This can happen when you create a fresh request with values from an older request. Throwing
+         would be rather hostile as preventing it requires implementing the same-origin check in
+         developer space. -->
+
+   <li><p>Otherwise, set <var>request</var>'s <span title=concept-request-referrer>referrer</span>
+   to <var>parsedReferrer</var>.
   </ol>
 
  <li><p>If <var>init</var>'s <code title>referrerPolicy</code> member is present, set
