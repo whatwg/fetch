@@ -4223,7 +4223,7 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
 
 <p>To <dfn title=concept-BodyInit-extract>extract</dfn> a <span title=concept-body>body</span> and a
 `<code title>Content-Type</code>` <span title=concept-header-value>value</span> from
-<var>object</var> with optional <var>maximum-body-size</var>, run these steps:
+<var>object</var> with optional <var>keepalive-body-size</var>, run these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be the result of
@@ -4232,7 +4232,6 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
 
  <li><p>Let <var>Content-Type</var> be null.
  <li><p>Let <var>action</var> be null.
- <li><p>Let <var>body-size</var> be zero.
 
  <li>
   <p>Switch on <var>object</var>'s type:
@@ -4291,23 +4290,21 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
   </dl>
 
  <li>
+  <p>If <var>keepalive-body-size</var> is provided and <var>object</var>'s type is
+  <code title=concept-ReadableStream>ReadableStream</code>, or <var>object</var>'s size is greater
+  than <var>keepalive-body-size</var>, throw a <code title>TypeError</code> and abort the
+  remaining steps.
+
+ <li>
   <p>If <var>action</var> is non-null, run <var>action</var> <span data-anolis-spec=html>in
   parallel</span>:
   <ol>
-   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes,
+   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes and
    <span title=concept-enqueue-ReadableStream>enqueue</span> a <code>Uint8Array</code> object
-   wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>, and
-   increment <var>body-size</var> by the number of consumed <var>bytes</var>.
-
-   <ol>
-    <li><p>If creating the <code>ArrayBuffer</code> threw an exception,
-    <span title=concept-error-ReadableStream>error</span> <var>stream</var> with that exception
-    and cancel running <var>action</var>.
-
-    <li>If <var>maximum-body-size</var> is provided and <var>body-size</var> is equal or greater
-    than the provided value, throw (TODO: ???)Error and cancel running <var>action</var>.
-    TODO: is there a way to bound how long the stream is allowed to stay alive?
-   </ol>
+   wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If
+   creating the <code>ArrayBuffer</code> threw an exception,
+   <span title=concept-error-ReadableStream>error</span> <var>stream</var> with that exception
+   and cancel running <var>action</var>.
 
    <li><p>When running <var>action</var> is done,
    <span title=concept-close-ReadableStream>close</span> <var>stream</var>.
@@ -4827,7 +4824,7 @@ constructor must run these steps:
    <li><p>If <var>init</var>'s <code title>keepAlive</code> member is present and is set to
    <code>true</code>, then set <var>inputBody</var> and <var>Content-Type</var> to the
    result of <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s
-   <code title>body</code> member with <var>maximum-body-size</var> set by user agent policy.
+   <code title>body</code> member with <var>keepalive-body-size</var> set by user agent policy.
    Rethrow any exceptions.
    <p class="note no-backref">This step ensures that requests that are allowed to outlive the
    environment settings object and contain a body have bounded size and are not allowed to stay
