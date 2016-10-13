@@ -763,12 +763,13 @@ explicitly set <a for="/">request</a>'s
 <dfn data-export for=request id=concept-request-target-browsing-context>target browsing context</dfn>
 (null or a <a spec=html>browsing context</a>). Unless stated otherwise it is null.
 
-<p>A <a for="/">request</a> has an associated
-<dfn>keep-alive flag</dfn>. Unless stated otherwise it is unset.
+<p id=keep-alive-flag>A <a for="/">request</a> has an associated
+<dfn>keepalive flag</dfn>. Unless stated otherwise it is unset.
 
-<p class="note no-backref">This is used by <code>navigator.sendBeacon</code> and the HTML
-<code>img</code> element to outlive the
-<a spec=html>environment settings object</a>.
+<p class="note no-backref">This can be used to allow the request to outlive the
+<a spec=html>environment settings object</a>, e.g.,
+<code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
+this flag set are subject to additional processing requirements.
 
 <p>A <a for="/">request</a> has an associated
 <dfn data-export>skip-service-worker flag</dfn>. Unless stated otherwise it is
@@ -1419,7 +1420,7 @@ functionality.
 <dfn data-export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>,
 for each associated <a for="fetch group">fetch record</a> whose
 <a for="fetch record">request</a>'s <a>done flag</a> or
-<a>keep-alive flag</a> is unset,
+<a>keepalive flag</a> is unset,
 <a lt=terminated for=fetch>terminate</a> the
 <a for="fetch group">fetch record</a>'s
 <a for="fetch record">fetch</a> with reason <i>fatal</i>.
@@ -3192,6 +3193,16 @@ steps:
  <var>httpRequest</var>'s
  <a for=request>header list</a>.
 
+<li>
+  <p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
+  <a>keepalive flag</a> is set, and <var>contentLengthValue</var> is greater than a
+  user-agent-defined maximum, then return a <a>network error</a>.
+
+  <p class="note no-backref">The above user-agent-defined maximum ensures that requests that are
+  allowed to outlive the <a spec=html>environment settings object</a> and contain
+  a body, have a bounded size and are not allowed to stay alive indefinitely.
+
+
  <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a
  <a for=url spec=url>URL</a>, then
  <a for="header list">append</a>
@@ -4322,7 +4333,7 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
 
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit>extract</dfn> a <a for="/">body</a> and a
 `<code>Content-Type</code>` <a for=header>value</a> from
-<var>object</var>, run these steps:
+<var>object</var>, with an optional <var>keepalive flag</var>, run these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be the result of
@@ -4330,7 +4341,8 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
  <a interface><code>ReadableStream</code></a> object.
 
  <li><p>Let <var>Content-Type</var> be null.
- <li><p>Let <var>action</var> be null.
+
+<li><p>Let <var>action</var> be null.
 
  <li>
   <p>Switch on <var>object</var>'s type:
@@ -4387,6 +4399,10 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
    <dt><a interface><code>ReadableStream</code></a>
    <dd><p>Set <var>stream</var> to <var>object</var>.
   </dl>
+
+ <li><p>If <var>keepalive flag</var> is set and <var>object</var>'s type is a
+ <a interface><code>ReadableStream</code></a> object, then throw a
+ <code>TypeError</code>.
 
  <li>
   <p>If <var>action</var> is non-null, run <var>action</var> <a spec=html>in
@@ -4585,6 +4601,7 @@ interface Request {
   readonly attribute RequestCache cache;
   readonly attribute RequestRedirect redirect;
   readonly attribute DOMString integrity;
+  readonly attribute boolean keepalive;
 
   [NewObject] Request clone();
 };
@@ -4601,6 +4618,7 @@ dictionary RequestInit {
   RequestCache cache;
   RequestRedirect redirect;
   DOMString integrity;
+  boolean keepalive;
   any window; // can only be set to null
 };
 
@@ -4725,10 +4743,12 @@ constructor must run these steps:
  <a for=request>cache mode</a>,
  <a for=request>redirect mode</a> is
  <var>request</var>'s
- <a for=request>redirect mode</a>, and
+ <a for=request>redirect mode</a>,
  <a for=request>integrity metadata</a> is
  <var>request</var>'s
- <a for=request>integrity metadata</a>.
+ <a for=request>integrity metadata</a>, and
+ <a>keepalive flag</a> is <var>request</var>'s <a>keepalive flag</a>.
+
 
  <li>
   <p>If any of <var>init</var>'s members are present, run these substeps:
@@ -4833,6 +4853,10 @@ constructor must run these steps:
  <var>request</var>'s
  <a for=request>integrity metadata</a> to it.
 
+<li><p>If <var>init</var>'s <code>keepalive</code> member is present, then set <var>request</var>'s
+ <a>keepalive flag</a> if <var>init</var>'s <code>keepalive</code> member is true, and unset
+ it otherwise.
+
  <li>
   <p>If <var>init</var>'s <code>method</code> member is present, let
   <var>method</var> be it and run these substeps:
@@ -4901,7 +4925,12 @@ constructor must run these steps:
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <li><p>If <var>init</var>'s <code>keepalive</code> member is present and is true, then set
+   <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <a lt=extract>extracting</a> <var>init</var>'s <code>body</code>
+   member, with <var>keepalive flag</var> set. Rethrow any exceptions.
+
+   <li><p>Otherwise, set <var>inputBody</var> and <var>Content-Type</var> to the result of
    <a lt=extract for=BodyInit>extracting</a> <var>init</var>'s
    <code>body</code> member. Rethrow any exceptions.
 
@@ -5011,6 +5040,10 @@ return <a for=Request>request</a>'s
 <p>The <dfn><code>integrity</code></dfn> attribute's getter
 must return <a for=Request>request</a>'s
 <a for=request>integrity metadata</a>.
+
+<p>The <dfn id=dom-Request-keepalive><code>keepalive</code></dfn> attribute's getter
+must return true if <a for=Request>request</a>'s <a>keepalive flag</a>
+is set, and false otherwise.
 
 <hr>
 
