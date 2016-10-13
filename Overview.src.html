@@ -679,13 +679,13 @@ explicitly set <span title=concept-request>request</span>'s
 <dfn title=concept-request-target-browsing-context data-export data-dfn-for=request>target browsing context</dfn>
 (null or a <span data-anolis-spec=html>browsing context</span>). Unless stated otherwise it is null.
 
-<p>A <span title=concept-request>request</span> has an associated
-<dfn>keepalive flag</dfn>. Unless stated otherwise it is unset.
+<p>A <span title=concept-request>request</span> has an associated <dfn>keepalive flag</dfn>. Unless
+stated otherwise it is unset.
 
 <p class="note no-backref">This can be used to allow the request to outlive the
-<span data-anolis-spec=html>environment settings object</span> - e.g.
-<code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests
-with this flag set are subject to additional processing requirements.
+<span data-anolis-spec=html>environment settings object</span>, e.g.,
+<code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
+this flag set are subject to additional processing requirements.
 
 <p>A <span title=concept-request>request</span> has an associated
 <dfn data-export data-dfn-for=request>skip-service-worker flag</dfn>. Unless stated otherwise it is
@@ -1336,8 +1336,7 @@ functionality.
 <dfn title=concept-fetch-group-terminate data-export data-dfn-for="fetch group">terminated</dfn>,
 for each associated <span title=concept-fetch-record>fetch record</span> whose
 <span title=concept-fetch-record-request>request</span>'s <span>done flag</span> or
-<span>keepalive flag</span> is unset,
-<span title=concept-fetch-terminate>terminate</span> the
+<span>keepalive flag</span> is unset, <span title=concept-fetch-terminate>terminate</span> the
 <span title=concept-fetch-record>fetch record</span>'s
 <span title=concept-fetch-record-fetch>fetch</span> with reason <i title>fatal</i>.
 
@@ -3100,14 +3099,13 @@ steps:
  <var>httpRequest</var>'s
  <span title=concept-request-header-list>header list</span>.
 
- <li><p>If <var>contentLengthValue</var> is non-null,
- the <var>httpRequest</var>'s <span>keepalive flag</span> is set,
- and <var>contentLengthValue</var> is greater than user-agent-defined maximum body size,
- then return a <span title=concept-network-error>network error</span>.
+ <li><p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
+ <span>keepalive flag</span> is set, and <var>contentLengthValue</var> is greater than a
+ user-agent-defined maximum, then return a <span title=concept-network-error>network error</span>.
 
  <p class="note no-backref">The above user-agent-defined value ensures that requests that are
- allowed to outlive the <span data-anolis-spec=html>environment settings object</span> and
- contain a body have bounded size and are not allowed to stay alive indefinitely.
+ allowed to outlive the <span data-anolis-spec=html>environment settings object</span> and contain a
+ body, have a bounded size and are not allowed to stay alive indefinitely.
 
  <li><p>If <var>httpRequest</var>'s <span title=concept-request-referrer>referrer</span> is a
  <span data-anolis-spec=url title=concept-url>URL</span>, then
@@ -4233,7 +4231,7 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
 
 <p>To <dfn title=concept-BodyInit-extract>extract</dfn> a <span title=concept-body>body</span> and a
 `<code title>Content-Type</code>` <span title=concept-header-value>value</span> from
-<var>object</var> with optional <var>keepalive</var> flag, run these steps:
+<var>object</var>, with an optional <var>keepalive flag</var>, run these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be the result of
@@ -4241,6 +4239,7 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
  <code title=concept-ReadableStream>ReadableStream</code> object.
 
  <li><p>Let <var>Content-Type</var> be null.
+
  <li><p>Let <var>action</var> be null.
 
  <li>
@@ -4299,14 +4298,14 @@ typedef (<span>BodyInit</span> or <span title=concept-ReadableStream>ReadableStr
    <dd><p>Set <var>stream</var> to <var>object</var>.
   </dl>
 
- <li>
-  <p>If <var>keepalive</var> flag is set and <var>object</var>'s type is a
-  <code title=concept-ReadableStream>ReadableStream</code> object, then throw a
-  <code title>TypeError</code>.
+ <li><p>If <var>keepalive flag</var> is set and <var>object</var>'s type is a
+ <code title=concept-ReadableStream>ReadableStream</code> object, then throw a
+ <code title>TypeError</code>.
 
  <li>
-  <p>If <var>action</var> is non-null, run <var>action</var> <span data-anolis-spec=html>in
-  parallel</span>:
+  <p>If <var>action</var> is non-null, run <var>action</var>
+  <span data-anolis-spec=html>in parallel</span>:
+
   <ol>
    <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes and
    <span title=concept-enqueue-ReadableStream>enqueue</span> a <code>Uint8Array</code> object
@@ -4756,7 +4755,8 @@ constructor must run these steps:
  <span title=concept-request-integrity-metadata>integrity metadata</span> to it.
 
  <li><p>If <var>init</var>'s <code title>keepalive</code> member is present, then set
- <var>request</var>'s <span>keepalive flag</span> to it.
+ <var>request</var>'s <span>keepalive flag</span> if <var>init</var>'s <code title>keepalive</code>
+ member is true, and unset it otherwise.
 
  <li>
   <p>If <var>init</var>'s <code title>method</code> member is present, let
@@ -4825,11 +4825,11 @@ constructor must run these steps:
 
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
-   <li>
-    <p>If <var>init</var>'s <code title>keepalive</code> member is present and is set to
-    <code>true</code>, then set <var>inputBody</var> and <var>Content-Type</var> to the
-    result of <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s
-    <code title>body</code> member with <var>keepalive</var>. Rethrow any exceptions.
+
+   <li><p>If <var>init</var>'s <code title>keepalive</code> member is present and is true, then set
+   <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s <code title>body</code>
+   member, with <var>keepalive flag</var> set. Rethrow any exceptions.
 
    <li><p>Otherwise, set <var>inputBody</var> and <var>Content-Type</var> to the result of
    <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s
@@ -4938,12 +4938,13 @@ return <span title=concept-Request-request>request</span>'s
 return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-redirect-mode>redirect mode</span>.
 
-<p>The <dfn title=dom-Request-keepalive><code>keepalive</code></dfn> attribute's getter
-must return <span title=concept-Request-request>request</span>'s <span>keepalive flag</span>.
-
 <p>The <dfn title=dom-Request-integrity><code>integrity</code></dfn> attribute's getter
 must return <span title=concept-Request-request>request</span>'s
 <span title=concept-request-integrity-metadata>integrity metadata</span>.
+
+<p>The <dfn title=dom-Request-keepalive><code>keepalive</code></dfn> attribute's getter
+must return true if <span title=concept-Request-request>request</span>'s <span>keepalive flag</span>
+is set, and false otherwise.
 
 <hr>
 
