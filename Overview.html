@@ -7,7 +7,7 @@
 
 <p><a class="logo" href="https://whatwg.org/"><img alt="WHATWG" height="100" src="https://resources.whatwg.org/logo-fetch.svg" width="100"></a>
 <h1 id="cors">Fetch</h1>
-<h2 class="no-num no-toc" id="living-standard-—-last-updated-12-october-2016">Living Standard — Last Updated 12 October 2016</h2>
+<h2 class="no-num no-toc" id="living-standard-—-last-updated-13-october-2016">Living Standard — Last Updated 13 October 2016</h2>
 
 <dl>
  <dt>Participate:
@@ -749,12 +749,13 @@ explicitly set <a href="#concept-request" title="concept-request">request</a>'s
 <dfn data-dfn-for="request" data-export="" id="concept-request-target-browsing-context" title="concept-request-target-browsing-context">target browsing context</dfn>
 (null or a <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context">browsing context</a>). Unless stated otherwise it is null.
 
-<p>A <a href="#concept-request" title="concept-request">request</a> has an associated
-<dfn id="keep-alive-flag">keep-alive flag</dfn>. Unless stated otherwise it is unset.
+<p id="keep-alive-flag">A <a href="#concept-request" title="concept-request">request</a> has an associated
+<dfn id="keepalive-flag">keepalive flag</dfn>. Unless stated otherwise it is unset.
 
-<p class="note no-backref">This is used by <code>navigator.sendBeacon</code> and the HTML
-<code>img</code> element to outlive the
-<a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>.
+<p class="note no-backref">This can be used to allow the request to outlive the
+<a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a>, e.g.,
+<code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
+this flag set are subject to additional processing requirements.
 
 <p>A <a href="#concept-request" title="concept-request">request</a> has an associated
 <dfn data-dfn-for="request" data-export="" id="skip-service-worker-flag">skip-service-worker flag</dfn>. Unless stated otherwise it is
@@ -1405,8 +1406,7 @@ functionality.
 <dfn data-dfn-for="fetch group" data-export="" id="concept-fetch-group-terminate" title="concept-fetch-group-terminate">terminated</dfn>,
 for each associated <a href="#concept-fetch-record" title="concept-fetch-record">fetch record</a> whose
 <a href="#concept-fetch-record-request" title="concept-fetch-record-request">request</a>'s <a href="#done-flag">done flag</a> or
-<a href="#keep-alive-flag">keep-alive flag</a> is unset,
-<a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminate</a> the
+<a href="#keepalive-flag">keepalive flag</a> is unset, <a href="#concept-fetch-terminate" title="concept-fetch-terminate">terminate</a> the
 <a href="#concept-fetch-record" title="concept-fetch-record">fetch record</a>'s
 <a href="#concept-fetch-record-fetch" title="concept-fetch-record-fetch">fetch</a> with reason <i title="">fatal</i>.
 
@@ -3169,6 +3169,15 @@ steps:
  <var>httpRequest</var>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a>.
 
+ <li>
+  <p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
+  <a href="#keepalive-flag">keepalive flag</a> is set, and <var>contentLengthValue</var> is greater than a
+  user-agent-defined maximum, then return a <a href="#concept-network-error" title="concept-network-error">network error</a>.
+
+  <p class="note no-backref">The above user-agent-defined maximum ensures that requests that are
+  allowed to outlive the <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">environment settings object</a> and contain
+  a body, have a bounded size and are not allowed to stay alive indefinitely.
+
  <li><p>If <var>httpRequest</var>'s <a href="#concept-request-referrer" title="concept-request-referrer">referrer</a> is a
  <a class="external" data-anolis-spec="url" href="https://url.spec.whatwg.org/#concept-url" title="concept-url">URL</a>, then
  <a href="#concept-header-list-append" title="concept-header-list-append">append</a>
@@ -4293,7 +4302,7 @@ typedef (<a href="#bodyinit">BodyInit</a> or <a href="#concept-readablestream" t
 
 <p>To <dfn id="concept-bodyinit-extract" title="concept-BodyInit-extract">extract</dfn> a <a href="#concept-body" title="concept-body">body</a> and a
 `<code title="">Content-Type</code>` <a href="#concept-header-value" title="concept-header-value">value</a> from
-<var>object</var>, run these steps:
+<var>object</var>, with an optional <var>keepalive flag</var>, run these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be the result of
@@ -4301,6 +4310,7 @@ typedef (<a href="#bodyinit">BodyInit</a> or <a href="#concept-readablestream" t
  <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object.
 
  <li><p>Let <var>Content-Type</var> be null.
+
  <li><p>Let <var>action</var> be null.
 
  <li>
@@ -4359,9 +4369,14 @@ typedef (<a href="#bodyinit">BodyInit</a> or <a href="#concept-readablestream" t
    <dd><p>Set <var>stream</var> to <var>object</var>.
   </dl>
 
+ <li><p>If <var>keepalive flag</var> is set and <var>object</var>'s type is a
+ <a href="#concept-readablestream"><code title="concept-ReadableStream">ReadableStream</code></a> object, then throw a
+ <code title="">TypeError</code>.
+
  <li>
-  <p>If <var>action</var> is non-null, run <var>action</var> <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in
-  parallel</a>:
+  <p>If <var>action</var> is non-null, run <var>action</var>
+  <a class="external" data-anolis-spec="html" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">in parallel</a>:
+
   <ol>
    <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes and
    <a href="#concept-enqueue-readablestream" title="concept-enqueue-ReadableStream">enqueue</a> a <code>Uint8Array</code> object
@@ -4556,6 +4571,7 @@ interface <dfn id="request">Request</dfn> {
   readonly attribute <a href="#requestcache">RequestCache</a> <a href="#dom-request-cache" title="dom-Request-cache">cache</a>;
   readonly attribute <a href="#requestredirect">RequestRedirect</a> <a href="#dom-request-redirect" title="dom-Request-redirect">redirect</a>;
   readonly attribute DOMString <a href="#dom-request-integrity" title="dom-Request-integrity">integrity</a>;
+  readonly attribute boolean <a href="#dom-request-keepalive" title="dom-Request-keepalive">keepalive</a>;
 
   [NewObject] <a href="#request">Request</a> <a href="#dom-request-clone" title="dom-Request-clone">clone</a>();
 };
@@ -4575,6 +4591,7 @@ interface <dfn id="request">Request</dfn> {
   <a href="#requestcache">RequestCache</a> cache;
   <a href="#requestredirect">RequestRedirect</a> redirect;
   DOMString integrity;
+  boolean keepalive;
   any window; // can only be set to null
 };
 
@@ -4699,10 +4716,11 @@ constructor must run these steps:
  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>,
  <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a> is
  <var>request</var>'s
- <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>, and
+ <a href="#concept-request-redirect-mode" title="concept-request-redirect-mode">redirect mode</a>,
  <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a> is
  <var>request</var>'s
- <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a>.
+ <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a>, and
+ <a href="#keepalive-flag">keepalive flag</a> is <var>request</var>'s <a href="#keepalive-flag">keepalive flag</a>.
 
  <li>
   <p>If any of <var>init</var>'s members are present, run these substeps:
@@ -4807,6 +4825,10 @@ constructor must run these steps:
  <var>request</var>'s
  <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a> to it.
 
+ <li><p>If <var>init</var>'s <code>keepalive</code> member is present, then set <var>request</var>'s
+ <a href="#keepalive-flag">keepalive flag</a> if <var>init</var>'s <code>keepalive</code> member is true, and unset
+ it otherwise.
+
  <li>
   <p>If <var>init</var>'s <code title="">method</code> member is present, let
   <var>method</var> be it and run these substeps:
@@ -4875,7 +4897,12 @@ constructor must run these steps:
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <li><p>If <var>init</var>'s <code>keepalive</code> member is present and is true, then set
+   <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var>init</var>'s <code title="">body</code>
+   member, with <var>keepalive flag</var> set. Rethrow any exceptions.
+
+   <li><p>Otherwise, set <var>inputBody</var> and <var>Content-Type</var> to the result of
    <a href="#concept-bodyinit-extract" title="concept-BodyInit-extract">extracting</a> <var>init</var>'s
    <code title="">body</code> member. Rethrow any exceptions.
 
@@ -4985,6 +5012,10 @@ return <a href="#concept-request-request" title="concept-Request-request">reques
 <p>The <dfn id="dom-request-integrity" title="dom-Request-integrity"><code>integrity</code></dfn> attribute's getter
 must return <a href="#concept-request-request" title="concept-Request-request">request</a>'s
 <a href="#concept-request-integrity-metadata" title="concept-request-integrity-metadata">integrity metadata</a>.
+
+<p>The <dfn id="dom-request-keepalive" title="dom-Request-keepalive"><code>keepalive</code></dfn> attribute's getter
+must return true if <a href="#concept-request-request" title="concept-Request-request">request</a>'s <a href="#keepalive-flag">keepalive flag</a>
+is set, and false otherwise.
 
 <hr>
 
