@@ -679,8 +679,8 @@ explicitly set <span title=concept-request>request</span>'s
 <dfn title=concept-request-target-browsing-context data-export data-dfn-for=request>target browsing context</dfn>
 (null or a <span data-anolis-spec=html>browsing context</span>). Unless stated otherwise it is null.
 
-<p>A <span title=concept-request>request</span> has an associated <dfn>keepalive flag</dfn>. Unless
-stated otherwise it is unset.
+<p id=keep-alive-flag>A <span title=concept-request>request</span> has an associated
+<dfn>keepalive flag</dfn>. Unless stated otherwise it is unset.
 
 <p class="note no-backref">This can be used to allow the request to outlive the
 <span data-anolis-spec=html>environment settings object</span>, e.g.,
@@ -3099,13 +3099,14 @@ steps:
  <var>httpRequest</var>'s
  <span title=concept-request-header-list>header list</span>.
 
- <li><p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
- <span>keepalive flag</span> is set, and <var>contentLengthValue</var> is greater than a
- user-agent-defined maximum, then return a <span title=concept-network-error>network error</span>.
+ <li>
+  <p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
+  <span>keepalive flag</span> is set, and <var>contentLengthValue</var> is greater than a
+  user-agent-defined maximum, then return a <span title=concept-network-error>network error</span>.
 
- <p class="note no-backref">The above user-agent-defined value ensures that requests that are
- allowed to outlive the <span data-anolis-spec=html>environment settings object</span> and contain a
- body, have a bounded size and are not allowed to stay alive indefinitely.
+  <p class="note no-backref">The above user-agent-defined maximum ensures that requests that are
+  allowed to outlive the <span data-anolis-spec=html>environment settings object</span> and contain
+  a body, have a bounded size and are not allowed to stay alive indefinitely.
 
  <li><p>If <var>httpRequest</var>'s <span title=concept-request-referrer>referrer</span> is a
  <span data-anolis-spec=url title=concept-url>URL</span>, then
@@ -4754,9 +4755,9 @@ constructor must run these steps:
  <var>request</var>'s
  <span title=concept-request-integrity-metadata>integrity metadata</span> to it.
 
- <li><p>If <var>init</var>'s <code title>keepalive</code> member is present, then set
- <var>request</var>'s <span>keepalive flag</span> if <var>init</var>'s <code title>keepalive</code>
- member is true, and unset it otherwise.
+ <li><p>If <var>init</var>'s <code>keepalive</code> member is present, then set <var>request</var>'s
+ <span>keepalive flag</span> if <var>init</var>'s <code>keepalive</code> member is true, and unset
+ it otherwise.
 
  <li>
   <p>If <var>init</var>'s <code title>method</code> member is present, let
@@ -4826,7 +4827,7 @@ constructor must run these steps:
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>If <var>init</var>'s <code title>keepalive</code> member is present and is true, then set
+   <li><p>If <var>init</var>'s <code>keepalive</code> member is present and is true, then set
    <var>inputBody</var> and <var>Content-Type</var> to the result of
    <span title=concept-BodyInit-extract>extracting</span> <var>init</var>'s <code title>body</code>
    member, with <var>keepalive flag</var> set. Rethrow any exceptions.
