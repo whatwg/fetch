@@ -18,6 +18,70 @@ Boilerplate: omit feedback-header, omit conformance, omit index, omit idl-index
 <script src=https://resources.whatwg.org/file-issue.js async></script>
 <script id=head src=https://resources.whatwg.org/dfn.js defer></script>
 
+<pre class=biblio>
+{
+    "HTTP": {
+        "aliasOf": "HTTP11"
+    },
+    "HTTP-SEMANTICS": {
+        "aliasOf": "RFC7231"
+    },
+    "HTTP-COND": {
+        "aliasOf": "RFC7232"
+    },
+    "HTTP-CACHING": {
+        "aliasOf": "RFC7234"
+    },
+    "HTTP-AUTH": {
+        "aliasOf": "RFC7235"
+    },
+    "REFERRER": {
+        "aliasOf": "referrer-policy"
+    },
+    "SW": {
+        "aliasOf": "service-workers"
+    },
+    "UPGRADE": {
+        "aliasOf": "upgrade-insecure-requests"
+    },
+    "HSTS": {
+        "aliasOf": "rfc6797"
+    },
+    "WSP": {
+        "aliasOf": "WEBSOCKETS-PROTOCOL"
+    },
+    "CLIENT-HINTS": {
+        "authors": [
+            "Ilya Grigorik"
+        ],
+        "href": "https://tools.ietf.org/html/draft-ietf-httpbis-client-hints",
+        "publisher": "IETF",
+        "title": "HTTP Client Hints"
+    },
+    "DATAURL": {
+        "authors": ["Simon Sapin"],
+        "href": "https://simonsapin.github.io/data-urls/",
+        "title": "The data URL scheme"
+    },
+    "HTTPVERBSEC1": {
+        "publisher": "US-CERT",
+        "href": "https://www.kb.cert.org/vuls/id/867593",
+        "title": "Multiple vendors' web servers enable HTTP TRACE method by default."
+    },
+    "HTTPVERBSEC2": {
+        "publisher": "US-CERT",
+        "href": "https://www.kb.cert.org/vuls/id/288308",
+        "title": "Microsoft Internet Information Server (IIS) vulnerable to cross-site scripting via HTTP TRACK method."
+    },
+    "HTTPVERBSEC3": {
+        "publisher": "US-CERT",
+        "href": "https://www.kb.cert.org/vuls/id/150227",
+        "title": "HTTP proxy default configurations allow arbitrary TCP connections."
+    }
+
+}
+</pre>
+
 <h2 id=goals class="no-num short">Goals</h2>
 
 <p>To unify fetching across the web platform this specification supplants a number of algorithms and
@@ -209,7 +273,7 @@ use "<code>deprecated</code>" is not defined by this specification. An
 <p>A <dfn data-export>forbidden method</dfn> is a <a for=https>method</a> that is a
 <a>byte-case-insensitive</a> match for `<code>CONNECT</code>`,
 `<code>TRACE</code>`, or `<code>TRACK</code>`.
-[[HTTPVERBSEC]]
+[[HTTPVERBSEC1]], [[HTTPVERBSEC2]], [[HTTPVERBSEC3]]
 
 <p>To <dfn data-export data-dfn-for=method id=concept-method-normalize for=method>normalize</dfn> a
 <a for=https>method</a>, if it is a <a>byte-case-insensitive</a>
@@ -570,7 +634,7 @@ user-agent-defined <a for=header>value</a> for the
  <li><p>If <var>codings</var> are not supported, return <var>bytes</var>.
 
  <li><p>Return the result of decoding bytes with the given
- <var>codings</var> as explained in HTTP. [[!HTTP]]
+ <var>codings</var> as explained in HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 </ol>
 <!-- XXX no hook in HTTP -->
 
@@ -933,7 +997,7 @@ Unless stated otherwise, it is unset.
   <dd><a lt=fetch for=ReadableStream>Fetch</a> will inspect the HTTP cache on the way to the network.
   If there is a fresh response it will be used. If there is a stale response a conditional request
   will be created, and a normal request otherwise. It then updates the HTTP cache with the response.
-  [[!HTTP]]
+  [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
   <dt>"<code>no-store</code>"
   <dd>Fetch behaves as if there is no HTTP cache at all.
@@ -1283,7 +1347,7 @@ associated with one or more <a lt=request for=body>requests</a>.
 functionality.
 <!-- fingerprinting -->
 
-<p>Further details are defined by HTTP. [[!HTTP]]
+<p>Further details are defined by HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
 
 <h3>Fetch groups</h3>
@@ -1334,7 +1398,7 @@ for each associated <a lt="fetch records" for=fetch>fetch record</a> whose
 
  <li>
   <p>Let <var>connection</var> be the result of establishing an HTTP connection to
-  <var>origin</var>. [[!HTTP]] [[!TLS]]
+  <var>origin</var>. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]] [[!TLS]]
 
   <p>If <var>credentials</var> is false, do <em>not</em> send a TLS client certificate.
 
@@ -2149,7 +2213,7 @@ the request.
 <p class="note no-backref">The user agent does not update the entry in the HTTP cache for a
 <a for=body>request</a> if request's cache mode is "no-store" or a
 `<code>Cache-Control: no-store</code>` header appears in the response.
-[[!HTTP]]
+[[!HTTP-CACHING]]
 
 <ol>
  <li><p>If <var>request</var>'s <a for=request>window</a> is
@@ -3289,7 +3353,7 @@ steps:
    <a for=request>response</a> from the HTTP cache using <var>httpRequest</var>, as
    per the
    "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
-   chapter of <cite>HTTP Caching</cite>. [[!HTTP]]
+   chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
 
    <li><p>If <var>cachedResponse</var> is null (i.e., one cannot be selected), return a
    <a for=network>network error</a>.
@@ -3297,7 +3361,7 @@ steps:
    <li><p>Update <var>cachedResponse</var>'s <a for=header>header list</a>
    using <var>response</var>'s <a for=header>header list</a>, as per the
    "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
-   chapter of <cite>HTTP Caching</cite>. [[!HTTP]]
+   chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
 
    <li>
     <p>Set <var>response</var> to the <var>cachedResponse</var>.
@@ -3352,7 +3416,7 @@ steps:
    <li>
     <p>Prompt the end user as appropriate in <var>request</var>'s
     <a for=request>window</a> and store the result as a
-    <a>proxy-authentication entry</a>. [[!HTTP]]
+    <a>proxy-authentication entry</a>. [[!HTTP-AUTH]]
 
     <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
 
@@ -3402,7 +3466,7 @@ steps:
   using <var>request</var> with the following caveats:
 
   <ul>
-   <li><p>Follow the relevant requirements from HTTP. [[!HTTP]]
+   <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
    <li><p>Wait until all the <a lt=header for=header>headers</a> are transmitted or
    <a for=ReadableStream>fetch</a> is being
@@ -5467,7 +5531,7 @@ however, it is perfectly fine to do so.
 <code>*</code> or a static <a spec=html>origin</a>,
 `<code>Vary</code>` is to be used.
 [[!HTML]]
-[[!HTTP]]
+[[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
 <pre class=example>Vary: Origin</pre>
 
