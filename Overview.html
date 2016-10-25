@@ -3346,12 +3346,29 @@ steps:
  <li><p>Let <var>response</var> be null.
 
  <li>
-  <p>If <var>httpRequest</var>'s
-  <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is neither
-  "<code title="">no-store</code>" nor "<code title="">reload</code>", and there is a <em>complete</em>
-  <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
-  <var>httpRequest</var> run these substeps:
-  <!-- XXX xref "HTTP cache" -->
+  <p>If <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is
+  "<code title="">default</code>", then follow the normal procedures to determine whether the
+  HTTP cache has a <a href="#concept-response" title="concept-response">response</a> for <var>httpRequest</var>.
+
+  <p class="note">Including taking into account any
+  `<code title="http-cache-control">Cache-Control</code>` and `<code title="http-pragma">Pragma</code>`
+  <a href="#concept-header" title="concept-header">headers</a>.
+
+  <p>If there is such a <a href="#concept-response" title="concept-response">response</a>, then set <var>response</var>
+  to it. Otherwise, if necessary, modify <var>httpRequest</var>'s
+  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with revalidation or resume
+  <a href="#concept-header" title="concept-header">headers</a>.
+  <!-- XXX modify, revalidation headers, resume headers -->
+
+  <p class="note">Unfortunately this is vaguer than intended. The HTTP cache specification does not
+  provide the necessary hooks to make this (or indeed, what follows) crystal clear.
+  <!-- XXX HTTP cache -->
+
+ <li>
+  <p>Otherwise, if <var>httpRequest</var>'s <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a>
+  is neither "<code title="">no-store</code>" nor "<code title="">reload</code>", and there is a
+  <em>complete</em> <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+  <var>httpRequest</var>, then run these substeps:
 
   <ol>
    <li>
@@ -3364,28 +3381,19 @@ steps:
     <a href="#concept-header" title="concept-header">header</a> into account.
 
    <li><p>Otherwise, if <var>httpRequest</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is "<code title="">default</code>" and the
-   <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for <var>httpRequest</var> does
-   not require revalidation, then set <var>response</var> to that
-   <a href="#concept-response" title="concept-response">response</a>.
-   <!-- XXX xref "revalidation" -->
-
-   <li><p>Otherwise, if <var>httpRequest</var>'s
-   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either "<code title="">default</code>"
-   or "<code title="">no-cache</code>", modify <var>httpRequest</var>'s
-   <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with revalidation
-   <a href="#concept-header" title="concept-header">headers</a>.
+   <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is "<code title="">no-cache</code>", then
+   modify <var>httpRequest</var>'s <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with
+   revalidation <a href="#concept-header" title="concept-header">headers</a>.
    <!-- XXX modify, revalidation headers -->
   </ol>
 
  <li><p>Otherwise, if <var>httpRequest</var>'s
- <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is either
- "<code title="">default</code>" or "<code title="">force-cache</code>", and there is a
- <em>partial</em> <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
- <var>httpRequest</var>, modify <var>httpRequest</var>'s
+ <a href="#concept-request-cache-mode" title="concept-request-cache-mode">cache mode</a> is "<code title="">force-cache</code>", and
+ there is a <em>partial</em> <a href="#concept-response" title="concept-response">response</a> in the HTTP cache for
+ <var>httpRequest</var>, then modify <var>httpRequest</var>'s
  <a href="#concept-request-header-list" title="concept-request-header-list">header list</a> with resume
  <a href="#concept-header" title="concept-header">headers</a>.
- <!-- XXX xref partial, modify, resume headers -->
+ <!-- XXX partial, modify, resume headers -->
 
  <li>
   <p>If <var>response</var> is null, run these substeps:
