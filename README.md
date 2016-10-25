@@ -15,16 +15,20 @@ started, leave a comment on the issue or ask around [on IRC](https://wiki.whatwg
 
 ### Pull requests
 
-In short, change `Overview.src.html` and submit your patch, with a
+In short, change `fetch.bs` and submit your patch, with a
 [good commit message](https://github.com/erlang/otp/wiki/Writing-good-commit-messages). Consider
 reading through the [WHATWG FAQ](https://wiki.whatwg.org/wiki/FAQ) if you are new here.
 
 Please add your name to the Acknowledgments section in your first pull request, even for trivial
 fixes. The names are sorted lexicographically.
 
-To generate `Overview.html`, [Anolis](https://wiki.whatwg.org/wiki/Anolis) can be used. (Do not
+To generate `fetch.html`, [bikeshed](https://github.com/tabatkins/bikeshed) can be used. Do not
 worry if using that tool is too complicated, your pull request does not need to contain the
-generated HTML to be accepted.)
+generated HTML to be accepted. If you _do_ want to use it, the easiest way is probably via the HTTP
+API:
+```
+curl https://api.csswg.org/bikeshed/ -f -F file=@fetch.bs > fetch.html
+```
 
 #### Formatting
 
