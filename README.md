@@ -22,12 +22,14 @@ reading through the [WHATWG FAQ](https://wiki.whatwg.org/wiki/FAQ) if you are ne
 Please add your name to the Acknowledgments section in your first pull request, even for trivial
 fixes. The names are sorted lexicographically.
 
-To generate `fetch.html`, [bikeshed](https://github.com/tabatkins/bikeshed) can be used. Do not
-worry if using that tool is too complicated, your pull request does not need to contain the
-generated HTML to be accepted. If you _do_ want to use it, the easiest way is probably via the HTTP
-API:
+If you want to preview the spec locally, you can either use a locally installed copy of
+[Bikeshed](https://github.com/tabatkins/bikeshed) by running `make` or use the HTTP API version by
+running `make remote`.
+
+If you want to do a complete "local deploy" including commit and/or branch snapshots, run
+
 ```
-curl https://api.csswg.org/bikeshed/ -f -F file=@fetch.bs > fetch.html
+./deploy.sh --local
 ```
 
 #### Formatting
