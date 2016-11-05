@@ -24,7 +24,7 @@ Translate IDs: typedefdef-bodyinit bodyinit,typedefdef-responsebodyinit response
 
 <pre class=anchors>
 url:https://xhr.spec.whatwg.org/#concept-formdata-entry;spec:XHR;type:dfn;text:entries
-url:https://heycam.github.io/webidl/#es-ByteString;type:dfn;text:converted to ByteString;spec:WEBIDL
+url:https://heycam.github.io/webidl/#record-mappings;type:dfn;text:mapping;spec:WEBIDL
 url:https://tools.ietf.org/html/rfc7230#section-3.1.1;text:method;type:dfn;spec:http
 url: https://tools.ietf.org/html/rfc7230#section-3.2;text:field-name;type:dfn;spec:http
 url: https://tools.ietf.org/html/rfc7230#section-3.2;text:field-content; type:dfn;spec:http
@@ -4016,7 +4016,7 @@ fetch("/music/pk/altes-kamuffel.flac")
 
 <h3 id=headers-class>Headers class</h3>
 
-<pre data-no-idl class=idl>typedef (Headers or sequence&lt;sequence&lt;ByteString>> or record&lt;ByteString, ByteString>) <dfn id=headersinit typedef export>HeadersInit</dfn>;</pre>
+<pre class=idl>typedef (Headers or sequence&lt;sequence&lt;ByteString>> or record&lt;ByteString, ByteString>) HeadersInit;</pre>
 
 <pre class=idl>[Constructor(optional HeadersInit init),
  Exposed=(Window,Worker)]
@@ -4028,6 +4028,23 @@ interface Headers {
   void set(ByteString name, ByteString value);
   iterable&lt;ByteString, ByteString>;
 };</pre>
+
+<div class=example>
+  <p>Constructing a {{Headers}} object from scratch is fairly
+  straightforward. You could pass in a JavaScript object representing a
+  header hash map, or an array of ordered pairs:
+
+  <pre>
+var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
+new Headers(meta)
+
+// The above is equivalent to
+var meta = [
+  [ "Content-Type", "text/xml" ],
+  [ "Breaking-Bad", "&lt;3" ]
+]
+new Headers(meta)</pre>
+</div>
 
 <p>A {{Headers}} object has an associated
 <dfn export for=Headers id=concept-headers-header-list>header list</dfn> (a
@@ -4109,13 +4126,10 @@ run these steps:
 
  <li>
   <p>Otherwise, if <var>object</var> is a record, then for each
-  mapping (<var>key</var>, <var>value</var>) in <var>object</var>, run these substeps:
-
-  <ol>
-   <li><p><a lt=append for=Headers>Append</a>
-   <var>key</var>/<var>value</var> to
-   <var>headers</var>. Rethrow any exception.
-  </ol>
+  <a spec=webidl>mapping</a> (<var>key</var>, <var>value</var>) in
+  <var>object</var>, <a lt=append for=Headers>append</a>
+  <var>key</var>/<var>value</var> to <var>headers</var>. Rethrow any
+  exception.
 </ol>
 
 <p>The
@@ -5626,6 +5640,7 @@ Surya Ismail,
 吉野剛史 (Takeshi Yoshino),
 Thomas Roessler,
 Thomas Wisniewski,
+Tiancheng "Timothy" Gu,
 Tobie Langel,
 Tom Schuster,
 Tomás Aparicio,
