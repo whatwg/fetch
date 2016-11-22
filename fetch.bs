@@ -15,7 +15,7 @@ Markup Shorthands: css off
 !Commits: [SNAPSHOT-LINK]
 !Commits: <a href=https://twitter.com/fetchstandard>@fetchstandard</a>
 !Translation (non-normative): <span title=Japanese><a href=https://triple-underscore.github.io/Fetch-ja.html lang=ja hreflang=ja rel=alternate>日本語</a></span>
-Translate IDs: typedefdef-bodyinit bodyinit,typedefdef-responsebodyinit responsebodyinit,dictdef-requestinit requestinit,typedefdef-requestinfo requestinfo,enumdef-requesttype requesttype,enumdef-requestdestination requestdestination,enumdef-requestmode requestmode,enumdef-requestcredentials requestcredentials,enumdef-requestcache requestcache,enumdef-requestredirect requestredirect,dictdef-responseinit responseinit,enumdef-responsetype responsetype
+Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,typedefdef-requestinfo requestinfo,enumdef-requesttype requesttype,enumdef-requestdestination requestdestination,enumdef-requestmode requestmode,enumdef-requestcredentials requestcredentials,enumdef-requestcache requestcache,enumdef-requestredirect requestredirect,dictdef-responseinit responseinit,enumdef-responsetype responsetype
 </pre>
 
 <script src=https://resources.whatwg.org/file-issue.js async></script>
@@ -571,13 +571,16 @@ user-agent-defined <a for=header>value</a> for the
 <p>A <dfn export id=concept-body>body</dfn> consists of:
 
 <ul>
- <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (a {{ReadableStream}} object).
+ <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (null or a {{ReadableStream}}
+ object).
 
  <li><p>A <dfn export for=body id=concept-body-transmitted>transmitted bytes</dfn>
  (an integer), initially 0.
 
  <li><p>A <dfn export for=body id=concept-body-total-bytes>total bytes</dfn> (an
  integer), initially 0.
+
+ <li><p>A <dfn export for=body id=concept-body-source>source</dfn>, initially null.
 </ul>
 
 <p>A <a for=/>body</a> <var>body</var> is said to be
@@ -2984,6 +2987,10 @@ in addition to <a>HTTP fetch</a> above.
  <a lt="include credential">includes credentials</a>, then return a
  <a>network error</a>.
 
+ <li><p>If <var>actualResponse</var>'s <a for=response>status</a> is not <code>303</code>,
+ <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
+ <a for=request>body</a>'s <a for=body>source</a> is null, then return a <a>network error</a>.
+
  <li>
   <p>If <i>CORS flag</i> is set and <var>actualResponse</var>'s
   <a for=response>location URL</a>
@@ -3007,6 +3014,15 @@ in addition to <a>HTTP fetch</a> above.
  <code>303</code>, set <var>request</var>'s <a for=request>method</a>
  to `<code>GET</code>` and <var>request</var>'s <a for=request>body</a>
  to null.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>body</a> is non-null, then set <var>request</var>'s
+  <a for=request>body</a> to the first part of <a lt=extract for=BodyInit>extracting</a>
+  <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>.
+
+  <p class="note no-backref"><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s
+  nullity has already been checked. The <a lt=extract for=BodyInit>extracting</a> operation cannot
+  throw as it was called for the same <a for=body>source</a> before.
 
  <li><p>Append <var>actualResponse</var>'s
  <a for=response>location URL</a> to <var>request</var>'s
@@ -3035,17 +3051,31 @@ steps:
 <i>authentication-fetch flag</i>.
 
 <ol>
- <li>
-  <p>Let <var>httpRequest</var> be <var>request</var> if
-  <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>"
-  and <var>request</var>'s <a for=request>redirect mode</a> is
-  "<code>error</code>", and the result of <a lt=clone for=request>cloning</a>
-  <var>request</var> otherwise.
+ <li><p>Let <var>httpRequest</var> be null.
 
-  <p class="note no-backref">A <var>request</var> is typically cloned as it needs to be possible to
-  add <a>headers</a> and read its
-  <a for=request>body</a> without affecting <var>request</var>. As
-  <var>request</var> is reused with redirects, authentication, and proxy authentication.
+ <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
+ <var>request</var>'s <a for=request>redirect mode</a> is "<code>error</code>", then set
+ <var>httpRequest</var> to <var>request</var>.
+
+ <li>
+  <p>Otherwise, run these substeps:
+
+  <ol>
+   <li><p>Set <var>httpRequest</var> to a copy of <var>request</var> except for its
+   <a for=request>body</a>.
+
+   <li><p>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
+
+   <li><p>Set <var>httpRequest</var>'s <a for=request>body</a> to <var>body</var>.
+
+   <li><p>If <var>body</var> is non-null, then set <var>request</var>'s <a for=request>body</a> to a
+   new <a for=/>body</a> whose <a for=body>stream</a> is null and whose <a for=body>source</a> is
+   <var>body</var>'s <a for=body>source</a>.
+  </ol>
+
+  <p class="note no-backref">Here we do not <a for=request>clone</a> <var>request</var> in order
+  to reduce memory consumption. <var>request</var> can be reused with redirects, authentication,
+  and proxy authentication.
 
  <li>
   <p>Let <i>credentials flag</i> be set if one of
@@ -3325,6 +3355,22 @@ steps:
   <ol>
    <li class=XXX><p>Needs testing: multiple `<code>WWW-Authenticate</code>` headers, missing,
    parsing issues.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>body</a> is non-null, then run these subsubsteps:
+
+    <ol>
+     <li><p>If <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is null,
+     then return a <a>network error</a>.
+
+     <li>
+      <p>Set <var>request</var>'s <a for=request>body</a> to the first part of
+      <a lt=extract for=BodyInit>extracting</a> <var>request</var>'s <a for=request>body</a>'s
+      <a for=body>source</a>.
+
+      <p class="note no-backref">The <a lt=extract for=BodyInit>extracting</a> operation cannot
+      throw as it was called for the same <a for=body>source</a> before.
+    </ol>
 
    <li>
     <p>If <var>request</var>'s
@@ -4184,9 +4230,7 @@ method, when invoked, must run these steps:
 <h3 id=body-mixin>Body mixin</h3>
 
 <pre class=idl>
-typedef (Blob or BufferSource or FormData or URLSearchParams or USVString) BodyInit;
-
-typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
+typedef (Blob or BufferSource or FormData or URLSearchParams or ReadableStream or USVString) BodyInit;</pre>
 
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
 `<code>Content-Type</code>` <a for=header>value</a> from
@@ -4199,7 +4243,9 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
 
  <li><p>Let <var>Content-Type</var> be null.
 
-<li><p>Let <var>action</var> be null.
+ <li><p>Let <var>action</var> be null.
+
+ <li><p>Let <var>source</var> be null.
 
  <li>
   <p>Switch on <var>object</var>'s type:
@@ -4212,6 +4258,8 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
     <p>If <var>object</var>'s {{Blob/type}}
     attribute is not the empty byte sequence, set <var>Content-Type</var> to its value.
 
+    <p>Set <var>source</var> to <var>object</var>.
+
    <dt><code>BufferSource</code>
    <dd>
     <p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code> object
@@ -4219,6 +4267,8 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
     to <var>stream</var> and <a abstract-op>close</a>
     <var>stream</var>. If that threw an exception,
     <a abstract-op>error</a> <var>stream</var> with that exception.
+
+    <p>Set <var>source</var> to <var>object</var>.
 
    <dt>{{FormData}}
    <dd>
@@ -4232,6 +4282,8 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
     <a><code>multipart/form-data</code> boundary string</a> generated by the
     <a><code>multipart/form-data</code> encoding algorithm</a>.
 
+    <p>Set <var>source</var> to <var>object</var>.
+
    <dt>{{URLSearchParams}}
    <dd>
     <p>Set <var>action</var> to an action that runs the
@@ -4243,11 +4295,15 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
     <p>Set <var>Content-Type</var> to
     `<code>application/x-www-form-urlencoded;charset=UTF-8</code>`.
 
+    <p>Set <var>source</var> to <var>object</var>.
+
    <dt><code>USVString</code>
    <dd>
     <p>Set <var>action</var> to an action that runs <a>UTF-8 encode</a> on <var>object</var>.
 
     <p>Set <var>Content-Type</var> to `<code>text/plain;charset=UTF-8</code>`.
+
+    <p>Set <var>source</var> to <var>object</var>.
 
    <dt>{{ReadableStream}}
    <dd><p>Set <var>stream</var> to <var>object</var>.
@@ -4272,8 +4328,8 @@ typedef (BodyInit or ReadableStream) ResponseBodyInit;</pre>
    <a abstract-op>close</a> <var>stream</var>.
   </ol>
 
- <li><p>Let <var>body</var> be a <a for=/>body</a> whose
- <a for=body>stream</a> is <var>stream</var>.
+ <li><p>Let <var>body</var> be a <a for=/>body</a> whose <a for=body>stream</a> is
+ <var>stream</var> and whose <a for=body>source</a> is <var>source</var>.
 
  <li><p>Return <var>body</var> and <var>Content-Type</var>.
 </ol>
@@ -4914,7 +4970,7 @@ run these steps:
 
 <h3 id=response-class>Response class</h3>
 
-<pre class=idl>[Constructor(optional ResponseBodyInit? body = null, optional ResponseInit init),
+<pre class=idl>[Constructor(optional BodyInit? body = null, optional ResponseInit init),
  Exposed=(Window,Worker)]
 interface Response {
   [NewObject] static Response error();
