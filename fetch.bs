@@ -3180,10 +3180,17 @@ steps:
 
  <li>
   <p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
-  <a>keepalive flag</a> is set, and <var>contentLengthValue</var> is greater than a
-  user-agent-defined maximum, then return a <a>network error</a>.
+  <a>keepalive flag</a> is set:
 
-  <p class="note no-backref">The above user-agent-defined maximum ensures that requests that are
+  <ul>
+    <li>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
+    <li>Let <var>inflight keepalive bytes</var> be the sum of <a>request</a> <a>body</a>'s
+    <a>total bytes</a> for each <a>record</a> in <var>group</var> whose <a>done flag</a> is unset.
+    <li>If the sum of <var>contentLengthValue</var> and <var>inflight keepalive bytes</var> is
+    greater than 64KB, then return a <a>network error</a>.
+  </ul>
+
+  <p class="note no-backref">The above limit ensures that requests that are
   allowed to outlive the <a>environment settings object</a> and contain
   a body, have a bounded size and are not allowed to stay alive indefinitely.
 
