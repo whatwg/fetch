@@ -24,7 +24,6 @@ Translate IDs: typedefdef-bodyinit bodyinit,typedefdef-responsebodyinit response
 
 <pre class=anchors>
 url:https://xhr.spec.whatwg.org/#concept-formdata-entry;spec:XHR;type:dfn;text:entries
-url:https://heycam.github.io/webidl/#es-ByteString;type:dfn;text:converted to ByteString;spec:WEBIDL
 url:https://tools.ietf.org/html/rfc7230#section-3.1.1;text:method;type:dfn;spec:http
 url: https://tools.ietf.org/html/rfc7230#section-3.2;text:field-name;type:dfn;spec:http
 url: https://tools.ietf.org/html/rfc7230#section-3.2;text:field-content; type:dfn;spec:http
@@ -4016,19 +4015,9 @@ fetch("/music/pk/altes-kamuffel.flac")
 
 <h3 id=headers-class>Headers class</h3>
 
-<pre data-no-idl class=idl>typedef (Headers or sequence&lt;sequence&lt;ByteString>> or OpenEndedDictionary&lt;ByteString>) <dfn id=headersinit typedef export>HeadersInit</dfn>;</pre>
+<pre class=idl>typedef (Headers or sequence&lt;sequence&lt;ByteString>> or record&lt;ByteString, ByteString>) HeadersInit;
 
-<div class=XXX>
- <p>OpenEndedDictionary&lt;T> is a future IDL construct. Expect it to be used as such:
-
- <pre>
-var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
-new Headers(meta)</pre>
-
- <p>See <a href=https://github.com/whatwg/fetch/issues/164>issue #164</a> for discussion.
-</div>
-
-<pre class=idl>[Constructor(optional HeadersInit init),
+[Constructor(optional HeadersInit init),
  Exposed=(Window,Worker)]
 interface Headers {
   void append(ByteString name, ByteString value);
@@ -4038,6 +4027,22 @@ interface Headers {
   void set(ByteString name, ByteString value);
   iterable&lt;ByteString, ByteString>;
 };</pre>
+
+<div class=example id=example-headers-class>
+ <p>Constructing a {{Headers}} object from scratch is fairly straightforward. You could pass in a
+ JavaScript object representing a header hash map, or an array of ordered pairs:
+
+ <pre>
+var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
+new Headers(meta)
+
+// The above is equivalent to
+var meta = [
+  [ "Content-Type", "text/xml" ],
+  [ "Breaking-Bad", "&lt;3" ]
+]
+new Headers(meta)</pre>
+</div>
 
 <p>A {{Headers}} object has an associated
 <dfn export for=Headers id=concept-headers-header-list>header list</dfn> (a
@@ -4117,19 +4122,9 @@ run these steps:
    <var>headers</var>. Rethrow any exception.
   </ol>
 
- <li>
-  <p>Otherwise, if <var>object</var> is an open-ended dictionary, then for each
-  <var>header</var> in <var>object</var>, run these substeps:
-
-  <ol>
-   <li><p>Set <var>header</var>'s key to <var>header</var>'s key,
-   <a spec=webidl>converted to ByteString</a>.
-   Rethrow any exception.
-
-   <li><p><a lt=append for=Headers>Append</a>
-   <var>header</var>'s key/<var>header</var>'s value to
-   <var>headers</var>. Rethrow any exception.
-  </ol>
+ <li><p>Otherwise, if <var>object</var> is a <a>record</a>, then for each <a for=record>mapping</a>
+ (<var>key</var>, <var>value</var>) in <var>object</var>, <a lt=append for=Headers>append</a>
+ <var>key</var>/<var>value</var> to <var>headers</var>. Rethrow any exception.
 </ol>
 
 <p>The
@@ -5566,6 +5561,7 @@ Graham Klyne,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Henri Sivonen,
+Henry Story,
 Hiroshige Hayashizaki,
 Honza Bambas,
 Ian Hickson,
@@ -5610,6 +5606,7 @@ Martin Dürst,
 Matt Andrews,
 Matt Falkenhagen,
 Matt Oshry,
+Matt Seddon,
 Matt Womer,
 Mhano Harkness,
 Michael Kohler,
@@ -5640,6 +5637,7 @@ Surya Ismail,
 吉野剛史 (Takeshi Yoshino),
 Thomas Roessler,
 Thomas Wisniewski,
+Tiancheng "Timothy" Gu,
 Tobie Langel,
 Tom Schuster,
 Tomás Aparicio,
