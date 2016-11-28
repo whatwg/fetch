@@ -3178,16 +3178,26 @@ steps:
  <var>httpRequest</var>'s
  <a for=request>header list</a>.
 
- <li>
-  <p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
-  <a>keepalive flag</a> is set:
+<li>
+  <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
+  <a for=request>keepalive flag</a> is set:
 
   <ul>
+    <li>Let <var>inflight keepalive bytes</var> be zero.
     <li>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
-    <li>Let <var>inflight keepalive bytes</var> be the sum of <a>request</a> <a>body</a>'s
-    <a>total bytes</a> for each <a>record</a> in <var>group</var> whose <a>done flag</a> is unset.
+    <li>Let <var>inflight records</var> be the set of <a>records</a> in <var>group</var> whose
+    <a for=request>keepalive flag</a> is set, and whose <a>done flag</a> is unset.
+    <li>
+      <p>For each <var>rec</var> in <var>inflight records</var>:
+
+      <ul class=brief>
+        <li>Let <var>inflight request</var> be <var>rec</var>'s <a>request</a>.
+        <li>Increment <var>inflight keepalive bytes</var> by <var>inflight request</var>'s
+        <a for=request>body</a>'s <a for=body>total bytes</a>.
+      </ul>
+
     <li>If the sum of <var>contentLengthValue</var> and <var>inflight keepalive bytes</var> is
-    greater than 64KB, then return a <a>network error</a>.
+    greater than 64 <abbr title="kibibyte">KiB</abbr>, then return a <a>network error</a>.
   </ul>
 
   <p class="note no-backref">The above limit ensures that requests that are
