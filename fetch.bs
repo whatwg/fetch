@@ -919,10 +919,6 @@ provides a convenient way for standards to not have to set
 changed during redirects too.
 
 <p>A <a for=/>request</a> has an associated
-<dfn export>omit-<code>Origin</code>-header flag</dfn>. Unless stated
-otherwise it is unset.
-
-<p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-referrer>referrer</dfn>, which is
 "<code>no-referrer</code>", "<code>client</code>", or a <a for=/>URL</a>. Unless stated otherwise it
 is "<code>client</code>".
@@ -1747,7 +1743,7 @@ of the `<code>Referer</code>` [sic] header that does not reveal a
 <a for=url>path</a>. It is used for
 all <a lt="HTTP fetch">HTTP fetches</a> whose <i>CORS flag</i> is
 set as well as those where <a for=/>request</a>'s
-<a for=request>method</a> is `<code>POST</code>`. Due to
+<a for=request>method</a> neither `<code>GET</code>` nor `<code>HEAD</code>`. Due to
 compatibility constraints it is not included in all
 <a lt=fetch for=/>fetches</a>.
 <!-- Ian Hickson told me Adam Barth researched that -->
@@ -1797,8 +1793,9 @@ performed, to ensure <a for=/>request</a>'s
 
 <p>A <dfn export>CORS request</dfn> is an HTTP request that includes an
 `<a http-header><code>Origin</code></a>` header. It cannot be reliably identified as particpating in
-the <a>CORS protocol</a> as the `<a http-header><code>Origin</code></a>` header is sometimes
-included for other purposes too.
+the <a>CORS protocol</a> as the `<a http-header><code>Origin</code></a>` header is also included for
+all <a for=/>requests</a> whose <a for=request>method</a> is neither `<code>GET</code>` nor
+`<code>HEAD</code>`.
 
 <p>A <dfn id=cors-preflight-request export>CORS-preflight request</dfn> is a <a>CORS request</a> that checks to see
 if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
@@ -3127,10 +3124,11 @@ steps:
  <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
           concept-as-bytes -->
 
- <li><p>If <var>httpRequest</var>'s <a>omit-<code>Origin</code>-header flag</a> is unset,
- <a for="header list">append</a> `<code>Origin</code>`/<var>httpRequest</var>'s
- <a for=request>origin</a>, <a lt="ASCII serialization of an origin">serialized</a> and
- <a>utf-8 encoded</a>, to <var>httpRequest</var>'s <a for=request>header list</a>.
+ <li><p>If the <i>CORS flag</i> is set or <var>httpRequest</var>'s <a for=request>method</a> is
+ neither `<code>GET</code>` nor `<code>HEAD</code>`, then <a for="header list">append</a>
+ `<code>Origin</code>`/<var>httpRequest</var>'s <a for=request>origin</a>,
+ <a lt="ASCII serialization of an origin">serialized</a> and <a>utf-8 encoded</a>, to
+ <var>httpRequest</var>'s <a for=request>header list</a>.
  <!-- XXX concept-as-bytes -->
 
  <li><p>If <var>httpRequest</var>'s <a for=request>header list</a> does
@@ -4602,8 +4600,6 @@ constructor must run these steps:
  <a>current settings object</a>,
  <a for=request>window</a> is <var>window</var>,
  <a for=request>origin</a> is "<code>client</code>",
- <a>omit-<code>Origin</code>-header flag</a> is <var>request</var>'s
- <a>omit-<code>Origin</code>-header flag</a>,
  <a for=request>referrer</a> is <var>request</var>'s
  <a for=request>referrer</a>,
  <a for=request>referrer policy</a> is
@@ -4633,8 +4629,6 @@ constructor must run these steps:
    <li><p>If <var>request</var>'s <a for=request>mode</a> is
    "<code>navigate</code>", then set it to "<code>same-origin</code>".
    <!-- This works because we have reset request's client too. -->
-
-   <li><p>Unset <var>request</var>'s <a>omit-<code>Origin</code>-header flag</a>.
 
    <li><p>Set <var>request</var>'s <a for=request>referrer</a> to
    "<code>client</code>"
