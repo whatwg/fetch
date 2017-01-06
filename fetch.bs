@@ -213,18 +213,6 @@ of:
 <a>queue a fetch task</a> on <var>request</var> to <a>process request end-of-body</a>
 for <var>request</var>.
 
-<hr>
-
-<p>To <dfn>read a <var>request</var></dfn>, if <var>request</var>'s
-<a for=request>body</a> is non-null, whenever
-<var>request</var>'s <a for=request>body</a> is read from (i.e.
-is transmitted or read by script), increase <var>request</var>'s
-<a for=request>body</a>'s
-<a for=body>transmitted bytes</a> with the amount of payload body
-bytes transmitted and then <a>queue a fetch task</a> on <var>request</var> to
-<a>process request body</a> for <var>request</var>.
-<!-- XXX xref "read", "payload body" -->
-
 
 <h3 id=http>HTTP</h3>
 
@@ -1106,6 +1094,8 @@ or "<code>worker</code>".
 <p class=note>See <a for=/>handle fetch</a> for usage of these terms.
 [[!SW]]
 
+<hr>
+
 <p>To <dfn export for=request id=concept-request-clone>clone</dfn> a
 <a for=/>request</a> <var>request</var>, run these steps:
 
@@ -1119,6 +1109,49 @@ or "<code>worker</code>".
  <a for=request>body</a>. Rethrow any exceptions.
 
  <li><p>Return <var>newRequest</var>.
+</ol>
+
+<hr>
+
+<p>To <dfn export for=request id=concept-request-transmit-body>transmit body</dfn> for a
+<a for=/>request</a> <var>request</var>, run these steps:
+
+<ol>
+ <li>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
+
+ <li><p>If <var>body</var> is null, then <a>queue a fetch task</a> on <var>request</var> to
+ <a>process request end-of-body</a> for <var>request</var> and abort these steps.
+
+ <li>
+  <p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
+  chunk</a> from <var>body</var>'s <a for=body>stream</a>.
+
+  <ul>
+   <li>
+    <p>When <var>read</var> is fulfilled with an object whose <code>done</code>
+    property is false and whose <code>value</code> property is a
+    <code>Uint8Array</code> object, run these substeps:
+
+    <ol>
+     <li><p>Let <var>bytes</var> be the <a>byte sequence</a> represented by the
+     <code>Uint8Array</code> object.
+
+     <li><p>Transmit <var>bytes</var>.
+
+     <li><p>Increase <var>body</var>'s <a for=body>transmitted bytes</a> by <var>bytes</var>'s
+     length.
+
+     <li><p>Run the above step again.
+    </ol>
+
+   <li><p>When <var>read</var> is fulfilled with an object whose <code>done</code>
+   property is true, <a>queue a fetch task</a> on <var>request</var> to
+   <a>process request end-of-body</a> for <var>request</var>.
+
+   <li><p>When <var>read</var> is fulfilled with a value that matches with neither of the
+   above patterns, or <var>read</var> is rejected, <a lt=terminated for=fetch>terminate</a> the
+   ongoing fetch with reason <i>fatal</i>.
+  </ul>
 </ol>
 
 
@@ -2791,7 +2824,7 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     <p>If <var>response</var> is not null, then run these substeps:
 
     <ol>
-     <li><p><a lt="Read a request">Read <var>request</var></a>.
+     <li><p><a for=request>Transmit body</a> for <var>request</var>.
 
      <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
      <a>filtered response</a>, and to <var>response</var>'s
@@ -3457,7 +3490,7 @@ steps:
   "<code>deprecated</code>" state value ought to be a temporary and last resort kind
   of option.
 
-  <p><a lt="Read a request">Read <var>request</var></a>.
+  <p><a for=request>Transmit body</a> for <var>request</var>.
 
  <li>
   <p>Let <var>strategy</var> be an object. The user agent may choose any object.
