@@ -3073,9 +3073,12 @@ steps:
    <var>body</var>'s <a for=body>source</a>.
   </ol>
 
-  <p class="note no-backref">Here we do not <a for=request>clone</a> <var>request</var> in order
-  to reduce memory consumption. <var>request</var> can be reused with redirects, authentication,
-  and proxy authentication.
+  <p class="note no-backref"><var>request</var> is copied as <var>httpRequest</var> here as we need
+  to be able to add headers to <var>httpRequest</var> and read its <a for=request>body</a> without
+  affecting <var>request</var>. Namely, <var>rquest</var> can be reused with redirects,
+  authentication, and proxy authentication. We copy rather than clone in order to reduce memory
+  consumption. In case <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is
+  null, redirects and authentication will end up failing the fetch.
 
  <li>
   <p>Let <i>credentials flag</i> be set if one of
@@ -3098,10 +3101,10 @@ steps:
  `<code>0</code>`.
  <!-- https://chromium.googlesource.com/chromium/src/+/master/net/http/http_network_transaction.cc#982 -->
 
- <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null, set
+ <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null and <var>httpRequest</var>'s
+ <a for=request>body</a>'s <a for=request>source</a> is non-null, then set
  <var>contentLengthValue</var> to <var>httpRequest</var>'s <a for=request>body</a>'s
  <a for=body>total bytes</a>, <a>UTF-8 encoded</a>.
- <!-- XXX with streams we don't always know the length and so need to do chunked here -->
 
  <li><p>If <var>contentLengthValue</var> is non-null,
  <a for="header list">append</a>
@@ -3109,7 +3112,7 @@ steps:
  <var>httpRequest</var>'s
  <a for=request>header list</a>.
 
-<li>
+ <li>
   <p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
   <a>keepalive flag</a> is set, and <var>contentLengthValue</var> is greater than a
   user-agent-defined maximum, then return a <a>network error</a>.
@@ -3118,6 +3121,11 @@ steps:
   allowed to outlive the <a>environment settings object</a> and contain
   a body, have a bounded size and are not allowed to stay alive indefinitely.
 
+
+ <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null and <var>httpRequest</var>'s
+ <a for=request>body</a>'s <a for=request>source</a> is null, then <a for="header list">append</a>
+ `<code>Transfer-Encoding</code>`/`<code>chunked</code>` to <var>httpRequest</var>'s
+ <a for=request>header list</a>.
 
  <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
  <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
@@ -4848,6 +4856,10 @@ constructor must run these steps:
    `<code>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s
    {{Headers}} object. Rethrow any exception.
   </ol>
+
+ <li><p>If <var>inputBody</var> is non-null, <var>inputBody</var>'s <a for=body>source</a> is
+ null, and <var>r</var>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
+ "<code>same-origin</code>" nor "<code>cors</code>", then throw a <code>TypeError</code>.
 
  <li><p>Set <var>r</var>'s <a for=Request>request</a>'s
  <a for=request>body</a> to <var>inputBody</var>.
