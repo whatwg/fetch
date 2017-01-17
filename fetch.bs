@@ -1910,7 +1910,7 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
 
 <pre>
 Access-Control-Request-Method    = <a spec=http>method</a>
-Access-Control-Request-Headers   = #<a spec=http>field-name</a>
+Access-Control-Request-Headers   = 1#<a spec=http>field-name</a>
 
 wildcard                         = "*"
 Access-Control-Allow-Origin      = origin-or-null / wildcard
@@ -2053,8 +2053,8 @@ Origin: https://foo.invalid</pre>
  <p>Upon receiving a response from <code>bar.invalid</code>, the user agent will verify the
  `<a http-header><code>Access-Control-Allow-Origin</code></a>` response header. If its value is
  either `<code>https://foo.invalid</code>` or `<code>*</code>`, the user agent will invoke the
- <code>success</code> callback. If it has any other value, or is simply missing, the user agent will
- invoke the <code>failure</code> callback.
+ <code>success</code> callback. If it has any other value, or is missing, the user agent will invoke
+ the <code>failure</code> callback.
 </div>
 
 <div id=example-cors-with-response-header class=example>
@@ -3748,11 +3748,17 @@ steps:
  <a>CORS-safelisted request-headers</a> and duplicates,
  sorted lexicographically, and <a lt="byte-lowercase">byte-lowercased</a>.
 
- <li><p>Let <var>value</var> be the items in <var>headers</var> separated from each other by 0x2C.
+ <li>
+  <p>If <var>headers</var> <a for=list lt="is empty">is not empty</a>, then:
 
- <li><p><a for="header list">Set</a>
- `<a http-header><code>Access-Control-Request-Headers</code></a>` to <var>value</var> in
- <var>preflight</var>'s <a for=request>header list</a>.
+  <ol>
+   <li><p>Let <var>value</var> be the items in <var>headers</var> separated from each other by
+   `<code>,</code>`.
+
+   <li><p><a for="header list">Set</a>
+   `<a http-header><code>Access-Control-Request-Headers</code></a>` to <var>value</var> in
+   <var>preflight</var>'s <a for=request>header list</a>.
+  </ol>
 
  <li><p>Let <var>response</var> be the result of performing an
  <a>HTTP-network-or-cache fetch</a> using
@@ -5703,6 +5709,7 @@ Sendil Kumar N,
 Shao-xuan Kang,
 Sharath Udupa,
 Shivakumar Jagalur Matt,
+Sigbjørn Finne,
 Simon Pieters,
 Srirama Chandra Sekhar Mogali,
 Steven Salat,
