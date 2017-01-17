@@ -4925,34 +4925,25 @@ constructor must run these steps:
   <a for=request>body</a> is non-null, run these substeps:
 
   <ol>
-   <li><p>Let <var>dummyStream</var> be an <a>empty</a>
-   {{ReadableStream}} object.
-
-   <li><p>Set <var>input</var>'s <a for=Request>request</a>'s
-   <a for=request>body</a> to a new <a for=/>body</a> whose
-   <a for=body>stream</a> is <var>dummyStream</var>.
+   <li>
+    <p>Let «<var>ws</var>, <var>rs</var>» be a
+    <a href=https://streams.spec.whatwg.org/#ts-model>transform stream</a> such that
+    from <var>rs</var> one can read exactly the same data written to <var>ws</var>.
+    <p class="note no-backref"><var>ws</var> is a {{WritableStream}} object and <var>rs</var>
+    is a {{ReadableStream}} object.
 
    <li>
-    <p>Let <var>reader</var> be the result of <a lt="get a reader" for=ReadableStream>getting a reader</a>
-    from <var>dummyStream</var>.
+    <p>Call <a href=https://streams.spec.whatwg.org/#rs-pipe-to>pipeTo</a> on
+    <var>input</var>'s <a for=Request>request</a>'s <a for=request>body</a>'s
+    <a for=body>stream</a> with <var>ws</var>.
     <p class="note no-backref">This operation will not throw an exception.
 
-   <li>
-    <p><a lt="read all bytes" for=ReadableStream>Read all bytes</a> from
-    <var>dummyStream</var> with <var>reader</var>.
-    <p class="note no-backref">This operation makes <var>dummyStream</var> disturbed.
-  </ol>
+   <li><p>Set <var>r</var>'s <a for=Request>request</a>'s
+   <a for=request>body</a> to a new <a for=/>body</a> whose <a for=body>stream</a>
+   is <var>rs</var> and whose <a for=body>source</a> is <var>input</var>'s
+   <a for=Request>request</a>'s <a for=request>body</a>'s <a for=body>source</a>.
 
-  <p class="note no-backref">These substeps are meant to produce the observable equivalent of
-  "piping" <var>input</var>'s <a for=Body>body</a>'s
-  <a for=body>stream</a> into <var>r</var>. That is, <var>input</var> is
-  left with a <a for=/>body</a> with a
-  {{ReadableStream}} object that is
-  <a for=ReadableStream>disturbed</a> and
-  <a for=ReadableStream>locked</a>, while the data readable from
-  <var>r</var>'s <a for=Body>body</a>'s
-  <a for=body>stream</a> is now equal to what used to be <var>input</var>'s,
-  if <var>input</var>'s original <a for=Body>body</a> is non-null.
+  </ol>
 
  <li><p>Return <var>r</var>.
 </ol>
