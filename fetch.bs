@@ -4874,6 +4874,8 @@ constructor must run these steps:
  <var>inputBody</var> is non-null, and <var>request</var>'s <a for=request>method</a> is
  `<code>GET</code>` or `<code>HEAD</code>`, then <a>throw</a> a <code>TypeError</code>.
 
+ <li><p>Let <var>body</var> be <var>inputBody</var>.
+
  <li>
   <p>If <var>init</var>'s <code>body</code> member is present and is non-null, run these
   substeps:
@@ -4882,11 +4884,11 @@ constructor must run these steps:
    <li><p>Let <var>Content-Type</var> be null.
 
    <li><p>If <var>init</var>'s <code>keepalive</code> member is present and is true, then set
-   <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <var>body</var> and <var>Content-Type</var> to the result of
    <a lt=extract>extracting</a> <var>init</var>'s <code>body</code>
    member, with <var>keepalive flag</var> set. Rethrow any exceptions.
 
-   <li><p>Otherwise, set <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
    <a lt=extract for=BodyInit>extracting</a> <var>init</var>'s
    <code>body</code> member. Rethrow any exceptions.
 
@@ -4899,7 +4901,7 @@ constructor must run these steps:
   </ol>
 
  <li>
-  <p>If <var>inputBody</var> is non-null and <var>inputBody</var>'s <a for=body>source</a> is
+  <p>If <var>body</var> is non-null and <var>body</var>'s <a for=body>source</a> is
   null, then run these substeps:
 
   <ol>
@@ -4910,19 +4912,10 @@ constructor must run these steps:
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
- <li><p>Set <var>r</var>'s <a for=Request>request</a>'s
- <a for=request>body</a> to <var>inputBody</var>.
  <!-- Any steps after this must not throw. -->
 
- <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to
- the result of <a lt="extract a MIME type" for="header list">extracting a MIME type</a>
- from <var>r</var>'s <a for=Request>request</a>'s
- <a for=request>header list</a>.
-
  <li>
-  <p>If <var>input</var> is a {{Request}} object and
-  <var>input</var>'s <a for=Request>request</a>'s
-  <a for=request>body</a> is non-null, run these substeps:
+  <p>If <var>inputBody</var> is non-null, then run these substeps:
 
   <ol>
    <li>
@@ -4934,16 +4927,21 @@ constructor must run these steps:
 
    <li>
     <p>Call <a href=https://streams.spec.whatwg.org/#rs-pipe-to>pipeTo</a> on
-    <var>input</var>'s <a for=Request>request</a>'s <a for=request>body</a>'s
-    <a for=body>stream</a> with <var>ws</var>.
+    <var>inputBody</var>'s <a for=body>stream</a> with <var>ws</var>.
     <p class="note no-backref">This operation will not throw an exception.
 
-   <li><p>Set <var>r</var>'s <a for=Request>request</a>'s
-   <a for=request>body</a> to a new <a for=/>body</a> whose <a for=body>stream</a>
-   is <var>rs</var> and whose <a for=body>source</a> is <var>input</var>'s
-   <a for=Request>request</a>'s <a for=request>body</a>'s <a for=body>source</a>.
-
+   <li><p>If <var>inputBody</var> is <var>body</var>, then set <var>body</var> to a new
+   <a for=/>body</a> whose <a for=body>stream</a> is <var>rs</var>, whose <a for=body>source</a>
+   is <var>inputBody</var>'s <a for=body>source</a> and whose <a for=body>total bytes</a> is
+   <var>inputBody</var>'s <a for=body>total bytes</a>.
   </ol>
+
+ <li><p>Set <var>r</var>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
+
+ <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to
+ the result of <a lt="extract a MIME type" for="header list">extracting a MIME type</a>
+ from <var>r</var>'s <a for=Request>request</a>'s
+ <a for=request>header list</a>.
 
  <li><p>Return <var>r</var>.
 </ol>
