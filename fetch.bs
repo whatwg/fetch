@@ -4387,6 +4387,7 @@ typedef (Blob or BufferSource or FormData or URLSearchParams or ReadableStream o
 <pre class=idl>[NoInterfaceObject,
  Exposed=(Window,Worker)]
 interface Body {
+  readonly attribute ReadableStream? body;
   readonly attribute boolean bodyUsed;
   [NewObject] Promise&lt;ArrayBuffer> arrayBuffer();
   [NewObject] Promise&lt;Blob> blob();
@@ -4413,6 +4414,9 @@ non-null and its <a for=body>stream</a> is
 <dfn export id=concept-body-locked for=Body>locked</dfn> if <a for=Body>body</a> is
 non-null and its <a for=body>stream</a> is
 <a for=ReadableStream>locked</a>.
+
+<p>The <dfn attribute for=Body><code>body</code></dfn> attribute's getter must return null if
+<a for=Body>body</a> is null and <a for=Body>body</a>'s <a for=body>stream</a> otherwise.
 
 <p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> attribute's getter must
 return true if <a for=Body>disturbed</a>, and false otherwise.
@@ -4919,16 +4923,16 @@ constructor must run these steps:
 
   <ol>
    <li>
-    <p>Let «<var>ws</var>, <var>rs</var>» be a
-    <a href=https://streams.spec.whatwg.org/#ts-model>transform stream</a> such that
-    from <var>rs</var> one can read exactly the same data written to <var>ws</var>.
-    <p class="note no-backref"><var>ws</var> is a {{WritableStream}} object and <var>rs</var>
-    is a {{ReadableStream}} object.
+    <p>Let <var>rs</var> bs a {{ReadableStream}} object from which one can read the exactly
+    same data as one could read from <var>inputBody</var>'s <a for=body>stream</a>.
 
-   <li>
-    <p>Call <a href=https://streams.spec.whatwg.org/#rs-pipe-to>pipeTo</a> on
-    <var>inputBody</var>'s <a for=body>stream</a> with <var>ws</var>.
-    <p class="note no-backref">This operation will not throw an exception.
+    <p class=XXX>This will be specified more precisely once
+    <a href=https://streams.spec.whatwg.org/#ts-model>transform stream</a> and
+    <a href=https://streams.spec.whatwg.org/#pipe-chains>piping</a> are precisely defined.
+    See <a href=https://github.com/whatwg/fetch/issues/463>the issue</a>.
+
+    <p class="note no-backref">This makes <var>inputBody</var>'s <a for=body>stream</a>
+    <a for=ReadableStream>locked</a> and <a for=ReadableStream>disturbed</a> immediately.
 
    <li><p>If <var>inputBody</var> is <var>body</var>, then set <var>body</var> to a new
    <a for=/>body</a> whose <a for=body>stream</a> is <var>rs</var>, whose <a for=body>source</a>
@@ -5034,7 +5038,6 @@ interface Response {
   readonly attribute boolean ok;
   readonly attribute ByteString statusText;
   [SameObject] readonly attribute Headers headers;
-  readonly attribute ReadableStream? body;
   [SameObject] readonly attribute Promise&lt;Headers> trailer;
 
   [NewObject] Response clone();
@@ -5214,10 +5217,6 @@ must return <a for=Response>response</a>'s
 
 <p>The <dfn attribute for=Response><code>headers</code></dfn> attribute's getter must
 return the associated {{Headers}} object.
-
-<p>The <dfn attribute for=Response><code>body</code></dfn> attribute's getter must return null if
-the associated <a for=Body>body</a> is null and the associated
-<a for=Body>body</a>'s <a for=body>stream</a> otherwise.
 
 <p>The <dfn attribute for=Response><code>trailer</code></dfn> attribute's getter must return the
 associated <a for=Response>trailer promise</a>.
