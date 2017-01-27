@@ -4393,6 +4393,7 @@ typedef (Blob or BufferSource or FormData or URLSearchParams or ReadableStream o
 <pre class=idl>[NoInterfaceObject,
  Exposed=(Window,Worker)]
 interface Body {
+  readonly attribute ReadableStream? body;
   readonly attribute boolean bodyUsed;
   [NewObject] Promise&lt;ArrayBuffer> arrayBuffer();
   [NewObject] Promise&lt;Blob> blob();
@@ -4419,6 +4420,9 @@ non-null and its <a for=body>stream</a> is
 <dfn export id=concept-body-locked for=Body>locked</dfn> if <a for=Body>body</a> is
 non-null and its <a for=body>stream</a> is
 <a for=ReadableStream>locked</a>.
+
+<p>The <dfn attribute for=Body><code>body</code></dfn> attribute's getter must return null if
+<a for=Body>body</a> is null and <a for=Body>body</a>'s <a for=body>stream</a> otherwise.
 
 <p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> attribute's getter must
 return true if <a for=Body>disturbed</a>, and false otherwise.
@@ -4880,6 +4884,8 @@ constructor must run these steps:
  <var>inputBody</var> is non-null, and <var>request</var>'s <a for=request>method</a> is
  `<code>GET</code>` or `<code>HEAD</code>`, then <a>throw</a> a <code>TypeError</code>.
 
+ <li><p>Let <var>body</var> be <var>inputBody</var>.
+
  <li>
   <p>If <var>init</var>'s <code>body</code> member is present and is non-null, run these
   substeps:
@@ -4888,11 +4894,11 @@ constructor must run these steps:
    <li><p>Let <var>Content-Type</var> be null.
 
    <li><p>If <var>init</var>'s <code>keepalive</code> member is present and is true, then set
-   <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <var>body</var> and <var>Content-Type</var> to the result of
    <a lt=extract>extracting</a> <var>init</var>'s <code>body</code>
    member, with <var>keepalive flag</var> set. Rethrow any exceptions.
 
-   <li><p>Otherwise, set <var>inputBody</var> and <var>Content-Type</var> to the result of
+   <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
    <a lt=extract for=BodyInit>extracting</a> <var>init</var>'s
    <code>body</code> member. Rethrow any exceptions.
 
@@ -4905,7 +4911,7 @@ constructor must run these steps:
   </ol>
 
  <li>
-  <p>If <var>inputBody</var> is non-null and <var>inputBody</var>'s <a for=body>source</a> is
+  <p>If <var>body</var> is non-null and <var>body</var>'s <a for=body>source</a> is
   null, then run these substeps:
 
   <ol>
@@ -4916,49 +4922,36 @@ constructor must run these steps:
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
- <li><p>Set <var>r</var>'s <a for=Request>request</a>'s
- <a for=request>body</a> to <var>inputBody</var>.
  <!-- Any steps after this must not throw. -->
+
+ <li>
+  <p>If <var>inputBody</var> is non-null, then run these substeps:
+
+  <ol>
+   <li>
+    <p>Let <var>rs</var> bs a {{ReadableStream}} object from which one can read the exactly
+    same data as one could read from <var>inputBody</var>'s <a for=body>stream</a>.
+
+    <p class=XXX>This will be specified more precisely once
+    <a href=https://streams.spec.whatwg.org/#ts-model>transform stream</a> and
+    <a href=https://streams.spec.whatwg.org/#pipe-chains>piping</a> are precisely defined.
+    See <a href=https://github.com/whatwg/fetch/issues/463>the issue</a>.
+
+    <p class="note no-backref">This makes <var>inputBody</var>'s <a for=body>stream</a>
+    <a for=ReadableStream>locked</a> and <a for=ReadableStream>disturbed</a> immediately.
+
+   <li><p>If <var>inputBody</var> is <var>body</var>, then set <var>body</var> to a new
+   <a for=/>body</a> whose <a for=body>stream</a> is <var>rs</var>, whose <a for=body>source</a>
+   is <var>inputBody</var>'s <a for=body>source</a> and whose <a for=body>total bytes</a> is
+   <var>inputBody</var>'s <a for=body>total bytes</a>.
+  </ol>
+
+ <li><p>Set <var>r</var>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
 
  <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to
  the result of <a lt="extract a MIME type" for="header list">extracting a MIME type</a>
  from <var>r</var>'s <a for=Request>request</a>'s
  <a for=request>header list</a>.
-
- <li>
-  <p>If <var>input</var> is a {{Request}} object and
-  <var>input</var>'s <a for=Request>request</a>'s
-  <a for=request>body</a> is non-null, run these substeps:
-
-  <ol>
-   <li><p>Let <var>dummyStream</var> be an <a>empty</a>
-   {{ReadableStream}} object.
-
-   <li><p>Set <var>input</var>'s <a for=Request>request</a>'s
-   <a for=request>body</a> to a new <a for=/>body</a> whose
-   <a for=body>stream</a> is <var>dummyStream</var>.
-
-   <li>
-    <p>Let <var>reader</var> be the result of <a lt="get a reader" for=ReadableStream>getting a reader</a>
-    from <var>dummyStream</var>.
-    <p class="note no-backref">This operation will not throw an exception.
-
-   <li>
-    <p><a lt="read all bytes" for=ReadableStream>Read all bytes</a> from
-    <var>dummyStream</var> with <var>reader</var>.
-    <p class="note no-backref">This operation makes <var>dummyStream</var> disturbed.
-  </ol>
-
-  <p class="note no-backref">These substeps are meant to produce the observable equivalent of
-  "piping" <var>input</var>'s <a for=Body>body</a>'s
-  <a for=body>stream</a> into <var>r</var>. That is, <var>input</var> is
-  left with a <a for=/>body</a> with a
-  {{ReadableStream}} object that is
-  <a for=ReadableStream>disturbed</a> and
-  <a for=ReadableStream>locked</a>, while the data readable from
-  <var>r</var>'s <a for=Body>body</a>'s
-  <a for=body>stream</a> is now equal to what used to be <var>input</var>'s,
-  if <var>input</var>'s original <a for=Body>body</a> is non-null.
 
  <li><p>Return <var>r</var>.
 </ol>
@@ -5051,7 +5044,6 @@ interface Response {
   readonly attribute boolean ok;
   readonly attribute ByteString statusText;
   [SameObject] readonly attribute Headers headers;
-  readonly attribute ReadableStream? body;
   [SameObject] readonly attribute Promise&lt;Headers> trailer;
 
   [NewObject] Response clone();
@@ -5231,10 +5223,6 @@ must return <a for=Response>response</a>'s
 
 <p>The <dfn attribute for=Response><code>headers</code></dfn> attribute's getter must
 return the associated {{Headers}} object.
-
-<p>The <dfn attribute for=Response><code>body</code></dfn> attribute's getter must return null if
-the associated <a for=Body>body</a> is null and the associated
-<a for=Body>body</a>'s <a for=body>stream</a> otherwise.
 
 <p>The <dfn attribute for=Response><code>trailer</code></dfn> attribute's getter must return the
 associated <a for=Response>trailer promise</a>.
