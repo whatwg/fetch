@@ -27,10 +27,7 @@ If you want to preview the spec locally, you can either use a locally installed 
 running `make remote`.
 
 If you want to do a complete "local deploy" including commit and/or branch snapshots, run
-
-```
-./deploy.sh --local
-```
+`make deploy`.
 
 #### Formatting
 
