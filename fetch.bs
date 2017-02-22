@@ -162,13 +162,6 @@ comparing them exactly, byte for byte, except that the bytes in the range 0x41 t
 inclusive, are considered to also match their corresponding byte in the range 0x61 to
 0x7A, inclusive.
 
-<p>A <dfn>case-insensitive byte sequence</dfn> is a byte sequence that when compared to
-another byte sequence does so in a <a>byte-case-insensitive</a> manner.
-
-<p id=example-case-insensitive-byte-sequence class=example>The
-<a>case-insensitive byte sequences</a>
-`<code>Content-Type</code>` and `<code>content-TYPE</code>` are equal.
-
 <hr>
 
 <p id=fetch-url>A <dfn>response URL</dfn> is a <a for=/>URL</a> for which implementations need not
@@ -278,66 +271,59 @@ for consistency.
 <p class="note no-backref">A <a for=/>header list</a> is essentially a
 specialized multimap. An ordered list of key-value pairs with potentially duplicate keys.
 
+<p>A <a for=/>header list</a> (<var>list</var>)
+<dfn export for="header list" lt="contains|does not contain">contains</dfn> a <a for=header>name</a>
+(<var>name</var>) if <var>list</var> contains a <a>header</a> whose <a for=header>name</a> is a
+<a>byte-case-insensitive</a> match for <var>name</var>.
+
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a
-<a for=header>name</a>/<a for=header>value</a>
-(<var>name</var>/<var>value</var>) pair to a
-<a for=/>header list</a> (<var>list</var>), append a new
-<a>header</a> whose <a for=header>name</a>
-is <var>name</var>, <a lt="byte-lowercase">byte-lowercased</a>, and
-<a for=header>value</a> is <var>value</var>, to
-<var>list</var>.
-
-<p>To <dfn export for="header list" id=concept-header-list-delete>delete</dfn> a
-<a for=header>name</a> (<var>name</var>) from a
-<a for=/>header list</a> (<var>list</var>), remove all
-<a>headers</a> whose
-<a for=header>name</a> is <var>name</var>,
-<a lt="byte-lowercase">byte-lowercased</a>, from <var>list</var>.
-
-<p>To <dfn export for="header list" id=concept-header-list-set>set</dfn> a
-<a for=header>name</a>/<a for=header>value</a>
-(<var>name</var>/<var>value</var>) pair in a
-<a for=/>header list</a> (<var>list</var>), run these
-steps:
+<a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair to a
+<a for=/>header list</a> (<var>list</var>), run these steps:
 
 <ol>
- <li><p><a>Byte-lowercase</a> <var>name</var>.
+ <li>
+  <p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set <var>name</var>
+  to the first such <a>header</a>'s <a for=header>name</a>.
 
- <li><p>If there are any <a>headers</a> in
- <var>list</var> whose <a for=header>name</a> is
- <var>name</var>, set the <a for=header>value</a> of the first
- such <a>header</a> to <var>value</var> and remove the
- others.
+  <p class="note no-backref">This reuses the casing of the <a for=header>name</a> of the
+  <a>header</a> already in the <a for=/>header list</a>, if any. If there are multiple matched
+  <a>headers</a> their <a for=header>names</a> will all be identical.
+  <!-- XXX Firefox and Safari adjust known header names too. -->
 
- <li><p>Otherwise, append a new <a>header</a> whose
- <a for=header>name</a> is <var>name</var> and
- <a for=header>value</a> is <var>value</var>, to
- <var>list</var>.
+ <li><p>Append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
+ <a for=header>value</a> is <var>value</var> to <var>list</var>.
+
+<p>To <dfn export for="header list" id=concept-header-list-delete>delete</dfn> a
+<a for=header>name</a> (<var>name</var>) from a <a for=/>header list</a> (<var>list</var>), remove
+all <a>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
+<var>name</var> from <var>list</var>.
+
+<p>To <dfn export for="header list" id=concept-header-list-set>set</dfn> a
+<a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair in a
+<a for=/>header list</a> (<var>list</var>), run these steps:
+
+<ol>
+ <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
+ <a for=header>value</a> of the first such <a>header</a> to <var>value</var> and remove the others.
+
+ <li><p>Otherwise, append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
+ <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
 <p>To <dfn export id=concept-header-list-combine>combine</dfn> a
-<a for=header>name</a>/<a for=header>value</a>
-(<var>name</var>/<var>value</var>) pair in a
-<a for=/>header list</a> (<var>list</var>), run these
-steps:
+<a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair in a
+<a for=/>header list</a> (<var>list</var>), run these steps:
 
 <ol>
- <li><p><a>Byte-lowercase</a> <var>name</var>.
+ <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
+ <a for=header>value</a> of the first such <a>header</a> to its <a for=header>value</a>, followed
+ by `<code>,</code>`, followed by <var>value</var>.
 
- <li><p>If there are any <a>headers</a> in <var>list</var> whose
- <a for=header>name</a> is <var>name</var>, set the
- <a for=header>value</a> of the first such
- <a>header</a> to its <a for=header>value</a>,
- followed by `<code>,</code>`, followed by <var>value</var>.
-
- <li><p>Otherwise, append a new <a>header</a> whose
- <a for=header>name</a> is <var>name</var> and
- <a for=header>value</a> is <var>value</var>, to
- <var>list</var>.
+ <li><p>Otherwise, append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
+ <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
-<p class="note no-backref"><a>Combine</a> is used by
-{{XMLHttpRequest}} and the
+<p class="note no-backref"><a>Combine</a> is used by {{XMLHttpRequest}} and the
 <a lt="establish a WebSocket connection" for=websocket>WebSocket protocol handshake</a>.
 
 <p>To
@@ -351,8 +337,8 @@ a <a for=/>header list</a> (<var>list</var>), run these steps:
  <a for=header>value</a>.
 
  <li><p>Let <var>names</var> be all the <a lt=name for=header>names</a> of the
- <a>headers</a> in <var>list</var>, with duplicates removed, and sorted
- lexicographically.
+ <a>headers</a> in <var>list</var>, <a>byte-lowercased</a>, with duplicates removed, and finally
+ sorted lexicographically.
 
  <li>
   <p>For each <var>name</var> in <var>names</var>, run these substeps:
@@ -374,8 +360,8 @@ a <a for=/>header list</a> (<var>list</var>), run these steps:
 <dfn export for=header id=concept-header-name>name</dfn> and
 <dfn export for=header id=concept-header-value>value</dfn>.
 
-<p>A <a for=header>name</a> is a <a>case-insensitive byte sequence</a> that matches the
-<a spec=http>field-name</a> token production.
+<p>A <a for=header>name</a> is a <a>byte sequence</a> that matches the <a spec=http>field-name</a>
+token production.
 
 <p>A <a for=header>value</a> is a <a>byte sequence</a> that matches the following conditions:
 
@@ -388,21 +374,20 @@ a <a for=/>header list</a> (<var>list</var>), run these steps:
 production as
 <a href=https://github.com/httpwg/http11bis/issues/19 title="fix field-value ABNF">it is broken</a>.
 
-<p>To <dfn export for=header id=concept-header-value-normalize>normalize</dfn> a
+<p>To <dfn export for=header/value id=concept-header-value-normalize>normalize</dfn> a
 <var>potentialValue</var>, remove any leading and trailing <a>HTTP whitespace bytes</a> from
 <var>potentialValue</var>.
 
-<p>A <dfn export for=header id=concept-header-value-combined>combined value</dfn>,
-given a <a for=header>name</a> (<var>name</var>) and
-<a for=/>header list</a> (<var>list</var>), is the
-<a lt=value for=header>values</a> of all <a>headers</a> in
-<var>list</var> whose <a for=header>name</a> is <var>name</var>, separated from
+<p>A <dfn export for=header id=concept-header-value-combined>combined value</dfn>, given a
+<a for=header>name</a> (<var>name</var>) and <a for=/>header list</a> (<var>list</var>), is the
+<a lt=value for=header>values</a> of all <a>headers</a> in <var>list</var> whose
+<a for=header>name</a> is a <a>byte-case-insensitive</a> match for <var>name</var>, separated from
 each other by `<code>,</code>`, in order.
 
 <hr>
 
-<p id=simple-header>A <dfn export>CORS-safelisted request-header</dfn> is a
-<a>header</a> whose <a for=header>name</a> is one of
+<p id=simple-header>A <dfn export>CORS-safelisted request-header</dfn> is a <a>header</a> whose
+<a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
 
 <ul class=brief>
  <li>`<code>Accept</code>`
@@ -417,7 +402,7 @@ each other by `<code>,</code>`, in order.
          * ignoring parameters has been the standard for a long time now
          * interesting test: "Content-Type: text/plain;" -->
 
-<p>or whose <a for=header>name</a> is one of
+<p>or whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
 
 <ul class=brief>
  <li>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
@@ -430,13 +415,12 @@ each other by `<code>,</code>`, in order.
 <p>and whose <a for=header>value</a>,
 <a lt="parse a header value" for=header>once parsed</a>, is not a failure.
 
-<p>A <dfn export>CORS non-wildcard request-header name</dfn> is
-`<code>Authorization</code>`.
+<p>A <dfn export>CORS non-wildcard request-header name</dfn> is a <a>byte-case-insensitive</a> match
+for `<code>Authorization</code>`.
 
 <p>A <dfn export>CORS-safelisted response-header name</dfn>, given a
-<a for=response>CORS-exposed header-name list</a>
-<var>list</var>, is a <a>header</a>
-<a for=header>name</a> that is one of
+<a for=response>CORS-exposed header-name list</a> <var>list</var>, is a <a>header</a>
+<a for=header>name</a> that is a <a>byte-case-insensitive</a> match for one of
 
 <ul class=brief>
  <li>`<code>Cache-Control</code>`
@@ -449,8 +433,8 @@ each other by `<code>,</code>`, in order.
  <a>forbidden response-header name</a>.
 </ul>
 
-<p>A <dfn export>forbidden header name</dfn> is a <a>header</a>
-<a for=header>name</a> that is one of
+<p>A <dfn export>forbidden header name</dfn> is a <a>header</a> <a for=header>name</a> that is a
+<a>byte-case-insensitive</a> match for one of
 
 <ul class=brief>
  <li>`<code>Accept-Charset</code>`
@@ -476,8 +460,9 @@ each other by `<code>,</code>`, in order.
 </ul>
 
 <p>or a <a>header</a> <a for=header>name</a> that
-starts with `<code>Proxy-</code>` or `<code>Sec-</code>` (including being just
-`<code>Proxy-</code>` or `<code>Sec-</code>`).
+starts with a <a>byte-case-insensitive</a> match for `<code>Proxy-</code>` or `<code>Sec-</code>`
+(including being a <a>byte-case-insensitive</a> match for just `<code>Proxy-</code>` or
+`<code>Sec-</code>`).
 
 <p class=note>These are forbidden so the user agent remains in full control over them.
 <a for=header>Names</a> starting with `<code>Sec-</code>` are
@@ -487,8 +472,8 @@ from APIs using <a for=/>fetch</a> that allow control over
 {{XMLHttpRequest}}.
 [[XHR]]
 
-<p>A <dfn export>forbidden response-header name</dfn> is a
-<a>header</a> <a for=header>name</a> that is one of:
+<p>A <dfn export>forbidden response-header name</dfn> is a <a>header</a> <a for=header>name</a> that
+is a <a>byte-case-insensitive</a> match for one of:
 
 <ul class=brief>
  <li>`<code>Set-Cookie</code>`
@@ -498,29 +483,27 @@ from APIs using <a for=/>fetch</a> that allow control over
 <hr>
 
 <p>To <dfn export id=concept-header-parse for=header>parse a header value</dfn> given a
-<a for=header>name</a> (<var>name</var>)  and a
-<a>header</a> or a <a for=/>header list</a>
+<a for=header>name</a> (<var>name</var>)  and a <a>header</a> or a <a for=/>header list</a>
 (<var>headers</var>), run these steps:
 
 <ol>
- <li><p>If <var>name</var> is not in <var>headers</var>, return null.
+ <li><p>If there are no <a>headers</a> in <var>headers</var> whose <a for=header>name</a> is a
+ <a>byte-case-insensitive</a> match for <var>name</var>, then return null.
 
  <li>
-  <p>If the ABNF for <var>name</var> allows a single
-  <a>header</a> and <var>headers</var> contains more than
-  one, return failure.
+  <p>If the ABNF for <var>name</var> allows a single <a>header</a> and <var>headers</var> contains
+  more than one, then return failure.
 
   <p class="note no-backref">If different error handling is needed, extract the desired
   <a>header</a> first.
 
- <li><p>If parsing all the <a>headers</a>
- <a lt=name for=header>named</a> <var>name</var> in
- <var>headers</var>, per the ABNF for <var>name</var>, failed, return failure.
+ <li><p>If parsing all the <a>headers</a> whose <a for=header>name</a> is a
+ <a>byte-case-insensitive</a> match for <var>name</var> in <var>headers</var>, per the ABNF for
+ <var>name</var>, failed, then return failure.
 
- <li><p>Return one or more <a lt=value for=header>values</a> resulting from
- parsing all the <a>headers</a>
- <a lt=name for=header>named</a> <var>name</var> in
- <var>headers</var>, per the ABNF for <var>name</var>.
+ <li><p>Return one or more <a lt=value for=header>values</a> resulting from parsing all the
+ <a>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
+ <var>name</var> in <var>headers</var>, per the ABNF for <var>name</var>.
 </ol>
 
 <p>To
@@ -544,6 +527,7 @@ from a <a for=/>header list</a> (<var>headers</var>), run these steps:
 user-agent-defined <a for=header>value</a> for the
 `<code>User-Agent</code>` <a>header</a>.
 
+
 <h4 id=statuses>Statuses</h4>
 
 <p>A <dfn export id=concept-status>status</dfn> is a code.
@@ -556,6 +540,7 @@ user-agent-defined <a for=header>value</a> for the
 
 <p>A <dfn export>redirect status</dfn> is a <a for=/>status</a> that is <code>301</code>,
 <code>302</code>, <code>303</code>, <code>307</code>, or <code>308</code>.
+
 
 <h4 id=bodies>Bodies</h4>
 
@@ -609,6 +594,7 @@ user-agent-defined <a for=header>value</a> for the
  <var>codings</var> as explained in HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 </ol>
 <!-- XXX no hook in HTTP -->
+
 
 <h4 id=requests>Requests</h4>
 
@@ -1025,13 +1011,11 @@ Unless stated otherwise, it is unset.
   <a for=request>mode</a>.)
  </dl>
 
- <p>If <a for=request>header list</a> contains a
- <a>header</a> whose <a for=header>name</a> is one
- of
+ <p>If <a for=request>header list</a> <a for="header list">contains</a>
  `<code>If-Modified-Since</code>`,
  `<code>If-None-Match</code>`,
  `<code>If-Unmodified-Since</code>`,
- `<code>If-Match</code>`, and
+ `<code>If-Match</code>`, or
  `<code>If-Range</code>`,
  <a for=/>fetch</a> will set
  <a for=request>cache mode</a> to "<code>no-store</code>" if it is
@@ -1601,6 +1585,7 @@ each of which is one of `<code>dpr</code>`,
 
 <p class="note no-backref">This section might be integrated into other standards, such as IDL.
 
+
 <h4 id=readablestream>ReadableStream</h4>
 
 <p>A <dfn export interface id=concept-readablestream><code>ReadableStream</code></dfn> object
@@ -2154,19 +2139,20 @@ response <a>header</a> can be used to require checking of a
 <pre>
 X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
 
+
 <h4 lt="should response to request be blocked due to nosniff" dfn id=should-response-to-request-be-blocked-due-to-nosniff?>Should
 <var>response</var> to <var>request</var> be blocked due to nosniff?</h4>
 
 <p>Run these steps:
 
 <ol>
- <li><p>If <var>response</var>'s <a for=response>header list</a> has no <a>header</a> whose
- <a for=header>name</a> is `<a http-header><code>X-Content-Type-Options</code></a>`, then return
- <b>allowed</b>.
+ <li><p>If <var>response</var>'s <a for=response>header list</a>
+ <a for="header list">does not contain</a> `<a http-header><code>X-Content-Type-Options</code></a>`,
+ then return <b>allowed</b>.
 
  <li><p>Let <var>nosniff</var> be the result of <a lt="parse a header value" for=header>parsing</a>
- the <em>first</em> <a>header</a> whose <a for=header>name</a> is
- `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
+ the <em>first</em> <a>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
+ match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
  <a for=response>header list</a>.
 
  <li><p>If <var>nosniff</var> is failure, then return <b>allowed</b>.
@@ -2247,9 +2233,8 @@ the request.
  <a for=request>client</a>'s <a for="environment settings object">origin</a>.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>header list</a> does not
-  contain a <a>header</a> whose
-  <a for=header>name</a> is `<code>Accept</code>`, run these substeps:
+  <p>If <var>request</var>'s <a for=request>header list</a>
+  <a for="header list">does not contain</a> `<code>Accept</code>`, then:
 
   <ol>
    <li><p>Let <var>value</var> be `<code>*/*</code>`.
@@ -2276,10 +2261,8 @@ the request.
    <a for=request>header list</a>.
   </ol>
 
- <li><p>If <var>request</var>'s <a for=request>header list</a> does not
- contain a <a>header</a> whose
- <a for=header>name</a> is
- `<code>Accept-Language</code>`, user agents should
+ <li><p>If <var>request</var>'s <a for=request>header list</a>
+ <a for="header list">does not contain</a> `<code>Accept-Language</code>`, user agents should
  <a for="header list">append</a>
  `<code>Accept-Language</code>`/an appropriate <a for=header>value</a>
  to <var>request</var>'s <a for=request>header list</a>.
@@ -2299,17 +2282,17 @@ the request.
 
  <li>
   <p>If <var>request</var> is a <a>navigation request</a>, a user agent should, for each
-  <a>header</a> <a for=header>name</a>
-  (<var>hint-name</var>) in the first column of the following table, if <var>hint-name</var>
-  is not in <var>request</var>'s <a for=request>header list</a>,
+  <a>header</a> <a for=header>name</a> (<var>hintName</var>) in the first column of the following
+  table, if <var>request</var>'s <a for=request>header list</a>
+  <a for="header list">does not contain</a> <var>hintName</var>, then
   <a for="header list">append</a>
-  <var>hint-name</var>/<var ignore>hint-value</var> given in the same row on the second column, to
-  <var>request</var>'s <a for=request>header list</a>.
+  <var>hintName</var>/the value given in the same row on the second column, to <var>request</var>'s
+  <a for=request>header list</a>.
 
   <table>
    <tbody><tr>
-    <th>hint-name
-    <th>hint-value
+    <th><a for=header>Name</a>
+    <th><a for=header>Value</a>
    <tr>
     <td>`<code>dpr</code>`
     <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
@@ -2326,13 +2309,13 @@ the request.
 
   <ol>
    <li>
-    <p>If the <var>request</var>'s <a for=client>client hints list</a> is
-    not empty, then run these substeps for each <var>hint-name</var> in the list:
+    <p>If <var>request</var>'s <a for=client>client hints list</a> is not empty, then run these
+    substeps for each <var>hintName</var> in the list:
 
     <ol>
      <li>
       <p>Set <var>value</var> to the first matching statement, if any, switching on
-      <var>hint-name</var>:
+      <var>hintName</var>:
 
       <dl class=switch>
        <dt>"<code>dpr</code>"
@@ -2345,9 +2328,8 @@ the request.
        <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#width>width value</a>
       </dl>
 
-     <li><p><a for="header list">Append</a>
-     <var>hint-name</var>/<var>value</var> to <var>request</var>'s
-     <a for=request>header list</a>.
+     <li><p><a for="header list">Append</a> <var>hintName</var>/<var>value</var> to
+     <var>request</var>'s <a for=request>header list</a>.
     </ol>
 
    <li><p>Let <var>record</var> be a new
@@ -3197,30 +3179,24 @@ steps:
  <var>httpRequest</var>'s <a for=request>header list</a>.
  <!-- XXX concept-as-bytes -->
 
- <li><p>If <var>httpRequest</var>'s <a for=request>header list</a> does
- <em>not</em> contain a <a>header</a> whose
- <a for=header>name</a> is `<code>User-Agent</code>`,
- user agents should <a for="header list">append</a>
+ <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+ <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
+ <a for="header list">append</a>
  `<code>User-Agent</code>`/<a>default `<code>User-Agent</code>` value</a>
  to <var>httpRequest</var>'s <a for=request>header list</a>.
 
- <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
- "<code>default</code>" and <var>httpRequest</var>'s
- <a for=request>header list</a> contains a
- <a>header</a> <a lt=name for=header>named</a>
+ <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>default</code>" and
+ <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
  `<code>If-Modified-Since</code>`,
  `<code>If-None-Match</code>`,
  `<code>If-Unmodified-Since</code>`,
  `<code>If-Match</code>`, or
- `<code>If-Range</code>`, set <var>httpRequest</var>'s
+ `<code>If-Range</code>`, then set <var>httpRequest</var>'s
  <a for=request>cache mode</a> to "<code>no-store</code>".
 
- <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
- "<code>no-cache</code>" and <var>httpRequest</var>'s
- <a for=request>header list</a> does <em>not</em> contain a
- <a>header</a> whose <a for=header>name</a> is
- `<code>Cache-Control</code>`,
- <a for="header list">append</a>
+ <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>" and
+ <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
+ `<code>Cache-Control</code>`, then <a for="header list">append</a>
  `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
  <var>httpRequest</var>'s <a for=request>header list</a>.
 
@@ -3230,18 +3206,13 @@ steps:
 
   <ol>
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   does <em>not</em> contain a <a>header</a> whose
-   <a for=header>name</a> is `<code>Pragma</code>`,
-   <a for="header list">append</a>
-   `<code>Pragma</code>`/`<code>no-cache</code>` to <var>httpRequest</var>'s
-   <a for=request>header list</a>.
+   <a for="header list">does not contain</a> `<code>Pragma</code>`, then
+   <a for="header list">append</a> `<code>Pragma</code>`/`<code>no-cache</code>` to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   does <em>not</em> contain a <a>header</a> whose
-   <a for=header>name</a> is
-   `<code>Cache-Control</code>`,
-   <a for="header list">append</a>
-   `<code>Cache-Control</code>`/`<code>no-cache</code>` to
+   <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
+   <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>no-cache</code>` to
    <var>httpRequest</var>'s <a for=request>header list</a>.
    <!-- Technically this only applies to HTTP/1.1 and up -->
   </ol>
@@ -3289,9 +3260,7 @@ steps:
     </ol>
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   contains a <a>header</a> whose
-   <a for=header>name</a> is
-   `<code>Authorization</code>`, terminate these substeps.
+   <a for="header list">contains</a> `<code>Authorization</code>`, then terminate these substeps.
 
    <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
    <li><p>Let <var>authorizationValue</var> be null.
@@ -3657,8 +3626,8 @@ steps:
   [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see
   <a href=https://tools.ietf.org/html/rfc6265#section-5.2>section 5.2</a> of
   [[!COOKIES]]) on the <a for=header>value</a>
-  of each <var>header</var> <a lt=name for=header>named</a> `<code>Set-Cookie</code>`
-  in <var>response</var>'s <a for=response>header list</a>, if any, and
+  of each <var>header</var> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
+  `<code>Set-Cookie</code>` in <var>response</var>'s <a for=response>header list</a>, if any, and
   <var>request</var>'s <a for=request>current url</a>.
 
   <p class=note>This is a fingerprinting vector.
@@ -3836,18 +3805,16 @@ steps:
    <em>not</em> contain `<code>*</code>`, then return a
    <a>network error</a>.
 
-   <li><p>If one of <var>request</var>'s
-   <a for=request>header list</a>'s
-   <a lt=name for=header>names</a> is a
-   <a>CORS non-wildcard request-header name</a> and is not in <var>headerNames</var>, then
+   <li><p>If one of <var>request</var>'s <a for=request>header list</a>'s
+   <a lt=name for=header>names</a> is a <a>CORS non-wildcard request-header name</a> and is not a
+   <a>byte-case-insensitive</a> match for an <a for=list>item</a> in <var>headerNames</var>, then
    return a <a>network error</a>.
 
-   <li><p>If one of <var>request</var>'s
-   <a for=request>header list</a>'
-   <a lt=name for=header>names</a> is not in <var>headerNames</var>, its corresponding
-   <a>header</a> is not a <a>CORS-safelisted request-header</a>,
-   and <var>headerNames</var> does <em>not</em> contain `<code>*</code>`, then return a
-   <a>network error</a>.
+   <li><p>If one of <var>request</var>'s <a for=request>header list</a>'
+   <a lt=name for=header>names</a> is not a <a>byte-case-insensitive</a> match for an
+   <a for=list>item</a> in <var>headerNames</var>, its corresponding <a>header</a> is not a
+   <a>CORS-safelisted request-header</a>, and <var>headerNames</var> does not contain
+   `<code>*</code>`, then return a <a>network error</a>.
 
    <li><p>Let <var>max-age</var> be the result of
    <a lt="parse a header value" for=header>parsing</a>
@@ -3970,7 +3937,7 @@ Entries may be removed before that moment arrives.
 <a for=cache>cache match</a> for <var>request</var> and one of
 
 <ul class=brief>
- <li><a for=cache>header name</a> is <var>headerName</var>
+ <li><a for=cache>header name</a> is a <a>byte-case-insensitive</a> match for <var>headerName</var>
  <li><a for=cache>header name</a> is `<code>*</code>` and
  <var>headerName</var> is <em>not</em> a <a>CORS non-wildcard request-header name</a>
 </ul>
@@ -4148,8 +4115,7 @@ objects.</span>
 {{Headers}} object (<var>headers</var>), run these steps:
 
 <ol>
- <li><p><a lt=normalize for=header>Normalize</a>
- <var>value</var>.
+ <li><p><a lt=normalize for=header/value>Normalize</a> <var>value</var>.
 
  <li><p>If <var>name</var> is not a <a for=header>name</a> or <var>value</var> is not a
  <a for=header>value</a>, then <a>throw</a> a <code>TypeError</code>.
@@ -4251,9 +4217,8 @@ invoked, must run these steps:
  <li><p>If <var>name</var> is not a <a for=header>name</a>, then <a>throw</a> a
  <code>TypeError</code>.
 
- <li><p>If there is <em>no</em> <a>header</a> in
- <a for=Headers>header list</a> whose
- <a for=header>name</a> is <var>name</var>, return null.
+ <li><p>If <a for=Headers>header list</a> <a for="header list">does not contain</a> <var>name</var>,
+ then return null.
 
  <li><p>Return the <a for=header>combined value</a> given
  <var>name</var> and <a for=Headers>header list</a>.
@@ -4266,10 +4231,8 @@ when invoked, must run these steps:
  <li><p>If <var>name</var> is not a <a for=header>name</a>, then <a>throw</a> a
  <code>TypeError</code>.
 
- <li><p>Return true if there is a <a>header</a> in
- <a for=Headers>header list</a> whose
- <a for=header>name</a> is <var>name</var>, and false
- otherwise.
+ <li><p>Return true if <a for=Headers>header list</a> <a for="header list">contains</a>
+ <var>name</var>, and false otherwise.
 </ol>
 
 <p>The
@@ -4277,8 +4240,7 @@ when invoked, must run these steps:
 method, when invoked, must run these steps:
 
 <ol>
- <li><p><a lt=normalize for=header>Normalize</a>
- <var>value</var>.
+ <li><p><a lt=normalize for=header/value>Normalize</a> <var>value</var>.
 
  <li><p>If <var>name</var> is not a <a for=header>name</a> or <var>value</var> is not a
  <a for=header>value</a>, then <a>throw</a> a <code>TypeError</code>.
@@ -4928,8 +4890,7 @@ constructor must run these steps:
    <code>body</code> member. Rethrow any exceptions.
 
    <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s {{Headers}} object's
-   <a for=Headers>header list</a> contains no
-   <a>header</a> <a lt=name for=header>named</a>
+   <a for=Headers>header list</a> <a for="header list">does not contain</a>
    `<code>Content-Type</code>`, then <a for=Headers>append</a>
    `<code>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s
    {{Headers}} object. Rethrow any exception.
@@ -5142,14 +5103,11 @@ constructor, when invoked, must run these steps:
    <a for=response>body</a> and <var>Content-Type</var> to the result of
    <a lt=extract for=BodyInit>extracting</a> <var>body</var>. Rethrow any exceptions.
 
-   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s
-   <a for=Response>response</a>'s
-   <a for=response>header list</a> contains no
-   <a>header</a> <a lt=name for=header>named</a>
-   `<code>Content-Type</code>`, <a for="header list">append</a>
-   `<code>Content-Type</code>`/<var>Content-Type</var> to
-   <var>r</var>'s <a for=Response>response</a>'s
-   <a for=response>header list</a>.
+   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a for=Response>response</a>'s
+   <a for=response>header list</a> <a for="header list">does not contain</a>
+   `<code>Content-Type</code>`, then <a for="header list">append</a>
+   `<code>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s
+   <a for=Response>response</a>'s <a for=response>header list</a>.
   </ol>
 
  <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to
@@ -5607,6 +5565,7 @@ Adam Barth,
 Adam Lavin,
 Alan Jeffrey,
 Alexey Proskuryakov,
+Andrés Gutiérrez,
 Andrew Sutherland,
 Ángel González,
 Anssi Kostiainen,
