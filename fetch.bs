@@ -399,7 +399,7 @@ each other by `<code>,</code>`, in order.
  <li>`<code>Accept-Language</code>`
  <li>`<code>Content-Language</code>`
  <li>`<code>Content-Type</code>` and whose <a for=header>value</a>,
- <a lt="parse a header value" for=header>once parsed</a>, has a MIME type (ignoring parameters)
+ <a lt="extract header values">once extracted</a>, has a MIME type (ignoring parameters)
  that is `<code>application/x-www-form-urlencoded</code>`,
  `<code>multipart/form-data</code>`, or `<code>text/plain</code>`
 </ul>
@@ -417,8 +417,8 @@ each other by `<code>,</code>`, in order.
  <li>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#width>Width</a></code>`
 </ul>
 
-<p>and whose <a for=header>value</a>,
-<a lt="parse a header value" for=header>once parsed</a>, is not a failure.
+<p>and whose <a for=header>value</a>, <a lt="extract header values">once extracted</a>, is not
+failure.
 
 <p>A <dfn export>CORS non-wildcard request-header name</dfn> is a <a>byte-case-insensitive</a> match
 for `<code>Authorization</code>`.
@@ -487,28 +487,49 @@ is a <a>byte-case-insensitive</a> match for one of:
 
 <hr>
 
-<p>To <dfn export id=concept-header-parse for=header>parse a header value</dfn> given a
-<a for=header>name</a> (<var>name</var>)  and a <a>header</a> or a <a for=/>header list</a>
-(<var>headers</var>), run these steps:
+<p>To <dfn export lt="extract header values|extracting header values">extract header values</dfn>
+given a <a>header</a> <var>header</var>, run these steps:
 
 <ol>
- <li><p>If there are no <a>headers</a> in <var>headers</var> whose <a for=header>name</a> is a
- <a>byte-case-insensitive</a> match for <var>name</var>, then return null.
+ <li><p>If parsing <var>header</var>'s <a for=header>value</a>, per the <a>ABNF</a> for
+ <var>header</var>'s <a for=header>name</a>, fails, then return failure.
+
+ <li><p>Return one or more <a for=header>values</a> resulting from parsing <var>header</var>'s
+ <a for=header>value</a>, per the <a>ABNF</a> for <var>header</var>'s <a for=header>name</a>.
+</ol>
+
+<p>To
+<dfn export lt="extract header list values|extracting header list values">extract header list values</dfn>
+given a <a for=header>name</a> (<var>name</var>) and a <a for=/>header list</a> (<var>list</var>),
+run these steps:
+
+<ol>
+ <li><p>If <var>list</var> <a for="header list">does not contain</a> <var>name</var>, then return
+ null.
 
  <li>
-  <p>If the <a>ABNF</a> for <var>name</var> allows a single <a>header</a> and <var>headers</var>
-  contains more than one, then return failure.
+  <p>If the <a>ABNF</a> for <var>name</var> allows a single <a>header</a> and <var>list</var>
+  <a for="header list">contains</a> more than one, then return failure.
 
   <p class="note no-backref">If different error handling is needed, extract the desired
   <a>header</a> first.
 
- <li><p>If parsing all the <a>headers</a> whose <a for=header>name</a> is a
- <a>byte-case-insensitive</a> match for <var>name</var> in <var>headers</var>, per the <a>ABNF</a>
- for <var>name</var>, failed, then return failure.
+ <li><p>Let <var>values</var> be an empty <a for=/>list</a>.
 
- <li><p>Return one or more <a lt=value for=header>values</a> resulting from parsing all the
- <a>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
- <var>name</var> in <var>headers</var>, per the <a>ABNF</a> for <var>name</var>.
+ <li>
+  <p>For each <a>header</a> <var>header</var> <var>list</var> <a for="header list">contains</a>
+  whose <a for=header>name</a> is <var>name</var>, run these substeps:
+
+  <ol>
+   <li><p>Let <var>extract</var> be the result of <a>extracting header values</a> from
+   <var>header</var>.
+
+   <li><p>If <var>extract</var> is failure, then return failure.
+
+   <li><p>Append each <a for=header>value</a> in <var>extract</var>, in order, to <var>values</var>.
+  </ol>
+
+ <li><p>Return <var>values</var>.
 </ol>
 
 <p>To
@@ -516,9 +537,8 @@ is a <a>byte-case-insensitive</a> match for one of:
 from a <a for=/>header list</a> (<var>headers</var>), run these steps:
 
 <ol>
- <li><p>Let <var>MIMEType</var> be the result of
- <a lt="parse a header value" for=header>parsing</a> `<code>Content-Type</code>` in
- <var>headers</var>.
+ <li><p>Let <var>MIMEType</var> be the result of <a>extracting header list values</a> given
+ `<code>Content-Type</code>` and <var>headers</var>.
 
  <li><p>If <var>MIMEType</var> is null or failure, return the empty byte sequence.
 
@@ -1242,8 +1262,7 @@ specified. [[!CSP]]
 <a lt=name for=header>names</a>). The list is empty unless otherwise specified.
 
 <p class="note no-backref">A <a for=/>response</a> will typically get its
-<a for=response>CORS-exposed header-name list</a> set by
-<a lt="parse a header value" for=header>parsing</a> the
+<a for=response>CORS-exposed header-name list</a> set by <a>extracting header values</a> from the
 `<a http-header><code>Access-Control-Expose-Headers</code></a>` header. This list is used by a
 <a>CORS filtered response</a> to determine which headers to expose.
 
@@ -1253,8 +1272,8 @@ specified. [[!CSP]]
 <a for=response>location URL</a>.
 
 <p class="note no-backref">This concept is used for redirect handling in Fetch and in HTML's
-navigate algorithm. It ensures `<code>Location</code>` is
-<a lt="parse a header value" for=header>parsed</a> consistently and only once.
+navigate algorithm. It ensures `<code>Location</code>` has
+<a lt="extracting header values">its value extracted</a> consistently and only once.
 [[!HTML]]
 
 <hr>
@@ -2155,9 +2174,9 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  <a for="header list">does not contain</a> `<a http-header><code>X-Content-Type-Options</code></a>`,
  then return <b>allowed</b>.
 
- <li><p>Let <var>nosniff</var> be the result of <a lt="parse a header value" for=header>parsing</a>
- the <em>first</em> <a>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
- match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
+ <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
+ <em>first</em> <a>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match
+ for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
  <a for=response>header list</a>.
 
  <li><p>If <var>nosniff</var> is failure, then return <b>allowed</b>.
@@ -2546,9 +2565,8 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
     "<code>cors</code>", then run these substeps:
 
     <ol>
-     <li><p>Let <var>headerNames</var> be the result of
-     <a lt="parse a header value" for=header>parsing</a>
-     `<a http-header><code>Access-Control-Expose-Headers</code></a>` in <var>response</var>'s
+     <li><p>Let <var>headerNames</var> be the result of <a>extracting header list values</a> given
+     `<a http-header><code>Access-Control-Expose-Headers</code></a>` and <var>response</var>'s
      <a for=response>header list</a>.
 
      <li><p>If <var>headerNames</var> is `<code>*</code>` and <var>request</var>'s
@@ -2954,9 +2972,8 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     <p class=note><code>303</code> is excluded as certain communities ascribe special status to
     it.
 
-   <li><p>Let <var>location</var> be the result of <a lt="parse a header value" for=header>parsing</a>
-   `<code>Location</code>` in <var>actualResponse</var>'s
-   <a for=response>header list</a>.
+   <li><p>Let <var>location</var> be the result of <a>extracting header list values</a> given
+   `<code>Location</code>` and <var>actualResponse</var>'s <a for=response>header list</a>.
 
    <li><p>If <var>location</var> is a <a for=header>value</a>, then set
    <var>location</var> to the result of
@@ -3589,21 +3606,17 @@ steps:
   conditions is true:
 
   <ul class=brief>
-   <li><a lt="parse a header value" for=header>Parsing</a>
-   `<code>Content-Encoding</code>` in <var>response</var>'s
-   <a for=response>header list</a> returns
-   `<code>gzip</code>` and <a lt="parse a header value" for=header>parsing</a>
-   `<code>Content-Type</code>` in <var>response</var>'s
-   <a for=response>header list</a> returns
+   <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
+   <var>response</var>'s <a for=response>header list</a> returns
+   `<code>gzip</code>`, and <a>extracting header list values</a> given `<code>Content-Type</code>`
+   and <var>response</var>'s <a for=response>header list</a> returns
    `<code>application/gzip</code>`, `<code>application/x-gunzip</code>`, or
    `<code>application/x-gzip</code>`.
-   <li><a lt="parse a header value" for=header>Parsing</a>
-   `<code>Content-Encoding</code>` in <var>response</var>'s
-   <a for=response>header list</a> returns
-   `<code>compress</code>` and <a lt="parse a header value" for=header>parsing</a>
-   `<code>Content-Type</code>` in <var>response</var>'s
-   <a for=response>header list</a> returns
-   `<code>application/compress</code>` or
+
+   <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
+   <var>response</var>'s <a for=response>header list</a> returns `<code>compress</code>`, and
+   <a>extracting header list values</a> given `<code>Content-Type</code>` and <var>response</var>'s
+   <a for=response>header list</a> returns `<code>application/compress</code>` or
    `<code>application/x-compress</code>.
   </ul>
 
@@ -3652,10 +3665,8 @@ steps:
      <a for=body>transmitted bytes</a> with <var>bytes</var>'
      length.
 
-     <li><p>Let <var>codings</var> be the result of
-     <a lt="parse a header value" for=header>parsing</a> `<code>Content-Encoding</code>`
-     in <var>response</var>'s
-     <a for=response>header list</a>.
+     <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
+     `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
 
      <li>
       <p>Set <var>bytes</var> to the result of <a lt="handle content codings">handling
@@ -3776,17 +3787,15 @@ steps:
   <a for=request>credentials mode</a> is used.
 
   <ol>
-   <li><p>Let <var>methods</var> be the result of
-   <a lt="parse a header value" for=header>parsing</a>
-   `<a http-header><code>Access-Control-Allow-Methods</code></a>` in <var>response</var>'s
+   <li><p>Let <var>methods</var> be the result of <a>extracting header list values</a> given
+   `<a http-header><code>Access-Control-Allow-Methods</code></a>` and <var>response</var>'s
    <a for=response>header list</a>.
 
    <li><p>If <var>methods</var> is `<code>*</code>`, then set <var>methods</var> to a new list
    containing `<code>*</code>`.
 
-   <li><p>Let <var>headerNames</var> be the result of
-   <a lt="parse a header value" for=header>parsing</a>
-   `<a http-header><code>Access-Control-Allow-Headers</code></a>` in <var>response</var>'s
+   <li><p>Let <var>headerNames</var> be the result of <a>extracting header list values</a> given
+   `<a http-header><code>Access-Control-Allow-Headers</code></a>` and <var>response</var>'s
    <a for=response>header list</a>.
 
    <li><p>If either <var>methods</var> or <var>headerNames</var> is failure,
@@ -3821,9 +3830,8 @@ steps:
    <a>CORS-safelisted request-header</a>, and <var>headerNames</var> does not contain
    `<code>*</code>`, then return a <a>network error</a>.
 
-   <li><p>Let <var>max-age</var> be the result of
-   <a lt="parse a header value" for=header>parsing</a>
-   `<a http-header><code>Access-Control-Max-Age</code></a>` in <var>response</var>'s
+   <li><p>Let <var>max-age</var> be the result of <a>extracting header list values</a> given
+   `<a http-header><code>Access-Control-Max-Age</code></a>` and <var>response</var>'s
    <a for=response>header list</a>.
 
    <li><p>If <var>max-age</var> is failure or null, then set <var>max-age</var> to zero.
@@ -3956,8 +3964,8 @@ Entries may be removed before that moment arrives.
 <var>request</var> and <var>response</var>, run these steps:
 
 <ol>
- <li><p>Let <var>origin</var> be the result of <a lt="parse a header value" for=header>parsing</a>
- `<a http-header><code>Access-Control-Allow-Origin</code></a>` in <var>response</var>'s
+ <li><p>Let <var>origin</var> be the result of <a>extracting header list values</a> given
+ `<a http-header><code>Access-Control-Allow-Origin</code></a>` and <var>response</var>'s
  <a for=response>header list</a>.
 
  <li>
@@ -3978,9 +3986,8 @@ Entries may be removed before that moment arrives.
  <a for=request>credentials mode</a> is not
  "<code>include</code>", return success.
 
- <li><p>Let <var>credentials</var> be the result of
- <a lt="parse a header value" for=header>parsing</a>
- `<a http-header><code>Access-Control-Allow-Credentials</code></a>` in <var>response</var>'s
+ <li><p>Let <var>credentials</var> be the result of <a>extracting header list values</a> given
+ `<a http-header><code>Access-Control-Allow-Credentials</code></a>` and <var>response</var>'s
  <a for=response>header list</a>.
 
  <li>
@@ -5230,7 +5237,8 @@ run these steps:
 
 <h3 id=fetch-method>Fetch method</h3>
 
-<pre class=idl>partial interface WindowOrWorkerGlobalScope {
+<pre class=idl>
+partial interface WindowOrWorkerGlobalScope {
   [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional RequestInit init);
 };</pre>
 
@@ -5459,11 +5467,9 @@ therefore not shareable, a WebSocket connection is very close to identical to an
  <a>fail the WebSocket connection</a>.
 
  <li>
-  <p>If <var>protocols</var> is not the empty list and
-  <a lt="parse a header value" for=header>parsing</a>
-  `<code>Sec-WebSocket-Protocol</code>` in <var>response</var>'s
-  <a for=request>header list</a> results in null, failure, or the empty
-  byte sequence, <a>fail the WebSocket connection</a>.
+  <p>If <var>protocols</var> is not the empty list and <a>extracting header list values</a> given
+  `<code>Sec-WebSocket-Protocol</code>` and <var>response</var>'s <a for=request>header list</a>
+  results in null, failure, or the empty byte sequence, then <a>fail the WebSocket connection</a>.
 
   <p class=note>This is different from the check on this header defined by The WebSocket Protocol.
   That only covers a subprotocol not requested by the client. This covers a subprotocol requested by
