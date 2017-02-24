@@ -3178,31 +3178,35 @@ steps:
  <var>httpRequest</var>'s
  <a for=request>header list</a>.
 
-<li>
+ <li>
   <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
-  <a for=request>keepalive flag</a> is set:
+  <a for=request>keepalive flag</a> is set, then:
 
-  <ul>
-    <li>Let <var>inflight keepalive bytes</var> be zero.
-    <li>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
-    <li>Let <var>inflight records</var> be the set of <a>records</a> in <var>group</var> whose
-    <a for=request>keepalive flag</a> is set, and whose <a>done flag</a> is unset.
-    <li>
-      <p>For each <var>rec</var> in <var>inflight records</var>:
+  <ol>
+   <li><p>Let <var>inflight keepalive bytes</var> be zero.
 
-      <ul class=brief>
-        <li>Let <var>inflight request</var> be <var>rec</var>'s <a>request</a>.
-        <li>Increment <var>inflight keepalive bytes</var> by <var>inflight request</var>'s
-        <a for=request>body</a>'s <a for=body>total bytes</a>.
-      </ul>
+   <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
 
-    <li>If the sum of <var>contentLengthValue</var> and <var>inflight keepalive bytes</var> is
-    greater than 64 <abbr title="kibibyte">KiB</abbr>, then return a <a>network error</a>.
-  </ul>
+   <li><p>Let <var>inflight records</var> be the set of <a>records</a> in <var>group</var> whose
+   <a for=request>keepalive flag</a> is set, and whose <a>done flag</a> is unset.
 
-  <p class="note no-backref">The above limit ensures that requests that are
-  allowed to outlive the <a>environment settings object</a> and contain
-  a body, have a bounded size and are not allowed to stay alive indefinitely.
+   <li>
+    <p><a for=set>For each</a> <var>rec</var> in <var>inflight records</var>:
+
+    <ol>
+     <li><p>Let <var>inflight request</var> be <var>rec</var>'s <a>request</a>.
+
+     <li><p>Increment <var>inflight keepalive bytes</var> by <var>inflight request</var>'s
+     <a for=request>body</a>'s <a for=body>total bytes</a>.
+    </ol>
+
+   <li><p>If the sum of <var>contentLengthValue</var> and <var>inflight keepalive bytes</var> is
+   greater than 64 kibibytes, then return a <a>network error</a>.
+  </ol>
+
+  <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
+  <a>environment settings object</a> and contain a body, have a bounded size and are not allowed to
+  stay alive indefinitely.
 
  <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
  <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
