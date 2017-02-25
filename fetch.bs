@@ -3179,13 +3179,36 @@ steps:
  <a for=request>header list</a>.
 
  <li>
-  <p>If <var>contentLengthValue</var> is non-null, <var>httpRequest</var>'s
-  <a>keepalive flag</a> is set, and <var>contentLengthValue</var> is greater than a
-  user-agent-defined maximum, then return a <a>network error</a>.
+  <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
+  <a for=request>keepalive flag</a> is set, then:
 
-  <p class="note no-backref">The above user-agent-defined maximum ensures that requests that are
-  allowed to outlive the <a>environment settings object</a> and contain
-  a body, have a bounded size and are not allowed to stay alive indefinitely.
+  <ol>
+   <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
+
+   <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
+
+   <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
+   <var>group</var> whose <a for="fetch record">request</a> has its
+   <a for=request>keepalive flag</a> set and <a>done flag</a> unset.
+
+   <li>
+    <p><a for=set>For each</a> <var>fetchRecord</var> in <var>inflightRecords</var>:
+
+    <ol>
+     <li><p>Let <var>inflightRequest</var> be <var>fetchRecord</var>'s
+     <a for="fetch record">request</a>.
+
+     <li><p>Increment <var>inflightKeepaliveBytes</var> by <var>inflightRequest</var>'s
+     <a for=request>body</a>'s <a for=body>total bytes</a>.
+    </ol>
+
+   <li><p>If the sum of <var>contentLengthValue</var> and <var>inflightKeepaliveBytes</var> is
+   greater than 64 kibibytes, then return a <a>network error</a>.
+  </ol>
+
+  <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
+  <a>environment settings object</a> and contain a body, have a bounded size and are not allowed to
+  stay alive indefinitely.
 
  <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
  <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
@@ -4158,7 +4181,7 @@ run these steps:
 
 <ol>
  <li>
-  <p>If <var>object</var> is a <a>sequence</a>, then for each <var>header</var> in
+  <p>If <var>object</var> is a <a>sequence</a>, then <a for=list>for each</a> <var>header</var> in
   <var>object</var>, run these substeps:
 
   <ol>
@@ -4170,8 +4193,8 @@ run these steps:
    <var>headers</var>. Rethrow any exception.
   </ol>
 
- <li><p>Otherwise, <var>object</var> is a <a>record</a>, then for each <a for=record>mapping</a>
- (<var>key</var>, <var>value</var>) in <var>object</var>, <a lt=append for=Headers>append</a>
+ <li><p>Otherwise, <var>object</var> is a <a>record</a>, then <a for=map>for each</a> <var>key</var>
+ → <var>value</var> in <var>object</var>, <a lt=append for=Headers>append</a>
  <var>key</var>/<var>value</var> to <var>headers</var>. Rethrow any exception.
 </ol>
 
