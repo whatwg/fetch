@@ -315,20 +315,24 @@ all <a>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a
  <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
-<p>To <dfn export id=concept-header-list-combine>combine</dfn> a
+<p>To <dfn export id=concept-header-list-combine for="header list">combine</dfn> a
 <a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair in a
-<a for=/>header list</a> (<var>list</var>), run these steps:
+<a for=/>header list</a> (<var>list</var>), optionally with a <var>legacySpaceFlag</var>, run these
+steps:
 
 <ol>
+ <li><p>Let <var>separator</var> be `<code>, </code>` if <var>legacySpaceFlag</var> is set, and
+ `<code>,</code>` otherwise.
+
  <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
  <a for=header>value</a> of the first such <a>header</a> to its <a for=header>value</a>, followed
- by `<code>,</code>`, followed by <var>value</var>.
+ by <var>separator</var>, followed by <var>value</var>.
 
  <li><p>Otherwise, append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
  <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
-<p class="note no-backref"><a>Combine</a> is used by {{XMLHttpRequest}} and the
+<p class="note no-backref">The <var>legacySpaceFlag</var> is used by {{XMLHttpRequest}} and the
 <a lt="establish a WebSocket connection" for=websocket>WebSocket protocol handshake</a>.
 
 <p>To
@@ -3783,17 +3787,10 @@ steps:
  <a>CORS-safelisted request-headers</a> and duplicates,
  sorted lexicographically, and <a lt="byte-lowercase">byte-lowercased</a>.
 
- <li>
-  <p>If <var>headers</var> <a for=list lt="is empty">is not empty</a>, then:
-
-  <ol>
-   <li><p>Let <var>value</var> be the items in <var>headers</var> separated from each other by
-   `<code>,</code>`.
-
-   <li><p><a for="header list">Set</a>
-   `<a http-header><code>Access-Control-Request-Headers</code></a>` to <var>value</var> in
-   <var>preflight</var>'s <a for=request>header list</a>.
-  </ol>
+ <li><p>If <var>headers</var> <a for=list lt="is empty">is not empty</a>, then
+ <a for=list>for each</a> <var>value</var> in <var>headers</var>, <a for="header list">combine</a>
+ `<a http-header><code>Access-Control-Request-Headers</code></a>`/<var>value</var> in
+ <var>preflight</var>'s <a for=request>header list</a>.
 
  <li><p>Let <var>response</var> be the result of performing an
  <a>HTTP-network-or-cache fetch</a> using
@@ -5468,10 +5465,9 @@ therefore not shareable, a WebSocket connection is very close to identical to an
  `<code>Sec-WebSocket-Version</code>`/`<code>13</code>` to
  <var>request</var>'s <a for=request>header list</a>.
 
- <li><p>For each <var>protocol</var> in <var>protocols</var>,
- <a>combine</a>
- `<code>Sec-WebSocket-Protocol</code>`/<var>protocol</var> in
- <var>request</var>'s <a for=request>header list</a>.
+ <li><p>For each <var>protocol</var> in <var>protocols</var>, <a for="header list">combine</a>
+ `<code>Sec-WebSocket-Protocol</code>`/<var>protocol</var> in <var>request</var>'s
+ <a for=request>header list</a> with <var>legacySpaceFlag</var> set.
 
  <li>
   <p>Let <var>permessageDeflate</var> be a user-agent defined
