@@ -533,17 +533,16 @@ run these steps:
 </ol>
 
 <p>To
-<dfn export for="header list" id=concept-header-extract-mime-type>extract a MIME type</dfn>
+<dfn export for="header list" lt="extract a MIME type|extracting a MIME type" id=concept-header-extract-mime-type>extract a MIME type</dfn>
 from a <a for=/>header list</a> (<var>headers</var>), run these steps:
 
 <ol>
- <li><p>Let <var>MIMEType</var> be the result of <a>extracting header list values</a> given
+ <li><p>Let <var>mimeType</var> be the result of <a>extracting header list values</a> given
  `<code>Content-Type</code>` and <var>headers</var>.
 
- <li><p>If <var>MIMEType</var> is null or failure, return the empty byte sequence.
+ <li><p>If <var>mimeType</var> is null or failure, then return the empty byte sequence.
 
- <li><p>Return <var>MIMEType</var>,
- <a lt="byte-lowercase">byte-lowercased</a>.
+ <li><p>Return <var>mimeType</var>, <a lt="byte-lowercase">byte-lowercased</a>.
 </ol>
 
 <hr>
@@ -1574,9 +1573,8 @@ run these steps:
 <p>Run these steps:
 
 <ol>
- <li><p>Let <var>MIMEType</var> be the result of
- <a lt="extract a MIME type" for="header list">extracting a MIME type</a> from
- <var>response</var>'s <a for=response>header list</a>.
+ <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
+ from <var>response</var>'s <a for=response>header list</a>.
 
  <li><p>Let <var>type</var> be <var>request</var>'s <a for=request>type</a>.
 
@@ -1585,9 +1583,9 @@ run these steps:
   <b>blocked</b>:
 
   <ul class=brief>
-   <li><var>MIMEType</var> starts with `<code>audio/</code>`, `<code>image/</code>`, or
+   <li><var>mimeType</var> starts with `<code>audio/</code>`, `<code>image/</code>`, or
    `<code>video/</code>`.
-   <li><var>MIMEType</var> is `<code>text/csv</code>`.
+   <li><var>mimeType</var> is `<code>text/csv</code>`.
   </ul>
 
  <li><p>Return <b>allowed</b>.
@@ -2183,16 +2181,15 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
 
  <li><p>If <var>nosniff</var> is failure, then return <b>allowed</b>.
 
- <li><p>Let <var>MIMEType</var> be the result of
- <a lt="extract a MIME type" for="header list">extracting a MIME type</a> from
- <var>response</var>'s <a for=response>header list</a>.
+ <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
+ from <var>response</var>'s <a for=response>header list</a>.
 
  <li><p>Let <var>type</var> be <var>request</var>'s <a for=request>type</a>.
 
- <li><p>If <var>type</var> is "<code>script</code>", and <var>MIMEType</var> (ignoring parameters)
+ <li><p>If <var>type</var> is "<code>script</code>", and <var>mimeType</var> (ignoring parameters)
  is not a <a>JavaScript MIME type</a>, then return <b>blocked</b>.
 
- <li><p>If <var>type</var> is "<code>style</code>" and <var>MIMEType</var> (ignoring parameters) is
+ <li><p>If <var>type</var> is "<code>style</code>" and <var>mimeType</var> (ignoring parameters) is
  not `<code>text/css</code>`, then return <b>blocked</b>.
 
  <li><p>Return <b>allowed</b>.
@@ -4453,7 +4450,7 @@ return true if <a for=Body>disturbed</a>, and false otherwise.
 
 <p>Objects implementing the {{Body}} mixin also have an associated
 <dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
-<var>bytes</var>, a <var>type</var> and a <var>MIME type</var>, switches on <var>type</var>, and
+<var>bytes</var>, a <var>type</var> and a <var>mimeType</var>, switches on <var>type</var>, and
 runs the associated steps:
 
 <dl class=switch>
@@ -4462,19 +4459,18 @@ runs the associated steps:
  exceptions.
 
  <dt><i>Blob</i>
- <dd><p>Return a {{Blob}} whose contents are
- <var>bytes</var> and {{Blob/type}} attribute
- is <var>MIME type</var>.
+ <dd><p>Return a {{Blob}} whose contents are <var>bytes</var> and {{Blob/type}} attribute is
+ <var>mimeType</var>.
 
  <dt><i>FormData</i>
  <dd>
-  <p>If <var>MIME type</var> (ignoring parameters) is `<code>multipart/form-data</code>`,
-  run these substeps:
+  <p>If <var>mimeType</var> (ignoring parameters) is `<code>multipart/form-data</code>`, run these
+  substeps:
 
   <ol>
    <li>
     <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
-    <var>MIME type</var>, per the rules set forth in
+    <var>mimeType</var>, per the rules set forth in
     <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]</p>
 
     <p>Each part whose `<code>Content-Disposition</code>` header contains a `<code>filename</code>`
@@ -4506,7 +4502,7 @@ runs the associated steps:
   `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
   written. Volunteers welcome.
 
-  <p>Otherwise, if <var>MIME type</var> (ignoring parameters) is
+  <p>Otherwise, if <var>mimeType</var> (ignoring parameters) is
   `<code>application/x-www-form-urlencoded</code>`, run these substeps:
 
   <ol>
@@ -4971,9 +4967,8 @@ constructor must run these steps:
 
  <li><p>Set <var>r</var>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
 
- <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to
- the result of <a lt="extract a MIME type" for="header list">extracting a MIME type</a>
- from <var>r</var>'s <a for=Request>request</a>'s
+ <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to the result of
+ <a for="header list">extracting a MIME type</a> from <var>r</var>'s <a for=Request>request</a>'s
  <a for=request>header list</a>.
 
  <li><p>Return <var>r</var>.
@@ -5147,9 +5142,8 @@ constructor, when invoked, must run these steps:
    <a for=Response>response</a>'s <a for=response>header list</a>.
   </ol>
 
- <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to
- the result of <a lt="extract a MIME type" for="header list">extracting a MIME type</a>
- from <var>r</var>'s <a for=Response>response</a>'s
+ <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to the result of
+ <a for="header list">extracting a MIME type</a> from <var>r</var>'s <a for=Response>response</a>'s
  <a for=response>header list</a>.
 
  <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
