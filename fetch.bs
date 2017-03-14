@@ -3119,6 +3119,9 @@ steps:
 <p class=note><i>CORS flag</i> is still a bookkeeping detail. As is
 <i>authentication-fetch flag</i>.
 
+<p class=note>Some implementations might support caching of partial content, as per <cite>HTTP
+Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by browser caches.
+
 <ol>
  <li><p>Let <var>httpRequest</var> be null.
 
@@ -3345,7 +3348,7 @@ steps:
 
  <li><p>Let <var>response</var> and <var>storedResponse</var> be null.
 
- <li><p>Let the <var>revalidatingFlag</var> and <var>partialFlag</var> be unset.
+ <li><p>Let the <var>revalidatingFlag</var> be unset.
 
  <li>
   <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
@@ -3369,11 +3372,6 @@ steps:
    <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
    <var>revalidatingFlag</var>.
 
-   <li><p>If <var>storedResponse</var> is not complete, then set the <var>partialFlag</var>.
-
-   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>only-if-cached</code>"
-   and the <var>partialFlag</var> is set, then abort these substeps.
-
    <li>
     <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>force-cache</code>" or
     "<code>only-if-cached</code>", then set <var>response</var> to <var>storedResponse</var> and
@@ -3382,14 +3380,8 @@ steps:
     <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>` <a>header</a>
     into account.
 
-   <li><p>If both the <var>revalidatingFlag</var> and <var>partialFlag</var> are set,
-   <a for="header list">append</a> `<code>If-Range</code>` with an appropriate value to
-   <var>httpRequest</var>'s <a for=request>header list</a>, as per the
-   "<a href=https://tools.ietf.org/html/rfc7233#section-3.2>If-Range</a>" chapter of
-   <cite>HTTP Range Requests</cite>. [[!HTTP-RANGE]]
-
    <li>
-    <p>If the <var>revalidatingFlag</var> is set and the <var>partialFlag</var> is unset, then:
+    <p>If the <var>revalidatingFlag</var> is set, then:
 
     <ol>
      <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
@@ -3406,15 +3398,6 @@ steps:
     <p class=note>See also the
     "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
     chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
-
-   <li><p>If the <var>revalidatingFlag</var> is unset and the <var>partialFlag</var> is set, then
-   <a for="header list">append</a> `<code>Range</code>` with an appropriate value to
-   <var>httpRequest</var>'s <a for=request>header list</a>, as per the
-   "<a href=https://tools.ietf.org/html/rfc7233#section-3.1>Range</a>" chapter of
-   <cite>HTTP Range Requests</cite>. [[!HTTP-RANGE]]
-
-   <li><p>If both the <var>revalidatingFlag</var> and <var>partialFlag</var> are unset, then set
-   <var>response</var> to <var>storedResponse</var>.
   </ol>
 
  <li>
@@ -3451,24 +3434,6 @@ steps:
      <li><p>Set <var>response</var> to <var>storedResponse</var>.
 
     </ol>
-
-   <li>
-    <p>If the <var>partialFlag</var> is set and <var>forwardResponse</var>'s
-    <a for=response>status</a> is <code>206</code>, run these substeps:
-
-    <ol>
-     <li>
-      <p>Update <var>storedResponse</var>'s <a for=response>header list</a> using
-      <var>forwardResponse</var>'s <a for=response>header list</a>, as per the
-      "<a href=https://tools.ietf.org/html/rfc7234#section-3.3>Combining Partial Content</a>" chapter
-      of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
-
-      <p class="note">This updates the stored response in cache as well.
-
-     <li><p>Set <var>response</var> to <var>storedResponse</var>.
-
-    </ol>
-    <!-- TODO: account for partial request failure -->
 
    <li>
     <p>If <var>response</var> is null, then run these substeps:
