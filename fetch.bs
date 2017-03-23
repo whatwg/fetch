@@ -49,6 +49,9 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
     "HTTP-CACHING": {
         "aliasOf": "RFC7234"
     },
+    "HTTP-RANGE": {
+        "aliasOf": "RFC7233"
+    },
     "HTTP-AUTH": {
         "aliasOf": "RFC7235"
     },
@@ -95,7 +98,6 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
         "href": "https://www.kb.cert.org/vuls/id/150227",
         "title": "HTTP proxy default configurations allow arbitrary TCP connections."
     }
-
 }
 </pre>
 
@@ -3140,6 +3142,9 @@ steps:
 <p class=note><i>CORS flag</i> is still a bookkeeping detail. As is
 <i>authentication-fetch flag</i>.
 
+<p class=note>Some implementations might support caching of partial content, as per <cite>HTTP
+Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by browser caches.
+
 <ol>
  <li><p>Let <var>httpRequest</var> be null.
 
@@ -3364,88 +3369,107 @@ steps:
   <var>httpRequest</var>'s
   <a for=request>credentials mode</a>.
 
- <li><p>Let <var>response</var> be null.
+ <li><p>Let <var>response</var> and <var>storedResponse</var> be null.
+
+ <li><p>Let the <var>revalidatingFlag</var> be unset.
 
  <li>
-  <p>If <var>httpRequest</var>'s
-  <a for=request>cache mode</a> is neither
-  "<code>no-store</code>" nor "<code>reload</code>", and there is a <em>complete</em>
-  <a for=/>response</a> in the HTTP cache for
-  <var>httpRequest</var> run these substeps:
-  <!-- XXX xref "HTTP cache" -->
+  <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
+  nor "<code>reload</code>", run these substeps:
 
   <ol>
    <li>
-    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
-    "<code>force-cache</code>" or "<code>only-if-cached</code>", then set
-    <var>response</var> to the <a for=/>response</a> in the HTTP cache for
-    <var>httpRequest</var>.
+    <p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
+    possibly needing validation, as per the
+    "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
+    chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
 
-    <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>`
-    <a>header</a> into account.
+   <li><p>If <var>storedResponse</var> is null, then abort these substeps.
 
-   <li><p>Otherwise, if <var>httpRequest</var>'s
-   <a for=request>cache mode</a> is "<code>default</code>" and the
-   <a for=/>response</a> in the HTTP cache for <var>httpRequest</var> does
-   not require revalidation, then set <var>response</var> to that
-   <a for=/>response</a>.
-   <!-- XXX xref "revalidation" -->
+   <!-- cache hit -->
+   <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
+   <var>revalidatingFlag</var>.
 
-   <li><p>Otherwise, if <var>httpRequest</var>'s
-   <a for=request>cache mode</a> is either "<code>default</code>"
-   or "<code>no-cache</code>", modify <var>httpRequest</var>'s
-   <a for=request>header list</a> with revalidation
-   <a>headers</a>.
-   <!-- XXX modify, revalidation headers -->
+   <li>
+    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>force-cache</code>" or
+    "<code>only-if-cached</code>", then set <var>response</var> to <var>storedResponse</var> and
+    abort these substeps.
+
+    <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>` <a>header</a>
+    into account.
+
+   <li>
+    <p>If the <var>revalidatingFlag</var> is set, then:
+
+    <ol>
+     <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+     <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
+     `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
+     <a for=request>header list</a>.
+
+     <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+     <a for="header list">contains</a> `<code>Last-Modified</code>`, then
+     <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+    </ol>
+
+    <p class=note>See also the
+    "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
+    chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+
+    <li><p>Otherwise, if the <var>revalidatingFlag</var> is unset, then set <var>response</var> to
+    <var>storedResponse</var>.
   </ol>
 
- <li><p>Otherwise, if <var>httpRequest</var>'s
- <a for=request>cache mode</a> is either
- "<code>default</code>" or "<code>force-cache</code>", and there is a
- <em>partial</em> <a for=/>response</a> in the HTTP cache for
- <var>httpRequest</var>, modify <var>httpRequest</var>'s
- <a for=request>header list</a> with resume
- <a>headers</a>.
- <!-- XXX xref partial, modify, resume headers -->
-
  <li>
-  <p>If <var>response</var> is null, run these substeps:
+  <!-- If response is still null, we require a forwarded request. -->
+  <p>If <var>response</var> is null, then run these substeps:
 
   <ol>
    <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
-   "<code>only-if-cached</code>", then return a
-   <a>network error</a>.
+   "<code>only-if-cached</code>", then return a <a>network error</a>.
 
-   <li><p>Set <var>response</var> to the result of making an
-   <a>HTTP-network fetch</a> using <var>httpRequest</var>
-   with <i>credentials flag</i> if set.
-  </ol>
+   <li><p>Set <var>forwardResponse</var> to the result of making an <a>HTTP-network fetch</a> using
+   <var>httpRequest</var> with <i>credentials flag</i> if set.
 
- <li>
-  <p>If <var>response</var>'s <a for=response>status</a> is <code>304</code> and
-  <var>httpRequest</var>'s <a for=request>cache mode</a> is either
-  "<code>default</code>" or "<code>no-cache</code>", run these substeps:
-
-  <ol>
-   <li><p>Set <var>cachedResponse</var> to the result of selecting a stored
-   <a for=/>response</a> from the HTTP cache using <var>httpRequest</var>, as
-   per the
-   "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
-   chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
-
-   <li><p>If <var>cachedResponse</var> is null (i.e., one cannot be selected), return a
-   <a>network error</a>.
-
-   <li><p>Update <var>cachedResponse</var>'s <a for=response>header list</a>
-   using <var>response</var>'s <a for=response>header list</a>, as per the
-   "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
-   chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+   <li><p>If <var>httpRequest</var>'s <var>method</var> is
+   <a href=https://tools.ietf.org/html/rfc7231#safe.methods>unsafe</a> and
+   <var>forwardResponse</var>'s <a for=response>status</a> is in the range <code>200</code> to
+   <code>399</code>, inclusive, invalidate appropriate stored responses in the HTTP cache, as per
+   the "<a href=https://tools.ietf.org/html/rfc7234#section-4.4>Invalidation</a>" chapter of
+   <cite>HTTP Caching</cite>, and set <var>storedResponse</var> to null. [[!HTTP-CACHING]]
 
    <li>
-    <p>Set <var>response</var> to the <var>cachedResponse</var>.
+    <p>If the <var>revalidatingFlag</var> is set and <var>forwardResponse</var>'s
+    <a for=response>status</a> is <code>304</code>, then:
 
-    <p class="note no-backref">This changes <var>response</var> entirely, including its
-    <a for=response>status</a> which is most likely <code>200</code> now.
+    <ol>
+     <li>
+      <p>Update <var>storedResponse</var>'s <a for=response>header list</a> using
+      <var>forwardResponse</var>'s <a for=response>header list</a>, as per the
+      "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
+      chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+
+      <p class="note">This updates the stored response in cache as well.
+
+     <li><p>Set <var>response</var> to <var>storedResponse</var>.
+
+    </ol>
+
+   <li>
+    <p>If <var>response</var> is null, then:
+
+    <ol>
+     <li><p>Set <var>response</var> to <var>forwardResponse</var>.
+
+     <li>
+      <p>Store <var>httpRequest</var> and <var>forwardResponse</var> in the HTTP cache, as per the
+      "<a href=https://tools.ietf.org/html/rfc7234#section-3>Storing Responses in Caches</a>"
+      chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+
+      <p class=note>If <var>forwardResponse</var> is a <a>network error</a>, this effectively caches
+      the network error, which is sometimes known as "negative caching".
+    </ol>
   </ol>
 
  <li>
