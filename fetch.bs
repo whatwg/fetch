@@ -1187,16 +1187,19 @@ or "<code>worker</code>".
    <li>
     <p>When <var>read</var> is fulfilled with an object whose <code>done</code>
     property is false and whose <code>value</code> property is a
-    <code>Uint8Array</code> object, run these substeps:
+    <code>Uint8Array</code> object, run these substeps <a>in parallel</a>:
 
     <ol>
-     <li><p>Let <var>bytes</var> be the <a>byte sequence</a> represented by the
+     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the
      <code>Uint8Array</code> object.
 
-     <li><p>Transmit <var>bytes</var>.
+     <li>
+      <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+      <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+      <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+      for <var>request</var>.
 
-     <li><p>Increase <var>body</var>'s <a for=body>transmitted bytes</a> by <var>bytes</var>'s
-     length.
+      <p class="note no-backref">This substep blocks until the entire <var>bs</var> is transmitted.
 
      <li><p>Run the above step again.
     </ol>
