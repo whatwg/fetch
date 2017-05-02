@@ -1170,43 +1170,6 @@ or "<code>worker</code>".
 
 <hr>
 
-<p>To <dfn export for=request id=concept-request-transmit-body-chunk>transmit a chunk</dfn> for a
-promise <var>p</var>, run these steps <a>in parallel</a>:
-
-<ol>
- <li><p>Wait for <var>p</var> to be fulfilled or rejected.
-
- <li>
-  <p>If <var>p</var> is fulfilled with an object whose <code>done</code> property is false
-  and whose <code>value</code> property is a <code>Uint8Array</code> object, run these steps:
-
-   <ol>
-    <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the <code>Uint8Array</code>
-    object.
-
-    <li>
-     <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
-     <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
-     <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
-     for <var>request</var>.
-
-     <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
-
-    <li><p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
-    chunk</a> from <var>body</var>'s <a for=body>stream</a>.
-
-    <li><p><a for=request>Transmit a chunk</a> with <var>read</var>.
-   </ol>
-
- <li><p>If <var>p</var> is fulfilled with an object whose <code>done</code> property is true,
- <a>queue a fetch task</a> on <var>request</var> to <a>process request end-of-body</a> for
- <var>request</var>.
-
- <li><p>If <var>p</var> is fulfilled with a value that matches with neither of the above patterns,
- or <var>read</var> is rejected, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with
- reason <i>fatal</i>.
-</ol>
-
 <p>To <dfn export for=request id=concept-request-transmit-body>transmit body</dfn> for a
 <a for=/>request</a> <var>request</var>, run these steps:
 
@@ -1219,7 +1182,39 @@ promise <var>p</var>, run these steps <a>in parallel</a>:
  <li><p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
  chunk</a> from <var>body</var>'s <a for=body>stream</a>.
 
- <li><p><a for=request>Transmit a chunk</a> with <var>read</var>.
+ <li>
+  <p>Run these steps repeatedly, <a>in parallel</a>
+
+  <ol>
+   <li><p>Wait for <var>read</var> to be fulfilled or rejected.
+
+   <li>
+    <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
+    and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these steps:
+
+    <ol>
+     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the <code>Uint8Array</code>
+     object.
+
+     <li>
+      <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+      <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+      <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+      for <var>request</var>.
+
+      <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
+
+     <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
+     chunk</a> from <var>body</var>'s <a for=body>stream</a>.
+    </ol>
+
+   <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code> property
+   is true, then <a>queue a fetch task</a> on <var>request</var> to
+   <a>process request end-of-body</a> for <var>request</var> and abort these steps.
+
+   <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with reason
+   <i>fatal</i> and abort these steps.
+  </ol>
 </ol>
 
 
