@@ -1179,36 +1179,42 @@ or "<code>worker</code>".
  <li><p>If <var>body</var> is null, then <a>queue a fetch task</a> on <var>request</var> to
  <a>process request end-of-body</a> for <var>request</var> and abort these steps.
 
- <li>
-  <p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
-  chunk</a> from <var>body</var>'s <a for=body>stream</a>.
+ <li><p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
+ chunk</a> from <var>body</var>'s <a for=body>stream</a>.
 
-  <ul>
+ <li>
+  <p><a>In parallel</a>, while true:
+
+  <ol>
+   <li><p>Wait for <var>read</var> to be fulfilled or rejected.
+
    <li>
-    <p>When <var>read</var> is fulfilled with an object whose <code>done</code>
-    property is false and whose <code>value</code> property is a
-    <code>Uint8Array</code> object, run these substeps:
+    <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
+    and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these steps:
 
     <ol>
-     <li><p>Let <var>bytes</var> be the <a>byte sequence</a> represented by the
-     <code>Uint8Array</code> object.
+     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the <code>Uint8Array</code>
+     object.
 
-     <li><p>Transmit <var>bytes</var>.
+     <li>
+      <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+      <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+      <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+      for <var>request</var>.
 
-     <li><p>Increase <var>body</var>'s <a for=body>transmitted bytes</a> by <var>bytes</var>'s
-     length.
+      <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
 
-     <li><p>Run the above step again.
+     <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
+     chunk</a> from <var>body</var>'s <a for=body>stream</a>.
     </ol>
 
-   <li><p>When <var>read</var> is fulfilled with an object whose <code>done</code>
-   property is true, <a>queue a fetch task</a> on <var>request</var> to
-   <a>process request end-of-body</a> for <var>request</var>.
+   <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code> property
+   is true, then <a>queue a fetch task</a> on <var>request</var> to
+   <a>process request end-of-body</a> for <var>request</var> and abort these steps.
 
-   <li><p>When <var>read</var> is fulfilled with a value that matches with neither of the
-   above patterns, or <var>read</var> is rejected, <a lt=terminated for=fetch>terminate</a> the
-   ongoing fetch with reason <i>fatal</i>.
-  </ul>
+   <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with reason
+   <i>fatal</i> and abort these steps.
+  </ol>
 </ol>
 
 
