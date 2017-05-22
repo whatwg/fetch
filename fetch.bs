@@ -318,6 +318,7 @@ specialized multimap. An ordered list of key-value pairs with potentially duplic
 
  <li><p>Append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
  <a for=header>value</a> is <var>value</var> to <var>list</var>.
+</ol>
 
 <p>To <dfn export for="header list" id=concept-header-list-delete>delete</dfn> a
 <a for=header>name</a> (<var>name</var>) from a <a for=/>header list</a> (<var>list</var>), remove
@@ -774,7 +775,7 @@ the empty string,
 
 <p class="note no-backref">A <a for=/>request</a>'s
 <a for=request>initiator</a> is not particularly granular for
-the time being as other specifications do not require it to. It is primarily a
+the time being as other specifications do not require it to be. It is primarily a
 specification device to assist defining CSP and Mixed Content. It is not exposed to
 JavaScript. [[!CSP]] [[!MIX]]
 
@@ -1178,36 +1179,42 @@ or "<code>worker</code>".
  <li><p>If <var>body</var> is null, then <a>queue a fetch task</a> on <var>request</var> to
  <a>process request end-of-body</a> for <var>request</var> and abort these steps.
 
- <li>
-  <p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
-  chunk</a> from <var>body</var>'s <a for=body>stream</a>.
+ <li><p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
+ chunk</a> from <var>body</var>'s <a for=body>stream</a>.
 
-  <ul>
+ <li>
+  <p><a>In parallel</a>, while true:
+
+  <ol>
+   <li><p>Wait for <var>read</var> to be fulfilled or rejected.
+
    <li>
-    <p>When <var>read</var> is fulfilled with an object whose <code>done</code>
-    property is false and whose <code>value</code> property is a
-    <code>Uint8Array</code> object, run these substeps:
+    <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
+    and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these steps:
 
     <ol>
-     <li><p>Let <var>bytes</var> be the <a>byte sequence</a> represented by the
-     <code>Uint8Array</code> object.
+     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the <code>Uint8Array</code>
+     object.
 
-     <li><p>Transmit <var>bytes</var>.
+     <li>
+      <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+      <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+      <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+      for <var>request</var>.
 
-     <li><p>Increase <var>body</var>'s <a for=body>transmitted bytes</a> by <var>bytes</var>'s
-     length.
+      <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
 
-     <li><p>Run the above step again.
+     <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
+     chunk</a> from <var>body</var>'s <a for=body>stream</a>.
     </ol>
 
-   <li><p>When <var>read</var> is fulfilled with an object whose <code>done</code>
-   property is true, <a>queue a fetch task</a> on <var>request</var> to
-   <a>process request end-of-body</a> for <var>request</var>.
+   <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code> property
+   is true, then <a>queue a fetch task</a> on <var>request</var> to
+   <a>process request end-of-body</a> for <var>request</var> and abort these steps.
 
-   <li><p>When <var>read</var> is fulfilled with a value that matches with neither of the
-   above patterns, or <var>read</var> is rejected, <a lt=terminated for=fetch>terminate</a> the
-   ongoing fetch with reason <i>fatal</i>.
-  </ul>
+   <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with reason
+   <i>fatal</i> and abort these steps.
+  </ol>
 </ol>
 
 
@@ -1844,7 +1851,7 @@ origin                           = <a for=url>scheme</a> "://" <a for=url>host</
 <a lt=fetch for=/>fetches</a> than possible with HTML's
 <{form}> element, the <dfn export>CORS protocol</dfn> exists. It
 is layered on top of HTTP and allows responses to declare they can be shared with other
-<a for=/>origin</a>.
+<a for=/>origins</a>.
 
 <p class=note>It needs to be an opt-in mechanism to prevent leaking data from responses behind a
 firewall (intranets). Additionally, for <a for=/>requests</a> including
@@ -1950,6 +1957,13 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
  <dd><p>Indicates which <a>headers</a> can be exposed as part
  of the response by listing their <a lt=name for=header>names</a>.
 </dl>
+
+<hr>
+
+<p>In case a server does not wish to participate in the <a>CORS protocol</a>, its HTTP response to
+the <a lt="CORS request">CORS</a> or <a>CORS-preflight request</a> must not include any of the above
+<a>headers</a>. The server is encouraged to use the <code>403</code> <a for=/>status</a> in such
+HTTP responses.
 
 
 <h4 id=http-new-header-syntax>HTTP new-header syntax</h4>
@@ -2506,7 +2520,7 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <li><p>Set <var>request</var>'s
      <a for=request>response tainting</a> to "<code>basic</code>".
 
-     <li><p>Return the result of performing a <a for=basic>basic fetch</a>
+     <li><p>Return the result of performing a <a>scheme fetch</a>
      using <var>request</var>.
     </ol>
 
@@ -2529,7 +2543,7 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <a for=request>response tainting</a> to
      "<code>opaque</code>".
 
-     <li><p>Return the result of performing a <a for=basic>basic fetch</a>
+     <li><p>Return the result of performing a <a>scheme fetch</a>
      using <var>request</var>.
      <!-- file URLs end up here as they are not same-origin typically. -->
     </ol>
@@ -2727,10 +2741,10 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
  for <var>response</var>.
 </ol>
 
+<!-- Prior to May 2017, this algorithm was named "basic fetch." -->
+<h3 id=scheme-fetch oldids=basic-fetch>Scheme fetch</h3>
 
-<h3 id=basic-fetch>Basic fetch</h3>
-
-<p>To perform a <dfn id=concept-basic-fetch for=basic>basic fetch</dfn> using
+<p>To perform a <dfn id=concept-scheme-fetch oldids=concept-basic-fetch>scheme fetch</dfn> using
 <var>request</var>, switch on <var>request</var>'s
 <a for=request>current url</a>'s
 <a for=url>scheme</a>, and run the associated
@@ -4069,12 +4083,7 @@ Entries may be removed before that moment arrives.
  `<a http-header><code>Access-Control-Allow-Credentials</code></a>` and <var>response</var>'s
  <a for=response>header list</a>.
 
- <li>
-  <p>If <var>credentials</var> is `<code>true</code>`, return success.
-
-  <p class=XXX>It has been suggested to check for <var>origin</var> not being
-  `<code>null</code>` here as that would be equal to allowing credentials and
-  `<code>*</code>` which is also forbidden.
+ <li><p>If <var>credentials</var> is `<code>true</code>`, return success.
 
  <li><p>Return failure.
 </ol>
@@ -5676,7 +5685,9 @@ Daniel Veditz,
 David Håsäther,
 David Orchard,
 Dean Jackson,
+Devdatta Akhawe,
 Domenic Denicola,
+Dominic Farolino,
 Dominique Hazaël-Massieux,
 Doug Turner,
 Eero Häkkinen,
@@ -5744,6 +5755,7 @@ Matt Womer,
 Mhano Harkness,
 Michael Kohler,
 Michael™ Smith,
+Mike Pennisi,
 Mike West,
 Mohamed Zergaoui,
 Ms2ger,
