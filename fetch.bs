@@ -5664,6 +5664,26 @@ however, it is perfectly fine to do so.
 
 <pre id=example-vary-origin class=example>Vary: Origin</pre>
 
+<p>In particular, consider what happens if `<code>Vary</code>` is <em>not</em> used and a server is
+configured to send `<a http-header><code>Access-Control-Allow-Origin</code></a>` for a certain
+resource only in response to a <a>CORS request</a>. When a user agent receives a response to a
+non-<a>CORS request</a> for that resource (for example, as the result of a <a>navigation
+request</a>), the response will lack `<a http-header><code>Access-Control-Allow-Origin</code></a>`
+and the user agent will cache that response. Then, if the user agent subsequently encounters a
+<a>CORS request</a> for the resource, it will use that cached response from the previous
+non-<a>CORS request</a>, without `<a http-header><code>Access-Control-Allow-Origin</code></a>`.
+
+<p>But if `<code>Vary: Origin</code>` is used in the same scenario described above, it will cause
+the user agent to <a for=/>fetch</a> a response that includes
+`<a http-header><code>Access-Control-Allow-Origin</code></a>`, rather than using the cached response
+from the previous non-<a>CORS request</a> that lacks
+`<a http-header><code>Access-Control-Allow-Origin</code></a>`.
+
+<p>However, if `<a http-header><code>Access-Control-Allow-Origin</code></a>` is set to
+<code>*</code> or a static <a for=/>origin</a> for a particular resource, then configure the server
+to always send `<a http-header><code>Access-Control-Allow-Origin</code></a>` in responses for the
+resource — for non-<a>CORS requests</a> as well as <a>CORS
+requests</a> — and do not use `<code>Vary</code>`.
 
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
