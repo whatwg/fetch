@@ -16,7 +16,7 @@ Markup Shorthands: css off
 !Commits: <a href=https://twitter.com/fetchstandard>@fetchstandard</a>
 !Tests: <a href=https://github.com/w3c/web-platform-tests/tree/master/fetch>web-platform-tests fetch/</a> (<a href=https://github.com/w3c/web-platform-tests/labels/fetch>ongoing work</a>)
 !Translation (non-normative): <span title=Japanese><a href=https://triple-underscore.github.io/Fetch-ja.html lang=ja hreflang=ja rel=alternate>日本語</a></span>
-Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,typedefdef-requestinfo requestinfo,enumdef-requesttype requesttype,enumdef-requestdestination requestdestination,enumdef-requestmode requestmode,enumdef-requestcredentials requestcredentials,enumdef-requestcache requestcache,enumdef-requestredirect requestredirect,dictdef-responseinit responseinit,enumdef-responsetype responsetype
+Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,typedefdef-requestinfo requestinfo,enumdef-requestdestination requestdestination,enumdef-requestmode requestmode,enumdef-requestcredentials requestcredentials,enumdef-requestcache requestcache,enumdef-requestredirect requestredirect,dictdef-responseinit responseinit,enumdef-responsetype responsetype
 </pre>
 
 <script src=https://resources.whatwg.org/file-issue.js async></script>
@@ -783,17 +783,6 @@ specification device to assist defining CSP and Mixed Content. It is not exposed
 JavaScript. [[!CSP]] [[!MIX]]
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-type>type</dfn>, which is
-the empty string,
-"<code>audio</code>",
-"<code>font</code>",
-"<code>image</code>",
-"<code>script</code>",
-"<code>style</code>",
-"<code>track</code>", or
-"<code>video</code>". Unless stated otherwise it is the empty string.
-
-<p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-destination>destination</dfn>, which is
 the empty string,
 "<code>audio</code>",
@@ -813,23 +802,33 @@ the empty string,
 "<code>worker</code>", or
 "<code>xslt</code>". Unless stated otherwise it is the empty string.
 
+<!-- Dependencies:
+     * CSP: https://w3c.github.io/webappsec-csp/#effective-directive-for-a-request
+     * Mixed Content: https://w3c.github.io/webappsec-mixed-content/#should-block-fetch
+     * Preload: https://w3c.github.io/preload/#processing
+     * SRI: https://w3c.github.io/webappsec-subresource-integrity/#apply-algorithm-to-request
+     * HTML -->
+
+<p>A <a for=/>request</a>'s <a for=request>destination</a> is
+<dfn export for=request/destination>script-like</dfn> if it is "<code>script</code>",
+"<code>serviceworker</code>", "<code>sharedworker</code>", or "<code>worker</code>".
+
+<p class=warning>Algorithms that use <a for=request/destination>script-like</a> should also consider
+"<code>xslt</code>" as that too can cause script execution. It is not included in the list as it is
+not always relevant and might require different behavior.
+
 <div class=note>
- <p>The following table illustrates the relationship between a
- <a for=/>request</a>'s
- <a for=request>initiator</a>,
- <a for=request>type</a>,
- <a for=request>destination</a>, CSP directives, and features.
+ <p>The following table illustrates the relationship between a <a for=/>request</a>'s
+ <a for=request>initiator</a>, <a for=request>destination</a>, CSP directives, and features.
 
  <table>
   <tbody><tr>
    <th><a lt=initiator for=request>Initiator</a>
-   <th><a for=request>Type</a>
    <th><a lt=destination for=request>Destination</a>
    <th>CSP directive
    <th>Features
   <tr>
    <td rowspan=16>""
-   <td rowspan=6>""
    <td>"<code>report</code>"
    <td rowspan=2>?
    <td>CSP, NEL reports.
@@ -856,23 +855,19 @@ the empty string,
    <td>HTML's <code>&lt;embed></code>
   <tr>
    <td>"<code>audio</code>"
-   <td>"<code>audio</code>"
    <td><code>media-src</code>
    <td>HTML's <code>&lt;audio></code>
   <tr>
    <td>"<code>font</code>"
-   <td>"<code>font</code>"
    <td><code>font-src</code>
    <td>CSS' <code>@font-face</code>
   <tr>
-   <td>"<code>image</code>"
    <td>"<code>image</code>"
    <td><code>img-src</code>
    <td>HTML's <code>&lt;img src></code>, <code>/favicon.ico</code> resource,
    SVG's <code>&lt;image></code>, CSS' <code>background-image</code>, CSS'
    <code>cursor</code>, CSS' <code>list-style-image</code>, …
   <tr>
-   <td rowspan=4>"<code>script</code>"
    <td>"<code>script</code>"
    <td><code>script-src</code>
    <td>HTML's <code>&lt;script></code>, <code>importScripts()</code>
@@ -890,34 +885,28 @@ the empty string,
    <td><code>Worker</code>
   <tr>
    <td>"<code>style</code>"
-   <td>"<code>style</code>"
    <td><code>style-src</code>
    <td>HTML's <code>&lt;link rel=stylesheet></code>, CSS' <code>@import</code>
   <tr>
    <td>"<code>track</code>"
-   <td>"<code>track</code>"
    <td><code>media-src</code>
    <td>HTML's <code>&lt;track></code>
   <tr>
-   <td>"<code>video</code>"
    <td>"<code>video</code>"
    <td><code>media-src</code>
    <td>HTML's <code>&lt;video></code> element
   <tr>
    <td>"<code>download</code>"
    <td>""
-   <td>""
    <td>?
    <td>HTML's <code>download=""</code>, "Save Link As…" UI
   <tr>
    <td>"<code>imageset</code>"
    <td>"<code>image</code>"
-   <td>"<code>image</code>"
    <td><code>img-src</code>
    <td>HTML's <code>&lt;img srcset></code> and <code>&lt;picture></code>
   <tr>
    <td>"<code>manifest</code>"
-   <td rowspan=2>""
    <td>"<code>manifest</code>"
    <td><code>manifest-src</code>
    <td>HTML's <code>&lt;link rel=manifest></code>
@@ -1635,11 +1624,11 @@ run these steps:
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
- <li><p>Let <var>type</var> be <var>request</var>'s <a for=request>type</a>.
+ <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
  <li>
-  <p>If <var>type</var> is "<code>script</code>" and one of the following is true, then return
-  <b>blocked</b>:
+  <p>If <var>destination</var> is <a for=request/destination>script-like</a> and one of the
+  following is true, then return <b>blocked</b>:
 
   <ul class=brief>
    <li><var>mimeType</var> starts with `<code>audio/</code>`, `<code>image/</code>`, or
@@ -2218,10 +2207,8 @@ Access-Control-Allow-Credentials: true</pre>
 
 <p>The
 `<dfn export http-header id=http-x-content-type-options><code>X-Content-Type-Options</code></dfn>`
-response <a for=/>header</a> can be used to require checking of a
-<a for=/>response</a>'s `<code>Content-Type</code>`
-<a for=/>header</a> against the
-<a for=request>type</a> of a
+response <a for=/>header</a> can be used to require checking of a <a for=/>response</a>'s
+`<code>Content-Type</code>` <a for=/>header</a> against the <a for=request>destination</a> of a
 <a for=/>request</a>.
 
 <p>Its <a for=header>value</a> <a>ABNF</a>:
@@ -2250,20 +2237,21 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
- <li><p>Let <var>type</var> be <var>request</var>'s <a for=request>type</a>.
+ <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
- <li><p>If <var>type</var> is "<code>script</code>", and <var>mimeType</var> (ignoring parameters)
- is not a <a>JavaScript MIME type</a>, then return <b>blocked</b>.
+ <li><p>If <var>destination</var> is <a for=request/destination>script-like</a> and
+ <var>mimeType</var> (ignoring parameters) is not a <a>JavaScript MIME type</a>, then return
+ <b>blocked</b>.
 
- <li><p>If <var>type</var> is "<code>style</code>" and <var>mimeType</var> (ignoring parameters) is
- not `<code>text/css</code>`, then return <b>blocked</b>.
+ <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var>
+ (ignoring parameters) is not `<code>text/css</code>`, then return <b>blocked</b>.
 
  <li><p>Return <b>allowed</b>.
 </ol>
 
-<p class="note no-backref">Only "<code>script</code>" and "<code>style</code>" are considered as any
-exploits pertain to those <a for=request>types</a>. Also, considering "<code>image</code>" was not
-compatible with deployed content.
+<p class="note no-backref">Only <a for=/>request</a> <a for=request>destinations</a> that are
+<a for=request/destination>script-like</a> or "<code>style</code>" are considered as any exploits
+pertain to them. Also, considering "<code>image</code>" was not compatible with deployed content.
 
 
 
@@ -2334,7 +2322,7 @@ the request.
 
    <li>
     <p>Otherwise, a user agent should set <var>value</var> to the first matching statement, if any,
-    switching on <var>request</var>'s <a for=request>type</a>:
+    switching on <var>request</var>'s <a for=request>destination</a>:
     <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
 
     <dl class=switch>
@@ -2357,17 +2345,13 @@ the request.
  to <var>request</var>'s <a for=request>header list</a>.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>priority</a> is
-  null, use <var>request</var>'s
-  <a for=request>initiator</a>,
-  <a for=request>type</a>, and
-  <a for=request>destination</a>
-  appropriately in setting it to a user-agent-defined object.
+  <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
+  <a for=request>initiator</a> and <a for=request>destination</a> appropriately in setting
+  <var>request</var>'s <a for=request>priority</a> to a user-agent-defined object.
 
   <p class=note>The user-agent-defined object could encompass stream weight and dependency
   for HTTP/2, and equivalent information used to prioritize dispatch and processing of
   HTTP/1 fetches.
-
 
  <li>
   <p>If <var>request</var> is a <a>navigation request</a>, a user agent should, for each
@@ -3853,8 +3837,6 @@ steps:
  <a for=request>current url</a>,
  <a for=request>initiator</a> is <var>request</var>'s
  <a for=request>initiator</a>,
- <a for=request>type</a> is <var>request</var>'s
- <a for=request>type</a>,
  <a for=request>destination</a> is <var>request</var>'s
  <a for=request>destination</a>,
  <a for=request>origin</a> is <var>request</var>'s
@@ -4688,7 +4670,6 @@ interface Request {
   readonly attribute USVString url;
   [SameObject] readonly attribute Headers headers;
 
-  readonly attribute RequestType type;
   readonly attribute RequestDestination destination;
   readonly attribute USVString referrer;
   readonly attribute ReferrerPolicy referrerPolicy;
@@ -4717,7 +4698,6 @@ dictionary RequestInit {
   any window; // can only be set to null
 };
 
-enum RequestType { "", "audio", "font", "image", "script", "style", "track", "video" };
 enum RequestDestination { "", "audio", "document", "embed", "font", "image", "manifest", "object", "report", "script", "serviceworker", "sharedworker", "style",  "track", "video", "worker", "xslt" };
 enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
@@ -5078,10 +5058,6 @@ return <a for=Request>request</a>'s
 
 <p>The <dfn attribute for=Request><code>headers</code></dfn> attribute's getter must return the
 associated <a for=Request>headers</a>.
-
-<p>The <dfn attribute for=Request><code>type</code></dfn> attribute's getter must return
-<a for=Request>request</a>'s
-<a for=request>type</a>.
 
 <p>The <dfn attribute for=Request><code>destination</code></dfn> attribute's
 getter must return <a for=Request>request</a>'s
