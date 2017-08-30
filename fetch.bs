@@ -1189,37 +1189,44 @@ or "<code>worker</code>".
   <p><a>In parallel</a>, while true:
 
   <ol>
-   <li><p>Wait for <var>read</var> to be fulfilled or rejected.
-
    <li>
-    <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
-    and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these steps:
+    <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
     <ol>
-     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the <code>Uint8Array</code>
-     object.
+     <li><p>Wait for <var>read</var> to be fulfilled or rejected.
 
      <li>
-      <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
-      <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
-      <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
-      for <var>request</var>.
+      <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
+      and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these
+      steps:
 
-      <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
+      <ol>
+       <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the
+       <code>Uint8Array</code> object.
 
-     <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
-     chunk</a> from <var>body</var>'s <a for=body>stream</a> with <var>reader</var>.
+       <li>
+        <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+        <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+        <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+        for <var>request</var>.
+
+        <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
+
+       <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
+       chunk</a> from <var>body</var>'s <a for=body>stream</a> with <var>reader</var>.
+      </ol>
+
+     <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code>
+     property is true, then <a>queue a fetch task</a> on <var>request</var> to
+     <a>process request end-of-body</a> for <var>request</var> and abort these in-parallel steps.
+
+     <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with reason
+     <i>fatal</i>.
     </ol>
 
-   <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code> property
-   is true, then <a>queue a fetch task</a> on <var>request</var> to
-   <a>process request end-of-body</a> for <var>request</var> and abort these steps.
-
-   <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with reason
-   <i>fatal</i> and abort these steps.
+   <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these in-parallel steps.
   </ol>
 </ol>
-
 
 <h4 id=responses>Responses</h4>
 
@@ -1488,21 +1495,38 @@ for each associated <a for="fetch group">fetch record</a> whose
 <var>origin</var> and <var>credentials</var>, run these steps:
 
 <ol>
- <li><p>If <a for=connection>connection pool</a> contains a
- <a>connection</a> whose <b>origin</b> is <var>origin</var> and
- <b>credentials</b> is <var>credentials</var>, return that
+ <li><p>If <a for=connection>connection pool</a> contains a <a>connection</a> whose <b>origin</b> is
+ <var>origin</var> and <b>credentials</b> is <var>credentials</var>, then return that
  <a>connection</a>.
 
+ <li><p>Let <var>connection</var> be null.
+
  <li>
-  <p>Let <var>connection</var> be the result of establishing an HTTP connection to
-  <var>origin</var>. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]] [[!TLS]]
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
-  <p>If <var>credentials</var> is false, do <em>not</em> send a TLS client certificate.
+  <ol>
+   <li>
+    <p>Set <var>connection</var> to the result of establishing an HTTP connection to
+    <var>origin</var>. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+    [[!TLS]]
 
-  <p>If establishing a connection does not succeed (e.g., a DNS, TCP, or TLS error), return failure.
+    <p>If <var>credentials</var> is false, then do <em>not</em> send a TLS client certificate.
 
- <li><p>Add <var>connection</var> to the <a for=connection>connection pool</a>
- with <b>origin</b> being <var>origin</var> and <b>credentials</b> being <var>credentials</var>.
+    <p>If establishing a connection does not succeed (e.g., a DNS, TCP, or TLS error), then return
+    failure.
+  </ol>
+
+ <li>
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+  <ol>
+   <li><p>If <var>connection</var> is not null, close <var>connection</var>.
+
+   <li><p>Return failure.
+  </ol>
+
+ <li><p>Add <var>connection</var> to the <a for=connection>connection pool</a> with <b>origin</b>
+ being <var>origin</var> and <b>credentials</b> being <var>credentials</var>.
 
  <li><p>Return <var>connection</var>.
 </ol>
@@ -1776,11 +1800,8 @@ from a {{ReadableStream}} object with <var>reader</var>, run these steps:
 </ol>
 
 <p>To <dfn export for=ReadableStream id=concept-cancel-readablestream>cancel</dfn> a
-{{ReadableStream}} object with <var>reader</var> and <var>reason</var>, return the result of calling
-<a abstract-op>ReadableStreamCancel</a>(<var>reader</var>, <var>reason</var>).
-
-<p class="note no-backref">Because the reader grants exclusive access, the actual mechanism of how
-to read cannot be observed. Implementations could use more direct mechanism if convenient.
+{{ReadableStream}} object <var>stream</var> with <var>reason</var>, return the result of calling
+<a abstract-op>ReadableStreamCancel</a>(<var>stream</var>, <var>reason</var>).
 
 <p>To <dfn export for=ReadableStream id=concept-tee-readablestream>tee</dfn> a {{ReadableStream}}
 object <var>stream</var>, run these steps:
@@ -2295,126 +2316,135 @@ the request.
 [[!HTTP-CACHING]]
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>window</a> is
- "<code>client</code>", set <var>request</var>'s
- <a for=request>window</a> to <var>request</var>'s
- <a for=request>client</a>, if <var>request</var>'s
- <a for=request>client</a>'s
- <a for="environment settings object">global object</a> is a
- {{Window}} object, and to "<code>no-window</code>"
- otherwise.
-
- <li><p>If <var>request</var>'s <a for=request>origin</a> is
- "<code>client</code>", set <var>request</var>'s
- <a for=request>origin</a> to  <var>request</var>'s
- <a for=request>client</a>'s <a for="environment settings object">origin</a>.
-
  <li>
-  <p>If <var>request</var>'s <a for=request>header list</a>
-  <a for="header list">does not contain</a> `<code>Accept</code>`, then:
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
   <ol>
-   <li><p>Let <var>value</var> be `<code>*/*</code>`.
+   <li><p>If <var>request</var>'s <a for=request>window</a> is
+   "<code>client</code>", set <var>request</var>'s
+   <a for=request>window</a> to <var>request</var>'s
+   <a for=request>client</a>, if <var>request</var>'s
+   <a for=request>client</a>'s
+   <a for="environment settings object">global object</a> is a
+   {{Window}} object, and to "<code>no-window</code>"
+   otherwise.
 
-   <li><p>If <var>request</var> is a <a>navigation request</a>, a user agent should set
-   <var>value</var> to
-   `<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`.
+   <li><p>If <var>request</var>'s <a for=request>origin</a> is
+   "<code>client</code>", set <var>request</var>'s
+   <a for=request>origin</a> to  <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">origin</a>.
 
    <li>
-    <p>Otherwise, a user agent should set <var>value</var> to the first matching statement, if any,
-    switching on <var>request</var>'s <a for=request>destination</a>:
-    <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
+    <p>If <var>request</var>'s <a for=request>header list</a>
+    <a for="header list">does not contain</a> `<code>Accept</code>`, then:
 
-    <dl class=switch>
-     <dt>"<code>image</code>"
-     <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
+    <ol>
+     <li><p>Let <var>value</var> be `<code>*/*</code>`.
 
-     <dt>"<code>style</code>"
-     <dd>`<code>text/css,*/*;q=0.1</code>`
-    </dl>
+     <li><p>If <var>request</var> is a <a>navigation request</a>, a user agent should set
+     <var>value</var> to
+     `<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`.
 
-   <li><p><a for="header list">Append</a>
-   `<code>Accept</code>`/<var>value</var> to <var>request</var>'s
-   <a for=request>header list</a>.
-  </ol>
+     <li>
+      <p>Otherwise, a user agent should set <var>value</var> to the first matching statement, if
+      any, switching on <var>request</var>'s <a for=request>destination</a>:
+      <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
 
- <li><p>If <var>request</var>'s <a for=request>header list</a>
- <a for="header list">does not contain</a> `<code>Accept-Language</code>`, user agents should
- <a for="header list">append</a>
- `<code>Accept-Language</code>`/an appropriate <a for=header>value</a>
- to <var>request</var>'s <a for=request>header list</a>.
+      <dl class=switch>
+       <dt>"<code>image</code>"
+       <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
 
- <li>
-  <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
-  <a for=request>initiator</a> and <a for=request>destination</a> appropriately in setting
-  <var>request</var>'s <a for=request>priority</a> to a user-agent-defined object.
+       <dt>"<code>style</code>"
+       <dd>`<code>text/css,*/*;q=0.1</code>`
+      </dl>
 
-  <p class=note>The user-agent-defined object could encompass stream weight and dependency
-  for HTTP/2, and equivalent information used to prioritize dispatch and processing of
-  HTTP/1 fetches.
+     <li><p><a for="header list">Append</a>
+     `<code>Accept</code>`/<var>value</var> to <var>request</var>'s
+     <a for=request>header list</a>.
+    </ol>
 
- <li>
-  <p>If <var>request</var> is a <a>navigation request</a>, a user agent should, for each
-  <a for=/>header</a> <a for=header>name</a> (<var>hintName</var>) in the first column of the
-  following table, if <var>request</var>'s <a for=request>header list</a>
-  <a for="header list">does not contain</a> <var>hintName</var>, then
-  <a for="header list">append</a>
-  <var>hintName</var>/the value given in the same row on the second column, to <var>request</var>'s
-  <a for=request>header list</a>.
+   <li><p>If <var>request</var>'s <a for=request>header list</a>
+   <a for="header list">does not contain</a> `<code>Accept-Language</code>`, user agents should
+   <a for="header list">append</a>
+   `<code>Accept-Language</code>`/an appropriate <a for=header>value</a>
+   to <var>request</var>'s <a for=request>header list</a>.
 
-  <table>
-   <tbody><tr>
-    <th><a for=header>Name</a>
-    <th><a for=header>Value</a>
-   <tr>
-    <td>`<code>dpr</code>`
-    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
-   <tr>
-    <td>`<code>save-data</code>`
-    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
-   <tr>
-    <td>`<code>viewport-width</code>`
-    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
-  </table>
-
- <li>
-  <p>If <var>request</var> is a <a>subresource request</a>, run these substeps:
-
-  <ol>
    <li>
-    <p>If <var>request</var>'s <a for=client>client hints list</a> is not empty, then run these
-    substeps for each <var>hintName</var> in the list:
+    <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
+    <a for=request>initiator</a> and <a for=request>destination</a> appropriately in setting
+    <var>request</var>'s <a for=request>priority</a> to a user-agent-defined object.
+
+    <p class=note>The user-agent-defined object could encompass stream weight and dependency
+    for HTTP/2, and equivalent information used to prioritize dispatch and processing of
+    HTTP/1 fetches.
+
+   <li>
+    <p>If <var>request</var> is a <a>navigation request</a>, a user agent should, for each
+    <a for=/>header</a> <a for=header>name</a> (<var>hintName</var>) in the first column of the
+    following table, if <var>request</var>'s <a for=request>header list</a>
+    <a for="header list">does not contain</a> <var>hintName</var>, then
+    <a for="header list">append</a>
+    <var>hintName</var>/the value given in the same row on the second column, to
+    <var>request</var>'s <a for=request>header list</a>.
+
+    <table>
+     <tbody><tr>
+      <th><a for=header>Name</a>
+      <th><a for=header>Value</a>
+     <tr>
+      <td>`<code>dpr</code>`
+      <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
+     <tr>
+      <td>`<code>save-data</code>`
+      <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+     <tr>
+      <td>`<code>viewport-width</code>`
+      <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
+    </table>
+
+   <li>
+    <p>If <var>request</var> is a <a>subresource request</a>, run these substeps:
 
     <ol>
      <li>
-      <p>Set <var>value</var> to the first matching statement, if any, switching on
-      <var>hintName</var>:
+      <p>If <var>request</var>'s <a for=client>client hints list</a> is not empty, then run these
+      substeps for each <var>hintName</var> in the list:
 
-      <dl class=switch>
-       <dt>"<code>dpr</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
-       <dt>"<code>save-data</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
-       <dt>"<code>viewport-width</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
-       <dt>"<code>width</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#width>width value</a>
-      </dl>
+      <ol>
+       <li>
+        <p>Set <var>value</var> to the first matching statement, if any, switching on
+        <var>hintName</var>:
 
-     <li><p><a for="header list">Append</a> <var>hintName</var>/<var>value</var> to
-     <var>request</var>'s <a for=request>header list</a>.
+        <dl class=switch>
+         <dt>"<code>dpr</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
+         <dt>"<code>save-data</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+         <dt>"<code>viewport-width</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
+         <dt>"<code>width</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#width>width value</a>
+        </dl>
+
+       <li><p><a for="header list">Append</a> <var>hintName</var>/<var>value</var> to
+       <var>request</var>'s <a for=request>header list</a>.
+      </ol>
+
+     <li><p>Let <var>record</var> be a new
+     <a for="fetch group">fetch record</a> consisting of
+     <var>request</var> and this instance of the
+     <a for=/>fetch</a> algorithm.
+
+     <li><p>Append <var>record</var> to <var>request</var>'s
+     <a for=request>client</a>'s
+     <a for=fetch>fetch group</a> list of
+     <a for="fetch group">fetch records</a>.
     </ol>
-
-   <li><p>Let <var>record</var> be a new
-   <a for="fetch group">fetch record</a> consisting of
-   <var>request</var> and this instance of the
-   <a for=/>fetch</a> algorithm.
-
-   <li><p>Append <var>record</var> to <var>request</var>'s
-   <a for=request>client</a>'s
-   <a for=fetch>fetch group</a> list of
-   <a for="fetch group">fetch records</a>.
   </ol>
+
+ <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
+ provided termination reason, and return a <a>network error</a> with
+ <a for=response>termination reason</a> set to <var>reason</var>.
 
  <li><p>Return the result of performing a <a for=main>main fetch</a>
  using <var>request</var>.
@@ -2432,81 +2462,91 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
 <ol>
  <li><p>Let <var>response</var> be null.
 
- <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and
- <var>request</var>'s <a for=request>current url</a> is
- not <a lt="is local">local</a>, set
- <var>response</var> to a <a>network error</a>.
-
- <li><p>Execute <a href=https://w3c.github.io/webappsec-csp/#report-for-request>Report Content Security Policy violations for <var>request</var></a>.
- [[!CSP]]
-
- <li><p><a href=https://w3c.github.io/webappsec-upgrade-insecure-requests/#upgrade-request>Upgrade <var>request</var> to a potentially secure URL, if appropriate</a>.
- [[!UPGRADE]]
-
- <li><p>If
- <a lt="block bad port">should fetching <var>request</var> be blocked due to a bad port</a>,
- <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
- or
- <a href=https://w3c.github.io/webappsec-csp/#should-block-request>should fetching <var>request</var> be blocked by Content Security Policy</a>
- returns <b>blocked</b>, set <var>response</var> to a
- <a>network error</a>.
- [[!MIX]]
- [[!CSP]]
-
- <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string and
- <var>request</var>'s <a for=request>client</a> is non-null, then set <var>request</var>'s
- <a for=request>referrer policy</a> to <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">referrer policy</a>.
- [[!REFERRER]]
-
  <li>
-  <p>If <var>request</var>'s <a for=request>referrer policy</a>
-  is the empty string, then set <var>request</var>'s
-  <a for=request>referrer policy</a> to
-  "<code>no-referrer-when-downgrade</code>".
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
-  <p class="note no-backref">We use "<code>no-referrer-when-downgrade</code>" because it is the
-  historical default.
+  <ol>
 
- <li>
-  <p>If <var>request</var>'s <a for=request>referrer</a>
-  is not "<code>no-referrer</code>", set <var>request</var>'s
-  <a for=request>referrer</a> to the result of invoking
-  <a>determine <var>request</var>'s referrer</a>.
-  [[!REFERRER]]
+   <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and
+   <var>request</var>'s <a for=request>current url</a> is
+   not <a lt="is local">local</a>, set
+   <var>response</var> to a <a>network error</a>.
 
-  <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
-  provide the end user with options to override <var>request</var>'s
-  <a for=request>referrer</a> to "<code>no-referrer</code>" or
-  have it expose less sensitive information.
+   <li><p>Execute <a href=https://w3c.github.io/webappsec-csp/#report-for-request>Report Content Security Policy violations for <var>request</var></a>.
+    [[!CSP]]
 
- <li>
-  <p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
-  "<code>ftp</code>", <var>request</var>'s <a for=request>client</a>'s
-  <a for=environment>creation URL</a>'s <a for=url>scheme</a> is not "<code>ftp</code>", and
-  <var>request</var>'s <a for=request>reserved client</a> is either null or an <a>environment</a>
-  whose <a for=environment>target browsing context</a> is a <a>nested browsing context</a>, then set
-  <var>response</var> to a <a>network error</a>.
+   <li><p><a href=https://w3c.github.io/webappsec-upgrade-insecure-requests/#upgrade-request>Upgrade <var>request</var> to a potentially secure URL, if appropriate</a>.
+   [[!UPGRADE]]
 
- <li>
-  <p>Set <var>request</var>'s <a for=request>current url</a>'s
-  <a for=url>scheme</a> to "<code>https</code>" if
-  all of the following conditions are true:
+   <li><p>If
+   <a lt="block bad port">should fetching <var>request</var> be blocked due to a bad port</a>,
+   <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
+   or
+   <a href=https://w3c.github.io/webappsec-csp/#should-block-request>should fetching <var>request</var> be blocked by Content Security Policy</a>
+   returns <b>blocked</b>, set <var>response</var> to a
+   <a>network error</a>.
+   [[!MIX]]
+   [[!CSP]]
 
-  <ul class=brief>
-   <li><var>request</var>'s <a for=request>current url</a>'s
-   <a for=url>scheme</a> is "<code>http</code>"
-   <li><var>request</var>'s <a for=request>current url</a>'s
-   <a for=url>host</a> is a
-   <a for=/>domain</a>
-   <li>Matching <var>request</var>'s <a for=request>current url</a>'s
-   <a for=url>host</a> per
-   <a href=https://tools.ietf.org/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
-   results in either a superdomain match with an asserted <code>includeSubDomains</code>
-   directive or a congruent match (with or without an asserted <code>includeSubDomains</code>
-   directive) [[!HSTS]]
-  </ul>
- <!-- Per Mike West HSTS happens "probably after" Referrer -->
+   <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string and
+   <var>request</var>'s <a for=request>client</a> is non-null, then set <var>request</var>'s
+   <a for=request>referrer policy</a> to <var>request</var>'s <a for=request>client</a>'s
+   <a for="environment settings object">referrer policy</a>.
+   [[!REFERRER]]
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>referrer policy</a>
+    is the empty string, then set <var>request</var>'s
+    <a for=request>referrer policy</a> to
+    "<code>no-referrer-when-downgrade</code>".
+
+    <p class="note no-backref">We use "<code>no-referrer-when-downgrade</code>" because it is the
+    historical default.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>referrer</a>
+    is not "<code>no-referrer</code>", set <var>request</var>'s
+    <a for=request>referrer</a> to the result of invoking
+    <a>determine <var>request</var>'s referrer</a>.
+    [[!REFERRER]]
+
+    <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
+    provide the end user with options to override <var>request</var>'s
+    <a for=request>referrer</a> to "<code>no-referrer</code>" or
+    have it expose less sensitive information.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
+    "<code>ftp</code>", <var>request</var>'s <a for=request>client</a>'s
+    <a for=environment>creation URL</a>'s <a for=url>scheme</a> is not "<code>ftp</code>", and
+    <var>request</var>'s <a for=request>reserved client</a> is either null or an <a>environment</a>
+    whose <a for=environment>target browsing context</a> is a <a>nested browsing context</a>, then
+    set <var>response</var> to a <a>network error</a>.
+
+   <li>
+    <p>Set <var>request</var>'s <a for=request>current url</a>'s
+    <a for=url>scheme</a> to "<code>https</code>" if
+    all of the following conditions are true:
+
+    <ul class=brief>
+     <li><var>request</var>'s <a for=request>current url</a>'s
+     <a for=url>scheme</a> is "<code>http</code>"
+     <li><var>request</var>'s <a for=request>current url</a>'s
+     <a for=url>host</a> is a
+     <a for=/>domain</a>
+     <li>Matching <var>request</var>'s <a for=request>current url</a>'s
+     <a for=url>host</a> per
+     <a href=https://tools.ietf.org/html/rfc6797#section-8.2>Known HSTS Host Domain Name
+     Matching</a> results in either a superdomain match with an asserted
+     <code>includeSubDomains</code> directive or a congruent match (with or without an asserted
+     <code>includeSubDomains</code> directive) [[!HSTS]]
+    </ul>
+   <!-- Per Mike West HSTS happens "probably after" Referrer -->
+  </ol>
+
+  <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
+  provided termination reason, and return a <a>network error</a> with
+  <a for=response>termination reason</a> set to <var>reason</var>.
 
  <li><p>If <var>request</var>'s <a>synchronous flag</a> is unset and
  <i>recursive flag</i> is unset, run the remaining steps
@@ -2788,44 +2828,55 @@ steps:
  <dt>"<code>blob</code>"
  <dd>
   <ol>
-   <li><p>Let <var>blob</var> be <var>request</var>'s
-   <a for=request>current url</a>'s
-   <a>object</a>.
-
    <li>
-    <p>If <var>request</var>'s <a for=request>method</a> is not
-    `<code>GET</code>` or <var>blob</var> is null, then return a
-    <a>network error</a>.
+    <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:
 
-    <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction
-    serves no useful purpose other than being interoperable.
+    <ol>
+     <li><p>Let <var>blob</var> be <var>request</var>'s
+     <a for=request>current url</a>'s
+     <a>object</a>.
 
-   <li><p>Let <var>response</var> be a new
-   <a for=/>response</a>.
+     <li>
+      <p>If <var>request</var>'s <a for=request>method</a> is not
+      `<code>GET</code>` or <var>blob</var> is null, then return a
+      <a>network error</a>.
 
-   <li><p><a for="header list">Append</a>
-   `<code>Content-Length</code>`/<var>blob</var>'s
-   {{Blob/size}} attribute value to
-   <var>response</var>'s
-   <a for=response>header list</a>.
+      <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction
+      serves no useful purpose other than being interoperable.
 
-   <li><p><a for="header list">Append</a>
-   `<code>Content-Type</code>`/<var>blob</var>'s
-   {{Blob/type}} attribute value to
-   <var>response</var>'s
-   <a for=response>header list</a>.
+     <li><p>Let <var>response</var> be a new
+     <a for=/>response</a>.
 
-   <li><p>Set <var>response</var>'s
-   <a for=response>HTTPS state</a> to <var>request</var>'s
-   <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
-   if <var>request</var>'s <a for=request>client</a> is non-null.
+     <li><p><a for="header list">Append</a>
+     `<code>Content-Length</code>`/<var>blob</var>'s
+     {{Blob/size}} attribute value to
+     <var>response</var>'s
+     <a for=response>header list</a>.
 
-   <li><p>Set <var>response</var>'s <a for=response>body</a> to
-   the result of performing the <a spec=fileapi>read operation</a> on
-   <var>blob</var>.
-   <!-- This takes care of setting length, transmitted, and error flag as well -->
+     <li><p><a for="header list">Append</a>
+     `<code>Content-Type</code>`/<var>blob</var>'s
+     {{Blob/type}} attribute value to
+     <var>response</var>'s
+     <a for=response>header list</a>.
 
-   <li><p>Return <var>response</var>.
+     <li><p>Set <var>response</var>'s
+     <a for=response>HTTPS state</a> to <var>request</var>'s
+     <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
+     if <var>request</var>'s <a for=request>client</a> is non-null.
+
+     <li><p>Set <var>response</var>'s <a for=response>body</a> to
+     the result of performing the <a spec=fileapi>read operation</a> on
+     <var>blob</var>.
+
+     <!-- This takes care of setting length, transmitted, and error flag as well -->
+
+     <li><p>Return <var>response</var>.
+    </ol>
+
+   <li><p>Let <var>reason</var> be the provided <a for=fetch lt=terminated>termination</a> reason.
+
+   <li><p>Return a <a>network error</a> with <a for=response>termination reason</a> set to
+   <var>reason</var>.
   </ol>
 
  <dt>"<code>data</code>"
@@ -2936,8 +2987,7 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
        <a for=response>url list</a> has more than one item.
       </ul>
 
-     <li><p>Execute
-     <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
+     <li><p>Execute <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
      on <var>actualResponse</var>. [[!CSP]]
     </ol>
   </ol>
@@ -3177,279 +3227,287 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 <ol>
  <li><p>Let <var>httpRequest</var> be null.
 
- <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
- <var>request</var>'s <a for=request>redirect mode</a> is "<code>error</code>", then set
- <var>httpRequest</var> to <var>request</var>.
-
  <li>
-  <p>Otherwise, run these substeps:
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
   <ol>
-   <li><p>Set <var>httpRequest</var> to a copy of <var>request</var> except for its
-   <a for=request>body</a>.
-
-   <li><p>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
-
-   <li><p>Set <var>httpRequest</var>'s <a for=request>body</a> to <var>body</var>.
-
-   <li><p>If <var>body</var> is non-null, then set <var>request</var>'s <a for=request>body</a> to a
-   new <a for=/>body</a> whose <a for=body>stream</a> is null and whose <a for=body>source</a> is
-   <var>body</var>'s <a for=body>source</a>.
-  </ol>
-
-  <p class="note no-backref"><var>request</var> is copied as <var>httpRequest</var> here as we need
-  to be able to add headers to <var>httpRequest</var> and read its <a for=request>body</a> without
-  affecting <var>request</var>. Namely, <var>request</var> can be reused with redirects,
-  authentication, and proxy authentication. We copy rather than clone in order to reduce memory
-  consumption. In case <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is
-  null, redirects and authentication will end up failing the fetch.
-
- <li>
-  <p>Let <i>credentials flag</i> be set if one of
-
-  <ul class=brief>
-   <li><var>request</var>'s <a for=request>credentials mode</a> is
-   "<code>include</code>"
-   <li><var>request</var>'s  <a for=request>credentials mode</a> is
-   "<code>same-origin</code>" and <var>request</var>'s
-   <a for=request>response tainting</a> is "<code>basic</code>"
-  </ul>
-
-  <p>is true, and unset otherwise.
-
- <li><p>Let <var>contentLengthValue</var> be null.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is null and
- <var>httpRequest</var>'s <a for=request>method</a> is
- `<code>POST</code>` or `<code>PUT</code>`, then set <var>contentLengthValue</var> to
- `<code>0</code>`.
- <!-- https://chromium.googlesource.com/chromium/src/+/master/net/http/http_network_transaction.cc#982 -->
-
- <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null and <var>httpRequest</var>'s
- <a for=request>body</a>'s <a for=body>source</a> is non-null, then set
- <var>contentLengthValue</var> to <var>httpRequest</var>'s <a for=request>body</a>'s
- <a for=body>total bytes</a>, <a>UTF-8 encoded</a>.
-
- <li><p>If <var>contentLengthValue</var> is non-null,
- <a for="header list">append</a>
- `<code>Content-Length</code>`/<var>contentLengthValue</var> to
- <var>httpRequest</var>'s
- <a for=request>header list</a>.
-
- <li>
-  <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
-  <a for=request>keepalive flag</a> is set, then:
-
-  <ol>
-   <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
-
-   <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
-
-   <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
-   <var>group</var> whose <a for="fetch record">request</a> has its
-   <a for=request>keepalive flag</a> set and <a>done flag</a> unset.
+   <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
+   <var>request</var>'s <a for=request>redirect mode</a> is "<code>error</code>", then set
+   <var>httpRequest</var> to <var>request</var>.
 
    <li>
-    <p><a for=set>For each</a> <var>fetchRecord</var> in <var>inflightRecords</var>:
+    <p>Otherwise, run these substeps:
 
     <ol>
-     <li><p>Let <var>inflightRequest</var> be <var>fetchRecord</var>'s
-     <a for="fetch record">request</a>.
+     <li><p>Set <var>httpRequest</var> to a copy of <var>request</var> except for its
+     <a for=request>body</a>.
 
-     <li><p>Increment <var>inflightKeepaliveBytes</var> by <var>inflightRequest</var>'s
-     <a for=request>body</a>'s <a for=body>total bytes</a>.
+     <li><p>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
+
+     <li><p>Set <var>httpRequest</var>'s <a for=request>body</a> to <var>body</var>.
+
+     <li><p>If <var>body</var> is non-null, then set <var>request</var>'s <a for=request>body</a> to
+     a new <a for=/>body</a> whose <a for=body>stream</a> is null and whose <a for=body>source</a>
+     is <var>body</var>'s <a for=body>source</a>.
     </ol>
 
-   <li><p>If the sum of <var>contentLengthValue</var> and <var>inflightKeepaliveBytes</var> is
-   greater than 64 kibibytes, then return a <a>network error</a>.
-  </ol>
+    <p class="note no-backref"><var>request</var> is copied as <var>httpRequest</var> here as we
+    need to be able to add headers to <var>httpRequest</var> and read its <a for=request>body</a>
+    without affecting <var>request</var>. Namely, <var>request</var> can be reused with redirects,
+    authentication, and proxy authentication. We copy rather than clone in order to reduce memory
+    consumption. In case <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is
+    null, redirects and authentication will end up failing the fetch.
 
-  <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
-  <a>environment settings object</a> and contain a body, have a bounded size and are not allowed to
-  stay alive indefinitely.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
- <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
- <a for=request>referrer</a>, <a lt="url serializer">serialized</a> and <a>UTF-8 encoded</a>, to
- <var>httpRequest</var>'s <a for=request>header list</a>.
- <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
-          concept-as-bytes -->
-
- <li><p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is
- neither `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s
- <a for=request>mode</a> is "<code>websocket</code>", then <a for="header list">append</a>
- `<code>Origin</code>`/<var>httpRequest</var>'s <a for=request>origin</a>,
- <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>, to
- <var>httpRequest</var>'s <a for=request>header list</a>.
- <!-- XXX concept-as-bytes -->
-
- <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
- <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
- <a for="header list">append</a>
- `<code>User-Agent</code>`/<a>default `<code>User-Agent</code>` value</a>
- to <var>httpRequest</var>'s <a for=request>header list</a>.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>default</code>" and
- <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
- `<code>If-Modified-Since</code>`,
- `<code>If-None-Match</code>`,
- `<code>If-Unmodified-Since</code>`,
- `<code>If-Match</code>`, or
- `<code>If-Range</code>`, then set <var>httpRequest</var>'s
- <a for=request>cache mode</a> to "<code>no-store</code>".
-
- <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>" and
- <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
- `<code>Cache-Control</code>`, then <a for="header list">append</a>
- `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
- <var>httpRequest</var>'s <a for=request>header list</a>.
-
- <li>
-  <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
-  "<code>no-store</code>" or "<code>reload</code>", run these substeps:
-
-  <ol>
-   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   <a for="header list">does not contain</a> `<code>Pragma</code>`, then
-   <a for="header list">append</a> `<code>Pragma</code>`/`<code>no-cache</code>` to
-   <var>httpRequest</var>'s <a for=request>header list</a>.
-
-   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
-   <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>no-cache</code>` to
-   <var>httpRequest</var>'s <a for=request>header list</a>.
-   <!-- Technically this only applies to HTTP/1.1 and up -->
-  </ol>
-
- <li>
-  <p>Modify <var>httpRequest</var>'s
-  <a for=request>header list</a> per HTTP.
-
-  <p class="note no-backref">It would be great if we could make this more normative
-  somehow. At this point <a for=/>headers</a> such as
-  `<code>Accept-Encoding</code>`,
-  `<code>Connection</code>`,
-  `<code>DNT</code>`, and
-  `<code>Host</code>`,
-  are to be <a for="header list">appended</a> if necessary.
-
-  <p>`<code>Accept</code>`,
-  `<code>Accept-Charset</code>`, and
-  `<code>Accept-Language</code>` must not be included at this point.
-
-  <p class="note no-backref">`<code>Accept</code>` and
-  `<code>Accept-Language</code>` are already included (unless
-  <a><code>fetch()</code></a> is used, which does not include the latter by
-  default), and `<code>Accept-Charset</code>` is a waste of bytes. See
-  <a>HTTP header layer division</a> for more details.
-
- <li>
-  <p>If <i>credentials flag</i> is set, run these substeps:
-
-  <ol>
    <li>
-    <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
-    <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
-    [[!COOKIES]]), then run these substeps:
+    <p>Let <i>credentials flag</i> be set if one of
 
-    <ol>
-     <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
-     <a href=https://tools.ietf.org/html/rfc6265#section-5.4>section 5.4</a> of
-     [[!COOKIES]]) with the user agent's cookie store and
-     <var>httpRequest</var>'s <a for=request>current url</a>.
+    <ul class=brief>
+     <li><var>request</var>'s <a for=request>credentials mode</a> is
+     "<code>include</code>"
+     <li><var>request</var>'s  <a for=request>credentials mode</a> is
+     "<code>same-origin</code>" and <var>request</var>'s
+     <a for=request>response tainting</a> is "<code>basic</code>"
+    </ul>
 
-     <li>If <var>cookies</var> is not the empty string, append
-     `<code>Cookie</code>`/<var>cookies</var> to <var>httpRequest</var>'s
-     <a for=request>header list</a>.
-    </ol>
+    <p>is true, and unset otherwise.
 
-   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   <a for="header list">contains</a> `<code>Authorization</code>`, then terminate these substeps.
+   <li><p>Let <var>contentLengthValue</var> be null.
 
-   <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
-   <li><p>Let <var>authorizationValue</var> be null.
+   <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is null and
+   <var>httpRequest</var>'s <a for=request>method</a> is
+   `<code>POST</code>` or `<code>PUT</code>`, then set <var>contentLengthValue</var> to
+   `<code>0</code>`.
+   <!-- https://chromium.googlesource.com/chromium/src/+/master/net/http/http_network_transaction.cc#982 -->
 
-   <li><p>If there's an <a>authentication entry</a> for <var>httpRequest</var>
-   and either <var>httpRequest</var>'s
-   <a for=request>use-URL-credentials flag</a> is
-   unset or <var>httpRequest</var>'s
-   <a for=request>current url</a> does not
-   <a>include credentials</a>, set
-   <var>authorizationValue</var> to <a>authentication entry</a>.
-   <!-- need to define the cache concept -->
+   <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null and <var>httpRequest</var>'s
+   <a for=request>body</a>'s <a for=body>source</a> is non-null, then set
+   <var>contentLengthValue</var> to <var>httpRequest</var>'s <a for=request>body</a>'s
+   <a for=body>total bytes</a>, <a>UTF-8 encoded</a>.
 
-   <li><p>Otherwise, if <var>httpRequest</var>'s
-   <a for=request>current url</a> does
-   <a>include credentials</a> and <i>authentication-fetch flag</i> is
-   set, then set <var>authorizationValue</var> to <var>httpRequest</var>'s
-   <a for=request>current url</a>,
-   <span class=XXX>converted to an `<code>Authorization</code>` value</span>.
-
-   <li><p>If <var>authorizationValue</var> is non-null,
+   <li><p>If <var>contentLengthValue</var> is non-null,
    <a for="header list">append</a>
-   `<code>Authorization</code>`/<var>authorizationValue</var> to
+   `<code>Content-Length</code>`/<var>contentLengthValue</var> to
    <var>httpRequest</var>'s
    <a for=request>header list</a>.
-  </ol>
-
- <li>
-  <p>If there's a <a>proxy-authentication entry</a>, use it as appropriate.
-
-  <p class="note no-backref">This intentionally does not depend on
-  <var>httpRequest</var>'s
-  <a for=request>credentials mode</a>.
-
- <li><p>Let <var>response</var> and <var>storedResponse</var> be null.
-
- <li><p>Let the <var>revalidatingFlag</var> be unset.
-
- <li>
-  <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
-  nor "<code>reload</code>", run these substeps:
-
-  <ol>
-   <li>
-    <p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
-    possibly needing validation, as per the
-    "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
-    chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
-
-   <li><p>If <var>storedResponse</var> is null, then abort these substeps.
-
-   <!-- cache hit -->
-   <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
-   <var>revalidatingFlag</var>.
 
    <li>
-    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>force-cache</code>" or
-    "<code>only-if-cached</code>", then set <var>response</var> to <var>storedResponse</var> and
-    abort these substeps.
-
-    <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>` <a for=/>header</a>
-    into account.
-
-   <li>
-    <p>If the <var>revalidatingFlag</var> is set, then:
+    <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
+    <a for=request>keepalive flag</a> is set, then:
 
     <ol>
-     <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-     <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
-     `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
-     <a for=request>header list</a>.
+     <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
 
-     <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-     <a for="header list">contains</a> `<code>Last-Modified</code>`, then
-     <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
-     <var>httpRequest</var>'s <a for=request>header list</a>.
+     <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
+
+     <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
+     <var>group</var> whose <a for="fetch record">request</a> has its
+     <a for=request>keepalive flag</a> set and <a>done flag</a> unset.
+
+     <li>
+      <p><a for=set>For each</a> <var>fetchRecord</var> in <var>inflightRecords</var>:
+
+      <ol>
+       <li><p>Let <var>inflightRequest</var> be <var>fetchRecord</var>'s
+       <a for="fetch record">request</a>.
+
+       <li><p>Increment <var>inflightKeepaliveBytes</var> by <var>inflightRequest</var>'s
+       <a for=request>body</a>'s <a for=body>total bytes</a>.
+      </ol>
+
+     <li><p>If the sum of <var>contentLengthValue</var> and <var>inflightKeepaliveBytes</var> is
+     greater than 64 kibibytes, then return a <a>network error</a>.
     </ol>
 
-    <p class=note>See also the
-    "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
-    chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+    <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
+    <a>environment settings object</a> and contain a body, have a bounded size and are not allowed
+    to stay alive indefinitely.
 
-    <li><p>Otherwise, if the <var>revalidatingFlag</var> is unset, then set <var>response</var> to
-    <var>storedResponse</var>.
+   <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
+   <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
+   <a for=request>referrer</a>, <a lt="url serializer">serialized</a> and <a>UTF-8 encoded</a>, to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+   <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
+            concept-as-bytes -->
+
+   <li><p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is
+   neither `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s
+   <a for=request>mode</a> is "<code>websocket</code>", then <a for="header list">append</a>
+   `<code>Origin</code>`/<var>httpRequest</var>'s <a for=request>origin</a>,
+   <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>, to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+   <!-- XXX concept-as-bytes -->
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+   <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
+   <a for="header list">append</a>
+   `<code>User-Agent</code>`/<a>default `<code>User-Agent</code>` value</a>
+   to <var>httpRequest</var>'s <a for=request>header list</a>.
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>default</code>" and
+   <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
+   `<code>If-Modified-Since</code>`,
+   `<code>If-None-Match</code>`,
+   `<code>If-Unmodified-Since</code>`,
+   `<code>If-Match</code>`, or
+   `<code>If-Range</code>`, then set <var>httpRequest</var>'s
+   <a for=request>cache mode</a> to "<code>no-store</code>".
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>" and
+   <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
+   `<code>Cache-Control</code>`, then <a for="header list">append</a>
+   `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+
+   <li>
+    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
+    "<code>no-store</code>" or "<code>reload</code>", run these substeps:
+
+    <ol>
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Pragma</code>`, then
+     <a for="header list">append</a> `<code>Pragma</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
+     <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+     <!-- Technically this only applies to HTTP/1.1 and up -->
+    </ol>
+
+   <li>
+    <p>Modify <var>httpRequest</var>'s
+    <a for=request>header list</a> per HTTP.
+
+    <p class="note no-backref">It would be great if we could make this more normative
+    somehow. At this point <a for=/>headers</a> such as
+    `<code>Accept-Encoding</code>`,
+    `<code>Connection</code>`,
+    `<code>DNT</code>`, and
+    `<code>Host</code>`,
+    are to be <a for="header list">appended</a> if necessary.
+
+    <p>`<code>Accept</code>`,
+    `<code>Accept-Charset</code>`, and
+    `<code>Accept-Language</code>` must not be included at this point.
+
+    <p class="note no-backref">`<code>Accept</code>` and
+    `<code>Accept-Language</code>` are already included (unless
+    <a><code>fetch()</code></a> is used, which does not include the latter by
+    default), and `<code>Accept-Charset</code>` is a waste of bytes. See
+    <a>HTTP header layer division</a> for more details.
+
+   <li>
+    <p>If <i>credentials flag</i> is set, run these substeps:
+
+    <ol>
+     <li>
+      <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
+      <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
+      [[!COOKIES]]), then run these substeps:
+
+      <ol>
+       <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
+       <a href=https://tools.ietf.org/html/rfc6265#section-5.4>section 5.4</a> of
+       [[!COOKIES]]) with the user agent's cookie store and
+       <var>httpRequest</var>'s <a for=request>current url</a>.
+
+       <li>If <var>cookies</var> is not the empty string, append
+       `<code>Cookie</code>`/<var>cookies</var> to <var>httpRequest</var>'s
+       <a for=request>header list</a>.
+      </ol>
+
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">contains</a> `<code>Authorization</code>`, then terminate these substeps.
+
+     <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
+     <li><p>Let <var>authorizationValue</var> be null.
+
+     <li><p>If there's an <a>authentication entry</a> for <var>httpRequest</var>
+     and either <var>httpRequest</var>'s
+     <a for=request>use-URL-credentials flag</a> is
+     unset or <var>httpRequest</var>'s
+     <a for=request>current url</a> does not
+     <a>include credentials</a>, set
+     <var>authorizationValue</var> to <a>authentication entry</a>.
+     <!-- need to define the cache concept -->
+
+     <li><p>Otherwise, if <var>httpRequest</var>'s
+     <a for=request>current url</a> does
+     <a>include credentials</a> and <i>authentication-fetch flag</i> is
+     set, then set <var>authorizationValue</var> to <var>httpRequest</var>'s
+     <a for=request>current url</a>,
+     <span class=XXX>converted to an `<code>Authorization</code>` value</span>.
+
+     <li><p>If <var>authorizationValue</var> is non-null,
+     <a for="header list">append</a>
+     `<code>Authorization</code>`/<var>authorizationValue</var> to
+     <var>httpRequest</var>'s
+     <a for=request>header list</a>.
+    </ol>
+
+   <li>
+    <p>If there's a <a>proxy-authentication entry</a>, use it as appropriate.
+
+    <p class="note no-backref">This intentionally does not depend on
+    <var>httpRequest</var>'s
+    <a for=request>credentials mode</a>.
+
+   <li><p>Let <var>response</var> and <var>storedResponse</var> be null.
+
+   <li><p>Let the <var>revalidatingFlag</var> be unset.
+
+   <li>
+    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
+    nor "<code>reload</code>", run these substeps:
+
+    <ol>
+     <li><p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
+     possibly needing validation, as per the
+     "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
+     chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
+
+     <li><p>If <var>storedResponse</var> is null, then abort these substeps.
+
+     <!-- cache hit -->
+     <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
+     <var>revalidatingFlag</var>.
+
+     <li>
+      <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>force-cache</code>" or
+      "<code>only-if-cached</code>", then set <var>response</var> to <var>storedResponse</var> and
+      abort these substeps.
+
+      <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>`
+      <a for=/>header</a> into account.
+
+     <li>
+      <p>If the <var>revalidatingFlag</var> is set, then:
+
+      <ol>
+       <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+       <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
+       `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
+       <a for=request>header list</a>.
+
+       <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+       <a for="header list">contains</a> `<code>Last-Modified</code>`, then
+       <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
+       <var>httpRequest</var>'s <a for=request>header list</a>.
+      </ol>
+
+      <p class=note>See also the
+      "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
+      chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+
+     <li><p>Otherwise, if the <var>revalidatingFlag</var> is unset, then set <var>response</var> to
+     <var>storedResponse</var>.
+    </ol>
   </ol>
+
+ <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
+ provided termination reason, and return a <a>network error</a> with
+ <a for=response>termination reason</a> set to <var>reason</var>.
 
  <li>
   <!-- If response is still null, we require a forwarded request. -->
@@ -3534,6 +3592,10 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
     <i>authentication-fetch flag</i> is set, then run these subsubsteps:
 
     <ol>
+     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
+     provided termination reason, and return a <a>network error</a> with
+     <a for=response>termination reason</a> set to <var>reason</var>.
+
      <li><p>Let <var>username</var> and <var>password</var> be the result of prompting the end user
      for a username and password, respectively, in <var>request</var>'s
      <a for=request>window</a>.
@@ -3560,6 +3622,10 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
    <li class=XXX><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers, missing,
    parsing issues.
+
+   <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
+   provided termination reason, and return a <a>network error</a> with
+   <a for=response>termination reason</a> set to <var>reason</var>.
 
    <li>
     <p>Prompt the end user as appropriate in <var>request</var>'s
@@ -3606,70 +3672,86 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <a for=url>origin</a> and <var>credentials</var>.
   </dl>
 
- <li><p>If <var>connection</var> is failure, return a
- <a>network error</a>.
-
- <li><p>If <var>connection</var> is not an HTTP/2 connection, <var>request</var>'s
- <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
- <a for=body>source</a> is null, then <a for="header list">append</a>
- `<code>Transfer-Encoding</code>`/`<code>chunked</code>` to <var>request</var>'s
- <a for=request>header list</a>.
 
  <li>
-  <p>Let <var>response</var> be the result of making an HTTP request over <var>connection</var>
-  using <var>request</var> with the following caveats:
-
-  <ul>
-   <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
-
-   <li><p>Wait until all the <a for=/>headers</a> are transmitted or
-   <a for=/>fetch</a> is being
-   <a for=fetch>terminated</a> with reason <var>reason</var>. If
-   <a for=/>fetch</a> is being
-   <a for=fetch>terminated</a>, then set <var>response</var>'s
-   <a for=response>termination reason</a> to <var>reason</var>.
-
-   <li>
-    <p>Any <a for=/>responses</a> whose
-    <a for=response>status</a> is in the range <code>100</code> to
-    <code>199</code>, inclusive, and is not <code>101</code>, are to be ignored.
-
-    <p class="note no-backref">These kind of <a for=/>responses</a> are
-    eventually followed by a "final" <a for=/>response</a>.
-  </ul>
-
-  <p class=note>The exact layering between Fetch and HTTP still needs to be sorted through and
-  therefore <var>response</var> represents both a <a for=/>response</a> and
-  an HTTP response here.
-
-  <p>If <var>request</var>'s <a for=request>header list</a> contains
-  `<code>Transfer-Encoding</code>`/`<code>chunked</code>` and <var>response</var> is transferred
-  via HTTP/1.0 or older, then return a <a>network error</a>.
-
-  <p>If the HTTP request results in a TLS client certificate dialog, run these substeps:
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
   <ol>
-   <li><p>If <var>request</var>'s <a for=request>window</a>
-   is an <a>environment settings object</a>, make the dialog
-   available in <var>request</var>'s
-   <a for=request>window</a>.
+   <li><p>If <var>connection</var> is failure, return a
+   <a>network error</a>.
 
-   <li><p>Otherwise, return a <a>network error</a>.
+   <li><p>If <var>connection</var> is not an HTTP/2 connection, <var>request</var>'s
+   <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
+   <a for=body>source</a> is null, then <a for="header list">append</a>
+   `<code>Transfer-Encoding</code>`/`<code>chunked</code>` to <var>request</var>'s
+   <a for=request>header list</a>.
+
+   <li>
+    <p>Let <var>response</var> be the result of making an HTTP request over <var>connection</var>
+    using <var>request</var> with the following caveats:
+
+    <ul>
+     <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+
+     <li><p>Wait until all the <a for=/>headers</a> are transmitted.
+
+     <li>
+      <p>Any <a for=/>responses</a> whose
+      <a for=response>status</a> is in the range <code>100</code> to
+      <code>199</code>, inclusive, and is not <code>101</code>, are to be ignored.
+
+      <p class="note no-backref">These kind of <a for=/>responses</a> are
+      eventually followed by a "final" <a for=/>response</a>.
+    </ul>
+
+    <p class=note>The exact layering between Fetch and HTTP still needs to be sorted through and
+    therefore <var>response</var> represents both a <a for=/>response</a> and
+    an HTTP response here.
+
+    <p>If <var>request</var>'s <a for=request>header list</a> contains
+    `<code>Transfer-Encoding</code>`/`<code>chunked</code>` and <var>response</var> is transferred
+    via HTTP/1.0 or older, then return a <a>network error</a>.
+
+    <p>If the HTTP request results in a TLS client certificate dialog, run these substeps:
+
+    <ol>
+     <li><p>If <var>request</var>'s <a for=request>window</a>
+     is an <a>environment settings object</a>, make the dialog
+     available in <var>request</var>'s
+     <a for=request>window</a>.
+
+     <li><p>Otherwise, return a <a>network error</a>.
+    </ol>
+
+    <p>If <var>response</var> was retrieved over HTTPS, set its
+    <a for=response>HTTPS state</a> to either
+    "<code>deprecated</code>" or "<code>modern</code>".
+    [[!TLS]]
+
+    <p class="note no-backref">The exact determination here is up to user agents for the
+    time being. User agents are strongly encouraged to only succeed HTTPS connections with
+    strong security properties and return
+    <a>network errors</a> otherwise. Using the
+    "<code>deprecated</code>" state value ought to be a temporary and last resort kind
+    of option.
+
+    <p><a for=request>Transmit body</a> for <var>request</var>.
   </ol>
 
-  <p>If <var>response</var> was retrieved over HTTPS, set its
-  <a for=response>HTTPS state</a> to either
-  "<code>deprecated</code>" or "<code>modern</code>".
-  [[!TLS]]
+ <li>
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
-  <p class="note no-backref">The exact determination here is up to user agents for the
-  time being. User agents are strongly encouraged to only succeed HTTPS connections with
-  strong security properties and return
-  <a>network errors</a> otherwise. Using the
-  "<code>deprecated</code>" state value ought to be a temporary and last resort kind
-  of option.
+  <ol>
+   <li><p>Let <var>reason</var> be the provided termination reason.
 
-  <p><a for=request>Transmit body</a> for <var>request</var>.
+   <li><p>If <var>connection</var> is an HTTP/2 connection, then transmit an
+   "<code>RST_STREAM</code>" to cancel the underlying stream.
+
+   <li><p>Otherwise, close <var>connection</var>.
+
+   <li><p>Return a <a>network error</a> with <a for=response>termination reason</a> set to
+   <var>reason</var>.
+  </ol>
 
  <li>
   <p>Let <var>strategy</var> be an object. The user agent may choose any object.
@@ -3677,12 +3759,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
   <p class="note no-backref"><var>strategy</var> is used to control the queuing strategy of
   <var>stream</var> constructed below.
 
- <li><p>Let <var>pull</var> be an action that <a lt=resumed for=fetch>resumes</a> the
- ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
+ <li><p>Let <var>pull</var> be an action that <a lt=resumed for=fetch>resumes</a> the ongoing fetch
+ if it is <a lt=suspend for=fetch>suspended</a>.
 
- <li><p>Let <var>cancel</var> be an action that
- <a lt=terminated for=fetch>terminates</a> the ongoing fetch with reason
- <i>end-user abort</i>.
+ <li><p>Let <var>cancel</var> be an action that <a lt=terminated for=fetch>terminates</a> the
+ ongoing fetch with reason <i>fatal</i>.
 
  <li>
   <p>Let <var>stream</var> be the result of
@@ -3691,132 +3772,153 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
   <var>pull</var> and <var>cancel</var>.
   <p class="note no-backref">This construction operation will not throw an exception.
 
- <li><p>Set <var>response</var>'s <a for=response>body</a> to a new
- <a for=/>body</a> whose <a for=body>stream</a> is
- <var>stream</var>.
+ <li>
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
- <li><p>If <var>response</var> has a payload body length, then set <var>response</var>'s
- <a for=response>body</a>'s
- <a for=body>total bytes</a> to that payload body length.
- <!-- XXX xref payload body -->
+  <ol>
+   <li><p>Set <var>response</var>'s <a for=response>body</a> to a new
+   <a for=/>body</a> whose <a for=body>stream</a> is
+   <var>stream</var>.
+
+   <li><p>If <var>response</var> has a payload body length, then set <var>response</var>'s
+   <a for=response>body</a>'s
+   <a for=body>total bytes</a> to that payload body length.
+   <!-- XXX xref payload body -->
+
+   <li>
+    <p><a for="header list">Delete</a>
+    `<code>Content-Encoding</code>` from <var>response</var>'s
+    <a for=response>header list</a> if one of the following
+    conditions is true:
+
+    <ul class=brief>
+     <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
+     <var>response</var>'s <a for=response>header list</a> returns
+     `<code>gzip</code>`, and <a>extracting header list values</a> given `<code>Content-Type</code>`
+     and <var>response</var>'s <a for=response>header list</a> returns
+     `<code>application/gzip</code>`, `<code>application/x-gunzip</code>`, or
+     `<code>application/x-gzip</code>`.
+
+     <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
+     <var>response</var>'s <a for=response>header list</a> returns `<code>compress</code>`, and
+     <a>extracting header list values</a> given `<code>Content-Type</code>` and
+     <var>response</var>'s <a for=response>header list</a> returns
+     `<code>application/compress</code>` or `<code>application/x-compress</code>.
+    </ul>
+
+    <p class=note>This deals with broken Apache configurations. Ideally HTTP would define
+    this.
+    <!-- https://wiki.whatwg.org/wiki/HTTP -->
+
+    <p class=XXX>Gecko
+    <a href=https://bugzilla.mozilla.org/show_bug.cgi?id=1030660>bug 1030660</a> looks
+    into whether this quirk can be removed.
+
+   <li><p>Execute
+   <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
+   on <var>response</var>. [[!CSP]]
+
+   <li><p>If <var>response</var> is not a
+   <a>network error</a> and <var>request</var>'s
+   <a for=request>cache mode</a> is not "<code>no-store</code>",
+   update <var>response</var> in the HTTP cache for <var>request</var>.
+   <!-- XXX xref HTTP cache -->
+
+   <li>
+    <p>If <i>credentials flag</i> is set and the user agent is not configured to block cookies for
+    <var>request</var> (see <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
+    [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see <a
+    href=https://tools.ietf.org/html/rfc6265#section-5.2>section 5.2</a> of [[!COOKIES]]) on the <a
+    for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
+    <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s <a
+    for=response>header list</a>, if any, and <var>request</var>'s <a for=request>current url</a>.
+
+    <p class=note>This is a fingerprinting vector.
+  </ol>
 
  <li>
-  <p><a for="header list">Delete</a>
-  `<code>Content-Encoding</code>` from <var>response</var>'s
-  <a for=response>header list</a> if one of the following
-  conditions is true:
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
-  <ul class=brief>
-   <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
-   <var>response</var>'s <a for=response>header list</a> returns
-   `<code>gzip</code>`, and <a>extracting header list values</a> given `<code>Content-Type</code>`
-   and <var>response</var>'s <a for=response>header list</a> returns
-   `<code>application/gzip</code>`, `<code>application/x-gunzip</code>`, or
-   `<code>application/x-gzip</code>`.
+  <ol>
+   <li><p>Let <var>reason</var> be the provided termination reason.
 
-   <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
-   <var>response</var>'s <a for=response>header list</a> returns `<code>compress</code>`, and
-   <a>extracting header list values</a> given `<code>Content-Type</code>` and <var>response</var>'s
-   <a for=response>header list</a> returns `<code>application/compress</code>` or
-   `<code>application/x-compress</code>.
-  </ul>
+   <li><p>Set <var>response</var>'s <a for=response>termination reason</a> to <var>reason</var>.
 
-  <p class=note>This deals with broken Apache configurations. Ideally HTTP would define
-  this.
-  <!-- https://wiki.whatwg.org/wiki/HTTP -->
-
-  <p class=XXX>Gecko
-  <a href=https://bugzilla.mozilla.org/show_bug.cgi?id=1030660>bug 1030660</a> looks
-  into whether this quirk can be removed.
-
- <li><p>Execute
- <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
- on <var>response</var>. [[!CSP]]
-
- <li><p>If <var>response</var> is not a
- <a>network error</a> and <var>request</var>'s
- <a for=request>cache mode</a> is not "<code>no-store</code>",
- update <var>response</var> in the HTTP cache for <var>request</var>.
- <!-- XXX xref HTTP cache -->
-
- <li>
-  <p>If <i>credentials flag</i> is set and the user agent is not configured to block cookies for
-  <var>request</var> (see <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
-  [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see
-  <a href=https://tools.ietf.org/html/rfc6265#section-5.2>section 5.2</a> of
-  [[!COOKIES]]) on the <a for=header>value</a>
-  of each <var>header</var> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
-  `<code>Set-Cookie</code>` in <var>response</var>'s <a for=response>header list</a>, if any, and
-  <var>request</var>'s <a for=request>current url</a>.
-
-  <p class=note>This is a fingerprinting vector.
+   <li><p>Return <var>response</var>.
+  </ol>
 
  <li>
   <p>Run these substeps <a>in parallel</a>:
 
   <ol>
    <li>
-    <p>Whenever one or more bytes are transmitted from <var>response</var>'s message body, let
-    <var>bytes</var> be the transmitted bytes and run these subsubsteps:
-    <!-- XXX xref message body -->
+    <p>While true, breaking if the ongoing fetch <a for=fetch lt=terminated>terminates</a>:
 
     <ol>
-     <li><p>Increase <var>response</var>'s
-     <a for=response>body</a>'s
-     <a for=body>transmitted bytes</a> with <var>bytes</var>'
-     length.
-
-     <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
-     `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
-
      <li>
-      <p>Set <var>bytes</var> to the result of <a lt="handle content codings">handling
-      content codings</a> given <var>codings</var> and <var>bytes</var>.
+      <p>If one or more bytes have been transmitted from <var>response</var>'s message body, then:
 
-      <p class="note no-backref">This makes the `<code>Content-Length</code>`
-      <a for=/>header</a> unreliable to the extent that it was reliable
-      to begin with.
+      <ol>
+       <li><p>Let <var>bytes</var> be the transmitted bytes.
 
-     <li>
-      <p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code>
-      object wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>.
-      If that threw an exception, <a lt=terminated for=fetch>terminate</a> the ongoing
-      fetch with <i>fatal</i>, <a abstract-op>error</a>
-      <var>stream</var> with that exception and abort these subsubsteps.
+       <li><p>Increase <var>response</var>'s <a for=response>body</a>'s <a for=body>transmitted
+       bytes</a> with <var>bytes</var>' length.
 
-     <li><p>If <var>stream</var> doesn't <a lt="need more data" for=ReadableStream>need more
-     data</a> and <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent
-     to <a for=fetch>suspend</a> the ongoing fetch.
+       <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
+       `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
+
+       <li>
+        <p>Set <var>bytes</var> to the result of <a lt="handle content codings">handling content
+        codings</a> given <var>codings</var> and <var>bytes</var>.
+
+        <p class="note no-backref">This makes the `<code>Content-Length</code>` <a for=/>header</a>
+        unreliable to the extent that it was reliable to begin with.
+
+       <li>
+        <p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code> object wrapping an
+        <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If that threw an
+        exception, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with <i>fatal</i>, <a
+        abstract-op>error</a> <var>stream</var> with that exception.
+
+       <li><p>If <var>stream</var> doesn't <a lt="need more data" for=ReadableStream>need more
+       data</a> and <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent to <a
+       for=fetch>suspend</a> the ongoing fetch.
+      </ol>
+
+     <li><p>Otherwise, if the bytes transmission for <var>response</var>'s message body is done
+     normally and <var>stream</var> is <a for=ReadableStream>readable</a>, then
+     <a abstract-op>close</a> <var>stream</var> and abort these steps.
     </ol>
 
-   <li><p>If at any point the bytes transmission for <var>response</var>'s message body is done
-   normally and <var>stream</var> is <a for=ReadableStream>readable</a>,
-   then <a abstract-op>close</a> <var>stream</var>.
-   <!-- XXX xref message body -->
+    <p class=note>The following steps can only occur if the ongoing fetch terminates.
+
+   <li><p>Let <var>reason</var> be the provided termination reason.
+
+   <li><p>Set <var>response</var>'s <a lt="termination reason" for=response>termination reason</a>
+   to <var>reason</var>.
+
+   <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, <a abstract-op>error</a>
+   <var>stream</var> with a <code>TypeError</code>.
+
+   <li><p>If <var>connection</var> is an HTTP/2 connection, then transmit an
+   "<code>RST_STREAM</code>" to cancel the underlying stream.
 
    <li>
-    <p>If at any point <a for=/>fetch</a> is
-    <a for=fetch>terminated</a> with reason <var>reason</var>,
-    run these subsubsteps:
+    <p>Otherwise, the user agent should close <var>connection</var> unless it would be bad for
+    performance to do so.
 
-    <ol>
-     <li><p>Set <var>response</var>'s <a lt="termination reason" for=response>termination
-     reason</a> to <var>reason</var>.
-
-     <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>,
-     <a abstract-op>error</a> <var>stream</var> with a
-     <code>TypeError</code>.
-    </ol>
+    <p class=note>For instance, the user agent could keep the connection open if it knows there's
+    only a few bytes of transfer remaining on a reusable connection. In this case it could be worse
+    to close the connection and go through the handshake process again for the next fetch.
   </ol>
 
-  <p class="note no-backref">These are run <a>in parallel</a>
-  as at this point it is unclear whether <var>response</var>'s
-  <a for=response>body</a> is relevant (<var>response</var>
-  might be a redirect).
+  <p class="note no-backref">These are run <a>in parallel</a> as at this point it is unclear whether
+  <var>response</var>'s <a for=response>body</a> is relevant (<var>response</var> might be a
+  redirect).
 
- <li><p>Return <var>response</var>. <span class="note no-backref">Typically
- <var>response</var>'s <a for=response>body</a>'s
- <a for=body>stream</a> is still being enqueued to after returning.</span>
+ <li><p>Return <var>response</var>. <span class="note no-backref">Typically <var>response</var>'s
+ <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
+ returning.</span>
 </ol>
 
 
@@ -4066,9 +4168,12 @@ Entries may be removed before that moment arrives.
 <var>request</var> and <var>response</var>, run these steps:
 
 <ol>
- <li><p>Let <var>origin</var> be the result of <a>extracting header list values</a> given
- `<a http-header><code>Access-Control-Allow-Origin</code></a>` and <var>response</var>'s
- <a for=response>header list</a>.
+ <li>
+  <p>Let <var>origin</var> be the result of <a>extracting header list values</a> given
+  `<a http-header><code>Access-Control-Allow-Origin</code></a>` and <var>response</var>'s
+  <a for=response>header list</a>.
+
+  <p class=note>The above will fail for network errors, as they have no headers.
 
  <li>
   <p>If <var>origin</var> is null or failure, return failure.
@@ -4679,6 +4784,7 @@ interface Request {
   readonly attribute RequestRedirect redirect;
   readonly attribute DOMString integrity;
   readonly attribute boolean keepalive;
+  readonly attribute AbortSignal signal;
 
   [NewObject] Request clone();
 };
@@ -4695,6 +4801,7 @@ dictionary RequestInit {
   RequestRedirect redirect;
   DOMString integrity;
   boolean keepalive;
+  AbortSignal? signal;
   any window; // can only be set to null
 };
 
@@ -4716,6 +4823,9 @@ omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor obser
 <p>A {{Request}} object also has an associated <dfn for=Request export>headers</dfn> (null or a
 {{Headers}} object), initially null.
 
+<p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (an {{AbortSignal}} object),
+initially a new {{AbortSignal}} object.
+
 <p>A {{Request}} object's <a for=Body>body</a> is its
 <a for=Request>request</a>'s
 <a for=request>body</a>.
@@ -4735,6 +4845,8 @@ constructor must run these steps:
 
  <li><p>Let <var>baseURL</var> be <a>current settings object</a>'s
  <a for="environment settings object">API base URL</a>.
+
+ <li><p>Let <var>signal</var> be null.
 
  <li>
   <p>If <var>input</var> is a string, then run these substeps:
@@ -4766,6 +4878,8 @@ constructor must run these steps:
 
    <li><p>Set <var>request</var> to <var>input</var>'s
    <a for=Request>request</a>.
+
+   <li><p>Set <var>signal</var> to <var>input</var>'s <a for=Request>signal</a>.
   </ol>
 
  <li><p>Let <var>origin</var> be <a>current settings object</a>'s
@@ -4935,11 +5049,22 @@ constructor must run these steps:
    to <var>method</var>.
   </ol>
 
+ <li><p>If <var>init</var>'s <code>signal</code> member is present, then set <var>signal</var> to
+ it.
+
  <li><p>Let <var>r</var> be a new {{Request}} object associated with <var>request</var>.
 
  <li><p>Set <var>r</var>'s <a for=Request>headers</a> to a new {{Headers}} object, whose
  <a for=Headers>header list</a> is <var>request</var>'s <a for=request>header list</a>, and
  <a for=Headers>guard</a> is "<code>request</code>".
+
+ <li>
+  <p>If <var>signal</var> is not null, then
+  <a for=AbortSignal lt=add>add the following abort steps</a> to <var>signal</var>:
+
+  <ol>
+   <li><p><a for=AbortSignal>Signal abort</a> on <var>r</var>'s <a for=Request>signal</a>.
+  </ol>
 
  <li><p>Let <var>headers</var> be a copy of <var>r</var>'s <a for=Request>headers</a> and its
  associated <a for=Headers>header list</a>.
@@ -5099,6 +5224,9 @@ must return <a for=Request>request</a>'s
 must return true if <a for=Request>request</a>'s <a>keepalive flag</a>
 is set, and false otherwise.
 
+<p>The <dfn attribute for=Request><code>signal</code></dfn> attribute's getter must return the
+associated <a for="Request">signal</a>.
+
 <hr>
 
 <p>The <dfn method for=Request><code>clone()</code></dfn> method, when invoked, must
@@ -5119,6 +5247,19 @@ run these steps:
  whose <a for=Headers>header list</a> is set to <var>clonedRequest</var>'s
  <a for=Headers>header list</a>, and <a for=Headers>guard</a> is <a>context object</a>'s
  <a for=Request>headers</a>' <a for=Headers>guard</a>.
+
+ <li><p>If <a>context object</a>'s <a for=Request>signal</a>'s <a for=AbortSignal>aborted flag</a>
+ is set, set <var>clonedRequestObject</var> <a for=Request>signal</a>'s
+ <a for=AbortSignal>aborted flag</a>.
+
+ <li>
+  <p>Otherwise, <a for=AbortSignal>add</a> the following abort steps to <a>context object</a>'s
+  <a for=Request>signal</a>:
+
+  <ol>
+   <li><p><a for=AbortSignal>Signal abort</a> on <var>clonedRequestObject</var>
+   <a for=Request>signal</a>.
+  </ol>
 
  <li><p>Return <var>clonedRequestObject</var>.
 </ol>
@@ -5367,11 +5508,21 @@ method, must run these steps:
 <ol>
  <li><p>Let <var>p</var> be a new promise.
 
- <li><p>Let <var>request</var> be the associated
- <a for=/>request</a> of the result of invoking the initial value of
- {{Request}} as constructor with <var>input</var> and
- <var>init</var> as arguments. If this throws an exception, reject
- <var>p</var> with it and return <var>p</var>.
+ <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
+ constructor with <var>input</var> and <var>init</var> as arguments. If this throws an exception,
+ reject <var>p</var> with it and return <var>p</var>
+
+ <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
+
+ <li>
+  <p>If <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>aborted flag</a>
+  is set, then:
+
+  <ol>
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and null.
+
+   <li><p>Return <var>p</var>.
+  </ol>
 
  <li>If <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">global object</a> is a {{ServiceWorkerGlobalScope}} object,
@@ -5381,6 +5532,21 @@ method, must run these steps:
  {{Headers}} object whose <a for=Headers>guard</a> is
  "<code>immutable</code>".
 
+ <li><p>Let <var>aborted</var> be false.
+
+ <li>
+  <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
+  <a for=Request>signal</a>:
+
+  <ol>
+    <li><p>Set <var>aborted</var> to true.
+
+    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and
+    <var>responseObject</var>.
+
+    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with reason <i>fatal</i>.
+  </ol>
+
  <li>
   <p>Run the following <a>in parallel</a>:
 
@@ -5389,6 +5555,8 @@ method, must run these steps:
   <p>To <a>process response</a> for <var>response</var>, run these substeps:
 
   <ol>
+   <li><p>If <var>aborted</var> is true, terminate these substeps.
+
    <li><p>If <var>response</var>'s <a for=response>type</a> is
    "<code>error</code>", reject <var>p</var> with a <code>TypeError</code> and terminate
    these substeps.
@@ -5401,6 +5569,8 @@ method, must run these steps:
   <p>To <a>process response done</a> for <var>response</var>, run these substeps:
 
   <ol>
+   <li><p>If <var>aborted</var> is true, terminate these substeps.
+
    <li><p>Let <var>trailerObject</var> be a new {{Headers}} object whose
    <a for=Headers>guard</a> is "<code>immutable</code>".
 
@@ -5413,6 +5583,36 @@ method, must run these steps:
   </ol>
 
  <li><p>Return <var>p</var>.
+</ol>
+
+<p>To <dfn>abort fetch</dfn> with a <var>promise</var>, <var>request</var>, and
+<var>responseObject</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>error</var> be an "<code><a exception>AbortError</a></code>" {{DOMException}}.
+
+ <li>
+  <p>Reject <var>promise</var> with <var>error</var>.
+
+  <p class=note>This is a no-op if <var>promise</var> has already fulfilled.
+
+ <li><p>If <var>request</var>'s <a for=request>body</a> is not null and is
+ <a for=ReadableStream>readable</a>, then <a for=ReadableStream>cancel</a> <var>request</var>'s
+ <a for=request>body</a> with <var>error</var>.
+
+ <li><p>If <var>responseObject</var> is null, then return.
+
+ <li>
+  <p>Reject <var>responseObject</var>'s <a for=Response>trailer promise</a> with <var>error</var>.
+
+  <p class=note>This is a no-op if <var>responseObject</var>'s <a for=Response>trailer promise</a>
+  has already fulfilled.
+
+ <li><p>Let <var>response</var> be <var>responseObject</var>'s <a for=Response>response</a>.
+
+ <li><p>If <var>response</var>'s <a for=response>body</a> is not null and is
+ <a for=ReadableStream>readable</a>, then <a for=ReadableStream abstract-op>error</a>
+ <var>response</var>'s <a for=response>body</a> with <var>error</var>.
 </ol>
 
 
