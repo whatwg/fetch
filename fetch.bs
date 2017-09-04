@@ -745,26 +745,18 @@ explicitly set <a for=/>request</a>'s
 <code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
 this flag set are subject to additional processing requirements.
 
-<p>A <a for=/>request</a> has an associated
-<dfn for=request export>service-workers mode</dfn>, that is "<code>all</code>",
-"<code>foreign</code>", or "<code>none</code>". Unless stated otherwise it is
-"<code>all</code>".
+<p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers mode</dfn>, that
+is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<code>all</code>".
 
 <div class=note>
  <p>This determines which service workers will receive a {{fetch!!event}} event for this fetch.
 
  <dl>
   <dt>"<code>all</code>"
-  <dd>Relevant local and foreign service workers will get a {{fetch!!event}} or
-   {{foreignfetch!!event}} event for this fetch.
-
-  <dt>"<code>foreign</code>"
-  <dd>Only relevant foreign service workers will get a {{foreignfetch!!event}} event for this fetch.
-  {{fetch(input)!!method}} uses this to bypass the current service worker if the global is a
-  {{ServiceWorkerGlobalScope}}.
+  <dd>Relevant service workers will get a {{fetch!!event}} event for this fetch.
 
   <dt>"<code>none</code>"
-  <dd>Neither local nor foreign service workers will get events for this fetch.
+  <dd>No service workers will get events for this fetch.
  </dd>
 </div>
 
@@ -2887,23 +2879,11 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
  <li><p>Let <var>actualResponse</var> be null.
 
  <li>
-  <p>If <var>request</var>'s <a>service-workers mode</a> is not "<code>none</code>", then run these
-  substeps:
+  <p>If <var>request</var>'s <a>service-workers mode</a> is "<code>all</code>", then:
 
   <ol>
-   <li>
-    <p>If <var>request</var>'s <a>service-workers mode</a> is "<code>all</code>", then set
-    <var>response</var> to the result of invoking <a for=/>handle fetch</a> for <var>request</var>.
-    [[!HTML]] [[!SW]]
-
-   <li>
-    <p>If <var>response</var> is null, <var>request</var> is a <a>subresource request</a>, and
-    <var>request</var>'s <a for=request>origin</a> is not
-    <a>same origin</a> with <var>request</var>'s
-    <a for=request>url</a>'s
-    <a for=url>origin</a>, then set <var>response</var>
-    to the result of invoking <a for=/>handle foreign fetch</a> for
-    <var>request</var>. [[!SW]]
+   <li><p>Set <var>response</var> to the result of invoking <a for=/>handle fetch</a> for
+   <var>request</var>. [[!HTML]] [[!SW]]
 
    <li>
     <p>If <var>response</var> is not null, then run these substeps:
@@ -2983,9 +2963,8 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     <a lt="CORS-preflight fetch">CORS-preflight fetches</a>.
 
    <li>
-    <p>If <var>request</var>'s <a for=request>redirect mode</a> is
-    "<code>follow</code>", then set <var>request</var>'s <a>service-workers mode</a> to
-    "<code>foreign</code>".
+    <p>If <var>request</var>'s <a for=request>redirect mode</a> is "<code>follow</code>", then set
+    <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
     <p class="note no-backref">Redirects coming from the network (as opposed to from a service
     worker) are not to be exposed to a service worker.
@@ -5377,7 +5356,7 @@ method, must run these steps:
 
  <li>If <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">global object</a> is a {{ServiceWorkerGlobalScope}} object,
- set <var>request</var>'s <a>service-workers mode</a> to "<code>foreign</code>".
+ then set <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
  <li><p>Let <var>responseObject</var> be a new {{Response}} object and a new associated
  {{Headers}} object whose <a for=Headers>guard</a> is
