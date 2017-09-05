@@ -1220,8 +1220,11 @@ or "<code>worker</code>".
      property is true, then <a>queue a fetch task</a> on <var>request</var> to
      <a>process request end-of-body</a> for <var>request</var> and abort these in-parallel steps.
 
-     <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with reason
-     <i>fatal</i>.
+     <li><p>Otherwise, if <var>read</var> is rejected with an
+     "<code><a exception>AbortError</a></code>" {{DOMException}},
+     <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
+
+     <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
     </ol>
 
    <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these in-parallel steps.
@@ -1245,8 +1248,11 @@ evolves over time. That is, not all its fields are available straight away.
 Unless stated otherwise, it is "<code>default</code>".
 
 <p>A <a for=/>response</a> can have an associated
-<dfn export for=response id=concept-response-termination-reason>termination reason</dfn>
-which is <i>end-user abort</i>, <i>fatal</i>, or <i>timeout</i>.
+<dfn export for=response id=concept-response-aborted>aborted flag</dfn>
+which is initially unset.
+
+<p class="note">This is set for <a>network errors</a> that should appear as "aborted" to developers.
+This should be limited to requests that are intentionally aborted by the developer or end-user.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url>url</dfn>. It is a pointer to the
@@ -1316,6 +1322,10 @@ navigate algorithm. It ensures `<code>Location</code>` has
 [[!HTML]]
 
 <hr>
+
+<p>A <a for=/>response</a> whose
+<a for=response>type</a> is "<code>error</code>" and <a for=response>aborted flag</a> is set is
+known as a <dfn export id=concept-aborted-network-error>aborted network error</dfn>.
 
 <p>A <a for=/>response</a> whose
 <a for=response>type</a> is "<code>error</code>" is known as a
@@ -1479,7 +1489,7 @@ for each associated <a for="fetch group">fetch record</a> whose
 <a>keepalive flag</a> is unset,
 <a lt=terminated for=fetch>terminate</a> the
 <a for="fetch group">fetch record</a>'s
-<a for="fetch record">fetch</a> with reason <i>fatal</i>.
+<a for="fetch record">fetch</a>.
 
 
 <h3 id=connections>Connections</h3>
@@ -2302,9 +2312,8 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
 
 <p>To perform a <dfn export id=concept-fetch>fetch</dfn> using <var>request</var>, run
 the steps below. An ongoing <a for=/>fetch</a> can be
-<dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with reason
-<var>reason</var>, which must be <i>end-user abort</i>, <i>fatal</i>,
-<i>timeout</i>, or <i>garbage collection</i>.
+<dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
+which is unset unless otherwise specified.
 
 <p>The user agent may be asked to
 <dfn export for=fetch id=concept-fetch-suspend>suspend</dfn> the ongoing fetch.
@@ -2445,9 +2454,16 @@ the request.
     </ol>
   </ol>
 
- <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
- provided termination reason, and return a <a>network error</a> with
- <a for=response>termination reason</a> set to <var>reason</var>.
+ <li>
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+  <ol>
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+   <li><p>Return a <a>network error</a>.
+  </ol>
 
  <li><p>Return the result of performing a <a for=main>main fetch</a>
  using <var>request</var>.
@@ -2547,9 +2563,16 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    <!-- Per Mike West HSTS happens "probably after" Referrer -->
   </ol>
 
-  <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
-  provided termination reason, and return a <a>network error</a> with
-  <a for=response>termination reason</a> set to <var>reason</var>.
+  <li>
+   <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+   <ol>
+    <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+    <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+    <li><p>Return a <a>network error</a>.
+   </ol>
 
  <li><p>If <var>request</var>'s <a>synchronous flag</a> is unset and
  <i>recursive flag</i> is unset, run the remaining steps
@@ -2739,13 +2762,11 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    <li><p><a lt=wait for=body>Wait</a> for <var>response</var>'s
    <a for=response>body</a>.
 
-   <li><p>If <var>response</var> does not have a
-   <a for=response>termination reason</a> and
-   <var>response</var> does not
+   <li><p>If <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> has not
+   <a for=ReadableStream>errored</a>, and <var>response</var> does not
    <a href=https://w3c.github.io/webappsec-subresource-integrity/#does-response-match-metadatalist>match</a>
-   <var>request</var>'s <a for=request>integrity metadata</a>,
-   set <var>response</var> and <var>internalResponse</var> to a
-   <a>network error</a>.
+   <var>request</var>'s <a for=request>integrity metadata</a>, set <var>response</var> and
+   <var>internalResponse</var> to a <a>network error</a>.
    [[!SRI]]
   </ol>
 
@@ -2876,10 +2897,11 @@ steps:
      <li><p>Return <var>response</var>.
     </ol>
 
-   <li><p>Let <var>reason</var> be the provided <a for=fetch lt=terminated>termination</a> reason.
+    <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
-   <li><p>Return a <a>network error</a> with <a for=response>termination reason</a> set to
-   <var>reason</var>.
+    <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+    <li><p>Return a <a>network error</a>.
   </ol>
 
  <dt>"<code>data</code>"
@@ -3508,9 +3530,16 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
     </ol>
   </ol>
 
- <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
- provided termination reason, and return a <a>network error</a> with
- <a for=response>termination reason</a> set to <var>reason</var>.
+ <li>
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+  <ol>
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+   <li><p>Return a <a>network error</a>.
+  </ol>
 
  <li>
   <!-- If response is still null, we require a forwarded request. -->
@@ -3595,9 +3624,16 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
     <i>authentication-fetch flag</i> is set, then run these subsubsteps:
 
     <ol>
-     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
-     provided termination reason, and return a <a>network error</a> with
-     <a for=response>termination reason</a> set to <var>reason</var>.
+     <li>
+      <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+      <ol>
+       <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+       <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+       <li><p>Return a <a>network error</a>.
+      </ol>
 
      <li><p>Let <var>username</var> and <var>password</var> be the result of prompting the end user
      for a username and password, respectively, in <var>request</var>'s
@@ -3626,9 +3662,16 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <li class=XXX><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers, missing,
    parsing issues.
 
-   <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then let <var>reason</var> be the
-   provided termination reason, and return a <a>network error</a> with
-   <a for=response>termination reason</a> set to <var>reason</var>.
+   <li>
+    <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+    <ol>
+     <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+     <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+     <li><p>Return a <a>network error</a>.
+    </ol>
 
    <li>
     <p>Prompt the end user as appropriate in <var>request</var>'s
@@ -3658,6 +3701,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
 <ol>
  <li><p>Let <var>credentials</var> be true if <i>credentials flag</i> is set, and false otherwise.
+
+ <li><p>Let <var>response</var> be null.
 
  <li>
   <p>Switch on <var>request</var>'s <a for=request>mode</a>:
@@ -3690,7 +3735,7 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <a for=request>header list</a>.
 
    <li>
-    <p>Let <var>response</var> be the result of making an HTTP request over <var>connection</var>
+    <p>Set <var>response</var> to the result of making an HTTP request over <var>connection</var>
     using <var>request</var> with the following caveats:
 
     <ul>
@@ -3745,15 +3790,14 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
   <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
   <ol>
-   <li><p>Let <var>reason</var> be the provided termination reason.
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
    <li><p>If <var>connection</var> is an HTTP/2 connection, then transmit an
    "<code>RST_STREAM</code>" to cancel the underlying stream.
 
-   <li><p>Otherwise, close <var>connection</var>.
+   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
 
-   <li><p>Return a <a>network error</a> with <a for=response>termination reason</a> set to
-   <var>reason</var>.
+   <li><p>Return a <a>network error</a>.
   </ol>
 
  <li>
@@ -3766,7 +3810,7 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
  if it is <a lt=suspend for=fetch>suspended</a>.
 
  <li><p>Let <var>cancel</var> be an action that <a lt=terminated for=fetch>terminates</a> the
- ongoing fetch with reason <i>fatal</i>.
+ ongoing fetch with the aborted flag set.
 
  <li>
   <p>Let <var>stream</var> be the result of
@@ -3843,9 +3887,10 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
   <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
   <ol>
-   <li><p>Let <var>reason</var> be the provided termination reason.
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
-   <li><p>Set <var>response</var>'s <a for=response>termination reason</a> to <var>reason</var>.
+   <li><p>If <var>aborted</var> is set, then set <var>response</var>'s
+   <a for=response>aborted flag</a>.
 
    <li><p>Return <var>response</var>.
   </ol>
@@ -3877,11 +3922,10 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
         <p class="note no-backref">This makes the `<code>Content-Length</code>` <a for=/>header</a>
         unreliable to the extent that it was reliable to begin with.
 
-       <li>
-        <p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code> object wrapping an
-        <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If that threw an
-        exception, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with <i>fatal</i>, <a
-        abstract-op>error</a> <var>stream</var> with that exception.
+       <li><p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code> object wrapping an
+       <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If that threw an
+       exception, <a lt=terminated for=fetch>terminate</a> the ongoing fetch, and
+       <a abstract-op>error</a> <var>stream</var> with that exception.
 
        <li><p>If <var>stream</var> doesn't <a lt="need more data" for=ReadableStream>need more
        data</a> and <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent to <a
@@ -3895,13 +3939,20 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
     <p class=note>The following steps can only occur if the ongoing fetch terminates.
 
-   <li><p>Let <var>reason</var> be the provided termination reason.
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
-   <li><p>Set <var>response</var>'s <a lt="termination reason" for=response>termination reason</a>
-   to <var>reason</var>.
+   <li>
+    <p>If <var>aborted</var> is set, then:
 
-   <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, <a abstract-op>error</a>
-   <var>stream</var> with a <code>TypeError</code>.
+    <ol>
+     <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
+
+     <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, <a abstract-op>error</a>
+     <var>stream</var> with an "<code><a exception>AbortError</a></code>" {{DOMException}}.
+    </ol>
+
+   <li><p>Otherwise, if <var>stream</var> is <a for=ReadableStream>readable</a>,
+   <a abstract-op>error</a> <var>stream</var> with a <code>TypeError</code>.
 
    <li><p>If <var>connection</var> is an HTTP/2 connection, then transmit an
    "<code>RST_STREAM</code>" to cancel the underlying stream.
@@ -5535,19 +5586,23 @@ method, must run these steps:
  {{Headers}} object whose <a for=Headers>guard</a> is
  "<code>immutable</code>".
 
- <li><p>Let <var>aborted</var> be false.
+ <li>
+  <p>Let <var>locallyAborted</var> be false.
+
+  <p class=note>This lets us reject promises with predictable timing, when the request to abort
+  comes from the same thread as the call to fetch.
 
  <li>
   <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
   <a for=Request>signal</a>:
 
   <ol>
-    <li><p>Set <var>aborted</var> to true.
+    <li><p>Set <var>locallyAborted</var> to true.
 
     <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and
     <var>responseObject</var>.
 
-    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with reason <i>fatal</i>.
+    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
   </ol>
 
  <li>
@@ -5558,11 +5613,14 @@ method, must run these steps:
   <p>To <a>process response</a> for <var>response</var>, run these substeps:
 
   <ol>
-   <li><p>If <var>aborted</var> is true, terminate these substeps.
+   <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
 
-   <li><p>If <var>response</var>'s <a for=response>type</a> is
-   "<code>error</code>", reject <var>p</var> with a <code>TypeError</code> and terminate
-   these substeps.
+   <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then <a>abort fetch</a>
+   with <var>p</var>, <var>request</var>, and <var>responseObject</var>, and terminate these
+   substeps.
+
+   <li><p>If <var>response</var> is a <a>network error</a>, then reject <var>p</var> with a
+   <code>TypeError</code> and terminate these substeps.
 
    <li><p>Associate <var>responseObject</var> with <var>response</var>.
 
@@ -5572,7 +5630,7 @@ method, must run these steps:
   <p>To <a>process response done</a> for <var>response</var>, run these substeps:
 
   <ol>
-   <li><p>If <var>aborted</var> is true, terminate these substeps.
+   <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
 
    <li><p>Let <var>trailerObject</var> be a new {{Headers}} object whose
    <a for=Headers>guard</a> is "<code>immutable</code>".
@@ -5621,8 +5679,8 @@ method, must run these steps:
 
 <h3 id=garbage-collection>Garbage collection</h3>
 
-<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch with
-reason <i>garbage collection</i> if that termination is not observable through script.
+<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch with if that
+termination is not observable through script.
 
 <p class="note no-backref">"Observable through script" means observable through
 <a><code>fetch()</code></a>'s arguments and return value. Other ways, such as
