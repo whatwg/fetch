@@ -1983,15 +1983,17 @@ Access-Control-Request-Headers   = 1#<a spec=http>field-name</a>
 wildcard                         = "*"
 Access-Control-Allow-Origin      = origin-or-null / wildcard
 Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
-Access-Control-Expose-Headers    = #<a spec=http>field-name</a> / wildcard
+Access-Control-Expose-Headers    = #<a spec=http>field-name</a>
 Access-Control-Max-Age           = <a spec=http-caching>delta-seconds</a>
-Access-Control-Allow-Methods     = #<a spec=http>method</a> / wildcard
-Access-Control-Allow-Headers     = #field-name-or-wildcard
-field-name-or-wildcard           = <a spec=http>field-name</a> / wildcard</pre>
+Access-Control-Allow-Methods     = #<a spec=http>method</a>
+Access-Control-Allow-Headers     = #<a spec=http>field-name</a></pre>
 
-<p class=note>The difference between the <code>Access-Control-Expose-Headers</code> and
-<code>Access-Control-Allow-Headers</code> production is that the latter needs to be able to
-handle `<code>*, Authorization</code>` as header value whereas the former does not.
+<p class=note>For `<code>Access-Control-Expose-Headers</code>`,
+`<code>Access-Control-Allow-Methods</code>`, and `<code>Access-Control-Allow-Headers</code>`
+response <a for=/>headers</a> the <a for=header>value</a> `<code>*</code>` counts as a wildcard for
+<a for=/>requests</a> without <a for=/>credentials</a>. For such <a for=/>requests</a> there is no
+way to solely match a <a for=/>header</a> <a for=header>name</a> or <a for=/>method</a> that is
+`<code>*</code>`.
 
 
 <h4 id=cors-protocol-and-credentials>CORS protocol and credentials</h4>
@@ -2603,17 +2605,18 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      `<a http-header><code>Access-Control-Expose-Headers</code></a>` and <var>response</var>'s
      <a for=response>header list</a>.
 
-     <li><p>If <var>headerNames</var> is `<code>*</code>` and <var>request</var>'s
-     <a for=request>credentials mode</a> is not
-     "<code>include</code>", then set <var>response</var>'s
-     <a for=response>CORS-exposed header-name list</a>
-     to all unique <a for=/>header</a>
-     <a lt=name for=header>names</a> in <var>response</var>'s
+     <li><p>If <var>request</var>'s <a for=request>credentials mode</a> is not
+     "<code>include</code>" and <var>headerNames</var> contains `<code>*</code>`, then set
+     <var>response</var>'s <a for=response>CORS-exposed header-name list</a> to all unique
+     <a for=/>header</a> <a lt=name for=header>names</a> in <var>response</var>'s
      <a for=response>header list</a>.
 
-     <li><p>Otherwise, if <var>headerNames</var> is not null, failure, or `<code>*</code>`, then set
-     <var>response</var>'s <a for=response>CORS-exposed header-name list</a> to
-     <var>headerNames</var>.
+     <li>
+      <p>Otherwise, if <var>headerNames</var> is not null or failure, then set <var>response</var>'s
+      <a for=response>CORS-exposed header-name list</a> to <var>headerNames</var>.
+
+      <p class="note">One of the <var>headerNames</var> can still be `<code>*</code>` at this point,
+      but will only match a <a for=/>header</a> whose <a for=header>name</a> is `<code>*</code>`.
     </ol>
 
    <li>
@@ -3865,19 +3868,12 @@ steps:
    `<a http-header><code>Access-Control-Allow-Methods</code></a>` and <var>response</var>'s
    <a for=response>header list</a>.
 
-   <li><p>If <var>methods</var> is `<code>*</code>`, then set <var>methods</var> to a new list
-   containing `<code>*</code>`.
-
    <li><p>Let <var>headerNames</var> be the result of <a>extracting header list values</a> given
    `<a http-header><code>Access-Control-Allow-Headers</code></a>` and <var>response</var>'s
    <a for=response>header list</a>.
 
    <li><p>If either <var>methods</var> or <var>headerNames</var> is failure,
    return a <a>network error</a>.
-
-   <li><p>If <var>methods</var> or <var>headerNames</var> contains `<code>*</code>`, and
-   <var>request</var>'s <a for=request>credentials mode</a> is
-   "<code>include</code>", then return a <a>network error</a>.
 
    <li>
     <p>If <var>methods</var> is null and <var>request</var>'s <a>use-CORS-preflight flag</a>
@@ -3888,21 +3884,22 @@ steps:
     happened due to <var>request</var>'s <a>use-CORS-preflight flag</a> being set is
     <a lt="CORS-preflight cache">cached</a>.
 
-   <li><p>If <var>request</var>'s <a for=request>method</a> is not in
-   <var>methods</var>, is not a <a>CORS-safelisted method</a>, and <var>methods</var> does
-   <em>not</em> contain `<code>*</code>`, then return a
-   <a>network error</a>.
+   <li><p>If <var>request</var>'s <a for=request>method</a> is not in <var>methods</var>,
+   <var>request</var>'s <a for=request>method</a> is not a <a>CORS-safelisted method</a>, and
+   <var>request</var>'s <a for=request>credentials mode</a> is "<code>include</code>" or
+   <var>methods</var> does not contain `<code>*</code>`, then return a <a>network error</a>.
 
    <li><p>If one of <var>request</var>'s <a for=request>header list</a>'s
    <a lt=name for=header>names</a> is a <a>CORS non-wildcard request-header name</a> and is not a
    <a>byte-case-insensitive</a> match for an <a for=list>item</a> in <var>headerNames</var>, then
    return a <a>network error</a>.
 
-   <li><p>If one of <var>request</var>'s <a for=request>header list</a>'
-   <a lt=name for=header>names</a> is not a <a>byte-case-insensitive</a> match for an
-   <a for=list>item</a> in <var>headerNames</var>, its corresponding <a for=/>header</a> is not a
-   <a>CORS-safelisted request-header</a>, and <var>headerNames</var> does not contain
-   `<code>*</code>`, then return a <a>network error</a>.
+   <li><p><a for=list>For each</a> <var>header</var> in <var>request</var>'s
+   <a for=request>header list</a>: if <var>header</var> is not a
+   <a>CORS-safelisted request-header</a>, <var>header</var>'s <a for=header>name</a> is not a
+   <a>byte-case-insensitive</a> match for an <a for=list>item</a> in <var>headerNames</var>, and
+   <var>request</var>'s <a for=request>credentials mode</a> is "<code>include</code>" or
+   <var>headerNames</var> does not contain `<code>*</code>`, then return a <a>network error</a>.
 
    <li><p>Let <var>max-age</var> be the result of <a>extracting header list values</a> given
    `<a http-header><code>Access-Control-Max-Age</code></a>` and <var>response</var>'s
