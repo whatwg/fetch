@@ -1320,8 +1320,11 @@ cannot be exposed to script. That would violate <a>atomic HTTP redirect handling
 <a for=/>status</a>. Unless stated otherwise it is <code>200</code>.
 
 <p>A <a for=/>response</a> has an associated
-<dfn export for=response id=concept-response-status-message>status message</dfn>.
-Unless stated otherwise it is `<code>OK</code>`.
+<dfn export for=response id=concept-response-status-message>status message</dfn>. Unless stated
+otherwise it is the empty byte sequence.
+
+<p class=note>This does not have a default value of `<code>OK</code>` as otherwise all HTTP/2
+<a for=/>responses</a> would have that value.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-header-list>header list</dfn> (a
@@ -2901,20 +2904,15 @@ steps:
 <dl class=switch>
  <dt>"<code>about</code>"
  <dd>
-  <p>If <var>request</var>'s
-  <a for=request>current url</a>'s
-  <a>cannot-be-a-base-URL flag</a> is set and
-  <a for=url>path</a> contains a single string
-  "<code>blank</code>", return a <a for=/>response</a> whose
-  <a for=response>header list</a> consist of a single
-  <a for=/>header</a> whose
-  <a for=header>name</a> is `<code>Content-Type</code>` and
-  <a for=header>value</a> is
-  `<code>text/html;charset=utf-8</code>`,
-  <a for=response>body</a> is the empty byte sequence, and
-  <a for=response>HTTPS state</a> is <var>request</var>'s
-  <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
-  if <var>request</var>'s <a for=request>client</a> is non-null.
+  <p>If <var>request</var>'s <a for=request>current url</a>'s <a>cannot-be-a-base-URL flag</a> is
+  set and <a for=url>path</a> contains a single string "<code>blank</code>", then return a new
+  <a for=/>response</a> whose <a for=response>status message</a> is `<code>OK</code>`,
+  <a for=response>header list</a> consist of a single <a for=/>header</a> whose
+  <a for=header>name</a> is `<code>Content-Type</code>` and <a for=header>value</a> is
+  `<code>text/html;charset=utf-8</code>`, <a for=response>body</a> is the empty byte sequence, and
+  <a for=response>HTTPS state</a> is <var>request</var>'s <a for=request>client</a>'s
+  <a for="environment settings object">HTTPS state</a> if <var>request</var>'s
+  <a for=request>client</a> is non-null.
 
   <p>Otherwise, return a <a>network error</a>.
 
@@ -2941,8 +2939,8 @@ steps:
       <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction
       serves no useful purpose other than being interoperable.
 
-     <li><p>Let <var>response</var> be a new
-     <a for=/>response</a>.
+     <li><p>Let <var>response</var> be a new <a for=/>response</a> whose
+     <a for=response>status message</a> is `<code>OK</code>`.
 
      <li><p><a for="header list">Append</a>
      `<code>Content-Length</code>`/<var>blob</var>'s
@@ -2985,9 +2983,10 @@ steps:
 
    <li><p>If <var>dataURLStruct</var> is failure, then return a <a>network error</a>.
 
-   <li><p>Return a <a for=/>response</a> whose <a for=response>header list</a> consist of a single
-   <a for=/>header</a> whose <a for=header>name</a> is `<code>Content-Type</code>` and
-   <a for=header>value</a> is <var>dataURLStruct</var>'s <a for="data: URL struct">MIME type</a>,
+   <li><p>Return a <a for=/>response</a> whose <a for=response>status message</a> is
+   `<code>OK</code>`, whose <a for=response>header list</a> consist of a single <a for=/>header</a>
+   whose <a for=header>name</a> is `<code>Content-Type</code>` and <a for=header>value</a> is
+   <var>dataURLStruct</var>'s <a for="data: URL struct">MIME type</a>,
    <a lt="serialize a MIME type to bytes">serialized</a>, whose <a for=response>body</a> is
    <var>dataURLStruct</var>'s <a for="data: URL struct">body</a>, and whose
    <a for=response>HTTPS state</a> is <var>request</var>'s <a for=request>client</a>'s
