@@ -1248,11 +1248,10 @@ evolves over time. That is, not all its fields are available straight away.
 Unless stated otherwise, it is "<code>default</code>".
 
 <p>A <a for=/>response</a> can have an associated
-<dfn export for=response id=concept-response-aborted>aborted flag</dfn>
-which is initially unset.
+<dfn export for=response id=concept-response-aborted>aborted flag</dfn>, which is initially unset.
 
-<p class="note">This is set for <a>network errors</a> that should appear as "aborted" to developers.
-This should be limited to requests that are intentionally aborted by the developer or end-user.
+<p class="note">This indicates that the request was intentionally aborted by the developer or
+end-user.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url>url</dfn>. It is a pointer to the
@@ -1289,6 +1288,10 @@ Unless stated otherwise it is `<code>OK</code>`.
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-trailer>trailer</dfn> (a
 <a for=/>header list</a>). Unless stated otherwise it is empty.
+
+<p>A <a for=/>response</a> has an associated
+<dfn export for=response id=concept-response-trailer-failed>trailer failed flag</dfn>, which is
+initially unset.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-https-state>HTTPS state</dfn> (an
@@ -2805,10 +2808,13 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
  <li><p><a>Queue a fetch task</a> on <var>request</var> to
  <a>process response end-of-body</a> for <var>response</var>.
 
- <li><p>Wait for <var>internalResponse</var>'s <a for=response>trailer</a>,
- if any. <span class=note>See
+ <li><p>Wait for either <var>internalResponse</var>'s <a for=response>trailer</a>,
+ if any, or for the ongoing fetch to <a for=fetch lt=terminated>terminate</a>. <span class=note>See
  <a href=https://tools.ietf.org/html/rfc7230#section-4.1.2>section 4.1.2</a> of
  [[!HTTP]].</span>
+
+ <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then set <var>internalResponse</var>'s
+ <a for=response>trailer failed flag</a>.
 
  <li><p>Set <var>request</var>'s <a>done flag</a>.
 
@@ -5634,6 +5640,20 @@ method, must run these steps:
 
    <li><p>Let <var>trailerObject</var> be a new {{Headers}} object whose
    <a for=Headers>guard</a> is "<code>immutable</code>".
+
+   <li>
+    <p>If <var>response</var>'s <a for=response>trailer failed flag</a> is set, then:
+
+    <ol>
+     <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, reject
+     <var>responseObject</var>'s <a for=Response>trailer promise</a> with an
+     "<code><a exception>AbortError</a></code>" {{DOMException}}.
+
+     <li><p>Otherwise, reject <var>responseObject</var>'s <a for=Response>trailer promise</a> with
+     a <code>TypeError</code>.
+
+     <li><p>Terminate these substeps.
+    </ol>
 
    <li><p>Associate <var>trailerObject</var> with <var>response</var>'s
    <a for=response>trailer</a>.
