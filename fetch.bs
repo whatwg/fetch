@@ -6052,6 +6052,11 @@ if the script checks that the URL has the right hostname.
 <p>For an informative description of <code>data:</code> URLs, see RFC 2397. This section replaces
 that RFC's normative processing requirements. [[RFC2397]]
 
+<p>A <dfn><code>data:</code> URL struct</dfn> is a <a>struct</a> that consists of a
+<dfn for="data: URL struct">MIME type</dfn> (a <a>byte sequence</a>) and a
+<dfn for="data: URL struct">body</dfn> (a <a>byte sequence</a>).
+<!-- XXX can we do better for MIME type? -->
+
 <p>The <dfn export><code>data:</code> URL processor</dfn> takes a <a for=/>URL</a>
 <var>dataURL</var> and then runs these steps:
 
@@ -6065,22 +6070,14 @@ that RFC's normative processing requirements. [[RFC2397]]
 
  <li><p>Let <var>position</var> point at the start of <var>input</var>.
 
- <li><p>Let <var>encodedMimeType</var> be the result of
- <a>collecting a sequence of code points</a> that are not equal to U+002C (,), given
- <var>position</var>.
+ <li><p>Let <var>mimeType</var> be the result of <a>collecting a sequence of code points</a> that
+ are not equal to U+002C (,), given <var>position</var>.
 
  <li><p>If <var>position</var> is past the end of <var>input</var>, then return failure.
 
  <li><p>Advance <var>position</var> by 1.
 
  <li><p>Let <var>encodedBody</var> be the remainder of <var>input</var>.
-
- <li><p>Let <var>mimeTypeBytes</var> be the <a>string percent decoding</a> of
- <var>encodedMimeType</var>.
- <!-- Note: implementations leave the percent-encoded bits around. That strikes me as rather broken,
-      but it might be due to web compatibility? -->
-
- <li><p>Let <var>mimeType</var> be the <a>isomorphic decode</a> of <var>mimeTypeBytes</var>.
 
  <li><p><a>Strip leading and trailing ASCII whitespace</a> from <var>mimeType</var>.
 
@@ -6102,23 +6099,18 @@ that RFC's normative processing requirements. [[RFC2397]]
    "<code>;base64</code>" from <var>mimeType</var>.
   </ol>
 
- <li><p>If <var>mimeType</var> starts with an <a>ASCII case-insensitive</a> match for
- "<code>;charset=</code>", then prepend "<code>text/plain</code>" to <var>mimeType</var>.
+ <li><p>If <var>mimeType</var> starts with "<code>;</code>", then prepend "<code>text/plain</code>"
+ to <var>mimeType</var>.
 
  <li><p>If <var>mimeType</var> is the empty string or is not a
  <span class=XXX>valid MIME type</span>, then set <var>mimeType</var> to
  "<code>text/plain;charset=US-ASCII</code>".
 
- <li><p>Set <var>mimeTypeBytes</var> to the <a>isomorphic encode</a> of <var>mimeType</var>.
+ <li><p>Let <var>mimeTypeBytes</var> be the <a>isomorphic encode</a> of <var>mimeType</var>.
 
- <li><p>Let <var>dataURLStruct</var> be a <a>struct</a> consisting of a
- <dfn for="data: URL struct">MIME type</dfn> and a <dfn for="data: URL struct">body</dfn>.
-
- <li><p>Set <var>dataURLStruct</var>'s <a for="data: URL struct">MIME type</a> to
- <var>mimeTypeBytes</var> and <var>dataURLStruct</var>'s <a for="data: URL struct">body</a> to
- <var>body</var>.
-
- <li><p>Return <var>dataURLStruct</var>.
+ <li><p>Return a new <a><code>data:</code> URL struct</a> whose
+ <a for="data: URL struct">MIME type</a> is <var>mimeTypeBytes</var> and
+ <a for="data: URL struct">body</a> is <var>body</var>.
 </ol>
 
 
