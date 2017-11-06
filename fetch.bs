@@ -16,7 +16,7 @@ Markup Shorthands: css off
 !Commits: <a href=https://twitter.com/fetchstandard>@fetchstandard</a>
 !Tests: <a href=https://github.com/w3c/web-platform-tests/tree/master/fetch>web-platform-tests fetch/</a> (<a href=https://github.com/w3c/web-platform-tests/labels/fetch>ongoing work</a>)
 !Translation (non-normative): <span title=Japanese><a href=https://triple-underscore.github.io/Fetch-ja.html lang=ja hreflang=ja rel=alternate>日本語</a></span>
-Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,typedefdef-requestinfo requestinfo,enumdef-requesttype requesttype,enumdef-requestdestination requestdestination,enumdef-requestmode requestmode,enumdef-requestcredentials requestcredentials,enumdef-requestcache requestcache,enumdef-requestredirect requestredirect,dictdef-responseinit responseinit,enumdef-responsetype responsetype
+Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,typedefdef-requestinfo requestinfo,enumdef-requestdestination requestdestination,enumdef-requestmode requestmode,enumdef-requestcredentials requestcredentials,enumdef-requestcache requestcache,enumdef-requestredirect requestredirect,dictdef-responseinit responseinit,enumdef-responsetype responsetype
 </pre>
 
 <script src=https://resources.whatwg.org/file-issue.js async></script>
@@ -38,7 +38,7 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
 <pre class=biblio>
 {
     "HTTP": {
-        "aliasOf": "HTTP11"
+        "aliasOf": "RFC7230"
     },
     "HTTP-SEMANTICS": {
         "aliasOf": "RFC7231"
@@ -55,9 +55,6 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
     "HTTP-AUTH": {
         "aliasOf": "RFC7235"
     },
-    "HTTP2": {
-        "aliasOf": "RFC7540"
-    },
     "REFERRER": {
         "aliasOf": "referrer-policy"
     },
@@ -68,10 +65,10 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
         "aliasOf": "upgrade-insecure-requests"
     },
     "HSTS": {
-        "aliasOf": "rfc6797"
+        "aliasOf": "RFC6797"
     },
     "WSP": {
-        "aliasOf": "WEBSOCKETS-PROTOCOL"
+        "aliasOf": "RFC6455"
     },
     "CLIENT-HINTS": {
         "authors": [
@@ -100,29 +97,6 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
         "publisher": "US-CERT",
         "href": "https://www.kb.cert.org/vuls/id/150227",
         "title": "HTTP proxy default configurations allow arbitrary TCP connections."
-    },
-    "PUBLIC-SUFFIX": {
-        "title": "Public Suffix List",
-        "publisher": "publicsuffix.org",
-        "href": "https://publicsuffix.org/list/"
-    },
-    "TOKBIND-NEGOTIATION": {
-        "authors": [ "Andrei Popov", "Magnus Nystroem", "Dirk Balfanz", "Adam Langley" ],
-        "title": "Transport Layer Security (TLS) Extension for Token Binding Protocol Negotiation",
-        "publisher": "IETF",
-        "href": "https://tools.ietf.org/html/draft-ietf-tokbind-negotiation"
-    },
-    "TOKBIND-PROTOCOL": {
-        "authors": [ "Andrei Popov", "Magnus Nystroem", "Dirk Balfanz", "Adam Langley", "Jeff Hodges" ],
-        "title": "The Token Binding Protocol Version 1.0",
-        "publisher": "IETF",
-        "href": "https://tools.ietf.org/html/draft-ietf-tokbind-protocol"
-    },
-    "TOKBIND-HTTPS": {
-        "authors": [ "Andrei Popov", "Magnus Nystroem", "Dirk Balfanz", "Adam Langley", "Jeff Hodges" ],
-        "title": "Token Binding over HTTP",
-        "publisher": "IETF",
-       "href": "https://tools.ietf.org/html/draft-ietf-tokbind-https"
     }
 }
 </pre>
@@ -192,8 +166,9 @@ Standards.
 
 <hr>
 
-<p><dfn id=credentials export>Credentials</dfn> are HTTP cookies, TLS client certificates, and
-<a lt="authentication entry">authentication entries</a>.
+<p><dfn id=credentials export>Credentials</dfn> are HTTP cookies, TLS client certificates, and <a
+lt="authentication entry">authentication entries</a> (for HTTP authentication). [[!COOKIES]]
+[[!TLS]] [[!HTTP-AUTH]]
 
 <hr>
 
@@ -318,15 +293,16 @@ for consistency.
 
 <h4 id=terminology-headers>Headers</h4>
 
-<p>A <dfn export id=concept-header-list>header list</dfn> consists of zero or more <a>headers</a>.
+<p>A <dfn export id=concept-header-list>header list</dfn> consists of zero or more
+<a for=/>headers</a>.
 
 <p class="note no-backref">A <a for=/>header list</a> is essentially a
 specialized multimap. An ordered list of key-value pairs with potentially duplicate keys.
 
 <p>A <a for=/>header list</a> (<var>list</var>)
 <dfn export for="header list" lt="contains|does not contain">contains</dfn> a <a for=header>name</a>
-(<var>name</var>) if <var>list</var> contains a <a>header</a> whose <a for=header>name</a> is a
-<a>byte-case-insensitive</a> match for <var>name</var>.
+(<var>name</var>) if <var>list</var> contains a <a for=/>header</a> whose <a for=header>name</a> is
+a <a>byte-case-insensitive</a> match for <var>name</var>.
 
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair to a
@@ -335,20 +311,20 @@ specialized multimap. An ordered list of key-value pairs with potentially duplic
 <ol>
  <li>
   <p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set <var>name</var>
-  to the first such <a>header</a>'s <a for=header>name</a>.
+  to the first such <a for=/>header</a>'s <a for=header>name</a>.
 
   <p class="note no-backref">This reuses the casing of the <a for=header>name</a> of the
-  <a>header</a> already in the <a for=/>header list</a>, if any. If there are multiple matched
-  <a>headers</a> their <a for=header>names</a> will all be identical.
+  <a for=/>header</a> already in the <a for=/>header list</a>, if any. If there are multiple matched
+  <a for=/>headers</a> their <a for=header>names</a> will all be identical.
   <!-- XXX Firefox and Safari adjust known header names too. -->
 
- <li><p>Append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
+ <li><p>Append a new <a for=/>header</a> whose <a for=header>name</a> is <var>name</var> and
  <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
 <p>To <dfn export for="header list" id=concept-header-list-delete>delete</dfn> a
 <a for=header>name</a> (<var>name</var>) from a <a for=/>header list</a> (<var>list</var>), remove
-all <a>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
+all <a for=/>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
 <var>name</var> from <var>list</var>.
 
 <p>To <dfn export for="header list" id=concept-header-list-set>set</dfn> a
@@ -357,10 +333,11 @@ all <a>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a
 
 <ol>
  <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
- <a for=header>value</a> of the first such <a>header</a> to <var>value</var> and remove the others.
+ <a for=header>value</a> of the first such <a for=/>header</a> to <var>value</var> and remove the
+ others.
 
- <li><p>Otherwise, append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
- <a for=header>value</a> is <var>value</var> to <var>list</var>.
+ <li><p>Otherwise, append a new <a for=/>header</a> whose <a for=header>name</a> is <var>name</var>
+ and <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
 <p>To <dfn export for="header list" id=concept-header-list-combine>combine</dfn> a
@@ -369,11 +346,11 @@ all <a>headers</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a
 
 <ol>
  <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
- <a for=header>value</a> of the first such <a>header</a> to its <a for=header>value</a>, followed
- by 0x2C 0x20, followed by <var>value</var>.
+ <a for=header>value</a> of the first such <a for=/>header</a> to its <a for=header>value</a>,
+ followed by 0x2C 0x20, followed by <var>value</var>.
 
- <li><p>Otherwise, append a new <a>header</a> whose <a for=header>name</a> is <var>name</var> and
- <a for=header>value</a> is <var>value</var> to <var>list</var>.
+ <li><p>Otherwise, append a new <a for=/>header</a> whose <a for=header>name</a> is <var>name</var>
+ and <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
 <p class="note no-backref"><a for="header list">Combine</a> is used by {{XMLHttpRequest}} and the
@@ -390,8 +367,8 @@ a <a for=/>header list</a> (<var>list</var>), run these steps:
  <a for=header>value</a>.
 
  <li><p>Let <var>names</var> be all the <a lt=name for=header>names</a> of the
- <a>headers</a> in <var>list</var>, <a>byte-lowercased</a>, with duplicates removed, and finally
- sorted lexicographically.
+ <a for=/>headers</a> in <var>list</var>, <a>byte-lowercased</a>, with duplicates removed, and
+ finally sorted lexicographically.
 
  <li>
   <p>For each <var>name</var> in <var>names</var>, run these substeps:
@@ -433,14 +410,14 @@ production as
 
 <p>A <dfn export for=header id=concept-header-value-combined>combined value</dfn>, given a
 <a for=header>name</a> (<var>name</var>) and <a for=/>header list</a> (<var>list</var>), is the
-<a lt=value for=header>values</a> of all <a>headers</a> in <var>list</var> whose
+<a lt=value for=header>values</a> of all <a for=/>headers</a> in <var>list</var> whose
 <a for=header>name</a> is a <a>byte-case-insensitive</a> match for <var>name</var>, separated from
 each other by 0x2C 0x20, in order.
 
 <hr>
 
-<p id=simple-header>A <dfn export>CORS-safelisted request-header</dfn> is a <a>header</a> whose
-<a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
+<p id=simple-header>A <dfn export>CORS-safelisted request-header</dfn> is a <a for=/>header</a>
+whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
 
 <ul class=brief>
  <li>`<code>Accept</code>`
@@ -472,7 +449,7 @@ failure.
 for `<code>Authorization</code>`.
 
 <p>A <dfn export>CORS-safelisted response-header name</dfn>, given a
-<a for=response>CORS-exposed header-name list</a> <var>list</var>, is a <a>header</a>
+<a for=response>CORS-exposed header-name list</a> <var>list</var>, is a <a for=/>header</a>
 <a for=header>name</a> that is a <a>byte-case-insensitive</a> match for one of
 
 <ul class=brief>
@@ -486,8 +463,8 @@ for `<code>Authorization</code>`.
  <a>forbidden response-header name</a>.
 </ul>
 
-<p>A <dfn export>forbidden header name</dfn> is a <a>header</a> <a for=header>name</a> that is a
-<a>byte-case-insensitive</a> match for one of
+<p>A <dfn export>forbidden header name</dfn> is a <a for=/>header</a> <a for=header>name</a> that
+is a <a>byte-case-insensitive</a> match for one of
 
 <ul class=brief>
  <li>`<code>Accept-Charset</code>`
@@ -512,21 +489,21 @@ for `<code>Authorization</code>`.
  <li>`<code>Via</code>`
 </ul>
 
-<p>or a <a>header</a> <a for=header>name</a> that
+<p>or a <a for=/>header</a> <a for=header>name</a> that
 starts with a <a>byte-case-insensitive</a> match for `<code>Proxy-</code>` or `<code>Sec-</code>`
 (including being a <a>byte-case-insensitive</a> match for just `<code>Proxy-</code>` or
 `<code>Sec-</code>`).
 
 <p class=note>These are forbidden so the user agent remains in full control over them.
 <a for=header>Names</a> starting with `<code>Sec-</code>` are
-reserved to allow new <a>headers</a> to be minted that are safe
+reserved to allow new <a for=/>headers</a> to be minted that are safe
 from APIs using <a for=/>fetch</a> that allow control over
-<a>headers</a> by developers, such as
+<a for=/>headers</a> by developers, such as
 {{XMLHttpRequest}}.
 [[XHR]]
 
-<p>A <dfn export>forbidden response-header name</dfn> is a <a>header</a> <a for=header>name</a> that
-is a <a>byte-case-insensitive</a> match for one of:
+<p>A <dfn export>forbidden response-header name</dfn> is a <a for=/>header</a>
+<a for=header>name</a> that is a <a>byte-case-insensitive</a> match for one of:
 
 <ul class=brief>
  <li>`<code>Set-Cookie</code>`
@@ -536,7 +513,7 @@ is a <a>byte-case-insensitive</a> match for one of:
 <hr>
 
 <p>To <dfn export lt="extract header values|extracting header values">extract header values</dfn>
-given a <a>header</a> <var>header</var>, run these steps:
+given a <a for=/>header</a> <var>header</var>, run these steps:
 
 <ol>
  <li><p>If parsing <var>header</var>'s <a for=header>value</a>, per the <a>ABNF</a> for
@@ -556,17 +533,18 @@ run these steps:
  null.
 
  <li>
-  <p>If the <a>ABNF</a> for <var>name</var> allows a single <a>header</a> and <var>list</var>
+  <p>If the <a>ABNF</a> for <var>name</var> allows a single <a for=/>header</a> and <var>list</var>
   <a for="header list">contains</a> more than one, then return failure.
 
   <p class="note no-backref">If different error handling is needed, extract the desired
-  <a>header</a> first.
+  <a for=/>header</a> first.
 
  <li><p>Let <var>values</var> be an empty <a for=/>list</a>.
 
  <li>
-  <p>For each <a>header</a> <var>header</var> <var>list</var> <a for="header list">contains</a>
-  whose <a for=header>name</a> is <var>name</var>, run these substeps:
+  <p>For each <a for=/>header</a> <var>header</var> <var>list</var>
+  <a for="header list">contains</a> whose <a for=header>name</a> is <var>name</var>, run these
+  substeps:
 
   <ol>
    <li><p>Let <var>extract</var> be the result of <a>extracting header values</a> from
@@ -597,7 +575,7 @@ from a <a for=/>header list</a> (<var>headers</var>), run these steps:
 
 <p>A <dfn id=default-user-agent-value export>default `<code>User-Agent</code>` value</dfn> is a
 user-agent-defined <a for=header>value</a> for the
-`<code>User-Agent</code>` <a>header</a>.
+`<code>User-Agent</code>` <a for=/>header</a>.
 
 
 <h4 id=statuses>Statuses</h4>
@@ -646,8 +624,7 @@ user-agent-defined <a for=header>value</a> for the
 
 <ol>
  <li><p>Let «<var>out1</var>, <var>out2</var>» be the result of
- <a lt=tee for=ReadableStream>teeing</a> <var>body</var>'s
- <a for=body>stream</a>. Rethrow any exceptions.
+ <a lt=tee for=ReadableStream>teeing</a> <var>body</var>'s <a for=body>stream</a>.
 
  <li><p>Set <var>body</var>'s <a for=body>stream</a> to <var>out1</var>.
 
@@ -768,26 +745,18 @@ explicitly set <a for=/>request</a>'s
 <code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
 this flag set are subject to additional processing requirements.
 
-<p>A <a for=/>request</a> has an associated
-<dfn for=request export>service-workers mode</dfn>, that is "<code>all</code>",
-"<code>foreign</code>", or "<code>none</code>". Unless stated otherwise it is
-"<code>all</code>".
+<p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers mode</dfn>, that
+is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<code>all</code>".
 
 <div class=note>
  <p>This determines which service workers will receive a {{fetch!!event}} event for this fetch.
 
  <dl>
   <dt>"<code>all</code>"
-  <dd>Relevant local and foreign service workers will get a {{fetch!!event}} or
-   {{foreignfetch!!event}} event for this fetch.
-
-  <dt>"<code>foreign</code>"
-  <dd>Only relevant foreign service workers will get a {{foreignfetch!!event}} event for this fetch.
-  {{fetch(input)!!method}} uses this to bypass the current service worker if the global is a
-  {{ServiceWorkerGlobalScope}}.
+  <dd>Relevant service workers will get a {{fetch!!event}} event for this fetch.
 
   <dt>"<code>none</code>"
-  <dd>Neither local nor foreign service workers will get events for this fetch.
+  <dd>No service workers will get events for this fetch.
  </dd>
 </div>
 
@@ -806,26 +775,17 @@ specification device to assist defining CSP and Mixed Content. It is not exposed
 JavaScript. [[!CSP]] [[!MIX]]
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-type>type</dfn>, which is
-the empty string,
-"<code>audio</code>",
-"<code>font</code>",
-"<code>image</code>",
-"<code>script</code>",
-"<code>style</code>",
-"<code>track</code>", or
-"<code>video</code>". Unless stated otherwise it is the empty string.
-
-<p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-destination>destination</dfn>, which is
 the empty string,
 "<code>audio</code>",
+"<code>audioworklet</code>",
 "<code>document</code>",
 "<code>embed</code>",
 "<code>font</code>",
 "<code>image</code>",
 "<code>manifest</code>",
 "<code>object</code>",
+"<code>paintworklet</code>",
 "<code>report</code>",
 "<code>script</code>",
 "<code>serviceworker</code>",
@@ -836,25 +796,36 @@ the empty string,
 "<code>worker</code>", or
 "<code>xslt</code>". Unless stated otherwise it is the empty string.
 
+<!-- Dependencies:
+     * CSP: https://w3c.github.io/webappsec-csp/#effective-directive-for-a-request
+     * Mixed Content: https://w3c.github.io/webappsec-mixed-content/#should-block-fetch
+     * Preload: https://w3c.github.io/preload/#processing
+     * SRI: https://w3c.github.io/webappsec-subresource-integrity/#apply-algorithm-to-request
+     * HTML -->
+
+<p>A <a for=/>request</a>'s <a for=request>destination</a> is
+<dfn export for=request/destination>script-like</dfn> if it is "<code>audioworklet</code>",
+"<code>paintworklet</code>", "<code>script</code>", "<code>serviceworker</code>",
+"<code>sharedworker</code>", or "<code>worker</code>".
+
+<p class=warning>Algorithms that use <a for=request/destination>script-like</a> should also consider
+"<code>xslt</code>" as that too can cause script execution. It is not included in the list as it is
+not always relevant and might require different behavior.
+
 <div class=note>
- <p>The following table illustrates the relationship between a
- <a for=/>request</a>'s
- <a for=request>initiator</a>,
- <a for=request>type</a>,
- <a for=request>destination</a>, CSP directives, and features.
+ <p>The following table illustrates the relationship between a <a for=/>request</a>'s
+ <a for=request>initiator</a>, <a for=request>destination</a>, CSP directives, and features.
 
  <table>
   <tbody><tr>
    <th><a lt=initiator for=request>Initiator</a>
-   <th><a for=request>Type</a>
    <th><a lt=destination for=request>Destination</a>
    <th>CSP directive
    <th>Features
   <tr>
-   <td rowspan=16>""
-   <td rowspan=6>""
+   <td rowspan=18>""
    <td>"<code>report</code>"
-   <td rowspan=2>?
+   <td rowspan=2>&mdash;
    <td>CSP, NEL reports.
   <tr>
    <td>"<code>document</code>"
@@ -879,68 +850,66 @@ the empty string,
    <td>HTML's <code>&lt;embed></code>
   <tr>
    <td>"<code>audio</code>"
-   <td>"<code>audio</code>"
    <td><code>media-src</code>
    <td>HTML's <code>&lt;audio></code>
   <tr>
    <td>"<code>font</code>"
-   <td>"<code>font</code>"
    <td><code>font-src</code>
    <td>CSS' <code>@font-face</code>
   <tr>
-   <td>"<code>image</code>"
    <td>"<code>image</code>"
    <td><code>img-src</code>
    <td>HTML's <code>&lt;img src></code>, <code>/favicon.ico</code> resource,
    SVG's <code>&lt;image></code>, CSS' <code>background-image</code>, CSS'
    <code>cursor</code>, CSS' <code>list-style-image</code>, …
   <tr>
-   <td rowspan=4>"<code>script</code>"
+   <td>"<code>audioworklet</code>"
+   <td><code>script-src</code>
+   <td><code>audioWorklet.addModule()</code>
+  <tr>
+   <td>"<code>paintworklet</code>"
+   <td><code>script-src</code>
+   <td><code>CSS.paintWorklet.addModule()</code>
+  <tr>
    <td>"<code>script</code>"
    <td><code>script-src</code>
    <td>HTML's <code>&lt;script></code>, <code>importScripts()</code>
   <tr>
    <td>"<code>serviceworker</code>"
-   <td>?
+   <td><code>child-src</code>, <code>script-src</code>, <code>worker-src</code>
    <td><code>navigator.serviceWorker.register()</code>
   <tr>
    <td>"<code>sharedworker</code>"
-   <td><code>child-src</code>
+   <td><code>child-src</code>, <code>script-src</code>, <code>worker-src</code>
    <td><code>SharedWorker</code>
   <tr>
    <td>"<code>worker</code>"
-   <td><code>child-src</code>
+   <td><code>child-src</code>, <code>script-src</code>, <code>worker-src</code>
    <td><code>Worker</code>
   <tr>
-   <td>"<code>style</code>"
    <td>"<code>style</code>"
    <td><code>style-src</code>
    <td>HTML's <code>&lt;link rel=stylesheet></code>, CSS' <code>@import</code>
   <tr>
    <td>"<code>track</code>"
-   <td>"<code>track</code>"
    <td><code>media-src</code>
    <td>HTML's <code>&lt;track></code>
   <tr>
-   <td>"<code>video</code>"
    <td>"<code>video</code>"
    <td><code>media-src</code>
    <td>HTML's <code>&lt;video></code> element
   <tr>
    <td>"<code>download</code>"
    <td>""
-   <td>""
-   <td>?
+   <td>&mdash;
    <td>HTML's <code>download=""</code>, "Save Link As…" UI
   <tr>
    <td>"<code>imageset</code>"
-   <td>"<code>image</code>"
    <td>"<code>image</code>"
    <td><code>img-src</code>
    <td>HTML's <code>&lt;img srcset></code> and <code>&lt;picture></code>
   <tr>
    <td>"<code>manifest</code>"
-   <td rowspan=2>""
    <td>"<code>manifest</code>"
    <td><code>manifest-src</code>
    <td>HTML's <code>&lt;link rel=manifest></code>
@@ -1026,6 +995,11 @@ discouraged from using it for new features. It is rather unsafe. "<code>navigate
 <dfn id=use-cors-preflight-flag export for=request>use-CORS-preflight flag</dfn>. Unless stated
 otherwise, it is unset.
 
+<p class="note no-backref">The <a>use-CORS-preflight flag</a> being set is one of several conditions
+that results in a <a>CORS-preflight request</a>. The <a>use-CORS-preflight flag</a> is set if either
+one or more event listeners are registered on an {{XMLHttpRequestUpload}} object or if a
+{{ReadableStream}} object is used in a request.
+
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-credentials-mode>credentials mode</dfn>,
 which is "<code>omit</code>", "<code>same-origin</code>", or
@@ -1043,41 +1017,6 @@ for other values. If <cite>HTML</cite> changes here, this standard will need cor
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-use-url-credentials-flag>use-URL-credentials flag</dfn>.
 Unless stated otherwise, it is unset.
-
-<p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-use-token-binding>use-token-binding flag</dfn>.
-Unless stated otherwise, it is unset.
-
-<p class="note no-backref"><a for=/>Request</a>'s <a for=request>use-token-binding flag</a>
-controls whether the user agent will send the <a for=/>token binding ID</a> for the
-<a for=request>origin</a> of the <a for=/>request</a>'s url when it transmits the
-<a for=/>request</a> to the server. The <a for=/>token binding ID</a> can be used by the server to,
-e.g., bind HTTP cookies or OAuth tokens that it issues to the user agent.
-
-<p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-use-referred-token-binding>use-referred-token-binding flag</dfn>.
-Unless stated otherwise, it is unset.
-
-<p class="note no-backref"><a for=request>Request</a>'s
-<a for=request>use-referred-token-binding flag</a> controls whether the user agent will send the
-<a for=/>token binding ID</a> used by the user agent for an alternate <a for=request>origin</a>,
-in addition to the <a for=/>token binding ID</a> used by the user agent for the
-<a for=request>origin</a> of the <a for=/>request</a>'s url, when it transmits the
-<a for=/>request</a> to the server. This is used, e.g., by a relying party to indicate
-(via the user agent) to the server receiving the <a for=/>request</a> that it wants the
-credential issued by the server to be bound to the <a for=/>token binding ID</a> for the
-relying party's <a for=request>origin</a>.
-(Without this, a credential issued by the server in response to a <a for=/>request</a> would be
-bound to <a for=/>request</a>'s <a for=request>origin</a>'s <a for=/>token binding ID</a>).
-
-<p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-referred-token-binding-origin>referred-token-binding origin</dfn>,
-which is an <a for=/>origin</a>. Unless stated otherwise, it is null.
-
-<p class="note no-backref"><a for=/>Request</a>'s
-<a for=request>referred-token-binding origin</a>
-specifies the <a for=/>origin</a> used to determine the <a for=/>referred-token-binding ID</a>,
-when its <a for=request>use-referred-token-binding flag</a> is set.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-cache-mode>cache mode</dfn>, which is
@@ -1190,9 +1129,9 @@ Unless stated otherwise, it is unset.
 <hr>
 
 <p>A <dfn export>subresource request</dfn> is a <a for=/>request</a>
-whose <a for=request>destination</a> is "<code>audio</code>", "<code>font</code>",
-"<code>image</code>", "<code>manifest</code>", "<code>script</code>",
-"<code>style</code>", "<code>track</code>", "<code>video</code>",
+whose <a for=request>destination</a> is "<code>audio</code>", "<code>audioworklet</code>",
+"<code>font</code>", "<code>image</code>", "<code>manifest</code>", "<code>paintworklet</code>",
+"<code>script</code>", "<code>style</code>", "<code>track</code>", "<code>video</code>",
 "<code>xslt</code>", or the empty string.
 
 <p>A <dfn export>potential-navigation-or-subresource request</dfn> is a
@@ -1221,10 +1160,9 @@ or "<code>worker</code>".
  <li><p>Let <var>newRequest</var> be a copy of <var>request</var>, except for its
  <a for=request>body</a>.
 
- <li><p>If <var>request</var>'s <a for=request>body</a> is non-null, set
- <var>newRequest</var>'s <a for=request>body</a> to the result of
- <a lt=clone for=body>cloning</a> <var>request</var>'s
- <a for=request>body</a>. Rethrow any exceptions.
+ <li><p>If <var>request</var>'s <a for=request>body</a> is non-null, set <var>newRequest</var>'s
+ <a for=request>body</a> to the result of <a lt=clone for=body>cloning</a> <var>request</var>'s
+ <a for=request>body</a>.
 
  <li><p>Return <var>newRequest</var>.
 </ol>
@@ -1240,44 +1178,60 @@ or "<code>worker</code>".
  <li><p>If <var>body</var> is null, then <a>queue a fetch task</a> on <var>request</var> to
  <a>process request end-of-body</a> for <var>request</var> and abort these steps.
 
+ <li>
+  <p>Let <var>reader</var> be the result of <a lt="get a reader" for=ReadableStream>getting
+  a reader</a> from <var>body</var>'s <a for=body>stream</a>.
+
+  <p class="note no-backref">This operation cannot throw an exception.
+
  <li><p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
- chunk</a> from <var>body</var>'s <a for=body>stream</a>.
+ chunk</a> from <var>body</var>'s <a for=body>stream</a> with <var>reader</var>.
 
  <li>
   <p><a>In parallel</a>, while true:
 
   <ol>
-   <li><p>Wait for <var>read</var> to be fulfilled or rejected.
-
    <li>
-    <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
-    and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these steps:
+    <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
     <ol>
-     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the <code>Uint8Array</code>
-     object.
+     <li><p>Wait for <var>read</var> to be fulfilled or rejected.
 
      <li>
-      <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
-      <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
-      <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
-      for <var>request</var>.
+      <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
+      and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these
+      steps:
 
-      <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
+      <ol>
+       <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the
+       <code>Uint8Array</code> object.
 
-     <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
-     chunk</a> from <var>body</var>'s <a for=body>stream</a>.
+       <li>
+        <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+        <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+        <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+        for <var>request</var>.
+
+        <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
+
+       <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
+       chunk</a> from <var>body</var>'s <a for=body>stream</a> with <var>reader</var>.
+      </ol>
+
+     <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code>
+     property is true, then <a>queue a fetch task</a> on <var>request</var> to
+     <a>process request end-of-body</a> for <var>request</var> and abort these in-parallel steps.
+
+     <li><p>Otherwise, if <var>read</var> is rejected with an
+     "<code><a exception>AbortError</a></code>" {{DOMException}},
+     <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
+
+     <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
     </ol>
 
-   <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code> property
-   is true, then <a>queue a fetch task</a> on <var>request</var> to
-   <a>process request end-of-body</a> for <var>request</var> and abort these steps.
-
-   <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch with reason
-   <i>fatal</i> and abort these steps.
+   <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these in-parallel steps.
   </ol>
 </ol>
-
 
 <h4 id=responses>Responses</h4>
 
@@ -1296,8 +1250,10 @@ evolves over time. That is, not all its fields are available straight away.
 Unless stated otherwise, it is "<code>default</code>".
 
 <p>A <a for=/>response</a> can have an associated
-<dfn export for=response id=concept-response-termination-reason>termination reason</dfn>
-which is <i>end-user abort</i>, <i>fatal</i>, or <i>timeout</i>.
+<dfn export for=response id=concept-response-aborted>aborted flag</dfn>, which is initially unset.
+
+<p class="note">This indicates that the request was intentionally aborted by the developer or
+end-user.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url>url</dfn>. It is a pointer to the
@@ -1336,6 +1292,10 @@ Unless stated otherwise it is `<code>OK</code>`.
 <a for=/>header list</a>). Unless stated otherwise it is empty.
 
 <p>A <a for=/>response</a> has an associated
+<dfn export for=response id=concept-response-trailer-failed>trailer failed flag</dfn>, which is
+initially unset.
+
+<p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-https-state>HTTPS state</dfn> (an
 <a>HTTPS state value</a>). Unless stated otherwise, it is
 "<code>none</code>".
@@ -1348,7 +1308,7 @@ specified. [[!CSP]]
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</dfn>
-(a list of zero or more <a>header</a>
+(a list of zero or more <a for=/>header</a>
 <a lt=name for=header>names</a>). The list is empty unless otherwise specified.
 
 <p class="note no-backref">A <a for=/>response</a> will typically get its
@@ -1367,6 +1327,10 @@ navigate algorithm. It ensures `<code>Location</code>` has
 [[!HTML]]
 
 <hr>
+
+<p>A <a for=/>response</a> whose
+<a for=response>type</a> is "<code>error</code>" and <a for=response>aborted flag</a> is set is
+known as an <dfn export id=concept-aborted-network-error>aborted network error</dfn>.
 
 <p>A <a for=/>response</a> whose
 <a for=response>type</a> is "<code>error</code>" is known as a
@@ -1399,7 +1363,7 @@ which is only "accessible" to internal specification algorithms and is never a
 <a>filtered response</a> whose
 <a for=response>type</a> is "<code>basic</code>" and
 <a for=response>header list</a> excludes any
-<a>headers</a> in
+<a for=/>headers</a> in
 <a for=internal>internal response</a>'s
 <a for=response>header list</a> whose
 <a for=header>name</a> is a
@@ -1409,7 +1373,7 @@ which is only "accessible" to internal specification algorithms and is never a
 <a>filtered response</a> whose
 <a for=response>type</a> is "<code>cors</code>",
 <a for=response>header list</a> excludes any
-<a>headers</a> in
+<a for=/>headers</a> in
 <a for=internal>internal response</a>'s
 <a for=response>header list</a> whose
 <a for=header>name</a> is <em>not</em> a
@@ -1458,18 +1422,16 @@ is a <a>filtered response</a> whose
 <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
- <li><p>If <var>response</var> is a <a>filtered response</a>,
- return a new identical filtered response whose <a lt="internal response" for=internal>internal
- response</a> is a <a for=response>clone</a> of <var>response</var>'s
- <a for=internal>internal response</a>. Rethrow any exceptions.
+ <li><p>If <var>response</var> is a <a>filtered response</a>, then return a new identical filtered
+ response whose <a lt="internal response" for=internal>internal response</a> is a
+ <a for=response>clone</a> of <var>response</var>'s <a for=internal>internal response</a>.
 
  <li><p>Let <var>newResponse</var> be a copy of <var>response</var>, except for its
  <a for=response>body</a>.
 
- <li><p>If <var>response</var>'s <a for=response>body</a> is non-null, set
- <var>newResponse</var>'s <a for=response>body</a> to the result of
- <a lt=clone for=body>cloning</a> <var>response</var>'s
- <a for=response>body</a>. Rethrow any exceptions.
+ <li><p>If <var>response</var>'s <a for=response>body</a> is non-null, then set
+ <var>newResponse</var>'s <a for=response>body</a> to the result of <a lt=clone for=body>cloning</a>
+ <var>response</var>'s <a for=response>body</a>.
 
  <li><p>Return <var>newResponse</var>.
 </ol>
@@ -1478,7 +1440,7 @@ is a <a>filtered response</a> whose
 <h4 id=miscellaneous>Miscellaneous</h4>
 
 <p>A <dfn export id=concept-potential-destination>potential destination</dfn> is
-"<code>fetch</code>" or a <a for=request>destination</a>.
+"<code>fetch</code>" or a <a for=request>destination</a> which is not the empty string.
 
 <p>To <dfn export for=destination id=concept-potential-destination-translate>translate</dfn> a
 <a for=/>potential destination</a> <var>potentialDestination</var>, run these steps:
@@ -1494,10 +1456,9 @@ is a <a>filtered response</a> whose
 
 <h3 id=authentication-entries>Authentication entries</h3>
 
-<p>An <dfn export>authentication entry</dfn> and a
-<dfn export>proxy-authentication entry</dfn> are tuples of username, password, and realm,
-associated with one or more <a for=/>requests</a>.
-
+<p>An <dfn export>authentication entry</dfn> and a <dfn export>proxy-authentication entry</dfn> are
+tuples of username, password, and realm, used for HTTP authentication and HTTP proxy authentication,
+and associated with one or more <a for=/>requests</a>.
 <p>User agents should allow both to be cleared together with HTTP cookies and similar tracking
 functionality.
 <!-- fingerprinting -->
@@ -1530,73 +1491,54 @@ for each associated <a for="fetch group">fetch record</a> whose
 <a>keepalive flag</a> is unset,
 <a lt=terminated for=fetch>terminate</a> the
 <a for="fetch group">fetch record</a>'s
-<a for="fetch record">fetch</a> with reason <i>fatal</i>.
+<a for="fetch record">fetch</a>.
 
 
 <h3 id=connections>Connections</h3>
 
 <p>A user agent has an associated
-<dfn export id=concept-connection-pool>connection pool</dfn>. A
-<a for=/>connection pool</a> consists of zero or more
+<dfn export id=concept-connection-pool for=connection>connection pool</dfn>. A
+<a for=connection>connection pool</a> consists of zero or more
 <dfn lt=connection export id=concept-connection>connections</dfn>. Each
 <a>connection</a> is identified by an <b>origin</b> (an
 <a for=/>origin</a>) and <b>credentials</b> (a boolean).
-
-<p>A <a>connection</a> has associated
-<dfn export for=connection id=concept-tls-connection-metadata>TLS connection metadata</dfn> that consists of:
-<ul class=brief>
- <li><a for=/>token-binding protocol version</a>, initially null.
- <li><a for=/>token-binding key parameters</a>, initially null.
- <li><a for=/>token-binding Exported Keying Material</a>, initially null.
-</ul>
-
-<h4 id=obtain-connection>Obtaining a Connection</h4>
 
 <p>To <dfn export id=concept-connection-obtain for=connection>obtain a connection</dfn>, given an
 <var>origin</var> and <var>credentials</var>, run these steps:
 
 <ol>
- <li><p>If <a for=/>connection pool</a> contains a <a>connection</a>
- whose <b>origin</b> is <var>origin</var>
- or whose <b>origin</b> is authoritative for <var>origin</var>,
- and <b>credentials</b> is <var>credentials</var>, return that <a>connection</a>.
+ <li><p>If <a for=connection>connection pool</a> contains a <a>connection</a> whose <b>origin</b> is
+ <var>origin</var> and <b>credentials</b> is <var>credentials</var>, then return that
+ <a>connection</a>.
+
+ <li><p>Let <var>connection</var> be null.
 
  <li>
-  <p>Let <var>connection</var> be the result of establishing an HTTP connection to
-  <var>origin</var>. [[!HTTP]] [[!HTTP2]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]] [[!TLS]]
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
-  <p>If <var>credentials</var> is true and the user agent supports <a for=/>Token Binding</a>,
-  send <a for=/>token-binding protocol version</a> and
-  <a for=/>token-binding key parameters</a> in a
-  <code>token_binding</code> Client Hello Extension, as described in
-  <a href="https://tools.ietf.org/html/draft-ietf-tokbind-negotiation#section-2">section 2</a>
-  of the Token Binding Negotiation spec [[!TOKBIND-NEGOTIATION]].
-  If Token Binding negotiation succeeds, set
-  <a for=/>token-binding protocol version</a> and
-  <a for=/>token-binding key parameters</a>
-  in <var>connection</var>'s <a for=connection>TLS connection metadata</a>
-  to the negotiated values,
-  and <a for=/>token-binding Exported Keying Material</a> to the computed value.
+  <ol>
+   <li>
+    <p>Set <var>connection</var> to the result of establishing an HTTP connection to
+    <var>origin</var>. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+    [[!TLS]]
 
-  <p class="note no-backref">
-  The user agent will use <a for=/>Token Binding</a> for any
-  <a for=/>request</a> sent over a TLS connection for which Token Binding
-  negotiation was successful.
-  <a for=/>Token Binding</a> is only proposed when <var>credentials</var>
-  is true, so connections which successfully negotiate a binding will never be
-  pooled with connections that do not include credentials.
-  Also, note that the <a for=/>token-binding key</a> used for a specific
-  <a for=/>request</a> depends on the origin of the request's url,
-  not on the <a>connection</a>.
-  Even if multiple endpoints are coalesced into a single HTTP/2
-  <a>connection</a>, each will use a distinct <a for=/>token-binding key</a>.
+    <p>If <var>credentials</var> is false, then do <em>not</em> send a TLS client certificate.
 
-  <p>If <var>credentials</var> is false, do <em>not</em> send a TLS client certificate.
+    <p>If establishing a connection does not succeed (e.g., a DNS, TCP, or TLS error), then return
+    failure.
+  </ol>
 
-  <p>If establishing a connection does not succeed (e.g., a DNS, TCP, or TLS error), return failure.
+ <li>
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
- <li><p>Add <var>connection</var> to the <a for=/>connection pool</a>
- with <b>origin</b> being <var>origin</var> and <b>credentials</b> being <var>credentials</var>.
+  <ol>
+   <li><p>If <var>connection</var> is not null, then close <var>connection</var>.
+
+   <li><p>Return failure.
+  </ol>
+
+ <li><p>Add <var>connection</var> to the <a for=connection>connection pool</a> with <b>origin</b>
+ being <var>origin</var> and <b>credentials</b> being <var>credentials</var>.
 
  <li><p>Return <var>connection</var>.
 </ol>
@@ -1718,11 +1660,11 @@ run these steps:
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
- <li><p>Let <var>type</var> be <var>request</var>'s <a for=request>type</a>.
+ <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
  <li>
-  <p>If <var>type</var> is "<code>script</code>" and one of the following is true, then return
-  <b>blocked</b>:
+  <p>If <var>destination</var> is <a for=request/destination>script-like</a> and one of the
+  following is true, then return <b>blocked</b>:
 
   <ul class=brief>
    <li><var>mimeType</var> starts with `<code>audio/</code>`, `<code>image/</code>`, or
@@ -1764,7 +1706,7 @@ we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 <ol>
  <li><p>Call
  <a abstract-op>ReadableStreamDefaultControllerEnqueue</a>(<var>stream</var>.\[[readableStreamController]],
- <var>chunk</var>). Rethrow any exceptions.
+ <var>chunk</var>).
 </ol>
 
 <p>To <dfn abstract-op export for=ReadableStream id=concept-close-readablestream>close</dfn> a
@@ -1773,7 +1715,6 @@ we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 <ol>
  <li><p>Call
  <a abstract-op>ReadableStreamDefaultControllerClose</a>(<var>stream</var>.\[[readableStreamController]]).
- Rethrow any exceptions.
 </ol>
 
 <p>To <dfn abstract-op export for=ReadableStream id=concept-error-readablestream>error</dfn> a
@@ -1782,7 +1723,7 @@ we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 <ol>
  <li><p>Call
  <a abstract-op>ReadableStreamDefaultControllerError</a>(<var>stream</var>.\[[readableStreamController]]).
- <var>reason</var>). Rethrow any exceptions.
+ <var>reason</var>).
 </ol>
 
 <p>To
@@ -1800,7 +1741,7 @@ are optional, run these steps:
  <var>cancel</var> is given.
 
  <li><p>Let <var>stream</var> be the result of calling the initial value of {{ReadableStream}} as
- constructor with <var>init</var> and <var>strategy</var> if given. Rethrow any exceptions.
+ constructor with <var>init</var> and <var>strategy</var> if given.
 
  <li><p>Return <var>stream</var>.
 </ol>
@@ -1812,12 +1753,12 @@ with given <var>chunks</var>, run these steps:
 <ol>
  <li><p>Let <var>stream</var> be the result of
  <a lt="construct a ReadableStream object" for=ReadableStream>constructing</a> a {{ReadableStream}}
- object. Rethrow any exceptions.
+ object.
 
  <li><p>For each <var>chunk</var> in <var>chunks</var>, <a for=ReadableStream>enqueue</a>
- <var>chunk</var> into <var>stream</var>. Rethrow any exceptions.
+ <var>chunk</var> into <var>stream</var>.
 
- <li><p><a lt=close abstract-op>Close</a> <var>stream</var>. Rethrow any exceptions.
+ <li><p><a lt=close abstract-op>Close</a> <var>stream</var>.
 
  <li>Return <var>stream</var>.
 </ol>
@@ -1827,7 +1768,7 @@ with given <var>chunks</var>, run these steps:
 
 <ol>
  <li><p>Let <var>reader</var> be the result of calling
- <a abstract-op>AcquireReadableStreamDefaultReader</a>(<var>stream</var>). Rethrow any exceptions.
+ <a abstract-op>AcquireReadableStreamDefaultReader</a>(<var>stream</var>).
 
  <li><p>Return <var>reader</var>.
 </ol>
@@ -1870,8 +1811,8 @@ from a {{ReadableStream}} object with <var>reader</var>, run these steps:
 </ol>
 
 <p>To <dfn export for=ReadableStream id=concept-cancel-readablestream>cancel</dfn> a
-{{ReadableStream}} object with <var>reader</var> and <var>reason</var>, return the result of calling
-<a abstract-op>ReadableStreamCancel</a>(<var>reader</var>, <var>reason</var>).
+{{ReadableStream}} object <var>stream</var> with <var>reason</var>, return the result of calling
+<a abstract-op>ReadableStreamCancel</a>(<var>stream</var>, <var>reason</var>).
 
 <p class="note no-backref">Because the reader grants exclusive access, the actual mechanism of how
 to read cannot be observed. Implementations could use more direct mechanism if convenient.
@@ -1880,9 +1821,7 @@ to read cannot be observed. Implementations could use more direct mechanism if c
 object <var>stream</var>, run these steps:
 
 <ol>
- <li><p>Return the result of calling
- <a abstract-op>ReadableStreamTee</a>(<var>stream</var>, true).
- Rethrow any exception.
+ <li><p>Return the result of calling <a abstract-op>ReadableStreamTee</a>(<var>stream</var>, true).
 </ol>
 
 <p>An <dfn export for=ReadableStream id=concept-empty-readablestream>empty</dfn> {{ReadableStream}}
@@ -1933,7 +1872,7 @@ if the result of calling
 <h3 id=origin-header>`<code>Origin</code>` header</h3>
 
 <p>The `<dfn export http-header id=http-origin><code>Origin</code></dfn>`
-request <a>header</a> indicates where a
+request <a for=/>header</a> indicates where a
 <a for=/>fetch</a> originates from.
 
 <p class="note no-backref">The `<a http-header><code>Origin</code></a>` header is a version
@@ -1955,7 +1894,7 @@ origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensiti
 origin                           = <a for=url>scheme</a> "://" <a for=url>host</a> [ ":" <a for=url>port</a> ]</pre>
 
 <p class="note no-backref">This supplants the `<code>Origin</code>`
-<a>header</a>.
+<a for=/>header</a>.
 [[ORIGIN]]
 
 
@@ -1998,7 +1937,7 @@ all <a for=/>requests</a> whose <a for=request>method</a> is neither `<code>GET<
 <p>A <dfn id=cors-preflight-request export>CORS-preflight request</dfn> is a <a>CORS request</a> that checks to see
 if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
 <a for=/>method</a> and includes these
-<a>headers</a>:
+<a for=/>headers</a>:
 
 <dl>
  <dt>`<dfn export http-header id=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>`
@@ -2006,7 +1945,7 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
  <a>CORS request</a> to the same resource might use.
 
  <dt>`<dfn export http-header id=http-access-control-request-headers><code>Access-Control-Request-Headers</code></dfn>`
- <dd><p>Indicates which <a>headers</a> a future
+ <dd><p>Indicates which <a for=/>headers</a> a future
  <a>CORS request</a> to the same resource might use.
 </dl>
 
@@ -2014,13 +1953,13 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
 <h4 id=http-responses>HTTP responses</h4>
 
 <p>An HTTP response to a <a>CORS request</a> can include the following
-<a>headers</a>:
+<a for=/>headers</a>:
 
 <dl>
  <dt>`<dfn export http-header id=http-access-control-allow-origin><code>Access-Control-Allow-Origin</code></dfn>`
  <dd><p>Indicates whether the response can be shared, via returning the literal
  <a for=header>value</a> of the
- `<a http-header><code>Origin</code></a>` request <a>header</a>
+ `<a http-header><code>Origin</code></a>` request <a for=/>header</a>
  (which can be `<code>null</code>`) or `<code>*</code>` in a response.
 
  <dt>`<dfn export http-header id=http-access-control-allow-credentials><code>Access-Control-Allow-Credentials</code></dfn>`
@@ -2039,7 +1978,7 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
 </dl>
 
 <p>An HTTP response to a <a>CORS-preflight request</a> can include the following
-<a>headers</a>:
+<a for=/>headers</a>:
 
 <dl>
  <dt>`<dfn export http-header id=http-access-control-allow-methods><code>Access-Control-Allow-Methods</code></dfn>`
@@ -2048,27 +1987,27 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
   <a for=/>response</a>'s <a for=response>url</a> for the
   purposes of the <a>CORS protocol</a>.
 
-  <p class=note>The `<code>Allow</code>` <a>header</a> is
+  <p class=note>The `<code>Allow</code>` <a for=/>header</a> is
   not relevant for the purposes of the <a>CORS protocol</a>.
 
  <dt>`<dfn export http-header id=http-access-control-allow-headers><code>Access-Control-Allow-Headers</code></dfn>`
- <dd><p>Indicates which <a>headers</a> are supported by the
+ <dd><p>Indicates which <a for=/>headers</a> are supported by the
  <a for=/>response</a>'s <a for=response>url</a> for the
  purposes of the <a>CORS protocol</a>.
 
  <dt>`<dfn export http-header id=http-access-control-max-age><code>Access-Control-Max-Age</code></dfn>`
  <dd><p>Indicates how long the information provided by the
  `<a http-header><code>Access-Control-Allow-Methods</code></a>` and
- `<a http-header><code>Access-Control-Allow-Headers</code></a>` <a>headers</a> can be cached.
+ `<a http-header><code>Access-Control-Allow-Headers</code></a>` <a for=/>headers</a> can be cached.
 </dl>
 
 <p>An HTTP response to a <a>CORS request</a> that is not a
 <a>CORS-preflight request</a> can also include the following
-<a>header</a>:
+<a for=/>header</a>:
 
 <dl>
  <dt>`<dfn export http-header id=http-access-control-expose-headers><code>Access-Control-Expose-Headers</code></dfn>`
- <dd><p>Indicates which <a>headers</a> can be exposed as part
+ <dd><p>Indicates which <a for=/>headers</a> can be exposed as part
  of the response by listing their <a lt=name for=header>names</a>.
 </dl>
 
@@ -2076,14 +2015,14 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
 
 <p>In case a server does not wish to participate in the <a>CORS protocol</a>, its HTTP response to
 the <a lt="CORS request">CORS</a> or <a>CORS-preflight request</a> must not include any of the above
-<a>headers</a>. The server is encouraged to use the <code>403</code> <a for=/>status</a> in such
-HTTP responses.
+<a for=/>headers</a>. The server is encouraged to use the <code>403</code> <a for=/>status</a> in
+such HTTP responses.
 
 
 <h4 id=http-new-header-syntax>HTTP new-header syntax</h4>
 
 <p><a>ABNF</a> for the <a lt=value for=header>values</a> of the
-<a>headers</a> used by the <a>CORS protocol</a>:
+<a for=/>headers</a> used by the <a>CORS protocol</a>:
 
 <pre>
 Access-Control-Request-Method    = <a spec=http>method</a>
@@ -2092,15 +2031,17 @@ Access-Control-Request-Headers   = 1#<a spec=http>field-name</a>
 wildcard                         = "*"
 Access-Control-Allow-Origin      = origin-or-null / wildcard
 Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
-Access-Control-Expose-Headers    = #<a spec=http>field-name</a> / wildcard
+Access-Control-Expose-Headers    = #<a spec=http>field-name</a>
 Access-Control-Max-Age           = <a spec=http-caching>delta-seconds</a>
-Access-Control-Allow-Methods     = #<a spec=http>method</a> / wildcard
-Access-Control-Allow-Headers     = #field-name-or-wildcard
-field-name-or-wildcard           = <a spec=http>field-name</a> / wildcard</pre>
+Access-Control-Allow-Methods     = #<a spec=http>method</a>
+Access-Control-Allow-Headers     = #<a spec=http>field-name</a></pre>
 
-<p class=note>The difference between the <code>Access-Control-Expose-Headers</code> and
-<code>Access-Control-Allow-Headers</code> production is that the latter needs to be able to
-handle `<code>*, Authorization</code>` as header value whereas the former does not.
+<p class=note>For `<code>Access-Control-Expose-Headers</code>`,
+`<code>Access-Control-Allow-Methods</code>`, and `<code>Access-Control-Allow-Headers</code>`
+response <a for=/>headers</a> the <a for=header>value</a> `<code>*</code>` counts as a wildcard for
+<a for=/>requests</a> without <a for=/>credentials</a>. For such <a for=/>requests</a> there is no
+way to solely match a <a for=/>header</a> <a for=header>name</a> or <a for=/>method</a> that is
+`<code>*</code>`.
 
 
 <h4 id=cors-protocol-and-credentials>CORS protocol and credentials</h4>
@@ -2144,9 +2085,9 @@ with <a for=/>credentials</a> is rather unsafe, and extreme care has to be taken
 
 <p>To share responses with <a for=/>credentials</a>, the
 `<a http-header><code>Access-Control-Allow-Origin</code></a>` and
-`<a http-header><code>Access-Control-Allow-Credentials</code></a>` <a>headers</a> are important. The
-following table serves to illustrate the various legal and illegal combinations for a request to
-<code>https://rabbit.invalid/</code>:
+`<a http-header><code>Access-Control-Allow-Credentials</code></a>` <a for=/>headers</a> are
+important. The following table serves to illustrate the various legal and illegal combinations for a
+request to <code>https://rabbit.invalid/</code>:
 
 <table>
  <tbody><tr>
@@ -2301,10 +2242,8 @@ Access-Control-Allow-Credentials: true</pre>
 
 <p>The
 `<dfn export http-header id=http-x-content-type-options><code>X-Content-Type-Options</code></dfn>`
-response <a>header</a> can be used to require checking of a
-<a for=/>response</a>'s `<code>Content-Type</code>`
-<a>header</a> against the
-<a for=request>type</a> of a
+response <a for=/>header</a> can be used to require checking of a <a for=/>response</a>'s
+`<code>Content-Type</code>` <a for=/>header</a> against the <a for=request>destination</a> of a
 <a for=/>request</a>.
 
 <p>Its <a for=header>value</a> <a>ABNF</a>:
@@ -2324,8 +2263,8 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  then return <b>allowed</b>.
 
  <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
- <em>first</em> <a>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match
- for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
+ <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
+ match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
  <a for=response>header list</a>.
 
  <li><p>If <var>nosniff</var> is failure, then return <b>allowed</b>.
@@ -2333,266 +2272,22 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
- <li><p>Let <var>type</var> be <var>request</var>'s <a for=request>type</a>.
+ <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
- <li><p>If <var>type</var> is "<code>script</code>", and <var>mimeType</var> (ignoring parameters)
- is not a <a>JavaScript MIME type</a>, then return <b>blocked</b>.
+ <li><p>If <var>destination</var> is <a for=request/destination>script-like</a> and
+ <var>mimeType</var> (ignoring parameters) is not a <a>JavaScript MIME type</a>, then return
+ <b>blocked</b>.
 
- <li><p>If <var>type</var> is "<code>style</code>" and <var>mimeType</var> (ignoring parameters) is
- not `<code>text/css</code>`, then return <b>blocked</b>.
+ <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var>
+ (ignoring parameters) is not `<code>text/css</code>`, then return <b>blocked</b>.
 
  <li><p>Return <b>allowed</b>.
 </ol>
 
-<p class="note no-backref">Only "<code>script</code>" and "<code>style</code>" are considered as any
-exploits pertain to those <a for=request>types</a>. Also, considering "<code>image</code>" was not
-compatible with deployed content.
+<p class="note no-backref">Only <a for=/>request</a> <a for=request>destinations</a> that are
+<a for=request/destination>script-like</a> or "<code>style</code>" are considered as any exploits
+pertain to them. Also, considering "<code>image</code>" was not compatible with deployed content.
 
-
-<h3 id=token-binding>Token Binding</h3>
-
-<p>In order to protect security tokens like HTTP cookies and OAuth tokens, user agents and servers
-can use a technique known as <dfn export id=concept-token-binding>Token Binding</dfn> to
-cryptographically associate a given token with a secret
-(a <dfn export id=concept-token-binding-key>token-binding key</dfn>) known only to a specific
-user agent. This association mitigates the risk that attackers can steal the token and use it
-themselves, as they will not be able to easily replicate the user agent's secret,
-and therefore will be unable to replicate the cryptographic binding of the token.
-
-<p>Details are described in TOKBIND-NEGOTIATION, TOKBIND-PROTOCOL and
-TOKBIND-HTTPS and integration is defined here.
-[[TOKBIND-NEGOTIATION]], [[TOKBIND-PROTOCOL]], and [[TOKBIND-HTTPS]].
-
-<p>A <dfn export id=token-binding-id>token binding ID</dfn> is the non-secret representation
-of a <a for=/>token-binding key</a>, as described in
-<a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.2">section 3.2</a>
-of [[TOKBIND-PROTOCOL]].
-
-<p>At a very high level, a user agent negotiates the use of Token Binding with
-a server when it sets up a TLS connection to the server.
-It sends its highest supported
-<dfn export id=concept-token-binding-protocol-version>token-binding protocol version</dfn>
-and supported cryptographic algorithms and parameters (the
-<dfn export id=concept-token-binding-key-parameters>token-binding key parameters</dfn>)
-in a <code>token_binding</code> Client Hello Extension, as described in
-<a href="https://tools.ietf.org/html/draft-ietf-tokbind-negotiation#section-2">section 2</a>
-of the Token Binding Negotiation spec [[!TOKBIND-NEGOTIATION]].
-The user agent saves the values of the <a for=/>token-binding protocol version</a> and
-<a for=/>token-binding key parameters</a> that were negotiated for the
-TLS connection in metadata for that connection.
-
-<p>The user agent uses a `<dfn http-header><code>Sec-Token-Binding</code></dfn>`
-HTTP request <a for=/>header</a> to transmit token binding metadata to the server.
-When a user agent sends a <a for=/>request</a> to a server over a TLS connection
-for which Token Binding has been negotiated, it proves possession of the
-private key by generating a cryptographic signature and sending it in the
-`<a http-header><code>Sec-Token-Binding</code></a>` <a for=/>header</a>.
-The server associates ('binds') credentials that it issues to that user agent
-with a <a for=/>token binding ID</a> in that <a for=/>header</a>.
-The server also verifies if bound credentials presented to it by a user agent
-match a <a for=/>token binding ID</a> in that <a for=/>header</a>.
-
-<p>The <a for=header>value</a> of the `<a http-header><code>Sec-Token-Binding</code></a>`
-<a for=/>header</a> is a base64url-encoded string [[!RFC4648]]:
-
-<pre>
-Sec-Token-Binding       = 1*( ALPHA / DIGIT / "-" / "_" ) *2( "=" )
-</pre>
-
-<p>The data in a `<a http-header><code>Sec-Token-Binding</code></a>` <a for=/>header</a> is a
-<dfn export id=token-binding-message>Token Binding Message</dfn> as specified in
-<a href="https://tools.ietf.org/html/draft-ietf-tokbind-https#section-2">section 2</a>
-of the Token Binding over HTTP spec [[!TOKBIND-HTTPS]].
-A <a for=/>token binding message</a> is a list of <a for=/>token binding</a>s,
-where each <a for=/>token binding</a> consists of a
-<a for=/>token binding ID</a>, a <dfn id=concept-token-binding-type>token-binding type</dfn> and a
-cryptographic signature over the <a for=/>token-binding type</a>, the
-<a for=/>token-binding key parameters</a> and the
-<dfn id=concept-token-binding-ekm>token-binding Exported Keying Material</dfn>,
-as described in
-<a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.3">section 3.3</a>
- of [[!TOKBIND-PROTOCOL]].
-
-<h4 id=federated-token-binding>Federated Token Binding</h4>
-
-<p>In the scenario described above, servers bind tokens to be used by user agents
-with those servers.
-To enable existing web authorization protocols to use bound credentials,
-there is a need to support scenarios where bound credentials issued by one server
-(e.g., an identity provider) are presented by the user agent to a different server
-(e.g., a relying party).
-[[TOKBIND-PROTOCOL]] and [[TOKBIND-HTTPS]] describe support for Federated Token Binding.
-
-<p>A <dfn export id=referred-token-binding-id>referred-token-binding ID</dfn> is the
-<a for=/>token binding ID</a> for a server other than the server to which the
-<a for=/>request</a> is being sent.
-
-Script code from an <a for=/>origin</a> can set a <a for=/>request</a>'s
-<a for=request>use-referred-token-binding flag</a> to ask the user agent to send
-the <a for=/>token binding ID</a> for that <a for=/>origin</a> as a
-<a for=/>referred-token-binding ID</a>
-in the <a for=/>Token Binding Message</a> sent to a target server.
-
-Alternately, servers that redirect a user agent to a different server can use the
-`<dfn http-header><code>Include-Referred-Token-Binding-ID</code></dfn>`
-<a for=response>header</a>.
-
-<pre>
-Include-Referred-Token-Binding-ID = %x74.72.75.65 ; "true", case-sensitive
-</pre>
-
-<p>The value of this <a for=response>header</a> is specified in
-<a href="https://tools.ietf.org/html/draft-ietf-tokbind-https#section-5.3">section 5.3</a>
-of the Token Binding over HTTP spec [[TOKBIND-HTTPS]].
-
-<p>By setting the `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
-<a for=response>header</a> to
-`<code>true</code>` in the redirect response, the <a for=request>origin</a> that
-sends the redirect <a for=/>response</a> (the "referring <a for=request>origin</a>" in the
-<a for=/>Token Binding</a> sense) tells the user agent to disclose the
-<a for=/>token binding ID</a> used by the user agent for that <a for=request>origin</a>
-to the target <a for=request>origin</a>. The user agent does this while processing the
-`<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
-<a for=response>header</a> in the redirect
-<a for=/>response</a>, by adding a <a for=/>referred-token-binding ID</a> in the
-<a for=/>Token Binding Message</a> that is created when the <a for=/>request</a>
-is sent to the target server.
-
-<h4 id=token-binding-key-store>Token Binding Key Store</h4>
-
-<p>The user agent maintains a
-<dfn id=concept-token-binding-key-store/>token-binding key store</dfn>,
-where it saves different <a for=/ lt="token-binding key">token-binding keys</a> to be used with different servers.
-Whenever a <a for=/>token-binding key</a> is needed, the user agent looks it up
-in the <a for=/>token-binding key store</a>,
-creating and saving a new <a for=/>token-binding key</a> if one does not exist.
-The <a for=/>token-binding key store</a> is typically maintained alongside
-the user agent's cookie store.
-
-<h4 id=getting-token-binding-key>Getting a Token Binding Key</h4>
-
-<p><dfn abstract-op export id=concept-get-token-binding-key>Get the token-binding key</dfn>
-for an <a for=/>origin</a> <var>tokenBindingOrigin</var> and
-<a for=/>token-binding key parameters</a> <var>tokenBindingKeyParameters</var>,
-using the user agent's <a for=/>token-binding key store</a>,
-by running these substeps:
-
-<ol>
- <li><p>Let <var>keyDomainName</var> be null.
-
- <li><p>If <var>tokenBindingOrigin</var>'s <a for=origin>host</a> is an <a>IPv4 address</a> or an <a>IPv6 address</a>,
- set <var>keyDomainName</var> to <var>tokenBindingOrigin</var>'s <a for=origin>host</a>.
-
- <p>Otherwise, set <var>keyDomainName</var> to the registrable domain of
- <var>tokenBindingOrigin</var>'s host, determined by running the steps in the Algorithm section of
- <a href=https://publicsuffix.org/list/>Public Suffix List</a>
- [[PUBLIC-SUFFIX]]
-
- <li><p>Let <var>tokenBindingKeyPair</var> be null.
-
- <li><p>Set <var>tokenBindingKeyPair</var> to the result of looking up the
- <a for=/>token-binding key</a> pair for <var>keyDomainName</var> and
- <var>tokenBindingKeyParameters</var> in the <a for=/>token-binding key store</a>.
-
- <li><p>If <var>tokenBindingKeyPair</var> is null, create a new key pair for
- <var>keyDomainName</var> using <var>tokenBindingKeyParameters</var>, save it in the
- <a for=/>token-binding key store</a>, and set <var>tokenBindingKeyPair</var> to that new key pair.
-
- <li><p>Return <var>tokenBindingKeyPair</var>.
-</ol>
-
-
-<h4 id=computing-token-binding-header-value>Computing a Token Binding Header Value</h4>
-
-<p><dfn abstract-op export id=concept-compute-token-binding-header-value>Compute a Token Binding header value</dfn>
-that can be passed in a `<a http-header><code>Sec-Token-Binding</code></a>`
-<a for=/>header</a> for a <a for=/>request</a>
-<var>httpRequest</var> and a <a>connection</a> <var>tlsConnection</var>,
-using the <a for=/>token-binding key store</a> and the
-<a for=/>connection pool</a>, by running these substeps:
-
-<ol>
- <li><p>If <var>httpRequest</var>'s <a for=request>use-token-binding flag</a> is not set,
- then return null.
-
- <li><p>Initialize <var>tokenBindingMessage</var> to null.
-
- <li><p>If <a for=/>token-binding protocol version</a> in <var>tlsConnection</var>'s
- <a for=connection>TLS connection metadata</a> is null, return null.
-
- <li><p>Let <var>providedTokenBindingKeyPair</var> be the result of
- <a abstract-op lt="Get the token-binding key">getting the token-binding key</a>
- for the <a for=/>origin</a> of <var>httpRequest</var>'s <a for=request>current url</a>
- and the <a for=/>token-binding key parameters</a> in <var>tlsConnection</var>'s
- <a for=connection>TLS connection metadata</a>.
-
- <li><p>Let <var>providedTokenBindingId</var> be the result of computing a
- <a for=/>token binding ID</a> from <var>providedTokenBindingKeyPair</var>,
- as described in
- <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.2">section 3.2</a>
- of [[!TOKBIND-PROTOCOL]].
-
- <li><p>Let <var>providedTokenBinding</var> be the result of computing a <a for=/>token binding</a>
- using <var>providedTokenBindingId</var> and <a for=/>token-binding type</a>
- <code>provided_token_binding</code>,
- containing a signature (using <var>providedTokenBindingKeyPair</var>) over the
- <var>providedTokenBindingId</var> as well as <var>tlsConnection</var>'s
- <a for=/>token-binding Exported Keying Material</a>, as described in
- <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.3">section 3.3</a>
- of [[!TOKBIND-PROTOCOL]].
-
- <li><p>Set <var>tokenBindingMessage</var> to a list containing <var>providedTokenBinding</var>
- as the only <a for=/>token binding</a>.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>use-referred-token-binding flag</a> is set,
- then run these substeps:
-  <ol>
-   <li><p>Let <var>referredTlsConnection</var> be the result of
-   <a lt="obtain a connection" for=connection>obtaining a connection</a> for
-   <var>httpRequest</var>'s <a for=request>referred-token-binding origin</a>
-   with credentials <code>true</code> from the <a for=/>connection pool</a>.
-
-   <li><p>If <a for=/>token-binding protocol version</a> in
-   <var>referredTlsConnection</var>'s
-   <a for=connection>TLS connection metadata</a> is null,
-   set <var>referredTokenBinding</var> to null.
-
-   <li><p>If <a for=/>token-binding protocol version</a> in
-   <var>referredTlsConnection</var>'s
-   <a for=connection>TLS connection metadata</a> is not null then:
-    <ol>
-     <li><p>Let <var>referredTokenBindingKeyPair</var> be the result of
-     <a abstract-op lt="Get the token-binding key">getting the token-binding key</a>
-     for <var>httpRequest</var>'s <a for=request>referred-token-binding origin</a>
-     and the <a for=/>token-binding key parameters</a> in <var>tlsConnection</var>'s
-     <a for=connection>TLS connection metadata</a>.
-
-     <li><p>Let <var>referredTokenBindingId</var> be the result of computing a
-     <a for=/>token binding ID</a> from <var>referredTokenBindingKeyPair</var>,
-     as described in
-     <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.2">section 3.2</a>
-     of [[!TOKBIND-PROTOCOL]].
-
-     <li><p>Let <var>referredTokenBinding</var> be the result of computing a
-     <a for=/>token binding</a> using <var>referredTokenBindingId</var> and
-     <a for=/>token-binding type</a>
-     <code>referred_token_binding</code>, containing a signature
-     (using <var>referredTokenBindingKeyPair</var>) over the <var>referredTokenBindingId</var>
-     as well as <var>tlsConnection</var>'s
-     <a for=/>token-binding Exported Keying Material</a>, as described in
-     <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.3">section 3.3</a>
-     of [[!TOKBIND-PROTOCOL]].
-    </ol>
-
-   <li><p>If <var>referredTokenBinding</var> is not null, <a for=list>append</a>
-   it to <var>tokenBindingMessage</var>.
-  </ol>
-
-  <li><p>If <var>tokenBindingMessage</var> is not null, compute and return its base64url-encoding
-  [[!RFC4648]] as described in
-  <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3">section 3</a>
-  of [[!TOKBIND-PROTOCOL]]. Otherwise return null.
-</ol>
 
 
 <h2 id=fetching>Fetching</h2>
@@ -2618,9 +2313,8 @@ using the <a for=/>token-binding key store</a> and the
 
 <p>To perform a <dfn export id=concept-fetch>fetch</dfn> using <var>request</var>, run
 the steps below. An ongoing <a for=/>fetch</a> can be
-<dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with reason
-<var>reason</var>, which must be <i>end-user abort</i>, <i>fatal</i>,
-<i>timeout</i>, or <i>garbage collection</i>.
+<dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
+which is unset unless otherwise specified.
 
 <p>The user agent may be asked to
 <dfn export for=fetch id=concept-fetch-suspend>suspend</dfn> the ongoing fetch.
@@ -2635,129 +2329,141 @@ the request.
 [[!HTTP-CACHING]]
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>window</a> is
- "<code>client</code>", set <var>request</var>'s
- <a for=request>window</a> to <var>request</var>'s
- <a for=request>client</a>, if <var>request</var>'s
- <a for=request>client</a>'s
- <a for="environment settings object">global object</a> is a
- {{Window}} object, and to "<code>no-window</code>"
- otherwise.
-
- <li><p>If <var>request</var>'s <a for=request>origin</a> is
- "<code>client</code>", set <var>request</var>'s
- <a for=request>origin</a> to  <var>request</var>'s
- <a for=request>client</a>'s <a for="environment settings object">origin</a>.
-
  <li>
-  <p>If <var>request</var>'s <a for=request>header list</a>
-  <a for="header list">does not contain</a> `<code>Accept</code>`, then:
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
   <ol>
-   <li><p>Let <var>value</var> be `<code>*/*</code>`.
+   <li><p>If <var>request</var>'s <a for=request>window</a> is
+   "<code>client</code>", set <var>request</var>'s
+   <a for=request>window</a> to <var>request</var>'s
+   <a for=request>client</a>, if <var>request</var>'s
+   <a for=request>client</a>'s
+   <a for="environment settings object">global object</a> is a
+   {{Window}} object, and to "<code>no-window</code>"
+   otherwise.
 
-   <li><p>If <var>request</var> is a <a>navigation request</a>, a user agent should set
-   <var>value</var> to
-   `<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`.
+   <li><p>If <var>request</var>'s <a for=request>origin</a> is
+   "<code>client</code>", set <var>request</var>'s
+   <a for=request>origin</a> to  <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">origin</a>.
 
    <li>
-    <p>Otherwise, a user agent should set <var>value</var> to the first matching statement, if any,
-    switching on <var>request</var>'s <a for=request>type</a>:
-    <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
+    <p>If <var>request</var>'s <a for=request>header list</a>
+    <a for="header list">does not contain</a> `<code>Accept</code>`, then:
 
-    <dl class=switch>
-     <dt>"<code>image</code>"
-     <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
+    <ol>
+     <li><p>Let <var>value</var> be `<code>*/*</code>`.
 
-     <dt>"<code>style</code>"
-     <dd>`<code>text/css,*/*;q=0.1</code>`
-    </dl>
+     <li><p>If <var>request</var> is a <a>navigation request</a>, a user agent should set
+     <var>value</var> to
+     `<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`.
 
-   <li><p><a for="header list">Append</a>
-   `<code>Accept</code>`/<var>value</var> to <var>request</var>'s
-   <a for=request>header list</a>.
-  </ol>
+     <li>
+      <p>Otherwise, a user agent should set <var>value</var> to the first matching statement, if
+      any, switching on <var>request</var>'s <a for=request>destination</a>:
+      <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
 
- <li><p>If <var>request</var>'s <a for=request>header list</a>
- <a for="header list">does not contain</a> `<code>Accept-Language</code>`, user agents should
- <a for="header list">append</a>
- `<code>Accept-Language</code>`/an appropriate <a for=header>value</a>
- to <var>request</var>'s <a for=request>header list</a>.
+      <dl class=switch>
+       <dt>"<code>image</code>"
+       <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
 
- <li>
-  <p>If <var>request</var>'s <a for=request>priority</a> is
-  null, use <var>request</var>'s
-  <a for=request>initiator</a>,
-  <a for=request>type</a>, and
-  <a for=request>destination</a>
-  appropriately in setting it to a user-agent-defined object.
+       <dt>"<code>style</code>"
+       <dd>`<code>text/css,*/*;q=0.1</code>`
+      </dl>
 
-  <p class=note>The user-agent-defined object could encompass stream weight and dependency
-  for HTTP/2, and equivalent information used to prioritize dispatch and processing of
-  HTTP/1 fetches.
+     <li><p><a for="header list">Append</a>
+     `<code>Accept</code>`/<var>value</var> to <var>request</var>'s
+     <a for=request>header list</a>.
+    </ol>
 
+   <li><p>If <var>request</var>'s <a for=request>header list</a>
+   <a for="header list">does not contain</a> `<code>Accept-Language</code>`, user agents should
+   <a for="header list">append</a>
+   `<code>Accept-Language</code>`/an appropriate <a for=header>value</a>
+   to <var>request</var>'s <a for=request>header list</a>.
 
- <li>
-  <p>If <var>request</var> is a <a>navigation request</a>, a user agent should, for each
-  <a>header</a> <a for=header>name</a> (<var>hintName</var>) in the first column of the following
-  table, if <var>request</var>'s <a for=request>header list</a>
-  <a for="header list">does not contain</a> <var>hintName</var>, then
-  <a for="header list">append</a>
-  <var>hintName</var>/the value given in the same row on the second column, to <var>request</var>'s
-  <a for=request>header list</a>.
-
-  <table>
-   <tbody><tr>
-    <th><a for=header>Name</a>
-    <th><a for=header>Value</a>
-   <tr>
-    <td>`<code>dpr</code>`
-    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
-   <tr>
-    <td>`<code>save-data</code>`
-    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
-   <tr>
-    <td>`<code>viewport-width</code>`
-    <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
-  </table>
-
- <li>
-  <p>If <var>request</var> is a <a>subresource request</a>, run these substeps:
-
-  <ol>
    <li>
-    <p>If <var>request</var>'s <a for=client>client hints list</a> is not empty, then run these
-    substeps for each <var>hintName</var> in the list:
+    <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
+    <a for=request>initiator</a> and <a for=request>destination</a> appropriately in setting
+    <var>request</var>'s <a for=request>priority</a> to a user-agent-defined object.
+
+    <p class=note>The user-agent-defined object could encompass stream weight and dependency
+    for HTTP/2, and equivalent information used to prioritize dispatch and processing of
+    HTTP/1 fetches.
+
+   <li>
+    <p>If <var>request</var> is a <a>navigation request</a>, a user agent should, for each
+    <a for=/>header</a> <a for=header>name</a> (<var>hintName</var>) in the first column of the
+    following table, if <var>request</var>'s <a for=request>header list</a>
+    <a for="header list">does not contain</a> <var>hintName</var>, then
+    <a for="header list">append</a>
+    <var>hintName</var>/the value given in the same row on the second column, to
+    <var>request</var>'s <a for=request>header list</a>.
+
+    <table>
+     <tbody><tr>
+      <th><a for=header>Name</a>
+      <th><a for=header>Value</a>
+     <tr>
+      <td>`<code>dpr</code>`
+      <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
+     <tr>
+      <td>`<code>save-data</code>`
+      <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+     <tr>
+      <td>`<code>viewport-width</code>`
+      <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
+    </table>
+
+   <li>
+    <p>If <var>request</var> is a <a>subresource request</a>, run these substeps:
 
     <ol>
      <li>
-      <p>Set <var>value</var> to the first matching statement, if any, switching on
-      <var>hintName</var>:
+      <p>If <var>request</var>'s <a for=client>client hints list</a> is not empty, then run these
+      substeps for each <var>hintName</var> in the list:
 
-      <dl class=switch>
-       <dt>"<code>dpr</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
-       <dt>"<code>save-data</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
-       <dt>"<code>viewport-width</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
-       <dt>"<code>width</code>"
-       <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#width>width value</a>
-      </dl>
+      <ol>
+       <li>
+        <p>Set <var>value</var> to the first matching statement, if any, switching on
+        <var>hintName</var>:
 
-     <li><p><a for="header list">Append</a> <var>hintName</var>/<var>value</var> to
-     <var>request</var>'s <a for=request>header list</a>.
+        <dl class=switch>
+         <dt>"<code>dpr</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
+         <dt>"<code>save-data</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+         <dt>"<code>viewport-width</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
+         <dt>"<code>width</code>"
+         <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#width>width value</a>
+        </dl>
+
+       <li><p><a for="header list">Append</a> <var>hintName</var>/<var>value</var> to
+       <var>request</var>'s <a for=request>header list</a>.
+      </ol>
+
+     <li><p>Let <var>record</var> be a new
+     <a for="fetch group">fetch record</a> consisting of
+     <var>request</var> and this instance of the
+     <a for=/>fetch</a> algorithm.
+
+     <li><p>Append <var>record</var> to <var>request</var>'s
+     <a for=request>client</a>'s
+     <a for=fetch>fetch group</a> list of
+     <a for="fetch group">fetch records</a>.
     </ol>
+  </ol>
 
-   <li><p>Let <var>record</var> be a new
-   <a for="fetch group">fetch record</a> consisting of
-   <var>request</var> and this instance of the
-   <a for=/>fetch</a> algorithm.
+ <li>
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
-   <li><p>Append <var>record</var> to <var>request</var>'s
-   <a for=request>client</a>'s
-   <a for=fetch>fetch group</a> list of
-   <a for="fetch group">fetch records</a>.
+  <ol>
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+   <li><p>Return a <a>network error</a>.
   </ol>
 
  <li><p>Return the result of performing a <a for=main>main fetch</a>
@@ -2776,81 +2482,98 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
 <ol>
  <li><p>Let <var>response</var> be null.
 
- <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and
- <var>request</var>'s <a for=request>current url</a> is
- not <a lt="is local">local</a>, set
- <var>response</var> to a <a>network error</a>.
-
- <li><p>Execute <a href=https://w3c.github.io/webappsec-csp/#report-for-request>Report Content Security Policy violations for <var>request</var></a>.
- [[!CSP]]
-
- <li><p><a href=https://w3c.github.io/webappsec-upgrade-insecure-requests/#upgrade-request>Upgrade <var>request</var> to a potentially secure URL, if appropriate</a>.
- [[!UPGRADE]]
-
- <li><p>If
- <a lt="block bad port">should fetching <var>request</var> be blocked due to a bad port</a>,
- <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
- or
- <a href=https://w3c.github.io/webappsec-csp/#should-block-request>should fetching <var>request</var> be blocked by Content Security Policy</a>
- returns <b>blocked</b>, set <var>response</var> to a
- <a>network error</a>.
- [[!MIX]]
- [[!CSP]]
-
- <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string and
- <var>request</var>'s <a for=request>client</a> is non-null, then set <var>request</var>'s
- <a for=request>referrer policy</a> to <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">referrer policy</a>.
- [[!REFERRER]]
-
  <li>
-  <p>If <var>request</var>'s <a for=request>referrer policy</a>
-  is the empty string, then set <var>request</var>'s
-  <a for=request>referrer policy</a> to
-  "<code>no-referrer-when-downgrade</code>".
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
-  <p class="note no-backref">We use "<code>no-referrer-when-downgrade</code>" because it is the
-  historical default.
+  <ol>
 
- <li>
-  <p>If <var>request</var>'s <a for=request>referrer</a>
-  is not "<code>no-referrer</code>", set <var>request</var>'s
-  <a for=request>referrer</a> to the result of invoking
-  <a>determine <var>request</var>'s referrer</a>.
-  [[!REFERRER]]
+   <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and
+   <var>request</var>'s <a for=request>current url</a> is
+   not <a lt="is local">local</a>, set
+   <var>response</var> to a <a>network error</a>.
 
-  <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
-  provide the end user with options to override <var>request</var>'s
-  <a for=request>referrer</a> to "<code>no-referrer</code>" or
-  have it expose less sensitive information.
+   <li><p>Execute <a href=https://w3c.github.io/webappsec-csp/#report-for-request>Report Content Security Policy violations for <var>request</var></a>.
+    [[!CSP]]
 
- <li>
-  <p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
-  "<code>ftp</code>", <var>request</var>'s <a for=request>client</a>'s
-  <a for=environment>creation URL</a>'s <a for=url>scheme</a> is not "<code>ftp</code>", and
-  <var>request</var>'s <a for=request>reserved client</a> is either null or an <a>environment</a>
-  whose <a for=environment>target browsing context</a> is a <a>nested browsing context</a>, then set
-  <var>response</var> to a <a>network error</a>.
+   <li><p><a href=https://w3c.github.io/webappsec-upgrade-insecure-requests/#upgrade-request>Upgrade <var>request</var> to a potentially secure URL, if appropriate</a>.
+   [[!UPGRADE]]
 
- <li>
-  <p>Set <var>request</var>'s <a for=request>current url</a>'s
-  <a for=url>scheme</a> to "<code>https</code>" if
-  all of the following conditions are true:
+   <li><p>If
+   <a lt="block bad port">should fetching <var>request</var> be blocked due to a bad port</a>,
+   <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
+   or
+   <a href=https://w3c.github.io/webappsec-csp/#should-block-request>should fetching <var>request</var> be blocked by Content Security Policy</a>
+   returns <b>blocked</b>, set <var>response</var> to a
+   <a>network error</a>.
+   [[!MIX]]
+   [[!CSP]]
 
-  <ul class=brief>
-   <li><var>request</var>'s <a for=request>current url</a>'s
-   <a for=url>scheme</a> is "<code>http</code>"
-   <li><var>request</var>'s <a for=request>current url</a>'s
-   <a for=url>host</a> is a
-   <a for=/>domain</a>
-   <li>Matching <var>request</var>'s <a for=request>current url</a>'s
-   <a for=url>host</a> per
-   <a href=https://tools.ietf.org/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
-   results in either a superdomain match with an asserted <code>includeSubDomains</code>
-   directive or a congruent match (with or without an asserted <code>includeSubDomains</code>
-   directive) [[!HSTS]]
-  </ul>
- <!-- Per Mike West HSTS happens "probably after" Referrer -->
+   <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string and
+   <var>request</var>'s <a for=request>client</a> is non-null, then set <var>request</var>'s
+   <a for=request>referrer policy</a> to <var>request</var>'s <a for=request>client</a>'s
+   <a for="environment settings object">referrer policy</a>.
+   [[!REFERRER]]
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>referrer policy</a>
+    is the empty string, then set <var>request</var>'s
+    <a for=request>referrer policy</a> to
+    "<code>no-referrer-when-downgrade</code>".
+
+    <p class="note no-backref">We use "<code>no-referrer-when-downgrade</code>" because it is the
+    historical default.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>referrer</a>
+    is not "<code>no-referrer</code>", set <var>request</var>'s
+    <a for=request>referrer</a> to the result of invoking
+    <a>determine <var>request</var>'s referrer</a>.
+    [[!REFERRER]]
+
+    <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
+    provide the end user with options to override <var>request</var>'s
+    <a for=request>referrer</a> to "<code>no-referrer</code>" or
+    have it expose less sensitive information.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
+    "<code>ftp</code>", <var>request</var>'s <a for=request>client</a>'s
+    <a for=environment>creation URL</a>'s <a for=url>scheme</a> is not "<code>ftp</code>", and
+    <var>request</var>'s <a for=request>reserved client</a> is either null or an <a>environment</a>
+    whose <a for=environment>target browsing context</a> is a <a>nested browsing context</a>, then
+    set <var>response</var> to a <a>network error</a>.
+
+   <li>
+    <p>Set <var>request</var>'s <a for=request>current url</a>'s
+    <a for=url>scheme</a> to "<code>https</code>" if
+    all of the following conditions are true:
+
+    <ul class=brief>
+     <li><var>request</var>'s <a for=request>current url</a>'s
+     <a for=url>scheme</a> is "<code>http</code>"
+     <li><var>request</var>'s <a for=request>current url</a>'s
+     <a for=url>host</a> is a
+     <a for=/>domain</a>
+     <li>Matching <var>request</var>'s <a for=request>current url</a>'s
+     <a for=url>host</a> per
+     <a href=https://tools.ietf.org/html/rfc6797#section-8.2>Known HSTS Host Domain Name
+     Matching</a> results in either a superdomain match with an asserted
+     <code>includeSubDomains</code> directive or a congruent match (with or without an asserted
+     <code>includeSubDomains</code> directive) [[!HSTS]]
+    </ul>
+   <!-- Per Mike West HSTS happens "probably after" Referrer -->
+  </ol>
+
+  <li>
+   <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+   <ol>
+    <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+    <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+    <li><p>Return a <a>network error</a>.
+   </ol>
 
  <li><p>If <var>request</var>'s <a>synchronous flag</a> is unset and
  <i>recursive flag</i> is unset, run the remaining steps
@@ -2912,7 +2635,7 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    <dt><var>request</var>'s <a>use-CORS-preflight flag</a> is set
    <dt><var>request</var>'s <a>unsafe-request flag</a> is set and either <var>request</var>'s
    <a for=request>method</a> is not a <a>CORS-safelisted method</a> or
-   a <a>header</a> in <var>request</var>'s
+   a <a for=/>header</a> in <var>request</var>'s
    <a for=request>header list</a> is not a
    <a>CORS-safelisted request-header</a>
    <dd>
@@ -2962,17 +2685,18 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      `<a http-header><code>Access-Control-Expose-Headers</code></a>` and <var>response</var>'s
      <a for=response>header list</a>.
 
-     <li><p>If <var>headerNames</var> is `<code>*</code>` and <var>request</var>'s
-     <a for=request>credentials mode</a> is not
-     "<code>include</code>", then set <var>response</var>'s
-     <a for=response>CORS-exposed header-name list</a>
-     to all unique <a>header</a>
-     <a lt=name for=header>names</a> in <var>response</var>'s
+     <li><p>If <var>request</var>'s <a for=request>credentials mode</a> is not
+     "<code>include</code>" and <var>headerNames</var> contains `<code>*</code>`, then set
+     <var>response</var>'s <a for=response>CORS-exposed header-name list</a> to all unique
+     <a for=/>header</a> <a lt=name for=header>names</a> in <var>response</var>'s
      <a for=response>header list</a>.
 
-     <li><p>Otherwise, if <var>headerNames</var> is not null, failure, or `<code>*</code>`, then set
-     <var>response</var>'s <a for=response>CORS-exposed header-name list</a> to
-     <var>headerNames</var>.
+     <li>
+      <p>Otherwise, if <var>headerNames</var> is not null or failure, then set <var>response</var>'s
+      <a for=response>CORS-exposed header-name list</a> to <var>headerNames</var>.
+
+      <p class="note">One of the <var>headerNames</var> can still be `<code>*</code>` at this point,
+      but will only match a <a for=/>header</a> whose <a for=header>name</a> is `<code>*</code>`.
     </ol>
 
    <li>
@@ -3040,13 +2764,11 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    <li><p><a lt=wait for=body>Wait</a> for <var>response</var>'s
    <a for=response>body</a>.
 
-   <li><p>If <var>response</var> does not have a
-   <a for=response>termination reason</a> and
-   <var>response</var> does not
+   <li><p>If <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> has not
+   <a for=ReadableStream>errored</a>, and <var>response</var> does not
    <a href=https://w3c.github.io/webappsec-subresource-integrity/#does-response-match-metadatalist>match</a>
-   <var>request</var>'s <a for=request>integrity metadata</a>,
-   set <var>response</var> and <var>internalResponse</var> to a
-   <a>network error</a>.
+   <var>request</var>'s <a for=request>integrity metadata</a>, set <var>response</var> and
+   <var>internalResponse</var> to a <a>network error</a>.
    [[!SRI]]
   </ol>
 
@@ -3085,10 +2807,13 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
  <li><p><a>Queue a fetch task</a> on <var>request</var> to
  <a>process response end-of-body</a> for <var>response</var>.
 
- <li><p>Wait for <var>internalResponse</var>'s <a for=response>trailer</a>,
- if any. <span class=note>See
+ <li><p>Wait for either <var>internalResponse</var>'s <a for=response>trailer</a>,
+ if any, or for the ongoing fetch to <a for=fetch lt=terminated>terminate</a>. <span class=note>See
  <a href=https://tools.ietf.org/html/rfc7230#section-4.1.2>section 4.1.2</a> of
  [[!HTTP]].</span>
+
+ <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then set <var>internalResponse</var>'s
+ <a for=response>trailer failed flag</a>.
 
  <li><p>Set <var>request</var>'s <a>done flag</a>.
 
@@ -3114,7 +2839,7 @@ steps:
   <a for=url>path</a> contains a single string
   "<code>blank</code>", return a <a for=/>response</a> whose
   <a for=response>header list</a> consist of a single
-  <a>header</a> whose
+  <a for=/>header</a> whose
   <a for=header>name</a> is `<code>Content-Type</code>` and
   <a for=header>value</a> is
   `<code>text/html;charset=utf-8</code>`,
@@ -3132,44 +2857,56 @@ steps:
  <dt>"<code>blob</code>"
  <dd>
   <ol>
-   <li><p>Let <var>blob</var> be <var>request</var>'s
-   <a for=request>current url</a>'s
-   <a>object</a>.
-
    <li>
-    <p>If <var>request</var>'s <a for=request>method</a> is not
-    `<code>GET</code>` or <var>blob</var> is null, then return a
-    <a>network error</a>.
+    <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:
 
-    <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction
-    serves no useful purpose other than being interoperable.
+    <ol>
+     <li><p>Let <var>blob</var> be <var>request</var>'s
+     <a for=request>current url</a>'s
+     <a>object</a>.
 
-   <li><p>Let <var>response</var> be a new
-   <a for=/>response</a>.
+     <li>
+      <p>If <var>request</var>'s <a for=request>method</a> is not
+      `<code>GET</code>` or <var>blob</var> is null, then return a
+      <a>network error</a>.
 
-   <li><p><a for="header list">Append</a>
-   `<code>Content-Length</code>`/<var>blob</var>'s
-   {{Blob/size}} attribute value to
-   <var>response</var>'s
-   <a for=response>header list</a>.
+      <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction
+      serves no useful purpose other than being interoperable.
 
-   <li><p><a for="header list">Append</a>
-   `<code>Content-Type</code>`/<var>blob</var>'s
-   {{Blob/type}} attribute value to
-   <var>response</var>'s
-   <a for=response>header list</a>.
+     <li><p>Let <var>response</var> be a new
+     <a for=/>response</a>.
 
-   <li><p>Set <var>response</var>'s
-   <a for=response>HTTPS state</a> to <var>request</var>'s
-   <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
-   if <var>request</var>'s <a for=request>client</a> is non-null.
+     <li><p><a for="header list">Append</a>
+     `<code>Content-Length</code>`/<var>blob</var>'s
+     {{Blob/size}} attribute value to
+     <var>response</var>'s
+     <a for=response>header list</a>.
 
-   <li><p>Set <var>response</var>'s <a for=response>body</a> to
-   the result of performing the <a spec=fileapi>read operation</a> on
-   <var>blob</var>.
-   <!-- This takes care of setting length, transmitted, and error flag as well -->
+     <li><p><a for="header list">Append</a>
+     `<code>Content-Type</code>`/<var>blob</var>'s
+     {{Blob/type}} attribute value to
+     <var>response</var>'s
+     <a for=response>header list</a>.
 
-   <li><p>Return <var>response</var>.
+     <li><p>Set <var>response</var>'s
+     <a for=response>HTTPS state</a> to <var>request</var>'s
+     <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
+     if <var>request</var>'s <a for=request>client</a> is non-null.
+
+     <li><p>Set <var>response</var>'s <a for=response>body</a> to
+     the result of performing the <a spec=fileapi>read operation</a> on
+     <var>blob</var>.
+
+     <!-- This takes care of setting length, transmitted, and error flag as well -->
+
+     <li><p>Return <var>response</var>.
+    </ol>
+
+    <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+    <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+    <li><p>Return a <a>network error</a>.
   </ol>
 
  <dt>"<code>data</code>"
@@ -3178,7 +2915,7 @@ steps:
   <var>request</var>'s <a for=request>current url</a> does not return
   failure, then return a <a for=/>response</a> whose
   <a for=response>header list</a> consist of a single
-  <a>header</a> whose <a for=header>name</a> is
+  <a for=/>header</a> whose <a for=header>name</a> is
   `<code>Content-Type</code>` and <a for=header>value</a> is the
   MIME type and parameters returned from
   <a href=https://simonsapin.github.io/data-urls/>obtaining a resource</a>,
@@ -3231,23 +2968,11 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
  <li><p>Let <var>actualResponse</var> be null.
 
  <li>
-  <p>If <var>request</var>'s <a>service-workers mode</a> is not "<code>none</code>", then run these
-  substeps:
+  <p>If <var>request</var>'s <a>service-workers mode</a> is "<code>all</code>", then:
 
   <ol>
-   <li>
-    <p>If <var>request</var>'s <a>service-workers mode</a> is "<code>all</code>", then set
-    <var>response</var> to the result of invoking <a for=/>handle fetch</a> for <var>request</var>.
-    [[!HTML]] [[!SW]]
-
-   <li>
-    <p>If <var>response</var> is null, <var>request</var> is a <a>subresource request</a>, and
-    <var>request</var>'s <a for=request>origin</a> is not
-    <a>same origin</a> with <var>request</var>'s
-    <a for=request>url</a>'s
-    <a for=url>origin</a>, then set <var>response</var>
-    to the result of invoking <a for=/>handle foreign fetch</a> for
-    <var>request</var>. [[!SW]]
+   <li><p>Set <var>response</var> to the result of invoking <a for=/>handle fetch</a> for
+   <var>request</var>. [[!HTML]] [[!SW]]
 
    <li>
     <p>If <var>response</var> is not null, then run these substeps:
@@ -3280,8 +3005,7 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
        <a for=response>url list</a> has more than one item.
       </ul>
 
-     <li><p>Execute
-     <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
+     <li><p>Execute <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
      on <var>actualResponse</var>. [[!CSP]]
     </ol>
   </ol>
@@ -3300,7 +3024,7 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
      <a>CORS-safelisted method</a> or <var>request</var>'s
      <a>use-CORS-preflight flag</a> is set.
 
-     <li>There is at least one <a>header</a> in
+     <li>There is at least one <a for=/>header</a> in
      <var>request</var>'s <a for=request>header list</a>
      for whose <a for=header>name</a> there is no
      <a for=cache>header-name cache match</a> using
@@ -3327,9 +3051,8 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     <a lt="CORS-preflight fetch">CORS-preflight fetches</a>.
 
    <li>
-    <p>If <var>request</var>'s <a for=request>redirect mode</a> is
-    "<code>follow</code>", then set <var>request</var>'s <a>service-workers mode</a> to
-    "<code>foreign</code>".
+    <p>If <var>request</var>'s <a for=request>redirect mode</a> is "<code>follow</code>", then set
+    <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
     <p class="note no-backref">Redirects coming from the network (as opposed to from a service
     worker) are not to be exposed to a service worker.
@@ -3480,36 +3203,6 @@ in addition to <a>HTTP fetch</a> above.
   nullity has already been checked. The <a lt=extract for=BodyInit>extracting</a> operation cannot
   throw as it was called for the same <a for=body>source</a> before.
 
- <li><p>Let <var>useReferredTokenBinding</var> be the result of
- <a for=header>parsing</a> `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
- in <var>actualResponse</var>'s <a for=response>header list</a>.
-
- <li><p>Unset the <var>request</var>'s <a for=request>use-referred-token-binding flag</a>.
-
- <li><p>If <var>useReferredTokenBinding</var> is `<code>true</code>`
- and the <var>request</var>'s <a for=request>use-token-binding flag</a> is set,
- then perform the following substeps:
-
- <ol>
-   <li><p>Set the <var>request</var>'s <a for=request>use-referred-token-binding flag</a>.
-   <li><p>Set the <var>request</var>'s <a for=request>referred-token-binding origin</span> to
-   <var>request</var>'s <a for=request>origin</a>.
- </ol>
-
-  <p class="note no-backref">By causing the <a for=request>use-referred-token-binding flag</a>
-  to be set for the subsequent <a for=/>request</a> via the
-  `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
-  <a for=response>header</a> in its redirect
-  <a for=/>response</a>, the referring <a for=request>origin</a> tells the user agent to
-  disclose to the target server the <a for=/>token binding ID</a> used by the user agent
-  with the referring <a for=request>origin</a>. Importantly, only the referring
-  <a for=request>origin</a> can cause the user agent to disclose the
-  <a for=/>token binding ID</a> for that <a for=request>origin</a> to a
-  target server - a third party cannot do that.  Also, every redirect in a redirect chain is
-  handled independently - the server that sends a redirect response controls whether the
-  user agent receiving that response will disclose its <a for=/>token binding id</a> for
-  that server to the target server to which the user agent is being redirected.
-
  <li><p>Append <var>actualResponse</var>'s
  <a for=response>location URL</a> to <var>request</var>'s
  <a for=request>url list</a>.
@@ -3551,286 +3244,293 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 <ol>
  <li><p>Let <var>httpRequest</var> be null.
 
- <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
- <var>request</var>'s <a for=request>redirect mode</a> is "<code>error</code>", then set
- <var>httpRequest</var> to <var>request</var>.
-
  <li>
-  <p>Otherwise, run these substeps:
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
   <ol>
-   <li><p>Set <var>httpRequest</var> to a copy of <var>request</var> except for its
-   <a for=request>body</a>.
-
-   <li><p>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
-
-   <li><p>Set <var>httpRequest</var>'s <a for=request>body</a> to <var>body</var>.
-
-   <li><p>If <var>body</var> is non-null, then set <var>request</var>'s <a for=request>body</a> to a
-   new <a for=/>body</a> whose <a for=body>stream</a> is null and whose <a for=body>source</a> is
-   <var>body</var>'s <a for=body>source</a>.
-  </ol>
-
-  <p class="note no-backref"><var>request</var> is copied as <var>httpRequest</var> here as we need
-  to be able to add headers to <var>httpRequest</var> and read its <a for=request>body</a> without
-  affecting <var>request</var>. Namely, <var>request</var> can be reused with redirects,
-  authentication, and proxy authentication. We copy rather than clone in order to reduce memory
-  consumption. In case <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is
-  null, redirects and authentication will end up failing the fetch.
-
- <li>
-  <p>Let <i>credentials flag</i> be set if one of
-
-  <ul class=brief>
-   <li><var>request</var>'s <a for=request>credentials mode</a> is
-   "<code>include</code>"
-   <li><var>request</var>'s  <a for=request>credentials mode</a> is
-   "<code>same-origin</code>" and <var>request</var>'s
-   <a for=request>response tainting</a> is "<code>basic</code>"
-  </ul>
-
-  <p>is true, and unset otherwise.
-
- <li><p>Let <var>contentLengthValue</var> be null.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is null and
- <var>httpRequest</var>'s <a for=request>method</a> is
- `<code>POST</code>` or `<code>PUT</code>`, then set <var>contentLengthValue</var> to
- `<code>0</code>`.
- <!-- https://chromium.googlesource.com/chromium/src/+/master/net/http/http_network_transaction.cc#982 -->
-
- <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null and <var>httpRequest</var>'s
- <a for=request>body</a>'s <a for=body>source</a> is non-null, then set
- <var>contentLengthValue</var> to <var>httpRequest</var>'s <a for=request>body</a>'s
- <a for=body>total bytes</a>, <a>UTF-8 encoded</a>.
-
- <li><p>If <var>contentLengthValue</var> is non-null,
- <a for="header list">append</a>
- `<code>Content-Length</code>`/<var>contentLengthValue</var> to
- <var>httpRequest</var>'s
- <a for=request>header list</a>.
-
- <li>
-  <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
-  <a for=request>keepalive flag</a> is set, then:
-
-  <ol>
-   <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
-
-   <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
-
-   <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
-   <var>group</var> whose <a for="fetch record">request</a> has its
-   <a for=request>keepalive flag</a> set and <a>done flag</a> unset.
+   <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
+   <var>request</var>'s <a for=request>redirect mode</a> is "<code>error</code>", then set
+   <var>httpRequest</var> to <var>request</var>.
 
    <li>
-    <p><a for=set>For each</a> <var>fetchRecord</var> in <var>inflightRecords</var>:
+    <p>Otherwise, run these substeps:
 
     <ol>
-     <li><p>Let <var>inflightRequest</var> be <var>fetchRecord</var>'s
-     <a for="fetch record">request</a>.
+     <li><p>Set <var>httpRequest</var> to a copy of <var>request</var> except for its
+     <a for=request>body</a>.
 
-     <li><p>Increment <var>inflightKeepaliveBytes</var> by <var>inflightRequest</var>'s
-     <a for=request>body</a>'s <a for=body>total bytes</a>.
+     <li><p>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
+
+     <li><p>Set <var>httpRequest</var>'s <a for=request>body</a> to <var>body</var>.
+
+     <li><p>If <var>body</var> is non-null, then set <var>request</var>'s <a for=request>body</a> to
+     a new <a for=/>body</a> whose <a for=body>stream</a> is null and whose <a for=body>source</a>
+     is <var>body</var>'s <a for=body>source</a>.
     </ol>
 
-   <li><p>If the sum of <var>contentLengthValue</var> and <var>inflightKeepaliveBytes</var> is
-   greater than 64 kibibytes, then return a <a>network error</a>.
-  </ol>
+    <p class="note no-backref"><var>request</var> is copied as <var>httpRequest</var> here as we
+    need to be able to add headers to <var>httpRequest</var> and read its <a for=request>body</a>
+    without affecting <var>request</var>. Namely, <var>request</var> can be reused with redirects,
+    authentication, and proxy authentication. We copy rather than clone in order to reduce memory
+    consumption. In case <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is
+    null, redirects and authentication will end up failing the fetch.
 
-  <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
-  <a>environment settings object</a> and contain a body, have a bounded size and are not allowed to
-  stay alive indefinitely.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
- <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
- <a for=request>referrer</a>, <a lt="url serializer">serialized</a> and <a>UTF-8 encoded</a>, to
- <var>httpRequest</var>'s <a for=request>header list</a>.
- <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
-          concept-as-bytes -->
-
- <li><p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is
- neither `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s
- <a for=request>mode</a> is "<code>websocket</code>", then <a for="header list">append</a>
- `<code>Origin</code>`/<var>httpRequest</var>'s <a for=request>origin</a>,
- <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>, to
- <var>httpRequest</var>'s <a for=request>header list</a>.
- <!-- XXX concept-as-bytes -->
-
- <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
- <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
- <a for="header list">append</a>
- `<code>User-Agent</code>`/<a>default `<code>User-Agent</code>` value</a>
- to <var>httpRequest</var>'s <a for=request>header list</a>.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>default</code>" and
- <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
- `<code>If-Modified-Since</code>`,
- `<code>If-None-Match</code>`,
- `<code>If-Unmodified-Since</code>`,
- `<code>If-Match</code>`, or
- `<code>If-Range</code>`, then set <var>httpRequest</var>'s
- <a for=request>cache mode</a> to "<code>no-store</code>".
-
- <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>" and
- <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
- `<code>Cache-Control</code>`, then <a for="header list">append</a>
- `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
- <var>httpRequest</var>'s <a for=request>header list</a>.
-
- <li>
-  <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
-  "<code>no-store</code>" or "<code>reload</code>", run these substeps:
-
-  <ol>
-   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   <a for="header list">does not contain</a> `<code>Pragma</code>`, then
-   <a for="header list">append</a> `<code>Pragma</code>`/`<code>no-cache</code>` to
-   <var>httpRequest</var>'s <a for=request>header list</a>.
-
-   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
-   <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>no-cache</code>` to
-   <var>httpRequest</var>'s <a for=request>header list</a>.
-   <!-- Technically this only applies to HTTP/1.1 and up -->
-  </ol>
-
- <li>
-  <p>Modify <var>httpRequest</var>'s
-  <a for=request>header list</a> per HTTP.
-
-  <p class="note no-backref">It would be great if we could make this more normative
-  somehow. At this point <a>headers</a> such as
-  `<code>Accept-Encoding</code>`,
-  `<code>Connection</code>`,
-  `<code>DNT</code>`, and
-  `<code>Host</code>`,
-  are to be <a for="header list">appended</a> if necessary.
-
-  <p>`<code>Accept</code>`,
-  `<code>Accept-Charset</code>`, and
-  `<code>Accept-Language</code>` must not be included at this point.
-
-  <p class="note no-backref">`<code>Accept</code>` and
-  `<code>Accept-Language</code>` are already included (unless
-  <a><code>fetch()</code></a> is used, which does not include the latter by
-  default), and `<code>Accept-Charset</code>` is a waste of bytes. See
-  <a>HTTP header layer division</a> for more details.
-
-  <li><p>If <i>credentials flag</i> is not set or if the user agent is
-    configured to block cookies for <var>httpRequest</var>
-    (see <a href="https://tools.ietf.org/html/rfc6265#section-7">section 7</a> of
-    [[!COOKIES]]), then unset the <var>httpRequest</var>'s
-    <a for=request>use-token-binding flag</a>.
-
- <li>
-  <p>If <i>credentials flag</i> is set, run these substeps:
-
-  <ol>
    <li>
-    <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
-    <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
-    [[!COOKIES]]), then run these substeps:
+    <p>Let <i>credentials flag</i> be set if one of
 
-    <ol>
-     <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
-     <a href=https://tools.ietf.org/html/rfc6265#section-5.4>section 5.4</a> of
-     [[!COOKIES]]) with the user agent's cookie store and
-     <var>httpRequest</var>'s <a for=request>current url</a>.
+    <ul class=brief>
+     <li><var>request</var>'s <a for=request>credentials mode</a> is
+     "<code>include</code>"
+     <li><var>request</var>'s  <a for=request>credentials mode</a> is
+     "<code>same-origin</code>" and <var>request</var>'s
+     <a for=request>response tainting</a> is "<code>basic</code>"
+    </ul>
 
-     <li>If <var>cookies</var> is not the empty string, append
-     `<code>Cookie</code>`/<var>cookies</var> to <var>httpRequest</var>'s
-     <a for=request>header list</a>.
+    <p>is true, and unset otherwise.
 
-     <li><p>Set <var>httpRequest</var>'s <a for=request>use-token-binding flag</a>.
-    </ol>
+   <li><p>Let <var>contentLengthValue</var> be null.
 
-   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
-   <a for="header list">contains</a> `<code>Authorization</code>`, then terminate these substeps.
+   <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is null and
+   <var>httpRequest</var>'s <a for=request>method</a> is
+   `<code>POST</code>` or `<code>PUT</code>`, then set <var>contentLengthValue</var> to
+   `<code>0</code>`.
+   <!-- https://chromium.googlesource.com/chromium/src/+/master/net/http/http_network_transaction.cc#982 -->
 
-   <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
-   <li><p>Let <var>authorizationValue</var> be null.
+   <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null and <var>httpRequest</var>'s
+   <a for=request>body</a>'s <a for=body>source</a> is non-null, then set
+   <var>contentLengthValue</var> to <var>httpRequest</var>'s <a for=request>body</a>'s
+   <a for=body>total bytes</a>, <a>UTF-8 encoded</a>.
 
-   <li><p>If there's an <a>authentication entry</a> for <var>httpRequest</var>
-   and either <var>httpRequest</var>'s
-   <a for=request>use-URL-credentials flag</a> is
-   unset or <var>httpRequest</var>'s
-   <a for=request>current url</a> does not
-   <a>include credentials</a>, set
-   <var>authorizationValue</var> to <a>authentication entry</a>.
-   <!-- need to define the cache concept -->
-
-   <li><p>Otherwise, if <var>httpRequest</var>'s
-   <a for=request>current url</a> does
-   <a>include credentials</a> and <i>authentication-fetch flag</i> is
-   set, then set <var>authorizationValue</var> to <var>httpRequest</var>'s
-   <a for=request>current url</a>,
-   <span class=XXX>converted to an `<code>Authorization</code>` value</span>.
-
-   <li><p>If <var>authorizationValue</var> is non-null,
+   <li><p>If <var>contentLengthValue</var> is non-null,
    <a for="header list">append</a>
-   `<code>Authorization</code>`/<var>authorizationValue</var> to
+   `<code>Content-Length</code>`/<var>contentLengthValue</var> to
    <var>httpRequest</var>'s
    <a for=request>header list</a>.
+
+   <li>
+    <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
+    <a for=request>keepalive flag</a> is set, then:
+
+    <ol>
+     <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
+
+     <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a>client</a>'s <a>fetch group</a>.
+
+     <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
+     <var>group</var> whose <a for="fetch record">request</a> has its
+     <a for=request>keepalive flag</a> set and <a>done flag</a> unset.
+
+     <li>
+      <p><a for=set>For each</a> <var>fetchRecord</var> in <var>inflightRecords</var>:
+
+      <ol>
+       <li><p>Let <var>inflightRequest</var> be <var>fetchRecord</var>'s
+       <a for="fetch record">request</a>.
+
+       <li><p>Increment <var>inflightKeepaliveBytes</var> by <var>inflightRequest</var>'s
+       <a for=request>body</a>'s <a for=body>total bytes</a>.
+      </ol>
+
+     <li><p>If the sum of <var>contentLengthValue</var> and <var>inflightKeepaliveBytes</var> is
+     greater than 64 kibibytes, then return a <a>network error</a>.
+    </ol>
+
+    <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
+    <a>environment settings object</a> and contain a body, have a bounded size and are not allowed
+    to stay alive indefinitely.
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
+   <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
+   <a for=request>referrer</a>, <a lt="url serializer">serialized</a> and <a>UTF-8 encoded</a>, to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+   <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
+            concept-as-bytes -->
+
+   <li><p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is
+   neither `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s
+   <a for=request>mode</a> is "<code>websocket</code>", then <a for="header list">append</a>
+   `<code>Origin</code>`/<var>httpRequest</var>'s <a for=request>origin</a>,
+   <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>, to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+   <!-- XXX concept-as-bytes -->
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+   <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
+   <a for="header list">append</a>
+   `<code>User-Agent</code>`/<a>default `<code>User-Agent</code>` value</a>
+   to <var>httpRequest</var>'s <a for=request>header list</a>.
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>default</code>" and
+   <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
+   `<code>If-Modified-Since</code>`,
+   `<code>If-None-Match</code>`,
+   `<code>If-Unmodified-Since</code>`,
+   `<code>If-Match</code>`, or
+   `<code>If-Range</code>`, then set <var>httpRequest</var>'s
+   <a for=request>cache mode</a> to "<code>no-store</code>".
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>" and
+   <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
+   `<code>Cache-Control</code>`, then <a for="header list">append</a>
+   `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+
+   <li>
+    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
+    "<code>no-store</code>" or "<code>reload</code>", run these substeps:
+
+    <ol>
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Pragma</code>`, then
+     <a for="header list">append</a> `<code>Pragma</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
+     <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+     <!-- Technically this only applies to HTTP/1.1 and up -->
+    </ol>
+
+   <li>
+    <p>Modify <var>httpRequest</var>'s
+    <a for=request>header list</a> per HTTP.
+
+    <p class="note no-backref">It would be great if we could make this more normative
+    somehow. At this point <a for=/>headers</a> such as
+    `<code>Accept-Encoding</code>`,
+    `<code>Connection</code>`,
+    `<code>DNT</code>`, and
+    `<code>Host</code>`,
+    are to be <a for="header list">appended</a> if necessary.
+
+    <p>`<code>Accept</code>`,
+    `<code>Accept-Charset</code>`, and
+    `<code>Accept-Language</code>` must not be included at this point.
+
+    <p class="note no-backref">`<code>Accept</code>` and
+    `<code>Accept-Language</code>` are already included (unless
+    <a><code>fetch()</code></a> is used, which does not include the latter by
+    default), and `<code>Accept-Charset</code>` is a waste of bytes. See
+    <a>HTTP header layer division</a> for more details.
+
+   <li>
+    <p>If <i>credentials flag</i> is set, run these substeps:
+
+    <ol>
+     <li>
+      <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
+      <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
+      [[!COOKIES]]), then run these substeps:
+
+      <ol>
+       <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
+       <a href=https://tools.ietf.org/html/rfc6265#section-5.4>section 5.4</a> of
+       [[!COOKIES]]) with the user agent's cookie store and
+       <var>httpRequest</var>'s <a for=request>current url</a>.
+
+       <li>If <var>cookies</var> is not the empty string, append
+       `<code>Cookie</code>`/<var>cookies</var> to <var>httpRequest</var>'s
+       <a for=request>header list</a>.
+      </ol>
+
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">contains</a> `<code>Authorization</code>`, then terminate these substeps.
+
+     <!-- https://wiki.whatwg.org/wiki/HTTP_Authentication -->
+     <li><p>Let <var>authorizationValue</var> be null.
+
+     <li><p>If there's an <a>authentication entry</a> for <var>httpRequest</var>
+     and either <var>httpRequest</var>'s
+     <a for=request>use-URL-credentials flag</a> is
+     unset or <var>httpRequest</var>'s
+     <a for=request>current url</a> does not
+     <a>include credentials</a>, set
+     <var>authorizationValue</var> to <a>authentication entry</a>.
+     <!-- need to define the cache concept -->
+
+     <li><p>Otherwise, if <var>httpRequest</var>'s
+     <a for=request>current url</a> does
+     <a>include credentials</a> and <i>authentication-fetch flag</i> is
+     set, then set <var>authorizationValue</var> to <var>httpRequest</var>'s
+     <a for=request>current url</a>,
+     <span class=XXX>converted to an `<code>Authorization</code>` value</span>.
+
+     <li><p>If <var>authorizationValue</var> is non-null,
+     <a for="header list">append</a>
+     `<code>Authorization</code>`/<var>authorizationValue</var> to
+     <var>httpRequest</var>'s
+     <a for=request>header list</a>.
+    </ol>
+
+   <li>
+    <p>If there's a <a>proxy-authentication entry</a>, use it as appropriate.
+
+    <p class="note no-backref">This intentionally does not depend on
+    <var>httpRequest</var>'s
+    <a for=request>credentials mode</a>.
+
+   <li><p>Let <var>response</var> and <var>storedResponse</var> be null.
+
+   <li><p>Let the <var>revalidatingFlag</var> be unset.
+
+   <li>
+    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
+    nor "<code>reload</code>", run these substeps:
+
+    <ol>
+     <li><p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
+     possibly needing validation, as per the
+     "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
+     chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
+
+     <li><p>If <var>storedResponse</var> is null, then abort these substeps.
+
+     <!-- cache hit -->
+     <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
+     <var>revalidatingFlag</var>.
+
+     <li>
+      <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>force-cache</code>" or
+      "<code>only-if-cached</code>", then set <var>response</var> to <var>storedResponse</var> and
+      abort these substeps.
+
+      <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>`
+      <a for=/>header</a> into account.
+
+     <li>
+      <p>If the <var>revalidatingFlag</var> is set, then:
+
+      <ol>
+       <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+       <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
+       `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
+       <a for=request>header list</a>.
+
+       <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+       <a for="header list">contains</a> `<code>Last-Modified</code>`, then
+       <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
+       <var>httpRequest</var>'s <a for=request>header list</a>.
+      </ol>
+
+      <p class=note>See also the
+      "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
+      chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+
+     <li><p>Otherwise, if the <var>revalidatingFlag</var> is unset, then set <var>response</var> to
+     <var>storedResponse</var>.
+    </ol>
   </ol>
 
  <li>
-  <p>If there's a <a>proxy-authentication entry</a>, use it as appropriate.
-
-  <p class="note no-backref">This intentionally does not depend on
-  <var>httpRequest</var>'s
-  <a for=request>credentials mode</a>.
-
- <li><p>Let <var>response</var> and <var>storedResponse</var> be null.
-
- <li><p>Let the <var>revalidatingFlag</var> be unset.
-
- <li>
-  <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
-  nor "<code>reload</code>", run these substeps:
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
   <ol>
-   <li>
-    <p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
-    possibly needing validation, as per the
-    "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
-    chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
-   <li><p>If <var>storedResponse</var> is null, then abort these substeps.
+   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
 
-   <!-- cache hit -->
-   <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
-   <var>revalidatingFlag</var>.
-
-   <li>
-    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>force-cache</code>" or
-    "<code>only-if-cached</code>", then set <var>response</var> to <var>storedResponse</var> and
-    abort these substeps.
-
-    <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>` <a>header</a>
-    into account.
-
-   <li>
-    <p>If the <var>revalidatingFlag</var> is set, then:
-
-    <ol>
-     <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-     <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
-     `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
-     <a for=request>header list</a>.
-
-     <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-     <a for="header list">contains</a> `<code>Last-Modified</code>`, then
-     <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
-     <var>httpRequest</var>'s <a for=request>header list</a>.
-    </ol>
-
-    <p class=note>See also the
-    "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
-    chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
-
-    <li><p>Otherwise, if the <var>revalidatingFlag</var> is unset, then set <var>response</var> to
-    <var>storedResponse</var>.
+   <li><p>Return a <a>network error</a>.
   </ol>
 
  <li>
@@ -3916,6 +3616,17 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
     <i>authentication-fetch flag</i> is set, then run these subsubsteps:
 
     <ol>
+     <li>
+      <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+      <ol>
+       <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+       <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+       <li><p>Return a <a>network error</a>.
+      </ol>
+
      <li><p>Let <var>username</var> and <var>password</var> be the result of prompting the end user
      for a username and password, respectively, in <var>request</var>'s
      <a for=request>window</a>.
@@ -3942,6 +3653,17 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
    <li class=XXX><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers, missing,
    parsing issues.
+
+   <li>
+    <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+    <ol>
+     <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+     <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+     <li><p>Return a <a>network error</a>.
+    </ol>
 
    <li>
     <p>Prompt the end user as appropriate in <var>request</var>'s
@@ -3972,6 +3694,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 <ol>
  <li><p>Let <var>credentials</var> be true if <i>credentials flag</i> is set, and false otherwise.
 
+ <li><p>Let <var>response</var> be null.
+
  <li>
   <p>Switch on <var>request</var>'s <a for=request>mode</a>:
 
@@ -3988,86 +3712,85 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <a for=url>origin</a> and <var>credentials</var>.
   </dl>
 
- <li><p>If <var>connection</var> is failure, return a
- <a>network error</a>.
-
-  <li><p>If <var>request</var>'s <a for=request>use-token-binding flag</a>
-  is set, build and add a `<a http-header><code>Sec-Token-Binding</code></a>`
-  <a for=request>header</a> by running the following substeps:
-
-   <ol>
-    <li><p>Let <var>tokenBindingMessage</var> be the result of
-    <a abstract-op lt="Compute a Token Binding header value">computing a Token Binding header value</a>
-    for <var>request</var> and <var>connection</var>,
-    using the user agent's <a for=/>token-binding key store</a> and
-    <a for=/>connection pool</a>.
-
-    <li><p>If <var>tokenBindingMessage</var> is not null, append
-    `<a http-header><code>Sec-Token-Binding</code></a>`/<var>tokenBindingMessage</var>
-    to <var>request</var>'s <a for=request>header list</a>.
-   </ol>
-
- <li><p>If <var>connection</var> is not an HTTP/2 connection, <var>request</var>'s
- <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
- <a for=body>source</a> is null, then <a for="header list">append</a>
- `<code>Transfer-Encoding</code>`/`<code>chunked</code>` to <var>request</var>'s
- <a for=request>header list</a>.
 
  <li>
-  <p>Let <var>response</var> be the result of making an HTTP request over <var>connection</var>
-  using <var>request</var> with the following caveats:
-
-  <ul>
-   <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
-
-   <li><p>Wait until all the <a>headers</a> are transmitted or
-   <a for=/>fetch</a> is being
-   <a for=fetch>terminated</a> with reason <var>reason</var>. If
-   <a for=/>fetch</a> is being
-   <a for=fetch>terminated</a>, then set <var>response</var>'s
-   <a for=response>termination reason</a> to <var>reason</var>.
-
-   <li>
-    <p>Any <a for=/>responses</a> whose
-    <a for=response>status</a> is in the range <code>100</code> to
-    <code>199</code>, inclusive, and is not <code>101</code>, are to be ignored.
-
-    <p class="note no-backref">These kind of <a for=/>responses</a> are
-    eventually followed by a "final" <a for=/>response</a>.
-  </ul>
-
-  <p class=note>The exact layering between Fetch and HTTP still needs to be sorted through and
-  therefore <var>response</var> represents both a <a for=/>response</a> and
-  an HTTP response here.
-
-  <p>If <var>request</var>'s <a for=request>header list</a> contains
-  `<code>Transfer-Encoding</code>`/`<code>chunked</code>` and <var>response</var> is transferred
-  via HTTP/1.0 or older, then return a <a>network error</a>.
-
-  <p>If the HTTP request results in a TLS client certificate dialog, run these substeps:
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
   <ol>
-   <li><p>If <var>request</var>'s <a for=request>window</a>
-   is an <a>environment settings object</a>, make the dialog
-   available in <var>request</var>'s
-   <a for=request>window</a>.
+   <li><p>If <var>connection</var> is failure, return a
+   <a>network error</a>.
 
-   <li><p>Otherwise, return a <a>network error</a>.
+   <li><p>If <var>connection</var> is not an HTTP/2 connection, <var>request</var>'s
+   <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
+   <a for=body>source</a> is null, then <a for="header list">append</a>
+   `<code>Transfer-Encoding</code>`/`<code>chunked</code>` to <var>request</var>'s
+   <a for=request>header list</a>.
+
+   <li>
+    <p>Set <var>response</var> to the result of making an HTTP request over <var>connection</var>
+    using <var>request</var> with the following caveats:
+
+    <ul>
+     <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+
+     <li><p>Wait until all the <a for=/>headers</a> are transmitted.
+
+     <li>
+      <p>Any <a for=/>responses</a> whose
+      <a for=response>status</a> is in the range <code>100</code> to
+      <code>199</code>, inclusive, and is not <code>101</code>, are to be ignored.
+
+      <p class="note no-backref">These kind of <a for=/>responses</a> are
+      eventually followed by a "final" <a for=/>response</a>.
+    </ul>
+
+    <p class=note>The exact layering between Fetch and HTTP still needs to be sorted through and
+    therefore <var>response</var> represents both a <a for=/>response</a> and
+    an HTTP response here.
+
+    <p>If <var>request</var>'s <a for=request>header list</a> contains
+    `<code>Transfer-Encoding</code>`/`<code>chunked</code>` and <var>response</var> is transferred
+    via HTTP/1.0 or older, then return a <a>network error</a>.
+
+    <p>If the HTTP request results in a TLS client certificate dialog, run these substeps:
+
+    <ol>
+     <li><p>If <var>request</var>'s <a for=request>window</a>
+     is an <a>environment settings object</a>, make the dialog
+     available in <var>request</var>'s
+     <a for=request>window</a>.
+
+     <li><p>Otherwise, return a <a>network error</a>.
+    </ol>
+
+    <p>If <var>response</var> was retrieved over HTTPS, set its
+    <a for=response>HTTPS state</a> to either
+    "<code>deprecated</code>" or "<code>modern</code>".
+    [[!TLS]]
+
+    <p class="note no-backref">The exact determination here is up to user agents for the
+    time being. User agents are strongly encouraged to only succeed HTTPS connections with
+    strong security properties and return
+    <a>network errors</a> otherwise. Using the
+    "<code>deprecated</code>" state value ought to be a temporary and last resort kind
+    of option.
+
+    <p><a for=request>Transmit body</a> for <var>request</var>.
   </ol>
 
-  <p>If <var>response</var> was retrieved over HTTPS, set its
-  <a for=response>HTTPS state</a> to either
-  "<code>deprecated</code>" or "<code>modern</code>".
-  [[!TLS]]
+ <li>
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
-  <p class="note no-backref">The exact determination here is up to user agents for the
-  time being. User agents are strongly encouraged to only succeed HTTPS connections with
-  strong security properties and return
-  <a>network errors</a> otherwise. Using the
-  "<code>deprecated</code>" state value ought to be a temporary and last resort kind
-  of option.
+  <ol>
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
-  <p><a for=request>Transmit body</a> for <var>request</var>.
+   <li><p>If <var>connection</var> is an HTTP/2 connection, then transmit an
+   "<code>RST_STREAM</code>" to cancel the underlying stream.
+
+   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+   <li><p>Return a <a>network error</a>.
+  </ol>
 
  <li>
   <p>Let <var>strategy</var> be an object. The user agent may choose any object.
@@ -4075,12 +3798,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
   <p class="note no-backref"><var>strategy</var> is used to control the queuing strategy of
   <var>stream</var> constructed below.
 
- <li><p>Let <var>pull</var> be an action that <a lt=resumed for=fetch>resumes</a> the
- ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
+ <li><p>Let <var>pull</var> be an action that <a lt=resumed for=fetch>resumes</a> the ongoing fetch
+ if it is <a lt=suspend for=fetch>suspended</a>.
 
- <li><p>Let <var>cancel</var> be an action that
- <a lt=terminated for=fetch>terminates</a> the ongoing fetch with reason
- <i>end-user abort</i>.
+ <li><p>Let <var>cancel</var> be an action that <a lt=terminated for=fetch>terminates</a> the
+ ongoing fetch with the aborted flag set.
 
  <li>
   <p>Let <var>stream</var> be the result of
@@ -4089,132 +3811,160 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
   <var>pull</var> and <var>cancel</var>.
   <p class="note no-backref">This construction operation will not throw an exception.
 
- <li><p>Set <var>response</var>'s <a for=response>body</a> to a new
- <a for=/>body</a> whose <a for=body>stream</a> is
- <var>stream</var>.
+ <li>
+  <p>Run these steps, but abort if the ongoing fetch is <a for=fetch>terminated</a>:</p>
 
- <li><p>If <var>response</var> has a payload body length, then set <var>response</var>'s
- <a for=response>body</a>'s
- <a for=body>total bytes</a> to that payload body length.
- <!-- XXX xref payload body -->
+  <ol>
+   <li><p>Set <var>response</var>'s <a for=response>body</a> to a new
+   <a for=/>body</a> whose <a for=body>stream</a> is
+   <var>stream</var>.
+
+   <li><p>If <var>response</var> has a payload body length, then set <var>response</var>'s
+   <a for=response>body</a>'s
+   <a for=body>total bytes</a> to that payload body length.
+   <!-- XXX xref payload body -->
+
+   <li>
+    <p><a for="header list">Delete</a>
+    `<code>Content-Encoding</code>` from <var>response</var>'s
+    <a for=response>header list</a> if one of the following
+    conditions is true:
+
+    <ul class=brief>
+     <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
+     <var>response</var>'s <a for=response>header list</a> returns
+     `<code>gzip</code>`, and <a>extracting header list values</a> given `<code>Content-Type</code>`
+     and <var>response</var>'s <a for=response>header list</a> returns
+     `<code>application/gzip</code>`, `<code>application/x-gunzip</code>`, or
+     `<code>application/x-gzip</code>`.
+
+     <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
+     <var>response</var>'s <a for=response>header list</a> returns `<code>compress</code>`, and
+     <a>extracting header list values</a> given `<code>Content-Type</code>` and
+     <var>response</var>'s <a for=response>header list</a> returns
+     `<code>application/compress</code>` or `<code>application/x-compress</code>.
+    </ul>
+
+    <p class=note>This deals with broken Apache configurations. Ideally HTTP would define
+    this.
+    <!-- https://wiki.whatwg.org/wiki/HTTP -->
+
+    <p class=XXX>Gecko
+    <a href=https://bugzilla.mozilla.org/show_bug.cgi?id=1030660>bug 1030660</a> looks
+    into whether this quirk can be removed.
+
+   <li><p>Execute
+   <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
+   on <var>response</var>. [[!CSP]]
+
+   <li><p>If <var>response</var> is not a
+   <a>network error</a> and <var>request</var>'s
+   <a for=request>cache mode</a> is not "<code>no-store</code>",
+   update <var>response</var> in the HTTP cache for <var>request</var>.
+   <!-- XXX xref HTTP cache -->
+
+   <li>
+    <p>If <i>credentials flag</i> is set and the user agent is not configured to block cookies for
+    <var>request</var> (see <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
+    [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see <a
+    href=https://tools.ietf.org/html/rfc6265#section-5.2>section 5.2</a> of [[!COOKIES]]) on the <a
+    for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
+    <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s <a
+    for=response>header list</a>, if any, and <var>request</var>'s <a for=request>current url</a>.
+
+    <p class=note>This is a fingerprinting vector.
+  </ol>
 
  <li>
-  <p><a for="header list">Delete</a>
-  `<code>Content-Encoding</code>` from <var>response</var>'s
-  <a for=response>header list</a> if one of the following
-  conditions is true:
+  <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
 
-  <ul class=brief>
-   <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
-   <var>response</var>'s <a for=response>header list</a> returns
-   `<code>gzip</code>`, and <a>extracting header list values</a> given `<code>Content-Type</code>`
-   and <var>response</var>'s <a for=response>header list</a> returns
-   `<code>application/gzip</code>`, `<code>application/x-gunzip</code>`, or
-   `<code>application/x-gzip</code>`.
+  <ol>
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
-   <li><p><a>Extracting header list values</a> given `<code>Content-Encoding</code>` and
-   <var>response</var>'s <a for=response>header list</a> returns `<code>compress</code>`, and
-   <a>extracting header list values</a> given `<code>Content-Type</code>` and <var>response</var>'s
-   <a for=response>header list</a> returns `<code>application/compress</code>` or
-   `<code>application/x-compress</code>.
-  </ul>
+   <li><p>If <var>aborted</var> is set, then set <var>response</var>'s
+   <a for=response>aborted flag</a>.
 
-  <p class=note>This deals with broken Apache configurations. Ideally HTTP would define
-  this.
-  <!-- https://wiki.whatwg.org/wiki/HTTP -->
-
-  <p class=XXX>Gecko
-  <a href=https://bugzilla.mozilla.org/show_bug.cgi?id=1030660>bug 1030660</a> looks
-  into whether this quirk can be removed.
-
- <li><p>Execute
- <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP list</a>
- on <var>response</var>. [[!CSP]]
-
- <li><p>If <var>response</var> is not a
- <a>network error</a> and <var>request</var>'s
- <a for=request>cache mode</a> is not "<code>no-store</code>",
- update <var>response</var> in the HTTP cache for <var>request</var>.
- <!-- XXX xref HTTP cache -->
-
- <li>
-  <p>If <i>credentials flag</i> is set and the user agent is not configured to block cookies for
-  <var>request</var> (see <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
-  [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see
-  <a href=https://tools.ietf.org/html/rfc6265#section-5.2>section 5.2</a> of
-  [[!COOKIES]]) on the <a for=header>value</a>
-  of each <var>header</var> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
-  `<code>Set-Cookie</code>` in <var>response</var>'s <a for=response>header list</a>, if any, and
-  <var>request</var>'s <a for=request>current url</a>.
-
-  <p class=note>This is a fingerprinting vector.
+   <li><p>Return <var>response</var>.
+  </ol>
 
  <li>
   <p>Run these substeps <a>in parallel</a>:
 
   <ol>
    <li>
-    <p>Whenever one or more bytes are transmitted from <var>response</var>'s message body, let
-    <var>bytes</var> be the transmitted bytes and run these subsubsteps:
-    <!-- XXX xref message body -->
+    <p>While true, breaking if the ongoing fetch <a for=fetch lt=terminated>terminates</a>:
 
     <ol>
-     <li><p>Increase <var>response</var>'s
-     <a for=response>body</a>'s
-     <a for=body>transmitted bytes</a> with <var>bytes</var>'
-     length.
-
-     <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
-     `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
-
      <li>
-      <p>Set <var>bytes</var> to the result of <a lt="handle content codings">handling
-      content codings</a> given <var>codings</var> and <var>bytes</var>.
+      <p>If one or more bytes have been transmitted from <var>response</var>'s message body, then:
 
-      <p class="note no-backref">This makes the `<code>Content-Length</code>`
-      <a>header</a> unreliable to the extent that it was reliable
-      to begin with.
+      <ol>
+       <li><p>Let <var>bytes</var> be the transmitted bytes.
 
-     <li>
-      <p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code>
-      object wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>.
-      If that threw an exception, <a lt=terminated for=fetch>terminate</a> the ongoing
-      fetch with <i>fatal</i>, <a abstract-op>error</a>
-      <var>stream</var> with that exception and abort these subsubsteps.
+       <li><p>Increase <var>response</var>'s <a for=response>body</a>'s <a for=body>transmitted
+       bytes</a> with <var>bytes</var>' length.
 
-     <li><p>If <var>stream</var> doesn't <a lt="need more data" for=ReadableStream>need more
-     data</a> and <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent
-     to <a for=fetch>suspend</a> the ongoing fetch.
+       <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
+       `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
+
+       <li>
+        <p>Set <var>bytes</var> to the result of <a lt="handle content codings">handling content
+        codings</a> given <var>codings</var> and <var>bytes</var>.
+
+        <p class="note no-backref">This makes the `<code>Content-Length</code>` <a for=/>header</a>
+        unreliable to the extent that it was reliable to begin with.
+
+       <li><p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code> object wrapping an
+       <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If that threw an
+       exception, <a lt=terminated for=fetch>terminate</a> the ongoing fetch, and
+       <a abstract-op>error</a> <var>stream</var> with that exception.
+
+       <li><p>If <var>stream</var> doesn't <a lt="need more data" for=ReadableStream>need more
+       data</a> and <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent to <a
+       for=fetch>suspend</a> the ongoing fetch.
+      </ol>
+
+     <li><p>Otherwise, if the bytes transmission for <var>response</var>'s message body is done
+     normally and <var>stream</var> is <a for=ReadableStream>readable</a>, then
+     <a abstract-op>close</a> <var>stream</var> and abort these in-parallel steps.
     </ol>
 
-   <li><p>If at any point the bytes transmission for <var>response</var>'s message body is done
-   normally and <var>stream</var> is <a for=ReadableStream>readable</a>,
-   then <a abstract-op>close</a> <var>stream</var>.
-   <!-- XXX xref message body -->
+    <p class=note>The following steps can only occur if the ongoing fetch terminates.
+
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
    <li>
-    <p>If at any point <a for=/>fetch</a> is
-    <a for=fetch>terminated</a> with reason <var>reason</var>,
-    run these subsubsteps:
+    <p>If <var>aborted</var> is set, then:
 
     <ol>
-     <li><p>Set <var>response</var>'s <a lt="termination reason" for=response>termination
-     reason</a> to <var>reason</var>.
+     <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
 
-     <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>,
-     <a abstract-op>error</a> <var>stream</var> with a
-     <code>TypeError</code>.
+     <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, <a abstract-op>error</a>
+     <var>stream</var> with an "<code><a exception>AbortError</a></code>" {{DOMException}}.
     </ol>
+
+   <li><p>Otherwise, if <var>stream</var> is <a for=ReadableStream>readable</a>,
+   <a abstract-op>error</a> <var>stream</var> with a <code>TypeError</code>.
+
+   <li><p>If <var>connection</var> is an HTTP/2 connection, then transmit an
+   "<code>RST_STREAM</code>" to cancel the underlying stream.
+
+   <li>
+    <p>Otherwise, the user agent should close <var>connection</var> unless it would be bad for
+    performance to do so.
+
+    <p class=note>For instance, the user agent could keep the connection open if it knows there's
+    only a few bytes of transfer remaining on a reusable connection. In this case it could be worse
+    to close the connection and go through the handshake process again for the next fetch.
   </ol>
 
-  <p class="note no-backref">These are run <a>in parallel</a>
-  as at this point it is unclear whether <var>response</var>'s
-  <a for=response>body</a> is relevant (<var>response</var>
-  might be a redirect).
+  <p class="note no-backref">These are run <a>in parallel</a> as at this point it is unclear whether
+  <var>response</var>'s <a for=response>body</a> is relevant (<var>response</var> might be a
+  redirect).
 
- <li><p>Return <var>response</var>. <span class="note no-backref">Typically
- <var>response</var>'s <a for=response>body</a>'s
- <a for=body>stream</a> is still being enqueued to after returning.</span>
+ <li><p>Return <var>response</var>. <span class="note no-backref">Typically <var>response</var>'s
+ <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
+ returning.</span>
 </ol>
 
 
@@ -4229,23 +3979,19 @@ number of these <a lt="CORS-preflight fetch">fetches</a>.
 steps:
 
 <ol>
- <li><p>Let <var>preflight</var> be a new <a for=/>request</a>
- whose <a for=request>method</a> is `<code>OPTIONS</code>`,
- <a for=request>url</a> is <var>request</var>'s
- <a for=request>current url</a>,
- <a for=request>initiator</a> is <var>request</var>'s
- <a for=request>initiator</a>,
- <a for=request>type</a> is <var>request</var>'s
- <a for=request>type</a>,
- <a for=request>destination</a> is <var>request</var>'s
- <a for=request>destination</a>,
- <a for=request>origin</a> is <var>request</var>'s
- <a for=request>origin</a>,
- <a for=request>referrer</a> is <var>request</var>'s
- <a for=request>referrer</a>, and
- <a for=request>referrer policy</a> is
- <var>request</var>'s
- <a for=request>referrer policy</a>.
+ <li>
+  <p>Let <var>preflight</var> be a new <a for=/>request</a> whose
+  <a for=request>method</a> is `<code>OPTIONS</code>`,
+  <a for=request>url</a> is <var>request</var>'s <a for=request>current url</a>,
+  <a for=request>initiator</a> is <var>request</var>'s <a for=request>initiator</a>,
+  <a for=request>destination</a> is <var>request</var>'s <a for=request>destination</a>,
+  <a for=request>origin</a> is <var>request</var>'s <a for=request>origin</a>,
+  <a for=request>referrer</a> is <var>request</var>'s <a for=request>referrer</a>, and
+  <a for=request>referrer policy</a> is <var>request</var>'s <a for=request>referrer policy</a>.
+
+  <p class="note no-backref">The <a for=request>service-workers mode</a> of <var>preflight</var>
+  does not matter as this algorithm uses <a>HTTP-network-or-cache fetch</a> rather than
+  <a>HTTP fetch</a>.
 
  <li><p><a for="header list">Set</a> `<a http-header><code>Access-Control-Request-Method</code></a>`
  to <var>request</var>'s <a for=request>method</a> in <var>preflight</var>'s
@@ -4253,7 +3999,7 @@ steps:
 
  <li><p>Let <var>headers</var> be the <a lt=name for=header>names</a> of
  <var>request</var>'s <a for=request>header list</a>'s
- <a>headers</a>, excluding
+ <a for=/>headers</a>, excluding
  <a>CORS-safelisted request-headers</a> and duplicates,
  sorted lexicographically, and <a lt="byte-lowercase">byte-lowercased</a>.
 
@@ -4293,19 +4039,12 @@ steps:
    `<a http-header><code>Access-Control-Allow-Methods</code></a>` and <var>response</var>'s
    <a for=response>header list</a>.
 
-   <li><p>If <var>methods</var> is `<code>*</code>`, then set <var>methods</var> to a new list
-   containing `<code>*</code>`.
-
    <li><p>Let <var>headerNames</var> be the result of <a>extracting header list values</a> given
    `<a http-header><code>Access-Control-Allow-Headers</code></a>` and <var>response</var>'s
    <a for=response>header list</a>.
 
    <li><p>If either <var>methods</var> or <var>headerNames</var> is failure,
    return a <a>network error</a>.
-
-   <li><p>If <var>methods</var> or <var>headerNames</var> contains `<code>*</code>`, and
-   <var>request</var>'s <a for=request>credentials mode</a> is
-   "<code>include</code>", then return a <a>network error</a>.
 
    <li>
     <p>If <var>methods</var> is null and <var>request</var>'s <a>use-CORS-preflight flag</a>
@@ -4316,21 +4055,22 @@ steps:
     happened due to <var>request</var>'s <a>use-CORS-preflight flag</a> being set is
     <a lt="CORS-preflight cache">cached</a>.
 
-   <li><p>If <var>request</var>'s <a for=request>method</a> is not in
-   <var>methods</var>, is not a <a>CORS-safelisted method</a>, and <var>methods</var> does
-   <em>not</em> contain `<code>*</code>`, then return a
-   <a>network error</a>.
+   <li><p>If <var>request</var>'s <a for=request>method</a> is not in <var>methods</var>,
+   <var>request</var>'s <a for=request>method</a> is not a <a>CORS-safelisted method</a>, and
+   <var>request</var>'s <a for=request>credentials mode</a> is "<code>include</code>" or
+   <var>methods</var> does not contain `<code>*</code>`, then return a <a>network error</a>.
 
    <li><p>If one of <var>request</var>'s <a for=request>header list</a>'s
    <a lt=name for=header>names</a> is a <a>CORS non-wildcard request-header name</a> and is not a
    <a>byte-case-insensitive</a> match for an <a for=list>item</a> in <var>headerNames</var>, then
    return a <a>network error</a>.
 
-   <li><p>If one of <var>request</var>'s <a for=request>header list</a>'
-   <a lt=name for=header>names</a> is not a <a>byte-case-insensitive</a> match for an
-   <a for=list>item</a> in <var>headerNames</var>, its corresponding <a>header</a> is not a
-   <a>CORS-safelisted request-header</a>, and <var>headerNames</var> does not contain
-   `<code>*</code>`, then return a <a>network error</a>.
+   <li><p><a for=list>For each</a> <var>header</var> in <var>request</var>'s
+   <a for=request>header list</a>: if <var>header</var> is not a
+   <a>CORS-safelisted request-header</a>, <var>header</var>'s <a for=header>name</a> is not a
+   <a>byte-case-insensitive</a> match for an <a for=list>item</a> in <var>headerNames</var>, and
+   <var>request</var>'s <a for=request>credentials mode</a> is "<code>include</code>" or
+   <var>headerNames</var> does not contain `<code>*</code>`, then return a <a>network error</a>.
 
    <li><p>Let <var>max-age</var> be the result of <a>extracting header list values</a> given
    `<a http-header><code>Access-Control-Max-Age</code></a>` and <var>response</var>'s
@@ -4384,7 +4124,7 @@ entries where each entry has these fields:
  <li><dfn id=concept-cache-method for=cache>method</dfn> (null, `<code>*</code>`, or a
  <a for=/>method</a>)
  <li><dfn id=concept-cache-header-name for=cache>header name</dfn> (null, `<code>*</code>`, or a
- <a>header</a> <a for=header>name</a>)
+ <a for=/>header</a> <a for=header>name</a>)
 </ul>
 
 <p>Entries must be removed after the seconds specified in the
@@ -4466,9 +4206,12 @@ Entries may be removed before that moment arrives.
 <var>request</var> and <var>response</var>, run these steps:
 
 <ol>
- <li><p>Let <var>origin</var> be the result of <a>extracting header list values</a> given
- `<a http-header><code>Access-Control-Allow-Origin</code></a>` and <var>response</var>'s
- <a for=response>header list</a>.
+ <li>
+  <p>Let <var>origin</var> be the result of <a>extracting header list values</a> given
+  `<a http-header><code>Access-Control-Allow-Origin</code></a>` and <var>response</var>'s
+  <a for=response>header list</a>.
+
+  <p class=note>The above will fail for network errors, as they have no headers.
 
  <li>
   <p>If <var>origin</var> is null or failure, return failure.
@@ -4662,14 +4405,13 @@ run these steps:
    <li><p>If <var>header</var> does not contain exactly two items, then <a>throw</a> a
    <code>TypeError</code>.
 
-   <li><p><a lt=append for=Headers>Append</a>
-   <var>header</var>'s first item/<var>header</var>'s second item to
-   <var>headers</var>. Rethrow any exception.
+   <li><p><a lt=append for=Headers>Append</a> <var>header</var>'s first item/<var>header</var>'s
+   second item to <var>headers</var>.
   </ol>
 
  <li><p>Otherwise, <var>object</var> is a <a>record</a>, then <a for=map>for each</a> <var>key</var>
  → <var>value</var> in <var>object</var>, <a lt=append for=Headers>append</a>
- <var>key</var>/<var>value</var> to <var>headers</var>. Rethrow any exception.
+ <var>key</var>/<var>value</var> to <var>headers</var>.
 </ol>
 
 <p>The
@@ -4680,15 +4422,15 @@ constructor, when invoked, must run these steps:
  <li><p>Let <var>headers</var> be a new {{Headers}} object whose
  <a for=Headers>guard</a> is "<code>none</code>".
 
- <li><p>If <var>init</var> is given, <a for=Headers>fill</a>
- <var>headers</var> with <var>init</var>. Rethrow any exception.
+ <li><p>If <var>init</var> is given, <a for=Headers>fill</a> <var>headers</var> with
+ <var>init</var>.
 
  <li><p>Return <var>headers</var>.
 </ol>
 
 <p>The <dfn export for=Headers method><code>append(<var>name</var>, <var>value</var>)</code></dfn>
 method, when invoked, must <a for=Headers>append</a> <var>name</var>/<var>value</var> to
-<a>context object</a> and rethrow any exception.
+<a>context object</a>.
 
 <p>The <dfn export for=Headers method><code>delete(<var>name</var>)</code></dfn>
 method, when invoked, must run these steps:
@@ -4930,8 +4672,10 @@ runs the associated steps:
 
 <dl class=switch>
  <dt><i>ArrayBuffer</i>
- <dd><p>Return an <code>ArrayBuffer</code> whose contents are <var>bytes</var>. Rethrow any
- exceptions.
+ <dd>
+  <p>Return a new <code>ArrayBuffer</code> whose contents are <var>bytes</var>.
+
+  <p class="note">Allocating an <code>ArrayBuffer</code> can throw a {{RangeError}}.
 
  <dt><i>Blob</i>
  <dd><p>Return a {{Blob}} whose contents are <var>bytes</var> and {{Blob/type}} attribute is
@@ -4993,10 +4737,7 @@ runs the associated steps:
   <p>Otherwise, <a>throw</a> a <code>TypeError</code>.
 
  <dt><i>JSON</i>
- <dd>
-  <p>Return the result of invoking the initial value of the <code>parse</code> property of the
-  <code>JSON</code> object with the result of running <a>UTF-8 decode</a> on <var>bytes</var> as
-  argument. Rethrow any exceptions.
+ <dd><p>Return the result of running <a>parse JSON with bytes</a> on <var>bytes</var>.
 
  <dt><i>text</i>
  <dd><p>Return the result of running <a>UTF-8 decode</a> on
@@ -5070,17 +4811,16 @@ interface Request {
   readonly attribute USVString url;
   [SameObject] readonly attribute Headers headers;
 
-  readonly attribute RequestType type;
   readonly attribute RequestDestination destination;
   readonly attribute USVString referrer;
   readonly attribute ReferrerPolicy referrerPolicy;
   readonly attribute RequestMode mode;
   readonly attribute RequestCredentials credentials;
-  readonly attribute boolean useReferredTokenBinding;
   readonly attribute RequestCache cache;
   readonly attribute RequestRedirect redirect;
   readonly attribute DOMString integrity;
   readonly attribute boolean keepalive;
+  readonly attribute AbortSignal signal;
 
   [NewObject] Request clone();
 };
@@ -5093,16 +4833,15 @@ dictionary RequestInit {
   ReferrerPolicy referrerPolicy;
   RequestMode mode;
   RequestCredentials credentials;
-  boolean useReferredTokenBinding;
   RequestCache cache;
   RequestRedirect redirect;
   DOMString integrity;
   boolean keepalive;
+  AbortSignal? signal;
   any window; // can only be set to null
 };
 
-enum RequestType { "", "audio", "font", "image", "script", "style", "track", "video" };
-enum RequestDestination { "", "audio", "document", "embed", "font", "image", "manifest", "object", "report", "script", "serviceworker", "sharedworker", "style",  "track", "video", "worker", "xslt" };
+enum RequestDestination { "", "audio", "audioworklet", "document", "embed", "font", "image", "manifest", "object", "paintworklet", "report", "script", "sharedworker", "style",  "track", "video", "worker", "xslt" };
 enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
@@ -5117,13 +4856,81 @@ omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor obser
 <p>A {{Request}} object has an associated
 <dfn id=concept-request-request for=Request export>request</dfn> (a <a for=/>request</a>).
 
-<p>A {{Request}} object also has an associated {{Headers}} object which
-is itself associated with <a for=Request>request</a>'s
-<a for=request>header list</a>.
+<p>A {{Request}} object also has an associated <dfn for=Request export>headers</dfn> (null or a
+{{Headers}} object), initially null.
+
+<p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (an {{AbortSignal}} object),
+initially a new {{AbortSignal}} object.
 
 <p>A {{Request}} object's <a for=Body>body</a> is its
 <a for=Request>request</a>'s
 <a for=request>body</a>.
+
+<dl class=domintro>
+ <dt><code><var>request</var> = new <a constructor lt="Request()">Request</a>(<var>input</var> [,
+ <var>init</var>])</code>
+ <dd>Returns a new <var>request</var> whose {{Request/url}} property is <var>input</var> if
+ <var>input</var> is a string, and <var>input</var>'s {{Request/url}} if <var>input</var> is a
+ {{Request}} object. The optional <var>init</var> argument allows for setting attributes
+ appearing in {{RequestInit}} via object members of the same name.
+
+ <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
+ <dd>Returns <var>request</var>'s HTTP method, which is "<code>GET</code>" by default.
+
+ <dt><code><var>request</var> . <a attribute for=Request>url</a></code>
+ <dd>Returns the URL of <var>request</var> as a string.
+
+ <dt><code><var>request</var> . <a attribute for=Request>headers</a></code>
+ <dd>Returns a {{Headers}} object consisting of the headers associated with <var>request</var>.
+ Note that headers added in the network layer by the user agent will not be accounted for in this
+ object, e.g., the "<code>Host</code>" header.
+
+ <dt><code><var>request</var> . <a attribute for=Request>destination</a></code>
+ <dd>Returns the kind of resource requested by <var>request</var>, e.g., "<code>document</code>" or
+ "<code>script</code>".
+
+ <dt><code><var>request</var> . <a attribute for=Request>referrer</a></code>
+ <dd>Returns the referrer of <var>request</var>. Its value can be a same-origin URL if
+ explicitly set in <var>init</var>, the empty string to indicate no referrer, and
+ "<code>about:client</code>" when defaulting to the global's default. This is used during
+ fetching to determine the value of the `<code>Referer</code>` header of the request being made.
+
+ <dt><code><var>request</var> . <a attribute for=Request>referrerPolicy</a></code>
+ <dd>Returns the referrer policy associated with <var>request</var>. This is used during
+ fetching to compute the value of the <var>request</var>'s referrer.
+
+ <dt><code><var>request</var> . <a attribute for=Request>mode</a></code>
+ <dd>Returns the <a>mode</a> associated with <var>request</var>, which is a string indicating whether
+ or not the request will use CORS, or will be restricted to same-origin URLs.
+
+ <dt><code><var>request</var> . <a attribute for=Request>credentials</a></code>
+ <dd>Returns the <a>credentials mode</a> associated with <var>request</var>, which is a string
+ indicating whether or not credentials will be sent with the request always, never, or only when
+ sent to a same-origin URL.
+
+ <dt><code><var>request</var> . <a attribute for=Request>cache</a></code>
+ <dd>Returns the <a>cache mode</a> associated with <var>request</var>, which is a string indicating
+ how the the request will interact with the browser's cache when fetching.
+
+ <dt><code><var>request</var> . <a attribute for=Request>redirect</a></code>
+ <dd>Returns the <a>redirect mode</a> associated with <var>request</var>, which is a string
+ indicating how redirects for the request will be handled during fetching. A <a>request</a>
+ will follow redirects by default.
+
+ <dt><code><var>request</var> . <a attribute for=Request>integrity</a></code>
+ <dd>Returns <var>request</var>'s subresource integrity metadata, which is a cryptographic hash of the
+ resource being fetched. Its value may consist of multiple hashes separated by whitespace.
+ [[SRI]]
+
+ <dt><code><var>request</var> . <a attribute for=Request>keepalive</a></code>
+ <dd>Returns a boolean indicating whether or not <var>request</var> can outlive the global in which
+ it was created.
+
+ <dt><code><var>request</var> . <a attribute for=Request>signal</a></code>
+ <dd>Returns the signal associated with <var>request</var>, which is an
+ {{AbortSignal}} object indicating whether or not <var>request</var> has been aborted, and its abort
+ event handler.
+</dl>
 
 <hr>
 
@@ -5140,6 +4947,8 @@ constructor must run these steps:
 
  <li><p>Let <var>baseURL</var> be <a>current settings object</a>'s
  <a for="environment settings object">API base URL</a>.
+
+ <li><p>Let <var>signal</var> be null.
 
  <li>
   <p>If <var>input</var> is a string, then run these substeps:
@@ -5171,6 +4980,8 @@ constructor must run these steps:
 
    <li><p>Set <var>request</var> to <var>input</var>'s
    <a for=Request>request</a>.
+
+   <li><p>Set <var>signal</var> to <var>input</var>'s <a for=Request>signal</a>.
   </ol>
 
  <li><p>Let <var>origin</var> be <a>current settings object</a>'s
@@ -5212,9 +5023,6 @@ constructor must run these steps:
  <a for=request>credentials mode</a> is
  <var>request</var>'s
  <a for=request>credentials mode</a>,
- <a for=request>use-referred-token-binding flag</a> is
- <var>request</var>'s
- <a for=request>use-referred-token-binding flag</a>,
  <a for=request>cache mode</a> is
  <var>request</var>'s
  <a for=request>cache mode</a>,
@@ -5242,7 +5050,7 @@ constructor must run these steps:
    <a for=request>referrer policy</a> to the empty string.
   </ol>
 
-  <p class=note>This is done to ensure that when a service worker "redirects" a request, .e.g.,
+  <p class=note>This is done to ensure that when a service worker "redirects" a request, e.g.,
   from an image in a cross-origin stylesheet, and makes modifications, it no longer appears to come
   from the original source (i.e., the cross-origin stylesheet), but instead from the service worker
   that "redirected" the request. This is important as the original source might not even be able to
@@ -5305,13 +5113,6 @@ constructor must run these steps:
  <code>credentials</code> member if it is present, and
  <var>fallbackCredentials</var> otherwise.
 
- <li><p>If <var>useReferredTokenBinding</var> is non-null, set <var>request</var>'s
- <a for=request>use-referred-token-binding flag</a> to
- <var>useReferredTokenBinding</var>.
- Also, set <var>request</var>'s
- <a for=request>referred-token-binding origin</a> to
- <var>origin</var>.
-
  <li><p>If <var>credentials</var> is non-null, set <var>request</var>'s
  <a for=request>credentials mode</a> to
  <var>credentials</var>.
@@ -5332,7 +5133,7 @@ constructor must run these steps:
  <var>request</var>'s
  <a for=request>integrity metadata</a> to it.
 
-<li><p>If <var>init</var>'s <code>keepalive</code> member is present, then set <var>request</var>'s
+ <li><p>If <var>init</var>'s <code>keepalive</code> member is present, then set <var>request</var>'s
  <a>keepalive flag</a> if <var>init</var>'s <code>keepalive</code> member is true, and unset
  it otherwise.
 
@@ -5350,19 +5151,31 @@ constructor must run these steps:
    to <var>method</var>.
   </ol>
 
- <li><p>Let <var>r</var> be a new {{Request}} object associated with <var>request</var> and
- a new associated {{Headers}} object whose <a for=Headers>guard</a>
- is "<code>request</code>".
+ <li><p>If <var>init</var>'s <code>signal</code> member is present, then set <var>signal</var> to
+ it.
 
- <li><p>Let <var>headers</var> be a copy of <var>r</var>'s {{Headers}} object and its
+ <li><p>Let <var>r</var> be a new {{Request}} object associated with <var>request</var>.
+
+ <li><p>Set <var>r</var>'s <a for=Request>headers</a> to a new {{Headers}} object, whose
+ <a for=Headers>header list</a> is <var>request</var>'s <a for=request>header list</a>, and
+ <a for=Headers>guard</a> is "<code>request</code>".
+
+ <li>
+  <p>If <var>signal</var> is not null, then
+  <a for=AbortSignal lt=add>add the following abort steps</a> to <var>signal</var>:
+
+  <ol>
+   <li><p><a for=AbortSignal>Signal abort</a> on <var>r</var>'s <a for=Request>signal</a>.
+  </ol>
+
+ <li><p>Let <var>headers</var> be a copy of <var>r</var>'s <a for=Request>headers</a> and its
  associated <a for=Headers>header list</a>.
  <!-- it might contain a header that is no longer allowed per the mode change -->
 
  <li><p>If <var>init</var>'s <code>headers</code> member is present, set
  <var>headers</var> to <var>init</var>'s <code>headers</code> member.
 
- <li><p>Empty <var>r</var>'s {{Headers}} object's
- <a for=Headers>header list</a>.
+ <li><p>Empty <var>r</var>'s <a for=Request>headers</a>'s <a for=Headers>header list</a>.
 
  <li>
   <p>If <var>r</var>'s <a for=Request>request</a>'s
@@ -5373,15 +5186,17 @@ constructor must run these steps:
    <li><p>If <var>r</var>'s <a for=Request>request</a>'s <a for=request>method</a> is not a
    <a>CORS-safelisted method</a>, then <a>throw</a> a <code>TypeError</code>.
 
-   <li><p>If <var>request</var>'s <a for=request>integrity metadata</a> is not the empty string,
-   then <a>throw</a> a <code>TypeError</code>.
-
-   <li><p>Set <var>r</var>'s {{Headers}} object's
-   <a for=Headers>guard</a> to "<code>request-no-cors</code>".
+   <li><p>Set <var>r</var>'s <a for=Request>headers</a>'s <a for=Headers>guard</a> to
+   "<code>request-no-cors</code>".
   </ol>
 
- <li><p><a lt=fill for=Headers>Fill</a> <var>r</var>'s
- {{Headers}} object with <var>headers</var>. Rethrow any exceptions.
+ <li><p>If <var>headers</var> is a <code>Headers</code> object, then <a for=list>for each</a>
+ <var>header</var> in its <a for=Headers>header list</a>, <a for=Headers>append</a>
+ <var>header</var>'s <a for=header>name</a>/<var>header</var>'s <a for=header>value</a> to
+ <var>r</var>'s {{Headers}} object.
+
+ <li><p>Otherwise, <a for=Headers>fill</a> <var>r</var>'s {{Headers}} object with
+ <var>headers</var>.
 
  <li><p>Let <var>inputBody</var> be <var>input</var>'s
  <a for=Request>request</a>'s <a for=request>body</a>
@@ -5401,19 +5216,16 @@ constructor must run these steps:
    <li><p>Let <var>Content-Type</var> be null.
 
    <li><p>If <var>init</var>'s <code>keepalive</code> member is present and is true, then set
-   <var>body</var> and <var>Content-Type</var> to the result of
-   <a lt=extract>extracting</a> <var>init</var>'s <code>body</code>
-   member, with <var>keepalive flag</var> set. Rethrow any exceptions.
+   <var>body</var> and <var>Content-Type</var> to the result of <a lt=extract>extracting</a>
+   <var>init</var>'s <code>body</code> member, with <var>keepalive flag</var> set.
 
    <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
-   <a lt=extract for=BodyInit>extracting</a> <var>init</var>'s
-   <code>body</code> member. Rethrow any exceptions.
+   <a lt=extract for=BodyInit>extracting</a> <var>init</var>'s <code>body</code> member.
 
-   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s {{Headers}} object's
+   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a for=Request>headers</a>'s
    <a for=Headers>header list</a> <a for="header list">does not contain</a>
    `<code>Content-Type</code>`, then <a for=Headers>append</a>
-   `<code>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s
-   {{Headers}} object. Rethrow any exception.
+   `<code>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s <a for=Request>headers</a>.
   </ol>
 
  <li>
@@ -5470,12 +5282,8 @@ return <a for=Request>request</a>'s
 <a for=request>url</a>,
 <a lt="url serializer">serialized</a>.
 
-<p>The <dfn attribute for=Request><code>headers</code></dfn> attribute's getter must
-return the associated {{Headers}} object.
-
-<p>The <dfn attribute for=Request><code>type</code></dfn> attribute's getter must return
-<a for=Request>request</a>'s
-<a for=request>type</a>.
+<p>The <dfn attribute for=Request><code>headers</code></dfn> attribute's getter must return the
+associated <a for=Request>headers</a>.
 
 <p>The <dfn attribute for=Request><code>destination</code></dfn> attribute's
 getter must return <a for=Request>request</a>'s
@@ -5501,10 +5309,6 @@ getter must return <a for=Request>request</a>'s
 getter must return <a for=Request>request</a>'s
 <a for=request>credentials mode</a>.
 
-<p>The <dfn attribute for=Request><code>useReferredTokenBinding</code></dfn> attribute's
-getter must return true if <a for=Request>request</a>'s
-<a for=request>use-referred-token-binding flag</a> is set, and false otherwise.
-
 <p>The <dfn attribute for=Request><code>cache</code></dfn> attribute's getter must
 return <a for=Request>request</a>'s
 <a for=request>cache mode</a>.
@@ -5521,6 +5325,9 @@ must return <a for=Request>request</a>'s
 must return true if <a for=Request>request</a>'s <a>keepalive flag</a>
 is set, and false otherwise.
 
+<p>The <dfn attribute for=Request><code>signal</code></dfn> attribute's getter must return the
+associated <a for="Request">signal</a>.
+
 <hr>
 
 <p>The <dfn method for=Request><code>clone()</code></dfn> method, when invoked, must
@@ -5530,10 +5337,32 @@ run these steps:
  <li><p>If this {{Request}} object is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then
  <a>throw</a> a <code>TypeError</code>.
 
- <li><p>Return a new {{Request}} object associated with the result of
- <a lt=clone for=request>cloning</a> <a for=Request>request</a> and a new associated {{Headers}}
- object whose <a for=Headers>guard</a> is <a>context object</a>'s {{Headers}} object's
- <a for=Headers>guard</a>.
+ <li><p>Let <var>clonedRequestObject</var> be a new {{Request}} object.
+
+ <li><p>Let <var>clonedRequest</var> be the result of <a lt=clone for=request>cloning</a>
+ <a>context object</a>'s <a for=Request>request</a>.
+
+ <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>request</a> to <var>clonedRequest</var>.
+
+ <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>headers</a> to a new {{Headers}} object
+ whose <a for=Headers>header list</a> is set to <var>clonedRequest</var>'s
+ <a for=Headers>header list</a>, and <a for=Headers>guard</a> is <a>context object</a>'s
+ <a for=Request>headers</a>' <a for=Headers>guard</a>.
+
+ <li><p>If <a>context object</a>'s <a for=Request>signal</a>'s <a for=AbortSignal>aborted flag</a>
+ is set, set <var>clonedRequestObject</var> <a for=Request>signal</a>'s
+ <a for=AbortSignal>aborted flag</a>.
+
+ <li>
+  <p>Otherwise, <a for=AbortSignal>add</a> the following abort steps to <a>context object</a>'s
+  <a for=Request>signal</a>:
+
+  <ol>
+   <li><p><a for=AbortSignal>Signal abort</a> on <var>clonedRequestObject</var>
+   <a for=Request>signal</a>.
+  </ol>
+
+ <li><p>Return <var>clonedRequestObject</var>.
 </ol>
 
 
@@ -5571,9 +5400,8 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <dfn id=concept-response-response for=Response export>response</dfn> (a
 <a for=/>response</a>).
 
-<p>A {{Response}} object also has an associated {{Headers}} object which
-is itself associated with <a for=Response>response</a>'s
-<a for=response>header list</a>.
+<p>A {{Response}} object also has an associated <dfn for=Response export>headers</dfn> (null or a
+{{Headers}} object), initially null.
 
 <p>A {{Response}} object also has an associated
 <dfn id=concept-response-trailer-promise for=Response>trailer promise</dfn> (a promise). <span class=note>Used
@@ -5593,9 +5421,11 @@ constructor, when invoked, must run these steps:
  <li><p>If <var>init</var>'s <code>statusText</code> member does not match the
  <a spec=http>reason-phrase</a> token production, then <a>throw</a> a <code>TypeError</code>.
 
- <li><p>Let <var>r</var> be a new {{Response}} object, associated with a new
- <a for=/>response</a> and a new associated {{Headers}} object whose
- <a for=Headers>guard</a> is "<code>response</code>".
+ <li><p>Let <var>r</var> be a new {{Response}} object associated with a new <a for=/>response</a>.
+
+ <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object, whose
+ <a for=Headers>header list</a> is <var>r</var>'s <a for=Response>response</a>'s
+ <a for=response>header list</a>, and <a for=Headers>guard</a> is "<code>response</code>".
 
  <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
  <a for=response>status</a> to <var>init</var>'s
@@ -5606,8 +5436,7 @@ constructor, when invoked, must run these steps:
  <var>init</var>'s <code>statusText</code> member.
 
  <li><p>If <var>init</var>'s <code>headers</code> member is present, then <a for=Headers>fill</a>
- <var>r</var>'s {{Headers}} object with <var>init</var>'s <code>headers</code> member. Rethrow any
- exceptions.
+ <var>r</var>'s <a for=Response>headers</a> with <var>init</var>'s <code>headers</code> member.
 
  <li>
   <p>If <var>body</var> is non-null, run these substeps:
@@ -5624,7 +5453,7 @@ constructor, when invoked, must run these steps:
 
    <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
    <a for=response>body</a> and <var>Content-Type</var> to the result of
-   <a lt=extract for=BodyInit>extracting</a> <var>body</var>. Rethrow any exceptions.
+   <a lt=extract for=BodyInit>extracting</a> <var>body</var>.
 
    <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a for=Response>response</a>'s
    <a for=response>header list</a> <a for="header list">does not contain</a>
@@ -5649,10 +5478,18 @@ constructor, when invoked, must run these steps:
  <li><p>Return <var>r</var>.
 </ol>
 
-<p>The static <dfn method for=Response><code>error()</code></dfn> method, when invoked, must
-return a new {{Response}} object, associated with a new
-<a>network error</a> and a new associated {{Headers}}
-object whose <a for=Headers>guard</a> is "<code>immutable</code>".
+<p>The static <dfn method for=Response><code>error()</code></dfn> method, when invoked, must run
+these steps:
+
+<ol>
+ <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
+ <a>network error</a>.
+
+ <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
+ <a for=Headers>guard</a> is "<code>immutable</code>".
+
+ <li><p>Return <var>r</var>.
+</ol>
 
 <p>The static
 <dfn method for=Response><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
@@ -5669,8 +5506,10 @@ method, when invoked, must run these steps:
  <li><p>If <var>status</var> is not a <a>redirect status</a>, then <a>throw</a> a
  <code>RangeError</code>.
 
- <li><p>Let <var>r</var> be a new {{Response}} object, associated with a new
- <a for=/>response</a> and a new associated {{Headers}} object whose
+ <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
+ <a for=/>response</a>.
+
+ <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
  <a for=Headers>guard</a> is "<code>immutable</code>".
 
  <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
@@ -5731,15 +5570,25 @@ run these steps:
  <li><p>If <a>context object</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then
  <a>throw</a> a <code>TypeError</code>.
 
- <li><p>Let <var>clonedResponse</var> be a new {{Response}} object associated with the result of
- <a lt=clone for=response>cloning</a> <a>context object</a>'s <a for=Response>response</a> and a new
- associated {{Headers}} object whose <a for=Headers>guard</a> is <a>context object</a>'s {{Headers}}
- object's <a for=Headers>guard</a>.
+ <li><p>Let <var>clonedResponseObject</var> be a new {{Response}} object.
+
+ <li><p>Let <var>clonedResponse</var> be the result of <a lt=clone for=response>cloning</a>
+ <a>context object</a>'s <a for=Response>response</a>.
+
+ <li><p>Set <var>clonedResponseObject</var>'s <a for=Response>response</a> to
+ <var>clonedResponse</var>.
+
+ <li><p>Set <var>clonedResponseObject</var>'s <a for=Request>headers</a> to a new {{Headers}} object
+ whose <a for=Headers>header list</a> is set to <var>clonedResponse</var>'s
+ <a for=Headers>header list</a>, and <a for=Headers>guard</a> is <a>context object</a>'s
+ <a for=Response>headers</a>' <a for=Headers>guard</a>.
 
  <li><p>Upon fulfillment of <a>context object</a>'s <a for=Response>trailer promise</a>, resolve
- <var>clonedResponse</var>'s <a for=Response>trailer promise</a> with a new {{Headers}} object whose
- <a for=Headers>guard</a> is "<code>immutable</code>" that is associated with
- <var>clonedResponse</var>'s <a for=response>trailer</a>.
+ <var>clonedResponseObject</var>'s <a for=Response>trailer promise</a> with a new {{Headers}} object
+ whose <a for=Headers>guard</a> is "<code>immutable</code>", and whose
+ <a for="Headers">header list</a> is <var>clonedResponse</var>'s <a for=response>trailer</a>.
+
+ <li><p>Return <var>clonedResponseObject</var>.
 
  <li><p>Return <var>clonedResponse</var>.
 </ol>
@@ -5759,19 +5608,48 @@ method, must run these steps:
 <ol>
  <li><p>Let <var>p</var> be a new promise.
 
- <li><p>Let <var>request</var> be the associated
- <a for=/>request</a> of the result of invoking the initial value of
- {{Request}} as constructor with <var>input</var> and
- <var>init</var> as arguments. If this throws an exception, reject
- <var>p</var> with it and return <var>p</var>.
+ <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
+ constructor with <var>input</var> and <var>init</var> as arguments. If this throws an exception,
+ reject <var>p</var> with it and return <var>p</var>
+
+ <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
+
+ <li>
+  <p>If <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>aborted flag</a>
+  is set, then:
+
+  <ol>
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and null.
+
+   <li><p>Return <var>p</var>.
+  </ol>
 
  <li>If <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">global object</a> is a {{ServiceWorkerGlobalScope}} object,
- set <var>request</var>'s <a>service-workers mode</a> to "<code>foreign</code>".
+ then set <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
  <li><p>Let <var>responseObject</var> be a new {{Response}} object and a new associated
  {{Headers}} object whose <a for=Headers>guard</a> is
  "<code>immutable</code>".
+
+ <li>
+  <p>Let <var>locallyAborted</var> be false.
+
+  <p class=note>This lets us reject promises with predictable timing, when the request to abort
+  comes from the same thread as the call to fetch.
+
+ <li>
+  <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
+  <a for=Request>signal</a>:
+
+  <ol>
+    <li><p>Set <var>locallyAborted</var> to true.
+
+    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and
+    <var>responseObject</var>.
+
+    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
+  </ol>
 
  <li>
   <p>Run the following <a>in parallel</a>:
@@ -5781,9 +5659,14 @@ method, must run these steps:
   <p>To <a>process response</a> for <var>response</var>, run these substeps:
 
   <ol>
-   <li><p>If <var>response</var>'s <a for=response>type</a> is
-   "<code>error</code>", reject <var>p</var> with a <code>TypeError</code> and terminate
-   these substeps.
+   <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
+
+   <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then <a>abort fetch</a>
+   with <var>p</var>, <var>request</var>, and <var>responseObject</var>, and terminate these
+   substeps.
+
+   <li><p>If <var>response</var> is a <a>network error</a>, then reject <var>p</var> with a
+   <code>TypeError</code> and terminate these substeps.
 
    <li><p>Associate <var>responseObject</var> with <var>response</var>.
 
@@ -5793,8 +5676,24 @@ method, must run these steps:
   <p>To <a>process response done</a> for <var>response</var>, run these substeps:
 
   <ol>
+   <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
+
    <li><p>Let <var>trailerObject</var> be a new {{Headers}} object whose
    <a for=Headers>guard</a> is "<code>immutable</code>".
+
+   <li>
+    <p>If <var>response</var>'s <a for=response>trailer failed flag</a> is set, then:
+
+    <ol>
+     <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, reject
+     <var>responseObject</var>'s <a for=Response>trailer promise</a> with an
+     "<code><a exception>AbortError</a></code>" {{DOMException}}.
+
+     <li><p>Otherwise, reject <var>responseObject</var>'s <a for=Response>trailer promise</a> with
+     a <code>TypeError</code>.
+
+     <li><p>Terminate these substeps.
+    </ol>
 
    <li><p>Associate <var>trailerObject</var> with <var>response</var>'s
    <a for=response>trailer</a>.
@@ -5807,11 +5706,41 @@ method, must run these steps:
  <li><p>Return <var>p</var>.
 </ol>
 
+<p>To <dfn>abort fetch</dfn> with a <var>promise</var>, <var>request</var>, and
+<var>responseObject</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>error</var> be an "<code><a exception>AbortError</a></code>" {{DOMException}}.
+
+ <li>
+  <p>Reject <var>promise</var> with <var>error</var>.
+
+  <p class=note>This is a no-op if <var>promise</var> has already fulfilled.
+
+ <li><p>If <var>request</var>'s <a for=request>body</a> is not null and is
+ <a for=ReadableStream>readable</a>, then <a for=ReadableStream>cancel</a> <var>request</var>'s
+ <a for=request>body</a> with <var>error</var>.
+
+ <li><p>If <var>responseObject</var> is null, then return.
+
+ <li>
+  <p>Reject <var>responseObject</var>'s <a for=Response>trailer promise</a> with <var>error</var>.
+
+  <p class=note>This is a no-op if <var>responseObject</var>'s <a for=Response>trailer promise</a>
+  has already fulfilled.
+
+ <li><p>Let <var>response</var> be <var>responseObject</var>'s <a for=Response>response</a>.
+
+ <li><p>If <var>response</var>'s <a for=response>body</a> is not null and is
+ <a for=ReadableStream>readable</a>, then <a for=ReadableStream abstract-op>error</a>
+ <var>response</var>'s <a for=response>body</a> with <var>error</var>.
+</ol>
+
 
 <h3 id=garbage-collection>Garbage collection</h3>
 
-<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch with
-reason <i>garbage collection</i> if that termination is not observable through script.
+<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch with if that
+termination is not observable through script.
 
 <p class="note no-backref">"Observable through script" means observable through
 <a><code>fetch()</code></a>'s arguments and return value. Other ways, such as
@@ -5959,7 +5888,7 @@ therefore not shareable, a WebSocket connection is very close to identical to an
 
  <li>
   <p>Let <var>permessageDeflate</var> be a user-agent defined
-  "<code>permessage-deflate</code>" extension <a>header</a>
+  "<code>permessage-deflate</code>" extension <a for=/>header</a>
   <a for=header>value</a>. [[!WSP]]
 
   <p id=example-permessage-deflate class=example>`<code>permessage-deflate; client_max_window_bits</code>`
@@ -6048,21 +5977,21 @@ scripting attack.
 <strong>unsafe</strong>. (This is the reason why the <a>CORS protocol</a> had to be
 invented.)
 
-<p>However, otherwise using the following <a>header</a> is
+<p>However, otherwise using the following <a for=/>header</a> is
 <strong>safe</strong>:
 
 <pre>
 Access-Control-Allow-Origin: *</pre>
 
 <p>Even if a resource exposes additional information based on cookie or HTTP
-authentication, using the above <a>header</a> will not reveal
+authentication, using the above <a for=/>header</a> will not reveal
 it. It will share the resource with APIs such as
 {{XMLHttpRequest}}, much like it is already shared with
 <code>curl</code> and <code>wget</code>.
 
 <p>Thus in other words, if a resource cannot be accessed from a random device connected to
 the web using <code>curl</code> and <code>wget</code> the aforementioned
-<a>header</a> is not to be included. If it can be accessed
+<a for=/>header</a> is not to be included. If it can be accessed
 however, it is perfectly fine to do so.
 
 
@@ -6076,6 +6005,26 @@ however, it is perfectly fine to do so.
 
 <pre id=example-vary-origin class=example>Vary: Origin</pre>
 
+<p>In particular, consider what happens if `<code>Vary</code>` is <em>not</em> used and a server is
+configured to send `<a http-header><code>Access-Control-Allow-Origin</code></a>` for a certain
+resource only in response to a <a>CORS request</a>. When a user agent receives a response to a
+non-<a>CORS request</a> for that resource (for example, as the result of a <a>navigation
+request</a>), the response will lack `<a http-header><code>Access-Control-Allow-Origin</code></a>`
+and the user agent will cache that response. Then, if the user agent subsequently encounters a
+<a>CORS request</a> for the resource, it will use that cached response from the previous
+non-<a>CORS request</a>, without `<a http-header><code>Access-Control-Allow-Origin</code></a>`.
+
+<p>But if `<code>Vary: Origin</code>` is used in the same scenario described above, it will cause
+the user agent to <a for=/>fetch</a> a response that includes
+`<a http-header><code>Access-Control-Allow-Origin</code></a>`, rather than using the cached response
+from the previous non-<a>CORS request</a> that lacks
+`<a http-header><code>Access-Control-Allow-Origin</code></a>`.
+
+<p>However, if `<a http-header><code>Access-Control-Allow-Origin</code></a>` is set to
+<code>*</code> or a static <a for=/>origin</a> for a particular resource, then configure the server
+to always send `<a http-header><code>Access-Control-Allow-Origin</code></a>` in responses for the
+resource — for non-<a>CORS requests</a> as well as <a>CORS
+requests</a> — and do not use `<code>Vary</code>`.
 
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
@@ -6172,6 +6121,7 @@ Marijn Kruisselbrink,
 Mark Nottingham,
 Mark S. Miller,
 Martin Dürst,
+Martin Thomson,
 Matt Andrews,
 Matt Falkenhagen,
 Matt Oshry,
@@ -6216,7 +6166,6 @@ Tomás Aparicio,
 保呂毅 (Tsuyoshi Horo),
 Tyler Close,
 Vignesh Shanmugam,
-Vinod Anupam,
 Vladimir Dzhuvinov,
 Wayne Carr,
 Xabier Rodríguez,
