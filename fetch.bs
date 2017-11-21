@@ -97,6 +97,22 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
         "publisher": "US-CERT",
         "href": "https://www.kb.cert.org/vuls/id/150227",
         "title": "HTTP proxy default configurations allow arbitrary TCP connections."
+    },
+    "REPORTING": {
+        "authors": ["Ilya Grigorik", "Mike West"],
+        "href": "https://wicg.github.io/reporting/",
+        "title": "Reporting API"
+    },
+    "EXPECT-CT": {
+        "authors": [
+            "Emily Stark"
+        ],
+        "href": "https://tools.ietf.org/html/draft-ietf-httpbis-expect-ct-02",
+        "publisher": "IETF",
+        "title": "Expect-CT Extension for HTTP"
+    },
+    "OCSP": {
+        "aliasOf": "RFC2560"
     }
 }
 </pre>
@@ -444,6 +460,9 @@ whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
 
 <p>and whose <a for=header>value</a>, <a lt="extract header values">once extracted</a>, is not
 failure.
+
+<p class="note">There are limited exceptions to the `<code>Content-Type</code>` header safelist, as
+documented in <a href=#cors-protocol-exceptions>CORS protocol exceptions</a>.
 
 <p>A <dfn export>CORS non-wildcard request-header name</dfn> is a <a>byte-case-insensitive</a> match
 for `<code>Authorization</code>`.
@@ -2236,6 +2255,27 @@ Access-Control-Allow-Credentials: true</pre>
  callback will be invoked and any `<code>Set-Cookie</code>` response headers will end up being
  ignored.
 </div>
+
+<h4 id=cors-protocol-exceptions>CORS protocol exceptions</h4>
+
+<p>Specifications have allowed limited exceptions to the CORS safelist for non-safelisted
+`<code>Content-Type</code>` header values. These exceptions are made for requests that can be
+triggered by web content but whose headers and bodies can be only minimally controlled by the web
+content. Therefore, servers should expect cross-origin web content to be allowed to trigger
+non-preflighted requests with the following non-safelisted `<code>Content-Type</code>` header
+values:
+
+<ul class=brief>
+ <li>`<code>application/csp-report</code>` [[CSP]]
+ <li>`<code>application/report</code>` [[REPORTING]]
+ <li>`<code>application/expect-ct-report+json</code>` [[EXPECT-CT]]
+ <li>`<code>application/xss-auditor-report</code>`
+ <li>`<code>application/ocsp-request</code>` [[OCSP]]
+</ul>
+
+<p>Specifications should avoid introducing new exceptions and should only do so with careful
+consideration for the security consequences. New exceptions can be proposed by
+<a href=https://github.com/whatwg/fetch/issues/new>filing an issue</a>.
 
 
 <h3 id=x-content-type-options-header>`<code>X-Content-Type-Options</code>` header</h3>
