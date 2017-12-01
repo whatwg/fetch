@@ -24,9 +24,6 @@ Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,type
 <script src=https://resources.whatwg.org/dfn.js defer></script>
 
 <pre class=anchors>
-url:https://xhr.spec.whatwg.org/#concept-formdata-entry;spec:xhr;type:dfn;
-    text:entry
-    text:entries
 url:https://tools.ietf.org/html/rfc7230#section-3.1.1;text:method;type:dfn;spec:http
 url: https://tools.ietf.org/html/rfc7230#section-3.2;text:field-name;type:dfn;spec:http
 url: https://tools.ietf.org/html/rfc7230#section-3.2;text:field-content; type:dfn;spec:http
@@ -83,6 +80,14 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
         "href": "https://simonsapin.github.io/data-urls/",
         "title": "The data URL scheme"
     },
+    "EXPECT-CT": {
+        "authors": [
+            "Emily Stark"
+        ],
+        "href": "https://tools.ietf.org/html/draft-ietf-httpbis-expect-ct-02",
+        "publisher": "IETF",
+        "title": "Expect-CT Extension for HTTP"
+    },
     "HTTPVERBSEC1": {
         "publisher": "US-CERT",
         "href": "https://www.kb.cert.org/vuls/id/867593",
@@ -98,10 +103,18 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
         "href": "https://www.kb.cert.org/vuls/id/150227",
         "title": "HTTP proxy default configurations allow arbitrary TCP connections."
     },
+    "OCSP": {
+        "aliasOf": "RFC2560"
+    },
     "PUBLIC-SUFFIX": {
         "title": "Public Suffix List",
         "publisher": "publicsuffix.org",
         "href": "https://publicsuffix.org/list/"
+    },
+    "REPORTING": {
+        "authors": ["Ilya Grigorik", "Mike West"],
+        "href": "https://wicg.github.io/reporting/",
+        "title": "Reporting API"
     },
     "TOKBIND-NEGOTIATION": {
         "authors": [ "Andrei Popov", "Magnus Nystroem", "Dirk Balfanz", "Adam Langley" ],
@@ -467,6 +480,9 @@ whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
 
 <p>and whose <a for=header>value</a>, <a lt="extract header values">once extracted</a>, is not
 failure.
+
+<p class="note">There are limited exceptions to the `<code>Content-Type</code>` header safelist, as
+documented in <a href=#cors-protocol-exceptions>CORS protocol exceptions</a>.
 
 <p>A <dfn export>CORS non-wildcard request-header name</dfn> is a <a>byte-case-insensitive</a> match
 for `<code>Authorization</code>`.
@@ -1282,6 +1298,7 @@ or "<code>worker</code>".
     </ol>
 
    <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these in-parallel steps.
+
   </ol>
 </ol>
 
@@ -2319,6 +2336,27 @@ Access-Control-Allow-Credentials: true</pre>
  callback will be invoked and any `<code>Set-Cookie</code>` response headers will end up being
  ignored.
 </div>
+
+<h4 id=cors-protocol-exceptions>CORS protocol exceptions</h4>
+
+<p>Specifications have allowed limited exceptions to the CORS safelist for non-safelisted
+`<code>Content-Type</code>` header values. These exceptions are made for requests that can be
+triggered by web content but whose headers and bodies can be only minimally controlled by the web
+content. Therefore, servers should expect cross-origin web content to be allowed to trigger
+non-preflighted requests with the following non-safelisted `<code>Content-Type</code>` header
+values:
+
+<ul class=brief>
+ <li>`<code>application/csp-report</code>` [[CSP]]
+ <li>`<code>application/report</code>` [[REPORTING]]
+ <li>`<code>application/expect-ct-report+json</code>` [[EXPECT-CT]]
+ <li>`<code>application/xss-auditor-report</code>`
+ <li>`<code>application/ocsp-request</code>` [[OCSP]]
+</ul>
+
+<p>Specifications should avoid introducing new exceptions and should only do so with careful
+consideration for the security consequences. New exceptions can be proposed by
+<a href=https://github.com/whatwg/fetch/issues/new>filing an issue</a>.
 
 
 <h3 id=x-content-type-options-header>`<code>X-Content-Type-Options</code>` header</h3>
@@ -3407,14 +3445,11 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
 
   <ol>
    <li>
-    <p>If <var>actualResponse</var>'s <a for=response>status</a> is not
-    <code>303</code>, <var>request</var>'s <a for=request>body</a> is not
-    <a for=body>done</a>, and the
-    <a>connection</a> uses HTTP/2, then user agents may, and are even
-    encouraged to, transmit an <code>RST_STREAM</code> frame.
+    <p>If <var>actualResponse</var>'s <a for=response>status</a> is not <code>303</code>,
+    <var>request</var>'s <a for=request>body</a> is not null, and the <a>connection</a> uses HTTP/2,
+    then user agents may, and are even encouraged to, transmit an <code>RST_STREAM</code> frame.
 
-    <p class=note><code>303</code> is excluded as certain communities ascribe special status to
-    it.
+    <p class=note><code>303</code> is excluded as certain communities ascribe special status to it.
 
    <li><p>Let <var>location</var> be the result of <a>extracting header list values</a> given
    `<code>Location</code>` and <var>actualResponse</var>'s <a for=response>header list</a>.
@@ -5064,16 +5099,16 @@ runs the associated steps:
     <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]</p>
 
     <p>Each part whose `<code>Content-Disposition</code>` header contains a `<code>filename</code>`
-    parameter must be parsed into an <a>entry</a> whose value is a {{File}} whose content is the
-    content of the part. The {{File/name}} attribute of the {{File}} must have the value of the
-    `<code>filename</code>` parameter of the part. The {{Blob/type}} attribute of the {{File}} must
-    have the value of the `<code>Content-Type</code>` header of the part if the part has such
-    header, and `<code>text/plain</code>` (the default defined by [[!RFC7578]] section 4.4)
-    otherwise.</p>
+    parameter must be parsed into an <a for=FormData>entry</a> whose value is a {{File}} object
+    whose contents are the contents of the part. The {{File/name}} attribute of the {{File}} object
+    must have the value of the `<code>filename</code>` parameter of the part. The {{Blob/type}}
+    attribute of the {{File}} object must have the value of the `<code>Content-Type</code>` header
+    of the part if the part has such header, and `<code>text/plain</code>` (the default defined by
+    [[!RFC7578]] section 4.4) otherwise.</p>
 
     <p>Each part whose `<code>Content-Disposition</code>` header does not contain a
-    `<code>filename</code>` parameter must be parsed into an <a>entry</a> whose value is the
-    <a>UTF-8 decoded</a> content of the part. <span class=note>This is done regardless of the
+    `<code>filename</code>` parameter must be parsed into an <a for=FormData>entry</a> whose value
+    is the <a>UTF-8 decoded</a> content of the part. <span class=note>This is done regardless of the
     presence or the value of a `<code>Content-Type</code>` header and regardless of the presence or
     the value of a `<code>charset</code>` parameter.</span></p>
 
@@ -5084,8 +5119,8 @@ runs the associated steps:
 
    <li><p>If that fails for some reason, then <a>throw</a> a <code>TypeError</code>.
 
-   <li><p>Return a new {{FormData}} object, appending each <a>entry</a>, resulting from the parsing
-   operation, to <a>entries</a>.
+   <li><p>Return a new {{FormData}} object, appending each <a for=FormData>entry</a>, resulting from
+   the parsing operation, to <a for=FormData>entries</a>.
   </ol>
 
   <p class=XXX>The above is a rough approximation of what is needed for
@@ -6240,6 +6275,7 @@ therefore not shareable, a WebSocket connection is very close to identical to an
  <a for=request>url</a> is <var>requestURL</var>,
  <a for=request>client</a> is <var>client</var>,
  <a>service-workers mode</a> is "<code>none</code>",
+ <a for=request>referrer</a> is "<code>no-referrer</code>",
  <a>synchronous flag</a> is set,
  <a for=request>mode</a> is "<code>websocket</code>",
  <a for=request>credentials mode</a> is
@@ -6560,6 +6596,7 @@ Vinod Anupam,
 Vladimir Dzhuvinov,
 Wayne Carr,
 Xabier Rodríguez,
+Yehuda Katz,
 Yoav Weiss,
 Youenn Fablet<!-- youennf; GitHub -->,
 平野裕 (Yutaka Hirano), and
