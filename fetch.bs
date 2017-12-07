@@ -146,13 +146,14 @@ of abstraction.
 
 <p>This specification depends on the Infra Standard. [[!INFRA]]
 
-<p>This specification uses terminology from the ABNF, Encoding, HTML, HTTP, IDL, Streams, and URL
-Standards.
+<p>This specification uses terminology from the ABNF, Encoding, HTML, HTTP, IDL, MIME Sniffing,
+Streams, and URL Standards.
 [[!ABNF]]
 [[!ENCODING]]
 [[!HTML]]
 [[!HTTP]]
 [[!WEBIDL]]
+[[!MIMESNIFF]]
 [[!STREAMS]]
 [[!URL]]
 
@@ -2987,7 +2988,8 @@ steps:
    <li><p>Return a <a for=/>response</a> whose <a for=response>header list</a> consist of a single
    <a for=/>header</a> whose <a for=header>name</a> is `<code>Content-Type</code>` and
    <a for=header>value</a> is <var>dataURLStruct</var>'s <a for="data: URL struct">MIME type</a>,
-   <a for=response>body</a> is <var>dataURLStruct</var>'s <a for="data: URL struct">body</a>, and
+   <a for="serialize a MIME type to bytes">serialized</a>, whose <a for=response>body</a> is
+   <var>dataURLStruct</var>'s <a for="data: URL struct">body</a>, and whose
    <a for=response>HTTPS state</a> is <var>request</var>'s <a for=request>client</a>'s
    <a for="environment settings object">HTTPS state</a> if <var>request</var>'s
    <a for=request>client</a> is non-null.
@@ -6053,9 +6055,8 @@ if the script checks that the URL has the right hostname.
 that RFC's normative processing requirements. [[RFC2397]]
 
 <p>A <dfn><code>data:</code> URL struct</dfn> is a <a>struct</a> that consists of a
-<dfn for="data: URL struct">MIME type</dfn> (a <a>byte sequence</a>) and a
+<dfn for="data: URL struct">MIME type</dfn> (a <a for=/>MIME type</a>) and a
 <dfn for="data: URL struct">body</dfn> (a <a>byte sequence</a>).
-<!-- XXX can we do better for MIME type? -->
 
 <p>The <dfn export><code>data:</code> URL processor</dfn> takes a <a for=/>URL</a>
 <var>dataURL</var> and then runs these steps:
@@ -6090,7 +6091,7 @@ that RFC's normative processing requirements. [[RFC2397]]
   <ol>
    <li><p>Let <var>stringBody</var> be the <a>isomorphic decode</a> of <var>body</var>.
 
-   <li><p>Set <var>body</var> to the <a>forgiving-base64 decode</span> of <var>stringBody</var>.
+   <li><p>Set <var>body</var> to the <a>forgiving-base64 decode</a> of <var>stringBody</var>.
 
    <li><p>If <var>body</var> is failure, then return failure.
 
@@ -6100,14 +6101,14 @@ that RFC's normative processing requirements. [[RFC2397]]
  <li><p>If <var>mimeType</var> starts with "<code>;</code>", then prepend "<code>text/plain</code>"
  to <var>mimeType</var>.
 
- <li><p>If <var>mimeType</var> is the empty string or is not a
- <span class=XXX>valid MIME type</span>, then set <var>mimeType</var> to
- "<code>text/plain;charset=US-ASCII</code>".
+ <li><p>Let <var>mimeTypeRecord</var> be the result of <a lt="parse a MIME type">parsing</a>
+ <var>mimeType</var>.
 
- <li><p>Let <var>mimeTypeBytes</var> be the <a>isomorphic encode</a> of <var>mimeType</var>.
+ <li><p>If <var>mimeTypeRecord</var> is failure, then set <var>mimeTypeRecord</var> to
+ <code>text/plain;charset=US-ASCII</code>.
 
  <li><p>Return a new <a><code>data:</code> URL struct</a> whose
- <a for="data: URL struct">MIME type</a> is <var>mimeTypeBytes</var> and
+ <a for="data: URL struct">MIME type</a> is <var>mimeTypeRecord</var> and
  <a for="data: URL struct">body</a> is <var>body</var>.
 </ol>
 
