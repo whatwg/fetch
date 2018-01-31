@@ -61,11 +61,6 @@ url: https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:d
         "publisher": "IETF",
         "title": "HTTP Client Hints"
     },
-    "DATAURL": {
-        "authors": ["Simon Sapin"],
-        "href": "https://simonsapin.github.io/data-urls/",
-        "title": "The data URL scheme"
-    },
     "HTTPVERBSEC1": {
         "publisher": "US-CERT",
         "href": "https://www.kb.cert.org/vuls/id/867593",
@@ -151,13 +146,14 @@ of abstraction.
 
 <p>This specification depends on the Infra Standard. [[!INFRA]]
 
-<p>This specification uses terminology from the ABNF, Encoding, HTML, HTTP, IDL, Streams, and URL
-Standards.
+<p>This specification uses terminology from the ABNF, Encoding, HTML, HTTP, IDL, MIME Sniffing,
+Streams, and URL Standards.
 [[!ABNF]]
 [[!ENCODING]]
 [[!HTML]]
 [[!HTTP]]
 [[!WEBIDL]]
+[[!MIMESNIFF]]
 [[!STREAMS]]
 [[!URL]]
 
@@ -2983,23 +2979,21 @@ steps:
 
  <dt>"<code>data</code>"
  <dd>
-  <p>If <a href=https://simonsapin.github.io/data-urls/>obtaining a resource</a> from
-  <var>request</var>'s <a for=request>current url</a> does not return
-  failure, then return a <a for=/>response</a> whose
-  <a for=response>header list</a> consist of a single
-  <a for=/>header</a> whose <a for=header>name</a> is
-  `<code>Content-Type</code>` and <a for=header>value</a> is the
-  MIME type and parameters returned from
-  <a href=https://simonsapin.github.io/data-urls/>obtaining a resource</a>,
-  <a for=response>body</a> is the data returned from
-  <a href=https://simonsapin.github.io/data-urls/>obtaining a resource</a>, and
-  <a for=response>HTTPS state</a> is <var>request</var>'s
-  <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
-  if <var>request</var>'s <a for=request>client</a> is non-null.
-  [[!DATAURL]]
-  <!-- XXX "obtaining a resource" needs a better reference -->
+  <ol>
+   <li><p>Let <var>dataURLStruct</var> be the result of running the
+   <a><code>data:</code> URL processor</a> on <var>request</var>'s <a for=request>current url</a>.
 
-  <p>Otherwise, return a <a>network error</a>.
+   <li><p>If <var>dataURLStruct</var> is failure, then return a <a>network error</a>.
+
+   <li><p>Return a <a for=/>response</a> whose <a for=response>header list</a> consist of a single
+   <a for=/>header</a> whose <a for=header>name</a> is `<code>Content-Type</code>` and
+   <a for=header>value</a> is <var>dataURLStruct</var>'s <a for="data: URL struct">MIME type</a>,
+   <a lt="serialize a MIME type to bytes">serialized</a>, whose <a for=response>body</a> is
+   <var>dataURLStruct</var>'s <a for="data: URL struct">body</a>, and whose
+   <a for=response>HTTPS state</a> is <var>request</var>'s <a for=request>client</a>'s
+   <a for="environment settings object">HTTPS state</a> if <var>request</var>'s
+   <a for=request>client</a> is non-null.
+  </ol>
 
  <dt>"<code>file</code>"
  <dt>"<code>ftp</code>"
@@ -6055,6 +6049,78 @@ if the script checks that the URL has the right hostname.
 
 
 
+<h2 id=data-urls><code>data:</code> URLs</h2>
+
+<p>For an informative description of <code>data:</code> URLs, see RFC 2397. This section replaces
+that RFC's normative processing requirements to be compatible with deployed content. [[RFC2397]]
+
+<p>A <dfn><code>data:</code> URL struct</dfn> is a <a>struct</a> that consists of a
+<dfn for="data: URL struct">MIME type</dfn> (a <a for=/>MIME type</a>) and a
+<dfn for="data: URL struct">body</dfn> (a <a>byte sequence</a>).
+
+<p>The <dfn export><code>data:</code> URL processor</dfn> takes a <a for=/>URL</a>
+<var>dataURL</var> and then runs these steps:
+
+<ol>
+ <li><p>Assert: <var>dataURL</var>'s <a for=url>scheme</a> is "<code>data</code>".
+
+ <li><p>Let <var>input</var> be the result of running the <a>URL serializer</a> on
+ <var>dataURL</var> with the <i>exclude fragment flag</i> set.
+
+ <li><p>Remove the leading "<code>data:</code>" string from <var>input</var>.
+
+ <li><p>Let <var>position</var> point at the start of <var>input</var>.
+
+ <li><p>Let <var>mimeType</var> be the result of <a>collecting a sequence of code points</a> that
+ are not equal to U+002C (,), given <var>position</var>.
+
+ <li>
+  <p><a>Strip leading and trailing ASCII whitespace</a> from <var>mimeType</var>.
+
+  <p class="note">This will only remove U+0020 SPACE <a>code points</a>, if any.
+
+ <li><p>If <var>position</var> is past the end of <var>input</var>, then return failure.
+
+ <li><p>Advance <var>position</var> by 1.
+
+ <li><p>Let <var>encodedBody</var> be the remainder of <var>input</var>.
+
+ <li><p>Let <var>body</var> be the <a>string percent decoding</a> of <var>encodedBody</var>.
+
+ <li>
+  <p>If <var>mimeType</var> ends with U+003B (;), followed by zero or more U+0020 SPACE, followed by
+  an <a>ASCII case-insensitive</a> match for "<code>base64</code>", then:
+
+  <ol>
+   <li><p>Let <var>stringBody</var> be the <a>isomorphic decode</a> of <var>body</var>.
+
+   <li><p>Set <var>body</var> to the <a>forgiving-base64 decode</a> of <var>stringBody</var>.
+
+   <li><p>If <var>body</var> is failure, then return failure.
+
+   <li><p>Remove the last 6 <a>code points</a> from <var>mimeType</var>.
+
+   <li><p>Remove trailing U+0020 SPACE <a>code points</a> from <var>mimeType</var>, if any.
+
+   <li><p>Remove the last U+003B (;) <a>code point</a> from <var>mimeType</var>.
+  </ol>
+
+ <li><p>If <var>mimeType</var> starts with U+003B (;), then prepend "<code>text/plain</code>"
+ to <var>mimeType</var>.
+
+ <li><p>Let <var>mimeTypeRecord</var> be the result of <a lt="parse a MIME type">parsing</a>
+ <var>mimeType</var>.
+
+ <li><p>If <var>mimeTypeRecord</var> is failure, then set <var>mimeTypeRecord</var> to
+ <code>text/plain;charset=US-ASCII</code>.
+
+ <li><p>Return a new <a><code>data:</code> URL struct</a> whose
+ <a for="data: URL struct">MIME type</a> is <var>mimeTypeRecord</var> and
+ <a for="data: URL struct">body</a> is <var>body</var>.
+</ol>
+
+
+
 <h2 id=background-reading class=no-num>Background reading</h2>
 
 <p><em>This section and its subsections are informative only.</em>
@@ -6175,6 +6241,7 @@ Brad Porter,
 Bryan Smith,
 Caitlin Potter,
 Cameron McCormack,
+Chris Rebert,
 Clement Pellerin,
 Collin Jackson,
 Daniel Robertson,
@@ -6231,6 +6298,7 @@ Jxck,
 Keith Yeung,
 Kenji Baheux,
 Lachlan Hunt,
+Larry Masinter,
 Liam Brummitt,
 Louis Ryan,
 Lucas Gonze,
@@ -6276,6 +6344,7 @@ Sharath Udupa,
 Shivakumar Jagalur Matt,
 Sigbjørn Finne,
 Simon Pieters,
+Simon Sapin,
 Srirama Chandra Sekhar Mogali,
 Steven Salat,
 Sunava Dutta,
