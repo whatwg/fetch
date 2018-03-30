@@ -2346,17 +2346,29 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var>
  (ignoring parameters) is not `<code>text/css</code>`, then return <b>blocked</b>.
 
- <li><p>If <var>destination</var> is
-     "<code>audio</code>",
-     "<code>font</code>",
-     "<code>image</code>",
-     "<code>track</code>" or
-     "<code>video</code>"
- and <var>mimeType</var> (ignoring parameters) is
-     a <a>HTML MIME type</a>,
-     a <a>JSON MIME type</a> or
-     an <a>XML MIME type</a> (except "<code>image/svg+xml</code>")
- then return <b>blocked</b>.
+ <li><p>Return <b>blocked</b> if all of the following conditions are met:
+   <ul>
+     <li><p><var>destination</var> is
+         "<code>audio</code>",
+         "<code>font</code>",
+         "<code>image</code>",
+         "<code>track</code>" or
+         "<code>video</code>"
+     <li><p><var>mimeType</var> (ignoring parameters) is
+         a <a>HTML MIME type</a>,
+         a <a>JSON MIME type</a> or
+         an <a>XML MIME type</a> (except "<code>image/svg+xml</code>")
+     <li><p><var>request</var>'s <a for=request>mode</a> is different from "<code>cors</code>",
+     <li><p><var>request</var>'s <a for=request>origin</a>
+         is not <a>same origin</a> with
+         <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>
+     <!-- The two items above are a bit unfortunate - ideally they would be
+          removed for consistency with other nosniff directives.  These items are
+          currently included to accomodate CORB (https://github.com/whatwg/fetch/issues/681),
+          which ignores same-origin or CORS-allowed requests.  To remove these
+          items we need to gather data on how much of existing requests would be
+          affected by blocking same-origin and/or CORS-allowed requests. -->
+   </ul>
 
  <li><p>Return <b>allowed</b>.
 </ol>
