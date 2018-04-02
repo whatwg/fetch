@@ -1069,8 +1069,7 @@ e.g., bind HTTP cookies or OAuth tokens that it issues to the user agent.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-referred-token-binding-origin>referred-token-binding origin</dfn>,
-which is an <a for=/>origin</a>.
-Unless stated otherwise, it is null.
+which is an <a for=/>origin</a> or null. Unless stated otherwise, it is null.
 
 <p class="note no-backref">When <a for=request>Request</a>'s
 <a for=request>referred-token-binding origin</a> is not null,
@@ -1298,7 +1297,6 @@ or "<code>worker</code>".
     </ol>
 
    <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these in-parallel steps.
-
   </ol>
 </ol>
 
@@ -1565,20 +1563,30 @@ for each associated <a for="fetch group">fetch record</a> whose
 
 <h3 id=connections>Connections</h3>
 
+<p>A <dfn>connection</dfn> is a communication channel between the user agent and an origin.
+
+<p>A <a>connection</a> has an associated <dfn for=connection>origin</dfn>, which is an <a for=/>origin</a>.
+
+<p>A <a>connection</a> has an associated <dfn for=connection>credential</dfn>, which is a boolean. Its value is `false` unless otherwise specified.
+
+<p>A <a>connection</a> has an associated <a for=connection>token-binding protocol version</a>,
+which is a byte sequence.
+Its value is null unless otherwise specified.
+
+<p>A <a>connection</a> has an associated <a for=connection>token-binding key parameters</a>, which is a byte.
+Its value is null unless otherwise specified.
+
+<p>A <a>connection</a> has an associated <a for=connection>token-binding Exported Keying Material</a>,
+which is a byte sequence.
+Its value is null unless otherwise specified.
+
+
 <p>A user agent has an associated
-<dfn export id=concept-connection-pool for=connection>connection pool</dfn>. A
-<a for=connection>connection pool</a> consists of zero or more
+<dfn export id=concept-connection-pool for=/>connection pool</dfn>. A
+<a for=/>connection pool</a> consists of zero or more
 <dfn lt=connection export id=concept-connection>connections</dfn>. Each
 <a>connection</a> is identified by an <b>origin</b> (an
 <a for=/>origin</a>) and <b>credentials</b> (a boolean).
-
-<p>A <a>connection</a> has associated
-<dfn export for=connection id=concept-tls-connection-metadata>TLS connection metadata</dfn> that consists of:
-<ul class=brief>
- <li><a for=/>token-binding protocol version</a>, initially null.
- <li><a for=/>token-binding key parameters</a>, initially null.
- <li><a for=/>token-binding Exported Keying Material</a>, initially null.
-</ul>
 
 <h4 id=obtain-connection>Obtaining a Connection</h4>
 
@@ -1586,7 +1594,7 @@ for each associated <a for="fetch group">fetch record</a> whose
 <var>origin</var> and <var>credentials</var>, run these steps:
 
 <ol>
- <li><p>If <a for=connection>connection pool</a> contains a <a>connection</a> whose <b>origin</b> is
+ <li><p>If <a for=/>connection pool</a> contains a <a>connection</a> whose <b>origin</b> is
  <var>origin</var> and <b>credentials</b> is <var>credentials</var>, then return that
  <a>connection</a>.
 
@@ -1601,26 +1609,34 @@ for each associated <a for="fetch group">fetch record</a> whose
     <var>origin</var>. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
     [[!TLS]]
 
-    <p>If <var>credentials</var> is true and the user agent supports <a for=/>Token Binding</a>,
-    send <a for=/>token-binding protocol version</a> and
-    <a for=/>token-binding key parameters</a> in a
+    <p>Send the highest supported
+    <a for=connection>token-binding protocol version</a> and
+    all supported <a for=connection>token-binding key parameters</a> in a
     <code>token_binding</code> Client Hello Extension, as described in
     <a href="https://tools.ietf.org/html/draft-ietf-tokbind-negotiation#section-2">section 2</a>
     of the Token Binding Negotiation spec [[!TOKBIND-NEGOTIATION]].
     If Token Binding negotiation succeeds, set
-    <a for=/>token-binding protocol version</a> and
-    <a for=/>token-binding key parameters</a>
-    in <var>connection</var>'s <a for=connection>TLS connection metadata</a>
-    to the negotiated values,
-    and <a for=/>token-binding Exported Keying Material</a> to the computed value.
+    <a for=connection>token-binding protocol version</a> and
+    <a for=connection>token-binding key parameters</a>
+    in <var>connection</var> to the negotiated values,
+    and <a for=connection>token-binding Exported Keying Material</a>
+    in <var>connection</var> to the computed value.
 
     <p class="note no-backref">
     The user agent will use <a for=/>Token Binding</a> for any
     <a for=/>request</a> sent over a TLS connection for which Token Binding
     negotiation was successful.
-    <a for=/>Token Binding</a> is only proposed when <var>credentials</var>
-    is true, so connections which successfully negotiate a binding will never be
-    pooled with connections that do not include credentials.
+
+    <p class="note no-backref">
+    Token Binding works correctly even when requests for different origins are
+    coalesced on the same HTTP2 connection.  Note that the user agent will use
+    a different <a for=/>token-binding key</a> for every different
+    <a for=/>registrable domain</a>.
+    Separate Token Binding messages (generated using different token-binding
+    keys) will be sent as headers in the requests to the different origins.
+    This implies that all origins that can be coalesced into the same
+    HTTP2 connection need to support the same Token Binding protocol
+    version and key parameters.
 
     <p>If <var>credentials</var> is false, then do <em>not</em> send a TLS client certificate.
 
@@ -1637,7 +1653,7 @@ for each associated <a for="fetch group">fetch record</a> whose
    <li><p>Return failure.
   </ol>
 
- <li><p>Add <var>connection</var> to the <a for=connection>connection pool</a> with <b>origin</b>
+ <li><p>Add <var>connection</var> to the <a for=/>connection pool</a> with <b>origin</b>
  being <var>origin</var> and <b>credentials</b> being <var>credentials</var>.
 
  <li><p>Return <var>connection</var>.
@@ -2414,14 +2430,14 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
 <p>In order to protect security tokens like HTTP cookies and OAuth tokens, user agents and servers
 can use a technique known as <dfn export id=concept-token-binding>Token Binding</dfn> to
 cryptographically associate a given token with a secret
-(a <dfn export id=concept-token-binding-key>token-binding key</dfn>) known only to a specific
-user agent. This association mitigates the risk that attackers can steal the token and use it
+known only to a specific user agent
+(a <dfn export id=concept-token-binding-key>token-binding key</dfn>).
+This association mitigates the risk that attackers can steal the token and use it
 themselves, as they will not be able to easily replicate the user agent's secret,
 and therefore will be unable to replicate the cryptographic binding of the token.
 
-<p>Details are described in TOKBIND-NEGOTIATION, TOKBIND-PROTOCOL and
-TOKBIND-HTTPS and integration is defined here.
-[[TOKBIND-NEGOTIATION]], [[TOKBIND-PROTOCOL]], and [[TOKBIND-HTTPS]].
+<p>Details are described in [[TOKBIND-NEGOTIATION]], [[TOKBIND-PROTOCOL]] and
+[[TOKBIND-HTTPS]] and integration is defined here.
 
 <p>A <dfn export id=token-binding-id>token binding ID</dfn> is the non-secret representation
 of a <a for=/>token-binding key</a>, as described in
@@ -2431,23 +2447,27 @@ of [[TOKBIND-PROTOCOL]].
 <p>At a very high level, a user agent negotiates the use of Token Binding with
 a server when it sets up a TLS connection to the server.
 It sends its highest supported
-<dfn export id=concept-token-binding-protocol-version>token-binding protocol version</dfn>
+<dfn export id=concept-token-binding-protocol-version for=connection>token-binding protocol version</dfn>
 and supported cryptographic algorithms and parameters (the
-<dfn export id=concept-token-binding-key-parameters>token-binding key parameters</dfn>)
+<dfn export id=concept-token-binding-key-parameters for=connection>token-binding key parameters</dfn>)
 in a <code>token_binding</code> Client Hello Extension, as described in
 <a href="https://tools.ietf.org/html/draft-ietf-tokbind-negotiation#section-2">section 2</a>
 of the Token Binding Negotiation spec [[!TOKBIND-NEGOTIATION]].
-The user agent saves the values of the <a for=/>token-binding protocol version</a> and
-<a for=/>token-binding key parameters</a> that were negotiated for the
-TLS connection in metadata for that connection.
+The user agent saves the values of the
+<a for=connection>token-binding protocol version</a> and
+<a for=connection>token-binding key parameters</a> that were negotiated for
+that TLS connection.  The user agent also computes and saves the value of
+<a for=connection>token-binding Exported Keying Material</a> for that connection.
 
-<p>The user agent uses a `<dfn http-header><code>Sec-Token-Binding</code></dfn>`
-HTTP request <a for=/>header</a> to transmit token binding metadata to the server.
-When a user agent sends a <a for=/>request</a> to a server over a TLS connection
-for which Token Binding has been negotiated, it proves possession of the
-private key by generating a cryptographic signature and sending it in the
-`<a http-header><code>Sec-Token-Binding</code></a>` <a for=/>header</a>.
-The server associates ('binds') credentials that it issues to that user agent
+<p>This connection-level metadata is used generate a
+`<dfn http-header><code>Sec-Token-Binding</code></dfn>` request
+<a for=/>header</a> on each HTTP request sent using that connection.
+The header contains the user agent's proof-of-possession for a given
+origin's <a for=/>token-binding key</a>.
+(The user agent proves possession of the private key by putting a cryptographic
+signature in that header.)
+
+<p>The server associates ('binds') credentials that it issues to that user agent
 with a <a for=/>token binding ID</a> in that <a for=/>header</a>.
 The server also verifies if bound credentials presented to it by a user agent
 match a <a for=/>token binding ID</a> in that <a for=/>header</a>.
@@ -2467,8 +2487,8 @@ A <a for=/>token binding message</a> is a list of <a for=/>token binding</a>s,
 where each <a for=/>token binding</a> consists of a
 <a for=/>token binding ID</a>, a <dfn id=concept-token-binding-type>token-binding type</dfn> and a
 cryptographic signature over the <a for=/>token-binding type</a>, the
-<a for=/>token-binding key parameters</a> and the
-<dfn id=concept-token-binding-ekm>token-binding Exported Keying Material</dfn>,
+<a for=connection>token-binding key parameters</a> and the
+<dfn id=concept-token-binding-ekm for=connection>token-binding Exported Keying Material</dfn>,
 as described in
 <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.3">section 3.3</a>
  of [[!TOKBIND-PROTOCOL]].
@@ -2488,12 +2508,31 @@ there is a need to support scenarios where bound credentials issued by one serve
 <a for=/>request</a> is being sent.
 
 Script code from an <a for=/>origin</a> can set a <a for=/>request</a>'s
-<a for=request>referred-token-binding origin</a> to ask the user agent to send
+<var>useReferredTokenBinding</var> attribute to ask the user agent to send
 the <a for=/>token binding ID</a> for that <a for=/>origin</a> as a
 <a for=/>referred-token-binding ID</a>
 in the <a for=/>Token Binding Message</a> sent to a target server.
 
-Alternately, servers that redirect a user agent to a different server can use the
+<p>E.g., by doing
+
+<pre>
+fetch("https://idp.org/issueToken?...", { useReferredTokenBinding:true })
+    .then( /* … */ )
+</pre>
+
+a script from <a for=request>origin</a> <code>https://rp.org/</code>
+can make the user agent disclose the <a for=/>token binding ID</a>
+used by the user agent for its <a for=request>origin</a>
+<code>https://rp.org/</code> to the target <a for=request>origin</a>
+<code>https://idp.org/</code>.
+The user agent discloses the <a for=/>token binding ID</a> by including a
+<a for=/>referred-token-binding ID</a> for <a for=request>origin</a>
+<code>https://rp.org/</code> (in addition to the <a for=/>token binding ID</a>
+for <a for=request>origin</a> <code>https://idp.org/</code>)
+in the <a for=/>Token Binding Message</a> that is created for the
+<a for=/>request</a> to <code>https://idp.org/</code>.
+
+<p>Alternately, servers that redirect a user agent to a different server can use the
 `<dfn http-header><code>Include-Referred-Token-Binding-ID</code></dfn>`
 response <a for=/>header</a>.
 
@@ -2505,18 +2544,26 @@ Include-Referred-Token-Binding-ID = %x74.72.75.65 ; "true", case-sensitive
 <a href="https://tools.ietf.org/html/draft-ietf-tokbind-https#section-5.3">section 5.3</a>
 of the Token Binding over HTTP spec [[TOKBIND-HTTPS]].
 
-<p>By setting the `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
-response <a for=/>header</a> to
-`<code>true</code>` in the redirect response, the <a for=request>origin</a> that
-sends the redirect <a for=/>response</a> (the "referring <a for=request>origin</a>" in the
-<a for=/>Token Binding</a> sense) tells the user agent to disclose the
-<a for=/>token binding ID</a> used by the user agent for that <a for=request>origin</a>
-to the target <a for=request>origin</a>. The user agent does this while processing the
+<p>E.g., by setting the
 `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
+response <a for=/>header</a> to `<code>true</code>` in a redirect response
+that is sending the user agent to <a for=request>origin</a>
+<code>https://idp.org/</code>, the <a for=request>origin</a> that
+issues the redirect <a for=/>response</a> (say <code>https://rp.org/</code> -
+the "referring <a for=request>origin</a>" in the <a for=/>Token Binding</a>
+sense) tells the user agent to disclose the <a for=/>token binding ID</a>
+used by the user agent for its <a for=request>origin</a>
+<code>https://rp.org/</code> to the target <a for=request>origin</a>
+<code>https://idp.org/</code>.
+The user agent discloses that <a for=/>token binding ID</a> while processing
+the `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
 <a for=/>header</a> in the redirect
-<a for=/>response</a>, by adding a <a for=/>referred-token-binding ID</a> in the
-<a for=/>Token Binding Message</a> that is created when the <a for=/>request</a>
-is sent to the target server.
+<a for=/>response</a>, by including a <a for=/>referred-token-binding ID</a>
+for <a for=request>origin</a> <code>https://rp.org/</code>
+(in addition to the <a for=/>token binding ID</a> for <a for=request>origin</a>
+<code>https://idp.org/</code>) in the
+<a for=/>Token Binding Message</a> that is created for the <a for=/>request</a>
+to <code>https://idp.org/</code>.
 
 <h4 id=token-binding-key-store>Token Binding Key Store</h4>
 
@@ -2533,7 +2580,7 @@ the user agent's cookie store.
 
 <p><dfn abstract-op export id=concept-get-token-binding-key>Get the token-binding key</dfn>
 for an <a for=/>origin</a> <var>tokenBindingOrigin</var> and
-<a for=/>token-binding key parameters</a> <var>tokenBindingKeyParameters</var>,
+<a for=connection>token-binding key parameters</a> <var>tokenBindingKeyParameters</var>,
 using the user agent's <a for=/>token-binding key store</a>,
 by running these substeps:
 
@@ -2543,7 +2590,8 @@ by running these substeps:
  <li><p>If <var>tokenBindingOrigin</var>'s <a for=origin>host</a> is an <a>IPv4 address</a> or an <a>IPv6 address</a>,
  set <var>keyDomainName</var> to <var>tokenBindingOrigin</var>'s <a for=origin>host</a>.
 
- <p>Otherwise, set <var>keyDomainName</var> to the registrable domain of
+ <p>Otherwise, set <var>keyDomainName</var> to the
+ <dfn id=concept-registrable-domain/>registrable domain</dfn> of
  <var>tokenBindingOrigin</var>'s host, determined by running the steps in the Algorithm section of
  <a href=https://publicsuffix.org/list/>Public Suffix List</a>
  [[PUBLIC-SUFFIX]]
@@ -2561,6 +2609,31 @@ by running these substeps:
  <li><p>Return <var>tokenBindingKeyPair</var>.
 </ol>
 
+<h4 id=computing-token-binding-id>Computing a Token Binding Id</h4>
+<p>The structure of a <a for=/>token binding ID</a> is described in
+ <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.2">section 3.2</a>
+ of [[!TOKBIND-PROTOCOL]].
+
+<p><dfn abstract-op export id=concept-compute-token-binding-id>Compute a Token Binding ID</dfn>
+using a <a for=/>token-binding key</a> <code>tokenBindingKeyPair</code>
+and <a for=connection>token-binding key parameters</a>
+<code>tokenBindingKeyParameters</code>, by running these substeps:
+
+<ol>
+ <li><p>Let <var>publicKeyData</var> be a <code>Uint8Array</code> object
+ containing the public key of <a for=/>token-binding key</a> pair
+ <code>tokenBindingKeyPair</code> and
+ <var>tokenBindingIdBytes</var> be an empty byte sequence.
+
+ <li><p>Append <code>tokenBindingKeyParameters</code> to
+ <var>tokenBindingIdBytes</var>.
+
+ <li><p>Append <var>publicKeyData</var>'s length (in network byte order) to <var>tokenBindingIdBytes</var>.
+
+ <li><p>Append <var>publicKeyData</var> to <var>tokenBindingIdBytes</var>.
+
+ <li><p>Return <var>tokenBindingIdBytes</var>.
+</ol>
 
 <h4 id=computing-token-binding-header-value>Computing a Token Binding Header Value</h4>
 
@@ -2569,7 +2642,7 @@ that can be passed in a `<a http-header><code>Sec-Token-Binding</code></a>`
 <a for=/>header</a> for a <a for=/>request</a>
 <var>httpRequest</var> and a <a>connection</a> <var>tlsConnection</var>,
 using the <a for=/>token-binding key store</a> and the
-<a for=connection>connection pool</a>, by running these substeps:
+<a for=/>connection pool</a>, by running these substeps:
 
 <ol>
  <li><p>Return null if any of the following are true.
@@ -2577,28 +2650,28 @@ using the <a for=/>token-binding key store</a> and the
  <ol>
   <li><p><var>httpRequest</var>'s <a for=request>use-token-binding flag</a> is not set.
 
-  <li><p><a for=/>token-binding protocol version</a> in <var>tlsConnection</var>'s
- <a for=connection>TLS connection metadata</a> is null.
+  <li><p><a for=connection>token-binding protocol version</a> in <var>tlsConnection</var> is null.
  </ol>
+
+ <li><p>Let <var>providedTokenBindingKeyParameters</var> be
+ <var>tlsConnection</var>'s <a for=connection>token-binding key parameters</a>.
 
  <li><p>Let <var>providedTokenBindingKeyPair</var> be the result of
  <a abstract-op lt="Get the token-binding key">getting the token-binding key</a>
  for the <a for=/>origin</a> of <var>httpRequest</var>'s <a for=request>current url</a>
- and the <a for=/>token-binding key parameters</a> in <var>tlsConnection</var>'s
- <a for=connection>TLS connection metadata</a>.
+ and <var>providedTokenBindingKeyParameters</var>.
 
- <li><p>Let <var>providedTokenBindingId</var> be the result of computing a
- <a for=/>token binding ID</a> from <var>providedTokenBindingKeyPair</var>,
- as described in
- <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.2">section 3.2</a>
- of [[!TOKBIND-PROTOCOL]].
+ <li><p>Let <var>providedTokenBindingId</var> be the result of
+ <a abstract-op lt="Compute a Token Binding ID">computing a token binding ID</a>
+from <var>providedTokenBindingKeyPair</var> and
+<var>providedTokenBindingKeyParameters</var>.
 
  <li><p>Let <var>providedTokenBinding</var> be the result of computing a <a for=/>token binding</a>
  using <var>providedTokenBindingId</var> and <a for=/>token-binding type</a>
  <code>provided_token_binding</code>,
  containing a signature (using <var>providedTokenBindingKeyPair</var>) over the
  <var>providedTokenBindingId</var> as well as <var>tlsConnection</var>'s
- <a for=/>token-binding Exported Keying Material</a>, as described in
+ <a for=connection>token-binding Exported Keying Material</a>, as described in
  <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.3">section 3.3</a>
  of [[!TOKBIND-PROTOCOL]].
 
@@ -2611,28 +2684,27 @@ using the <a for=/>token-binding key store</a> and the
    <li><p>Let <var>referredTlsConnection</var> be the result of
    <a lt="obtain a connection" for=connection>obtaining a connection</a> for
    <var>httpRequest</var>'s <a for=request>referred-token-binding origin</a>
-   with credentials <code>true</code> from the <a for=connection>connection pool</a>.
+   with credentials <code>true</code> from the <a for=/>connection pool</a>.
 
-   <li><p>If <a for=/>token-binding protocol version</a> in
-   <var>referredTlsConnection</var>'s
-   <a for=connection>TLS connection metadata</a> is null,
+   <li><p>If <a for=connection>token-binding protocol version</a> in
+   <var>referredTlsConnection</var> is null,
    set <var>referredTokenBinding</var> to null.
 
-   <li><p>If <a for=/>token-binding protocol version</a> in
-   <var>referredTlsConnection</var>'s
-   <a for=connection>TLS connection metadata</a> is not null then:
+   <li><p>If <a for=connection>token-binding protocol version</a> in
+   <var>referredTlsConnection</var> is not null then:
     <ol>
+     <li><p>Let <var>referredTokenBindingKeyParameters</var> be
+     <var>referredTlsConnection</var>'s <a for=connection>token-binding key parameters</a>.
+
      <li><p>Let <var>referredTokenBindingKeyPair</var> be the result of
      <a abstract-op lt="Get the token-binding key">getting the token-binding key</a>
      for <var>httpRequest</var>'s <a for=request>referred-token-binding origin</a>
-     and the <a for=/>token-binding key parameters</a> in <var>tlsConnection</var>'s
-     <a for=connection>TLS connection metadata</a>.
+     and <var>referredTokenBindingKeyParameters</var>.
 
-     <li><p>Let <var>referredTokenBindingId</var> be the result of computing a
-     <a for=/>token binding ID</a> from <var>referredTokenBindingKeyPair</var>,
-     as described in
-     <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.2">section 3.2</a>
-     of [[!TOKBIND-PROTOCOL]].
+     <li><p>Let <var>referredTokenBindingId</var> be the result of
+     <a abstract-op lt="Compute a Token Binding ID">computing a token binding ID</a>
+     from <var>referredTokenBindingKeyPair</var> and
+     <var>referredTokenBindingKeyParameters</var>.
 
      <li><p>Let <var>referredTokenBinding</var> be the result of computing a
      <a for=/>token binding</a> using <var>referredTokenBindingId</var> and
@@ -2640,7 +2712,7 @@ using the <a for=/>token-binding key store</a> and the
      <code>referred_token_binding</code>, containing a signature
      (using <var>referredTokenBindingKeyPair</var>) over the <var>referredTokenBindingId</var>
      as well as <var>tlsConnection</var>'s
-     <a for=/>token-binding Exported Keying Material</a>, as described in
+     <a for=connection>token-binding Exported Keying Material</a>, as described in
      <a href="https://tools.ietf.org/html/draft-ietf-tokbind-protocol#section-3.3">section 3.3</a>
      of [[!TOKBIND-PROTOCOL]].
     </ol>
@@ -3567,15 +3639,16 @@ in addition to <a>HTTP fetch</a> above.
   throw as it was called for the same <a for=body>source</a> before.
 
  <li><p>Let <var>useReferredTokenBinding</var> be the result of
- <a for=header>parsing</a> `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
- in <var>actualResponse</var>'s <a for=response>header list</a>.
+ <a>extracting header list values</a> given
+ `<a http-header><code>Include-Referred-Token-Binding-ID</code></a>`
+ and <var>actualResponse</var>'s <a for=response>header list</a>.
 
  <li><p>Set the <var>request</var>'s <a for=request>referred-token-binding origin</a> to null.
 
  <li><p>If <var>useReferredTokenBinding</var> is `<code>true</code>`
  and the <var>request</var>'s <a for=request>use-token-binding flag</a> is set,
  then set the <var>request</var>'s <a for=request>referred-token-binding origin</a> to
-  <var>request</var>'s <a for=request>origin</a>.
+  <var>request</var>'s <a for=request>current url</a>'s <a for=request>origin</a>.
 
   <p class="note no-backref">By causing the <a for=request>referred-token-binding origin</a>
   to be set for the subsequent <a for=/>request</a> via the
@@ -3585,7 +3658,7 @@ in addition to <a>HTTP fetch</a> above.
   disclose to the target server the <a for=/>token binding ID</a> used by the user agent
   with the referring <a for=request>origin</a>. Importantly, only the referring
   <a for=request>origin</a> can cause the user agent to disclose the
-  <a for=/>token binding ID</a> for that <a for=request>origin</a> to a
+  <a for=/>token binding ID</a> for that referring <a for=request>origin</a> to a
   target server - a third party cannot do that.  Also, every redirect in a redirect chain is
   handled independently - the server that sends a redirect response controls whether the
   user agent receiving that response will disclose its <a for=/>token binding id</a> for
@@ -4119,7 +4192,7 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
      <a abstract-op lt="Compute a Token Binding header value">computing a Token Binding header value</a>
      for <var>request</var> and <var>connection</var>,
      using the user agent's <a for=/>token-binding key store</a> and
-     <a for=connection>connection pool</a>.
+     <a for=/>connection pool</a>.
 
      <li><p>If <var>tokenBindingMessage</var> is not null, append
      `<a http-header><code>Sec-Token-Binding</code></a>`/<var>tokenBindingMessage</var>
