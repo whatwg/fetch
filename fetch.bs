@@ -1,27 +1,13 @@
 <pre class=metadata>
-Title: Fetch Standard
 Group: WHATWG
 H1: Fetch
 Shortname: fetch
-Status: LS
-No Editor: true
+Text Macro: TWITTER fetchstandard
 Abstract: The Fetch standard defines requests, responses, and the process that binds them: fetching.
-Logo: https://resources.whatwg.org/logo-fetch.svg
-Boilerplate: omit feedback-header, omit conformance, omit index, omit idl-index
+Translation: ja https://triple-underscore.github.io/Fetch-ja.html
 Markup Shorthands: css off
-!Participate: <a href=https://github.com/whatwg/fetch>GitHub whatwg/fetch</a> (<a href=https://github.com/whatwg/fetch/issues/new>file an issue</a>, <a href=https://github.com/whatwg/fetch/issues>open issues</a>)
-!Participate: <a href=https://wiki.whatwg.org/wiki/IRC>IRC: #whatwg on Freenode</a>
-!Commits: <a href=https://github.com/whatwg/fetch/commits>GitHub whatwg/fetch/commits</a>
-!Commits: [SNAPSHOT-LINK]
-!Commits: <a href=https://twitter.com/fetchstandard>@fetchstandard</a>
-!Tests: <a href=https://github.com/w3c/web-platform-tests/tree/master/fetch>web-platform-tests fetch/</a> (<a href=https://github.com/w3c/web-platform-tests/labels/fetch>ongoing work</a>)
-!Translation (non-normative): <span title=Japanese><a href=https://triple-underscore.github.io/Fetch-ja.html lang=ja hreflang=ja rel=alternate>日本語</a></span>
 Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,typedefdef-requestinfo requestinfo,enumdef-requestdestination requestdestination,enumdef-requestmode requestmode,enumdef-requestcredentials requestcredentials,enumdef-requestcache requestcache,enumdef-requestredirect requestredirect,dictdef-responseinit responseinit,enumdef-responsetype responsetype
 </pre>
-
-<script src=https://resources.whatwg.org/file-issue.js async></script>
-<script src=https://resources.whatwg.org/commit-snapshot-shortcut-key.js async></script>
-<script src=https://resources.whatwg.org/dfn.js defer></script>
 
 <pre class=anchors>
 url:https://tools.ietf.org/html/rfc7230#section-3.1.1;text:method;type:dfn;spec:http
@@ -188,13 +174,14 @@ of abstraction.
 
 <p>This specification depends on the Infra Standard. [[!INFRA]]
 
-<p>This specification uses terminology from the ABNF, Encoding, HTML, HTTP, IDL, Streams, and URL
-Standards.
+<p>This specification uses terminology from the ABNF, Encoding, HTML, HTTP, IDL, MIME Sniffing,
+Streams, and URL Standards.
 [[!ABNF]]
 [[!ENCODING]]
 [[!HTML]]
 [[!HTTP]]
 [[!WEBIDL]]
+[[!MIMESNIFF]]
 [[!STREAMS]]
 [[!URL]]
 
@@ -284,7 +271,7 @@ means (e.g., <code>data</code> URLs).
 <p class="note no-backref">A <a for=/>response</a> delivered over HTTPS will
 typically have its <a for=response>HTTPS state</a> set to
 "<code>modern</code>". A user agent can use "<code>deprecated</code>" in a transition
-period. E.g., while removing support for a hash function, weak cypher suites, certificates for an
+period. E.g., while removing support for a hash function, weak cipher suites, certificates for an
 "Internal Name", or certificates with an overly long validity period. How exactly a user agent can
 use "<code>deprecated</code>" is not defined by this specification. An
 <a>environment settings object</a> typically derives its
@@ -796,7 +783,7 @@ is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<co
 
   <dt>"<code>none</code>"
   <dd>No service workers will get events for this fetch.
- </dd>
+ </dl>
 </div>
 
 <p>A <a for=/>request</a> has an associated
@@ -853,7 +840,9 @@ not always relevant and might require different behavior.
 
 <div class=note>
  <p>The following table illustrates the relationship between a <a for=/>request</a>'s
- <a for=request>initiator</a>, <a for=request>destination</a>, CSP directives, and features.
+ <a for=request>initiator</a>, <a for=request>destination</a>, CSP directives, and features. It is
+ not exhaustive with respect to features. Features need to have the relevant values defined in their
+ respective standards.
 
  <table>
   <tbody><tr>
@@ -1024,11 +1013,32 @@ unset.
 "<code>navigate</code>", or "<code>websocket</code>". Unless stated otherwise, it is
 "<code>no-cors</code>".
 
-<p class="note no-backref">Even though the default <a for=/>request</a>
-<a for=request>mode</a> is "<code>no-cors</code>", standards are highly
-discouraged from using it for new features. It is rather unsafe. "<code>navigate</code>" and
-"<code>websocket</code>" are special values for the HTML Standard.
-[[!HTML]]
+<div class="note no-backref">
+ <dl>
+  <dt>"<code>same-origin</code>"
+  <dd>Used to ensure requests are made to same-origin URLs. <a for=/>Fetch</a> will return a
+  <a>network error</a> if the request is not made to a same-origin URL.
+
+  <dt>"<code>cors</code>"
+  <dd>Makes the request a <a>CORS request</a>. Fetch will return a <a>network error</a> if the
+  requested resource does not understand the <a>CORS protocol</a>.
+
+  <dt>"<code>no-cors</code>"
+  <dd>Restricts requests to using <a>CORS-safelisted methods</a> and
+  <a>CORS-safelisted request-headers</a>. Upon success, fetch will return an
+  <a>opaque filtered response</a>.
+
+  <dt>"<code>navigate</code>"
+  <dd>This is a special mode used only when <a>navigating</a> between documents.
+
+  <dt>"<code>websocket</code>"
+  <dd>This is a special mode used only when <a lt="establish a WebSocket connection">establishing
+  a WebSocket connection</a>.
+ </dl>
+
+ <p>Even though the default <a for=/>request</a> <a for=request>mode</a> is "<code>no-cors</code>",
+ standards are highly discouraged from using it for new features. It is rather unsafe.
+</div>
 
 <p>A <a for=/>request</a> has an associated
 <dfn id=use-cors-preflight-flag export for=request>use-CORS-preflight flag</dfn>. Unless stated
@@ -1044,14 +1054,24 @@ one or more event listeners are registered on an {{XMLHttpRequestUpload}} object
 which is "<code>omit</code>", "<code>same-origin</code>", or
 "<code>include</code>". Unless stated otherwise, it is "<code>omit</code>".
 
-<p class="note no-backref"><a for=/>Request</a>'s
-<a for=request>credentials mode</a> controls the flow of
-<a for=/>credentials</a> during a <a for=/>fetch</a>. When
-<a for=/>request</a>'s <a for=request>mode</a> is
-"<code>navigate</code>", its
-<a for=request>credentials mode</a> is assumed to be
-"<code>include</code>" and <a for=/>fetch</a> does not currently account
-for other values. If <cite>HTML</cite> changes here, this standard will need corresponding changes.
+<div class="note no-backref">
+ <dl>
+  <dt>"<code>omit</code>"
+  <dd>Excludes credentials from this request.
+
+  <dt>"<code>same-origin</code>"
+  <dd>Include credentials with requests made to same-origin URLs.
+
+  <dt>"<code>include</code>"
+  <dd>Always includes credentials with this request.
+ </dl>
+
+ <p><a for=/>Request</a>'s <a for=request>credentials mode</a> controls the flow of
+ <a for=/>credentials</a> during a <a for=/>fetch</a>. When <a for=/>request</a>'s
+ <a for=request>mode</a> is "<code>navigate</code>", its <a for=request>credentials mode</a> is
+ assumed to be "<code>include</code>" and <a for=/>fetch</a> does not currently account for other
+ values. If <cite>HTML</cite> changes here, this standard will need corresponding changes.
+</div>
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-use-url-credentials-flag>use-URL-credentials flag</dfn>.
@@ -1142,6 +1162,20 @@ bound to <a for=/>request</a>'s <a for=request>origin</a>'s <a for=/>token bindi
 "<code>follow</code>", "<code>error</code>", or "<code>manual</code>".
 Unless stated otherwise, it is "<code>follow</code>".
 
+<div class="note no-backref">
+ <dl>
+  <dt>"<code>follow</code>"
+  <dd>Follow all redirects incurred when fetching a resource.
+
+  <dt>"<code>error</code>"
+  <dd>Return a <a>network error</a> when a request is met with a redirect.
+
+  <dt>"<code>manual</code>"
+  <dd>Retrieves an <a>opaque-redirect filtered response</a> when a request is met with a redirect so
+  that the redirect can be followed manually.
+ </dl>
+</div>
+
 <p>A <a for=/>request</a> has associated
 <dfn export for=request id=concept-request-integrity-metadata>integrity metadata</dfn>
 (a string). Unless stated otherwise, it is the empty string.
@@ -1156,11 +1190,10 @@ which is the empty string, "<code>parser-inserted</code>", or
 "<code>not-parser-inserted</code>". Unless otherwise stated, it is the empty string.
 
 <p class="note no-backref">A <a for=/>request</a>'s
-<a lt="url list" for=request>cryptographic nonce metadata</a> and
-<a for=request>parser metadata</a> are generally populated from
-attributes and flags on the HTML element responsible for triggering a fetch. They are used by
-various algorithms in [[!CSP]] to determine whether requests or responses
-should be blocked in a given context.
+<a lt="url list" for=request>cryptographic nonce metadata</a> and <a for=request>parser metadata</a>
+are generally populated from attributes and flags on the HTML element responsible for creating a
+<a for=/>request</a>. They are used by various algorithms in <cite>Content Security Policy</cite> to
+determine whether requests or responses are to be blocked in a given context. [[!CSP]]
 
 <hr>
 
@@ -2337,11 +2370,11 @@ fetch(url, { credentials:"include" }).then(success, failure)</pre>
  includes fully functional (they are ignored otherwise).
 
  <p>The user agent will make sure to include any relevant <a for=/>credentials</a> in the request.
- It will also put stricter requirements on the response. Not only will <code>bar.invalid</code> be
- required to list `<code>https://foo.invalid</code>` as value for
- `<a http-header><code>Access-Control-Allow-Origin</code></a>` (`<code>*</code>` is not allowed when
- <a for=/>credentials</a> are involved), the
- `<a http-header><code>Access-Control-Allow-Credentials</code></a>` has to be present too:
+ It will also put stricter requirements on the response. Not only will <code>bar.invalid</code> need
+ to list `<code>https://foo.invalid</code>` as value for the
+ `<a http-header><code>Access-Control-Allow-Origin</code></a>` header (`<code>*</code>` is not
+ allowed when <a for=/>credentials</a> are involved), the
+ `<a http-header><code>Access-Control-Allow-Credentials</code></a>` header has to be present too:
 
  <pre>
 Access-Control-Allow-Origin: https://foo.invalid
@@ -3057,6 +3090,9 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    "<code>no-cors</code>"
    <dd>
     <ol>
+     <li><p>If <var>request</var>'s <a for=request>redirect mode</a> is not "<code>follow</code>",
+     then return a <a>network error</a>.
+
      <li><p>Set <var>request</var>'s
      <a for=request>response tainting</a> to
      "<code>opaque</code>".
@@ -3351,23 +3387,21 @@ steps:
 
  <dt>"<code>data</code>"
  <dd>
-  <p>If <a href=https://simonsapin.github.io/data-urls/>obtaining a resource</a> from
-  <var>request</var>'s <a for=request>current url</a> does not return
-  failure, then return a <a for=/>response</a> whose
-  <a for=response>header list</a> consist of a single
-  <a for=/>header</a> whose <a for=header>name</a> is
-  `<code>Content-Type</code>` and <a for=header>value</a> is the
-  MIME type and parameters returned from
-  <a href=https://simonsapin.github.io/data-urls/>obtaining a resource</a>,
-  <a for=response>body</a> is the data returned from
-  <a href=https://simonsapin.github.io/data-urls/>obtaining a resource</a>, and
-  <a for=response>HTTPS state</a> is <var>request</var>'s
-  <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
-  if <var>request</var>'s <a for=request>client</a> is non-null.
-  [[!DATAURL]]
-  <!-- XXX "obtaining a resource" needs a better reference -->
+  <ol>
+   <li><p>Let <var>dataURLStruct</var> be the result of running the
+   <a><code>data:</code> URL processor</a> on <var>request</var>'s <a for=request>current url</a>.
 
-  <p>Otherwise, return a <a>network error</a>.
+   <li><p>If <var>dataURLStruct</var> is failure, then return a <a>network error</a>.
+
+   <li><p>Return a <a for=/>response</a> whose <a for=response>header list</a> consist of a single
+   <a for=/>header</a> whose <a for=header>name</a> is `<code>Content-Type</code>` and
+   <a for=header>value</a> is <var>dataURLStruct</var>'s <a for="data: URL struct">MIME type</a>,
+   <a lt="serialize a MIME type to bytes">serialized</a>, whose <a for=response>body</a> is
+   <var>dataURLStruct</var>'s <a for="data: URL struct">body</a>, and whose
+   <a for=response>HTTPS state</a> is <var>request</var>'s <a for=request>client</a>'s
+   <a for="environment settings object">HTTPS state</a> if <var>request</var>'s
+   <a for=request>client</a> is non-null.
+  </ol>
 
  <dt>"<code>file</code>"
  <dt>"<code>ftp</code>"
@@ -3425,12 +3459,14 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
      <a for=internal>internal response</a> otherwise.
 
      <li>
-      <p>If one of the following conditions is true, then return a
-      <a>network error</a>:
+      <p>If one of the following conditions is true, then return a <a>network error</a>:
 
       <ul class=brief>
        <li><var>response</var>'s
        <a for=response>type</a> is "<code>error</code>".
+
+       <li><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>" and
+       <var>response</var>'s <a for=response>type</a> is "<code>cors</code>".
 
        <li><var>request</var>'s <a for=request>mode</a> is not
        "<code>no-cors</code>" and <var>response</var>'s
@@ -4890,8 +4926,8 @@ run these steps:
    second item to <var>headers</var>.
   </ol>
 
- <li><p>Otherwise, <var>object</var> is a <a>record</a>, then <a for=map>for each</a> <var>key</var>
- → <var>value</var> in <var>object</var>, <a lt=append for=Headers>append</a>
+ <li><p>Otherwise, <var>object</var> is a <a for=/>record</a>, then <a for=map>for each</a>
+ <var>key</var> → <var>value</var> in <var>object</var>, <a lt=append for=Headers>append</a>
  <var>key</var>/<var>value</var> to <var>headers</var>.
 </ol>
 
@@ -5109,9 +5145,8 @@ typedef (Blob or BufferSource or FormData or URLSearchParams or ReadableStream o
 </ol>
 
 
-<pre class=idl>[NoInterfaceObject,
- Exposed=(Window,Worker)]
-interface Body {
+<pre class=idl>
+interface mixin Body {
   readonly attribute ReadableStream? body;
   readonly attribute boolean bodyUsed;
   [NewObject] Promise&lt;ArrayBuffer> arrayBuffer();
@@ -5306,7 +5341,8 @@ interface Request {
 
   [NewObject] Request clone();
 };
-Request implements Body;
+Request includes Body;
+
 dictionary RequestInit {
   ByteString method;
   HeadersInit headers;
@@ -5352,10 +5388,60 @@ initially a new {{AbortSignal}} object.
 <dl class=domintro>
  <dt><code><var>request</var> = new <a constructor lt="Request()">Request</a>(<var>input</var> [,
  <var>init</var>])</code>
- <dd>Returns a new <var>request</var> whose {{Request/url}} property is <var>input</var> if
- <var>input</var> is a string, and <var>input</var>'s {{Request/url}} if <var>input</var> is a
- {{Request}} object. The optional <var>init</var> argument allows for setting attributes
- appearing in {{RequestInit}} via object members of the same name.
+ <dd>
+  <p>Returns a new <var>request</var> whose {{Request/url}} property is <var>input</var> if
+  <var>input</var> is a string, and <var>input</var>'s {{Request/url}} if <var>input</var> is a
+  {{Request}} object.
+
+  <p>The optional <var>init</var> argument is an object whose properties can be set as follows:</p>
+
+  <dl>
+   <dt>{{RequestInit/method}}
+   <dd>A string to set <var>request</var>'s {{Request/method}}.
+
+   <dt>{{RequestInit/headers}}
+   <dd>A {{Headers}} object, an object literal, or an array of two-item arrays to set
+   <var>request</var>'s {{Request/headers}}.
+
+   <dt>{{RequestInit/body}}
+   <dd>A {{BodyInit}} object or null to set <var>request</var>'s <a for=request>body</a>.
+
+   <dt>{{RequestInit/referrer}}
+   <dd>A string whose value is a same-origin URL, "<code>about:client</code>", or the empty string,
+   to set <var>request</var>'s <a>referrer</a>.
+
+   <dt>{{RequestInit/referrerPolicy}}
+   <dd>A <a for=/>referrer policy</a> to set <var>request</var>'s {{Request/referrerPolicy}}.
+
+   <dt>{{RequestInit/mode}}
+   <dd>A string to indicate whether the request will use CORS, or will be restricted to same-origin
+   URLs. Sets <var>request</var>'s {{Request/mode}}.
+
+   <dt>{{RequestInit/credentials}}
+   <dd>A string indicating whether credentials will be sent with the request always, never, or only
+   when sent to a same-origin URL. Sets <var>request</var>'s {{Request/credentials}}.
+
+   <dt>{{RequestInit/cache}}
+   <dd>A string indicating how the request will interact with the browser's cache to set
+   <var>request</var>'s {{Request/cache}}.
+
+   <dt>{{RequestInit/redirect}}
+   <dd>A string indicating whether or not <var>request</var> should automatically follow redirects,
+   result in an error, or manually follow redirects. Sets <var>request</var>'s {{Request/redirect}}.
+
+   <dt>{{RequestInit/integrity}}
+   <dd>A cryptographic hash of the resource to be fetched by <var>request</var>. Sets
+   <var>request</var>'s {{Request/integrity}}.
+
+   <dt>{{RequestInit/keepalive}}
+   <dd>A boolean to set <var>request</var>'s {{Request/keepalive}}.
+
+   <dt>{{RequestInit/signal}}
+   <dd>An {{AbortSignal}} to set <var>request</var>'s {{Request/signal}}.
+
+   <dt>{{RequestInit/window}}
+   <dd>Can only be null. Used to disassociate <var>request</var> from any {{Window}}.
+  </dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
  <dd>Returns <var>request</var>'s HTTP method, which is "<code>GET</code>" by default.
@@ -5383,13 +5469,13 @@ initially a new {{AbortSignal}} object.
  fetching to compute the value of the <var>request</var>'s referrer.
 
  <dt><code><var>request</var> . <a attribute for=Request>mode</a></code>
- <dd>Returns the <a>mode</a> associated with <var>request</var>, which is a string indicating whether
- or not the request will use CORS, or will be restricted to same-origin URLs.
+ <dd>Returns the <a>mode</a> associated with <var>request</var>, which is a string indicating
+ whether the request will use CORS, or will be restricted to same-origin URLs.
 
  <dt><code><var>request</var> . <a attribute for=Request>credentials</a></code>
  <dd>Returns the <a>credentials mode</a> associated with <var>request</var>, which is a string
- indicating whether or not credentials will be sent with the request always, never, or only when
- sent to a same-origin URL.
+ indicating whether credentials will be sent with the request always, never, or only when sent to a
+ same-origin URL.
 
  <dt><code><var>request</var> . <a attribute for=Request>useReferredTokenBinding</a></code>
  <dd>Returns a boolean indicating if <var>request</var>'s
@@ -5403,12 +5489,12 @@ initially a new {{AbortSignal}} object.
 
  <dt><code><var>request</var> . <a attribute for=Request>redirect</a></code>
  <dd>Returns the <a>redirect mode</a> associated with <var>request</var>, which is a string
- indicating how redirects for the request will be handled during fetching. A <a>request</a>
+ indicating how redirects for the request will be handled during fetching. A <a for=/>request</a>
  will follow redirects by default.
 
  <dt><code><var>request</var> . <a attribute for=Request>integrity</a></code>
- <dd>Returns <var>request</var>'s subresource integrity metadata, which is a cryptographic hash of the
- resource being fetched. Its value may consist of multiple hashes separated by whitespace.
+ <dd>Returns <var>request</var>'s subresource integrity metadata, which is a cryptographic hash of
+ the resource being fetched. Its value may consist of multiple hashes separated by whitespace.
  [[SRI]]
 
  <dt><code><var>request</var> . <a attribute for=Request>keepalive</a></code>
@@ -5464,9 +5550,6 @@ constructor must run these steps:
   <p>Otherwise (<var>input</var> is a {{Request}} object), run these substeps:
 
   <ol>
-   <li><p>If <var>input</var> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then
-   <a>throw</a> a <code>TypeError</code>.
-
    <li><p>Set <var>request</var> to <var>input</var>'s
    <a for=Request>request</a>.
 
@@ -5656,13 +5739,8 @@ constructor must run these steps:
  <a for=Headers>header list</a> is <var>request</var>'s <a for=request>header list</a>, and
  <a for=Headers>guard</a> is "<code>request</code>".
 
- <li>
-  <p>If <var>signal</var> is not null, then
-  <a for=AbortSignal lt=add>add the following abort steps</a> to <var>signal</var>:
-
-  <ol>
-   <li><p><a for=AbortSignal>Signal abort</a> on <var>r</var>'s <a for=Request>signal</a>.
-  </ol>
+ <li><p>If <var>signal</var> is not null, then make <var>r</var>'s <a for=Request>signal</a>
+ <a for=AbortSignal>follow</a> <var>signal</var>.
 
  <li><p>Let <var>headers</var> be a copy of <var>r</var>'s <a for=Request>headers</a> and its
  associated <a for=Headers>header list</a>.
@@ -5736,10 +5814,13 @@ constructor must run these steps:
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
+ <li><p>If <var>inputBody</var> is <var>body</var> and <var>input</var> is <a for=Body>disturbed</a>
+ or <a for=Body>locked</a>, then <a>throw</a> a <code>TypeError</code>.
+
  <!-- Any steps after this must not throw. -->
 
  <li>
-  <p>If <var>inputBody</var> is non-null, then run these substeps:
+  <p>If <var>inputBody</var> is non-null and <var>inputBody</var> is <var>body</var>, then:
 
   <ol>
    <li>
@@ -5754,10 +5835,9 @@ constructor must run these steps:
     <p class="note no-backref">This makes <var>inputBody</var>'s <a for=body>stream</a>
     <a for=ReadableStream>locked</a> and <a for=ReadableStream>disturbed</a> immediately.
 
-   <li><p>If <var>inputBody</var> is <var>body</var>, then set <var>body</var> to a new
-   <a for=/>body</a> whose <a for=body>stream</a> is <var>rs</var>, whose <a for=body>source</a>
-   is <var>inputBody</var>'s <a for=body>source</a> and whose <a for=body>total bytes</a> is
-   <var>inputBody</var>'s <a for=body>total bytes</a>.
+   <li><p>Set <var>body</var> to a new <a for=/>body</a> whose <a for=body>stream</a> is
+   <var>rs</var>, whose <a for=body>source</a> is <var>inputBody</var>'s <a for=body>source</a>, and
+   whose <a for=body>total bytes</a> is <var>inputBody</var>'s <a for=body>total bytes</a>.
   </ol>
 
  <li><p>Set <var>r</var>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
@@ -5849,18 +5929,8 @@ run these steps:
  <a for=Headers>header list</a>, and <a for=Headers>guard</a> is <a>context object</a>'s
  <a for=Request>headers</a>' <a for=Headers>guard</a>.
 
- <li><p>If <a>context object</a>'s <a for=Request>signal</a>'s <a for=AbortSignal>aborted flag</a>
- is set, set <var>clonedRequestObject</var> <a for=Request>signal</a>'s
- <a for=AbortSignal>aborted flag</a>.
-
- <li>
-  <p>Otherwise, <a for=AbortSignal>add</a> the following abort steps to <a>context object</a>'s
-  <a for=Request>signal</a>:
-
-  <ol>
-   <li><p><a for=AbortSignal>Signal abort</a> on <var>clonedRequestObject</var>
-   <a for=Request>signal</a>.
-  </ol>
+ <li><p>Make <var>clonedRequestObject</var>'s <a for=Request>signal</a>
+ <a for=AbortSignal>follow</a> <a>context object</a>'s <a for=Request>signal</a>.
 
  <li><p>Return <var>clonedRequestObject</var>.
 </ol>
@@ -5886,7 +5956,7 @@ interface Response {
 
   [NewObject] Response clone();
 };
-Response implements Body;
+Response includes Body;
 
 dictionary ResponseInit {
   unsigned short status = 200;
@@ -6239,15 +6309,15 @@ method, must run these steps:
 
 <h3 id=garbage-collection>Garbage collection</h3>
 
-<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch with if that
-termination is not observable through script.
+<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch if that termination
+is not observable through script.
 
 <p class="note no-backref">"Observable through script" means observable through
 <a><code>fetch()</code></a>'s arguments and return value. Other ways, such as
 communicating with the server through a side-channel are not included.
 
 <p class="note no-backref">The server being able to observe garbage collection has precedent, e.g.,
-with <code>WebSocket</code> and <code>XMLHttpRequest</code> objects.
+with {{WebSocket}} and {{XMLHttpRequest}} objects.
 
 <div id=terminate-examples class="example no-backref">
  <p>The user agent can terminate the fetch because the termination cannot be observed.
@@ -6280,6 +6350,9 @@ fetch("https://www.example.com/")
   .then(res => {
     res.body.getReader().closed.then(() => console.log("stream closed!"))
   })</pre>
+
+  <p>(The above examples of non-observability assume that built-in properties and functions, such as
+  {{ReadableStream/getReader()|body.getReader()}}, have not been overwritten.)
 </div>
 
 
@@ -6433,6 +6506,78 @@ if the script checks that the URL has the right hostname.
 
 
 
+<h2 id=data-urls><code>data:</code> URLs</h2>
+
+<p>For an informative description of <code>data:</code> URLs, see RFC 2397. This section replaces
+that RFC's normative processing requirements to be compatible with deployed content. [[RFC2397]]
+
+<p>A <dfn><code>data:</code> URL struct</dfn> is a <a>struct</a> that consists of a
+<dfn for="data: URL struct">MIME type</dfn> (a <a for=/>MIME type</a>) and a
+<dfn for="data: URL struct">body</dfn> (a <a>byte sequence</a>).
+
+<p>The <dfn export><code>data:</code> URL processor</dfn> takes a <a for=/>URL</a>
+<var>dataURL</var> and then runs these steps:
+
+<ol>
+ <li><p>Assert: <var>dataURL</var>'s <a for=url>scheme</a> is "<code>data</code>".
+
+ <li><p>Let <var>input</var> be the result of running the <a>URL serializer</a> on
+ <var>dataURL</var> with the <i>exclude fragment flag</i> set.
+
+ <li><p>Remove the leading "<code>data:</code>" string from <var>input</var>.
+
+ <li><p>Let <var>position</var> point at the start of <var>input</var>.
+
+ <li><p>Let <var>mimeType</var> be the result of <a>collecting a sequence of code points</a> that
+ are not equal to U+002C (,), given <var>position</var>.
+
+ <li>
+  <p><a>Strip leading and trailing ASCII whitespace</a> from <var>mimeType</var>.
+
+  <p class="note">This will only remove U+0020 SPACE <a>code points</a>, if any.
+
+ <li><p>If <var>position</var> is past the end of <var>input</var>, then return failure.
+
+ <li><p>Advance <var>position</var> by 1.
+
+ <li><p>Let <var>encodedBody</var> be the remainder of <var>input</var>.
+
+ <li><p>Let <var>body</var> be the <a>string percent decoding</a> of <var>encodedBody</var>.
+
+ <li>
+  <p>If <var>mimeType</var> ends with U+003B (;), followed by zero or more U+0020 SPACE, followed by
+  an <a>ASCII case-insensitive</a> match for "<code>base64</code>", then:
+
+  <ol>
+   <li><p>Let <var>stringBody</var> be the <a>isomorphic decode</a> of <var>body</var>.
+
+   <li><p>Set <var>body</var> to the <a>forgiving-base64 decode</a> of <var>stringBody</var>.
+
+   <li><p>If <var>body</var> is failure, then return failure.
+
+   <li><p>Remove the last 6 <a>code points</a> from <var>mimeType</var>.
+
+   <li><p>Remove trailing U+0020 SPACE <a>code points</a> from <var>mimeType</var>, if any.
+
+   <li><p>Remove the last U+003B (;) <a>code point</a> from <var>mimeType</var>.
+  </ol>
+
+ <li><p>If <var>mimeType</var> starts with U+003B (;), then prepend "<code>text/plain</code>"
+ to <var>mimeType</var>.
+
+ <li><p>Let <var>mimeTypeRecord</var> be the result of <a lt="parse a MIME type">parsing</a>
+ <var>mimeType</var>.
+
+ <li><p>If <var>mimeTypeRecord</var> is failure, then set <var>mimeTypeRecord</var> to
+ <code>text/plain;charset=US-ASCII</code>.
+
+ <li><p>Return a new <a><code>data:</code> URL struct</a> whose
+ <a for="data: URL struct">MIME type</a> is <var>mimeTypeRecord</var> and
+ <a for="data: URL struct">body</a> is <var>body</var>.
+</ol>
+
+
+
 <h2 id=background-reading class=no-num>Background reading</h2>
 
 <p><em>This section and its subsections are informative only.</em>
@@ -6553,6 +6698,7 @@ Brad Porter,
 Bryan Smith,
 Caitlin Potter,
 Cameron McCormack,
+Chris Rebert,
 Clement Pellerin,
 Collin Jackson,
 Daniel Robertson,
@@ -6577,6 +6723,7 @@ Glenn Maynard,
 Graham Klyne,
 Hal Lockhart,
 Hallvord R. M. Steen,
+Harris Hancock,
 Henri Sivonen,
 Henry Story,
 Hiroshige Hayashizaki,
@@ -6592,6 +6739,7 @@ Jeff Carpenter,
 Jeff Hodges,
 Jeffrey Yasskin,
 Jesse M. Heines,
+Jinho Bang,
 Jochen Eisinger,
 Jonas Sicking,
 Jonathan Kingston,
@@ -6608,6 +6756,7 @@ Jxck,
 Keith Yeung,
 Kenji Baheux,
 Lachlan Hunt,
+Larry Masinter,
 Liam Brummitt,
 Louis Ryan,
 Lucas Gonze,
@@ -6653,6 +6802,7 @@ Sharath Udupa,
 Shivakumar Jagalur Matt,
 Sigbjørn Finne,
 Simon Pieters,
+Simon Sapin,
 Srirama Chandra Sekhar Mogali,
 Steven Salat,
 Sunava Dutta,
@@ -6682,7 +6832,3 @@ for being awesome.
 <a href=https://annevankesteren.nl/ lang=nl>Anne van Kesteren</a>
 (<a href=https://www.mozilla.org/>Mozilla</a>,
 <a href=mailto:annevk@annevk.nl>annevk@annevk.nl</a>).
-
-<p>Per <a rel=license href=https://creativecommons.org/publicdomain/zero/1.0/>CC0</a>, to
-the extent possible under law, the editor has waived all copyright and related or
-neighboring rights to this work.
