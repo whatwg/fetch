@@ -218,13 +218,6 @@ number.
 <p class="note no-backref"><a>HTTP(S) scheme</a> and <a>fetch scheme</a> are also used by
 <cite>HTML</cite>. [[HTML]]
 
-<hr>
-
-<p id=fetch-url>A <dfn>response URL</dfn> is a <a for=/>URL</a> for which implementations need not
-store the <a for=url>fragment</a> as it is never exposed. When
-<a lt="URL serializer">serialized</a>, <a for="URL serializer"><i>exclude fragment</i></a> is set to
-true, meaning implementations can store the <a for=url>fragment</a> nonetheless.
-
 
 <h3 id=http>HTTP</h3>
 
@@ -1840,15 +1833,15 @@ end-user.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url>URL</dfn>. It is a pointer to the last
-<a>response URL</a> in <a for=/>response</a>'s <a for=response>URL list</a> and null if
-<a for=/>response</a>'s <a for=response>URL list</a> is the empty list.
+<a for=/>URL</a> in <a for=/>response</a>'s <a for=response>URL list</a> and null if
+<a for=/>response</a>'s <a for=response>URL list</a> <a for=list>is empty</a>.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url-list>URL list</dfn> (a <a for=/>list</a> of zero or
-more <a>response URLs</a>). Unless stated otherwise, it is the empty list.
+more <a for=/>URLs</a>). Unless stated otherwise, it is the empty list.
 
-<p class="note no-backref">Except for the last <a>response URL</a>, if any, a
-<a for=/>response</a>'s <a for=response>URL list</a> cannot be exposed to script. That would violate
+<p class="note no-backref">Except for the last <a for=/>URL</a>, if any, a <a for=/>response</a>'s
+<a for=response>URL list</a> is not exposed to script as that would violate
 <a>atomic HTTP redirect handling</a>.
 
 <p>A <a for=/>response</a> has an associated
@@ -2028,8 +2021,9 @@ not a <a>fresh response</a> or a <a>stale-while-revalidate response</a>.
 
 <hr>
 
-<p>The <dfn export for=response id=concept-response-location-url>location URL</dfn> algorithm of
-given a <a for=/>response</a> <var>response</var> is the following steps. They return null, failure,
+<p>The <dfn export for=response id=concept-response-location-url>location URL</dfn> of a
+<a for=/>response</a> <var>response</var>, given null or an <a for=/>ASCII string</a>
+<var>requestFragment</var>, is the value returned by the following steps. They return null, failure,
 or a <a for=/>URL</a>.
 
 <ol>
@@ -2048,6 +2042,13 @@ or a <a for=/>URL</a>.
   <p class=note>If <var>response</var> was constructed through the {{Response}} constructor,
   <var>response</var>'s <a for=response>URL</a> will be null, meaning that <var>location</var> will
   only parse successfully if it is an <a>absolute-URL-with-fragment string</a>.
+
+ <li>
+  <p>If <var>locationURL</var>'s <a for=url>fragment</a> is null, then set <var>locationURL</var>'s
+  <a for=url>fragment</a> to <var>requestFragment</var>.
+
+  <p class=note>This ensures that synthetic (indeed, all) responses follow the processing model for
+  redirects defined by HTTP. [[HTTP-SEMANTICS]]
 
  <li><p>Return <var>location</var>.
 </ol>
@@ -3976,7 +3977,8 @@ run these steps:
  <a>filtered response</a>, and <var>response</var>'s
  <a for="filtered response">internal response</a> otherwise.
 
- <li><p>Let <var>locationURL</var> be <var>actualResponse</var>'s <a for=response>location URL</a>.
+ <li><p>Let <var>locationURL</var> be <var>actualResponse</var>'s <a for=response>location URL</a>
+ given <var>request</var>'s <a for=request>current URL</a>'s <a for=url>fragment</a>.
 
  <li><p>If <var>locationURL</var> is null, then return <var>response</var>.
 
