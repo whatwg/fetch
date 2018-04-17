@@ -1340,6 +1340,10 @@ Unless stated otherwise it is `<code>OK</code>`.
 initially unset.
 
 <p>A <a for=/>response</a> has an associated
+<dfn export for=response id=concept-response-cache-state>cache state</dfn> (the empty string or
+"<code>local</code>"). Unlesss stated otherwise, it is the empty string.
+
+<p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-https-state>HTTPS state</dfn> (an
 <a>HTTPS state value</a>). Unless stated otherwise, it is
 "<code>none</code>".
@@ -3541,49 +3545,50 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
    <li>
     <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
-    nor "<code>reload</code>", run these substeps:
+    nor "<code>reload</code>", then:
 
     <ol>
-     <li><p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
-     possibly needing validation, as per the
-     "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
-     chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
-
-     <li><p>If <var>storedResponse</var> is null, then abort these substeps.
-
-     <!-- cache hit -->
-     <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
-     <var>revalidatingFlag</var>.
-
      <li>
-      <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>force-cache</code>" or
-      "<code>only-if-cached</code>", then set <var>response</var> to <var>storedResponse</var> and
-      abort these substeps.
+      <p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
+      possibly needing validation, as per the
+      "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
+      chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
 
       <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>`
       <a for=/>header</a> into account.
 
      <li>
-      <p>If the <var>revalidatingFlag</var> is set, then:
+      <p>If <var>storedResponse</var> is non-null, then:
 
+      <!-- cache hit -->
       <ol>
-       <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-       <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
-       `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
-       <a for=request>header list</a>.
+       <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
+       <var>revalidatingFlag</var>.
 
-       <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-       <a for="header list">contains</a> `<code>Last-Modified</code>`, then
-       <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
-       <var>httpRequest</var>'s <a for=request>header list</a>.
+       <li>
+        <p>If the <var>revalidatingFlag</var> is set and <var>httpRequest</var>'s
+        <a for=request>cache mode</a> is neither "<code>force-cache</code>" nor
+        "<code>only-if-cached</code>", then:
+
+        <ol>
+         <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+         <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
+         `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
+         <a for=request>header list</a>.
+
+         <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+         <a for="header list">contains</a> `<code>Last-Modified</code>`, then
+         <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
+         <var>httpRequest</var>'s <a for=request>header list</a>.
+        </ol>
+
+        <p class=note>See also the
+        "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
+        chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+
+       <li><p>Otherwise, set <var>response</var> to <var>storedResponse</var> and set
+       <var>response</var>'s <a for=response>cache mode</a> to "<code>local</code>".
       </ol>
-
-      <p class=note>See also the
-      "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
-      chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
-
-     <li><p>Otherwise, if the <var>revalidatingFlag</var> is unset, then set <var>response</var> to
-     <var>storedResponse</var>.
     </ol>
   </ol>
 
