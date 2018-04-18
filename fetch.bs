@@ -2346,29 +2346,89 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var>
  (ignoring parameters) is not `<code>text/css</code>`, then return <b>blocked</b>.
 
- <li><p>Return <b>blocked</b> if all of the following conditions are met:
-   <ul>
-     <li><p><var>destination</var> is
-         "<code>audio</code>",
-         "<code>font</code>",
-         "<code>image</code>",
-         "<code>track</code>" or
-         "<code>video</code>"
-     <li><p><var>mimeType</var> (ignoring parameters) is
-         a <a>HTML MIME type</a>,
-         a <a>JSON MIME type</a> or
-         an <a>XML MIME type</a> (except "<code>image/svg+xml</code>")
-     <li><p><var>request</var>'s <a for=request>mode</a> is different from "<code>cors</code>",
-     <li><p><var>request</var>'s <a for=request>origin</a>
-         is not <a>same origin</a> with
-         <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>
-     <!-- The two items above are a bit unfortunate - ideally they would be
-          removed for consistency with other nosniff directives.  These items are
-          currently included to accomodate CORB (https://github.com/whatwg/fetch/issues/681),
-          which ignores same-origin or CORS-allowed requests.  To remove these
-          items we need to gather data on how much of existing requests would be
-          affected by blocking same-origin and/or CORS-allowed requests. -->
-   </ul>
+ <li><p>Return <b>allowed</b>.
+</ol>
+
+<p class="note no-backref">Only <a for=/>request</a> <a for=request>destinations</a> that are
+<a for=request/destination>script-like</a> or "<code>style</code>" are considered as any exploits
+pertain to them. Also, considering "<code>image</code>" was not compatible with deployed content.
+
+
+<h3 id=cross-origin-read-blocking>Cross-Origin Read Blocking (CORB)</h3>
+
+<h4 lt="should response to request be blocked due to corb" dfn id=should-response-to-request-be-blocked-due-to-corb?>Should
+<var>response</var> to <var>request</var> be blocked due to CORB?</h4>
+
+<p>Run these steps:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>destination</a> is
+     "<code>document</code>", <!-- covers navigations -->
+     "<code>embed</code>" or
+     "<code>object</code>"
+   then return <b>allowed</b>.
+
+ <li><p>If <var>request</var>'s <a for=request>initiator</a> is
+     "<code>download</code>"
+   then return <b>allowed</b>.
+
+ <li><p>If <var>request</var>'s <a for=request>origin</a>
+   is <a>same origin</a> with
+   <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>
+   then return <b>allowed</b>.
+
+ <li><p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>'s
+   <a for=url>scheme</a> is neither "<code>http</code>" nor "<code>https</code>"
+   then return <b>allowed</b>.
+
+<p class="note no-backref">Checking the <a for=url>scheme</a> of
+<a for=request>current url</a>'s <a for=url>origin</a>
+(rather than of <a for=request>current url</a>'s itself)
+ensures that blob URIs are handled correctly</p>
+
+ <li><p>Let <var>allowedOrigin</var> be the result of <a>extracting header values</a>
+   from the <em>first</em> <a for=/>header</a> whose <a for=header>name</a>
+   is a <a>byte-case-insensitive</a> match for
+   `<a http-header><code>Access-Control-Allow-Origin</code></a>`
+   in <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>allowedOrigin</var> is
+   "<code>*</code>" or
+   same as <var>request</var>'s <a for=request>origin</a>
+   then return <b>allowed</b>.
+
+ <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
+   from <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>Let <var>contentRange</var> be the result of <a>extracting header values</a>
+   from the <em>first</em> <a for=/>header</a> whose <a for=header>name</a>
+   is a <a>byte-case-insensitive</a> match for
+   `<a http-header><code>Content-Range</code></a>`
+   in <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>contentRange</var> is not a failure and
+   <var>mimeType</var> (ignoring parameters) is
+   a <a>HTML MIME type</a> or
+   a <a>JSON MIME type</a> or
+   an <a>XML MIME type</a> (except "<code>image/svg+xml</code>")
+     then return <b>blocked</b>.
+
+ <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a>
+   from the <em>first</em> <a for=/>header</a> whose <a for=header>name</a>
+   is a <a>byte-case-insensitive</a> match for
+   `<a http-header><code>X-Content-Type-Options</code></a>`
+   in <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>nosniff</var> is not a failure and
+   <var>mimeType</var> (ignoring parameters) is
+   a <a>HTML MIME type</a> or
+   a <a>JSON MIME type</a> or
+   an <a>XML MIME type</a> (except "<code>image/svg+xml</code>") or
+   a "<code>text/plain</code>" MIME type
+     then return <b>blocked</b>.
+
+ <!-- TODO: MIME type confirmation sniffing -->
+ <!-- TODO: JSON security prefix sniffing -->
 
  <li><p>Return <b>allowed</b>.
 </ol>
@@ -2831,6 +2891,19 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    [[!CSP]]
    <li><a lt="should response to request be blocked due to mime type">should <var>internalResponse</var> to <var>request</var> be blocked due to its MIME type</a>
    <li><a lt="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>
+  </ul>
+
+ <li>
+  <p>If <var>response</var> is not a <a>network error</a> and
+  <a lt="should response to request be blocked due to corb">the CORB algorithm</a> returns <b>blocked</b>,
+  then for both <var>response</var> and <var>internalResponse</var>:
+  <ul class=brief>
+   <li>Replace <a for=response>body</a> with an empty body</li>
+   <li>Remove headers with a name that is neither
+      <a>CORS-safelisted response-header name</a>
+      nor one of
+      <a lt=http-responses>response headers defined for CORS</a>.
+      <!-- TODO: DO NOT SUBMIT: No idea how to use bikeshed to insert the right link here -->
   </ul>
 
  <li>
