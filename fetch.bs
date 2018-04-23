@@ -1156,7 +1156,7 @@ Unless stated otherwise, it is zero.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-response-tainting>response tainting</dfn>,
-which is "<code>basic</code>", "<code>cors</code>", or "<code>opaque</code>".
+which is "<code>basic</code>", "<code>corb</code>", "<code>cors</code>", or "<code>opaque</code>".
 Unless stated otherwise, it is "<code>basic</code>".
 
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=done-flag>done flag</dfn>.
@@ -1412,6 +1412,21 @@ which is only "accessible" to internal specification algorithms and is never a
 <a for=response>header list</a> whose
 <a for=header>name</a> is a
 <a>forbidden response-header name</a>.
+
+<p>A <dfn export id=concept-filtered-response-corb>CORB filtered response</dfn> is a
+<a>filtered response</a> whose
+<a for=response>type</a> is "<code>corb</code>",
+<a for=response>header list</a> excludes any
+<a for=/>headers</a> in
+<a for=internal>internal response</a>'s
+<a for=response>header list</a> whose
+<a for=header>name</a> is <em>not</em> a
+<a>CORS-safelisted response-header name</a>,
+nor a name that starts with "<code>Access-Control-</code>", given
+<a for=internal>internal response</a>'s
+<a for=response>CORS-exposed header-name list</a>,
+<a for=response>body</a> is null, and
+<a for=response>trailer</a> is empty.
 
 <p>A <dfn export id=concept-filtered-response-cors>CORS filtered response</dfn> is a
 <a>filtered response</a> whose
@@ -2372,11 +2387,6 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
      "<code>download</code>"
    then return <b>allowed</b>.
 
- <li><p>If <var>request</var>'s <a for=request>origin</a>
-   is <a>same origin</a> with
-   <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>
-   then return <b>allowed</b>.
-
  <li><p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>'s
    <a for=url>scheme</a> is neither "<code>http</code>" nor "<code>https</code>"
    then return <b>allowed</b>.
@@ -2386,27 +2396,10 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
 (rather than of <a for=request>current url</a>'s itself)
 ensures that blob URIs are handled correctly</p>
 
- <li><p>Let <var>allowedOrigin</var> be the result of <a>extracting header values</a>
-   from the <em>first</em> <a for=/>header</a> whose <a for=header>name</a>
-   is a <a>byte-case-insensitive</a> match for
-   `<a http-header><code>Access-Control-Allow-Origin</code></a>`
-   in <var>response</var>'s <a for=response>header list</a>.
-
- <li><p>If <var>allowedOrigin</var> is
-   "<code>*</code>" or
-   same as <var>request</var>'s <a for=request>origin</a>
-   then return <b>allowed</b>.
-
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
    from <var>response</var>'s <a for=response>header list</a>.
 
- <li><p>Let <var>contentRange</var> be the result of <a>extracting header values</a>
-   from the <em>first</em> <a for=/>header</a> whose <a for=header>name</a>
-   is a <a>byte-case-insensitive</a> match for
-   `<a http-header><code>Content-Range</code></a>`
-   in <var>response</var>'s <a for=response>header list</a>.
-
- <li><p>If <var>contentRange</var> is not a failure and
+ <li>If <var>response</var>'s <a for=response>status</a> is <code>206</code> and
    <var>mimeType</var> (ignoring parameters) is
    a <a>HTML MIME type</a> or
    a <a>JSON MIME type</a> or
@@ -2806,9 +2799,11 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    <dt>Otherwise
    <dd>
     <ol>
-     <li><p>Set <var>request</var>'s
-     <a for=request>response tainting</a> to
-     "<code>cors</code>".
+     <li><p>If <a lt="should response to request be blocked due to corb">the CORB algorithm</a>
+     returns <b>blocked</b>, then
+     set <var>request</var>'s <a for=request>response tainting</a> to "<code>corb</code>".
+     Otherwise
+     set <var>request</var>'s <a for=request>response tainting</a> to "<code>cors</code>".
 
      <li><p>Return the result of performing an <a>HTTP fetch</a>
      using <var>request</var> with <i>CORS flag</i> set.
@@ -2856,6 +2851,8 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
     <dl class="switch compact">
      <dt>"<code>basic</code>"
      <dd><a>basic filtered response</a>
+     <dt>"<code>corb</code>"
+     <dd><a>CORB filtered response</a>
      <dt>"<code>cors</code>"
      <dd><a>CORS filtered response</a>
      <dt>"<code>opaque</code>"
@@ -2891,19 +2888,6 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    [[!CSP]]
    <li><a lt="should response to request be blocked due to mime type">should <var>internalResponse</var> to <var>request</var> be blocked due to its MIME type</a>
    <li><a lt="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>
-  </ul>
-
- <li>
-  <p>If <var>response</var> is not a <a>network error</a> and
-  <a lt="should response to request be blocked due to corb">the CORB algorithm</a> returns <b>blocked</b>,
-  then for both <var>response</var> and <var>internalResponse</var>:
-  <ul class=brief>
-   <li>Replace <a for=response>body</a> with an empty body</li>
-   <li>Remove headers with a name that is neither
-      <a>CORS-safelisted response-header name</a>
-      nor one of
-      <a lt=http-responses>response headers defined for CORS</a>.
-      <!-- TODO: DO NOT SUBMIT: No idea how to use bikeshed to insert the right link here -->
   </ul>
 
  <li>
