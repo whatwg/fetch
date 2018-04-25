@@ -2746,14 +2746,23 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <!-- file URLs end up here as they are not same-origin typically. -->
 
      <li><p>If <a lt="should response to request be blocked due to corb">the CORB algorithm</a>
-     returns <b>blocked</b>, then set <var>noCorsResponse</var>'s
-     <a for=response>header list</a> to empty and
-     <a for=response>body</a> to null.
-     <p class="note">To be an effective defense against side channel attacks,
-     resetting of <var>noCorsResponse</var>'s
-     <a for=response>body</a> and <a for=response>header list</a>
-     has to take place before the data reaches the process that hosts the cross-origin
-     <a for=/>browsing context</a> that initiated the request.
+     returns <b>blocked</b>, then
+     <ul>
+       <li><p>Let <var>oldNoCorsResponse</var> hold the old <var>noCorsResponse</var> value.
+       <li><p>Set <var>noCorsResponse</var> to a new response
+         (with default, empty <a for=response>header list</a> and
+          default, null <a for=response>body</a>).
+       <p class="note">To be an effective defense against side channel attacks,
+         resetting of <var>noCorsResponse</var>'s
+         <a for=response>body</a> and <a for=response>header list</a>
+         has to take place before the data reaches the process that hosts the cross-origin
+         <a for=/>browsing context</a> that initiated the request.
+       <li><p>Copy response
+         <a for=response>type</a>,
+         <a for=response>url</a>, <a for=response>url list</a>,
+         <a for=response>status</a>, <a for=response>status message</a>
+         from <var>oldNoCorsResponse</var> to <var>noCorsResponse</var>.
+     </ul>
 
      <li><p>Return <var>noCorsResponse</var>.
 
