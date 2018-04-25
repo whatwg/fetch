@@ -2747,9 +2747,22 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <a for=request>response tainting</a> to
      "<code>opaque</code>".
 
-     <li><p>Return the result of performing a <a>scheme fetch</a>
-     using <var>request</var>.
+     <li><p>Let <var>noCorsResponse</var> be the result of performing
+     a <a>scheme fetch</a> using <var>request</var>.
      <!-- file URLs end up here as they are not same-origin typically. -->
+
+     <li><p>If <a lt="should response to request be blocked due to corb">the CORB algorithm</a>
+     returns <b>blocked</b>, then set <var>noCorsResponse</var>'s
+     <a for=response>header list</a> to empty and
+     <a for=response>body</a> to null.
+     <p class="note">To be an effective defense against side channel attacks,
+     resetting of <var>noCorsResponse</var>'s
+     <a for=response>body</a> and <a for=response>header list</a>
+     has to take place before the data reaches the process that hosts the cross-origin
+     <a for=/>browsing context</a> that initiated the request.
+
+     <li><p>Return <var>noCorsResponse</var>.
+
     </ol>
 
    <dt><var>request</var>'s <a for=request>current url</a>'s
@@ -2784,11 +2797,9 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    <dt>Otherwise
    <dd>
     <ol>
-     <li><p>If <a lt="should response to request be blocked due to corb">the CORB algorithm</a>
-     returns <b>blocked</b>, then
-     set <var>request</var>'s <a for=request>response tainting</a> to "<code>opaque</code>".
-     Otherwise
-     set <var>request</var>'s <a for=request>response tainting</a> to "<code>cors</code>".
+     <li><p>Set <var>request</var>'s
+     <a for=request>response tainting</a> to
+     "<code>cors</code>".
 
      <li><p>Return the result of performing an <a>HTTP fetch</a>
      using <var>request</var> with <i>CORS flag</i> set.
