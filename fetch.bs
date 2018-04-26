@@ -2362,42 +2362,33 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
 <p>Run these steps:
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>initiator</a> is
-     "<code>download</code>"
-   then return <b>allowed</b>.
+ <li><p>If <var>request</var>'s <a for=request>initiator</a> is "<code>download</code>", then return
+ <b>allowed</b>.
+ <!-- XXX If we recast downloading as navigation this step can be removed. -->
 
- <li><p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>'s
-   <a for=url>scheme</a> is neither "<code>http</code>" nor "<code>https</code>"
-   then return <b>allowed</b>.
+ <li>
+  <p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>'s
+  <a for=url>scheme</a> is not an <a>HTTP(S) scheme</a>, then return <b>allowed</b>.
 
-<p class="note no-backref">Checking the <a for=url>scheme</a> of
-<a for=request>current url</a>'s <a for=url>origin</a>
-(rather than of <a for=request>current url</a>'s itself)
-ensures that blob URIs are handled correctly</p>
+  <p class="note no-backref">Checking the <a for=url>scheme</a> of <a for=request>current url</a>'s
+  <a for=url>origin</a>, rather than of <a for=request>current url</a>'s itself, ensures that
+  <code>blob:</code> URLs are handled correctly.
 
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
-   from <var>response</var>'s <a for=response>header list</a>.
+ from <var>response</var>'s <a for=response>header list</a>.
 
- <li>If <var>response</var>'s <a for=response>status</a> is <code>206</code> and
-   <var>mimeType</var> (ignoring parameters) is
-   a <a>HTML MIME type</a> or
-   a <a>JSON MIME type</a> or
-   an <a>XML MIME type</a> (except "<code>image/svg+xml</code>")
-     then return <b>blocked</b>.
+ <li><p>If <var>response</var>'s <a for=response>status</a> is <code>206</code> and
+ <var>mimeType</var> (ignoring parameters) is an <a>HTML MIME type</a>, a <a>JSON MIME type</a>, or
+ an <a>XML MIME type</a>, but not "<code>image/svg+xml</code>, then return <b>blocked</b>.
 
- <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a>
-   from the <em>first</em> <a for=/>header</a> whose <a for=header>name</a>
-   is a <a>byte-case-insensitive</a> match for
-   `<a http-header><code>X-Content-Type-Options</code></a>`
-   in <var>response</var>'s <a for=response>header list</a>.
+ <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
+ <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
+ match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
+ <a for=response>header list</a>.
 
- <li><p>If <var>nosniff</var> is not a failure and
-   <var>mimeType</var> (ignoring parameters) is
-   a <a>HTML MIME type</a> or
-   a <a>JSON MIME type</a> or
-   an <a>XML MIME type</a> (except "<code>image/svg+xml</code>") or
-   a "<code>text/plain</code>" MIME type
-     then return <b>blocked</b>.
+ <li><p>If <var>nosniff</var> is not a failure and <var>mimeType</var> (ignoring parameters) is
+ <cde>text/plain</cde>, an <a>HTML MIME type</a>, a <a>JSON MIME type</a>, or an
+ <a>XML MIME type</a>, but not <code>image/svg+xml</code>, then return <b>blocked</b>.
 
  <!-- TODO: MIME type confirmation sniffing -->
  <!-- TODO: JSON security prefix sniffing -->
@@ -2741,31 +2732,30 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <a for=request>response tainting</a> to
      "<code>opaque</code>".
 
-     <li><p>Let <var>noCorsResponse</var> be the result of performing
-     a <a>scheme fetch</a> using <var>request</var>.
+     <li><p>Let <var>noCorsResponse</var> be the result of performing a <a>scheme fetch</a> using
+     <var>request</var>.
      <!-- file URLs end up here as they are not same-origin typically. -->
 
-     <li><p>If <a lt="should response to request be blocked due to corb">the CORB algorithm</a>
-     returns <b>blocked</b>, then
-     <ul>
-       <li><p>Let <var>oldNoCorsResponse</var> hold the old <var>noCorsResponse</var> value.
-       <li><p>Set <var>noCorsResponse</var> to a new response
-         (with default, empty <a for=response>header list</a> and
-          default, null <a for=response>body</a>).
-       <p class="note">To be an effective defense against side channel attacks,
-         resetting of <var>noCorsResponse</var>'s
-         <a for=response>body</a> and <a for=response>header list</a>
-         has to take place before the data reaches the process that hosts the cross-origin
-         <a for=/>browsing context</a> that initiated the request.
-       <li><p>Copy response
-         <a for=response>type</a>,
-         <a for=response>url</a>, <a for=response>url list</a>,
-         <a for=response>status</a>, <a for=response>status message</a>
-         from <var>oldNoCorsResponse</var> to <var>noCorsResponse</var>.
-     </ul>
+     <li>
+      <p>If <var>noCorsResponse</var> is not a <a>filtered response</a> and
+      <a lt="should response to request be blocked due to corb">the CORB algorithm</a> returns
+      <b>blocked</b>, then:
+
+      <ol>
+       <li><p>Let <var>oldNoCorsResponse</var> be <var>noCorsResponse</var>.
+
+       <li>
+        <p>Set <var>noCorsResponse</var> to a new <a for=/>response</a> whose
+        <a for=response>status</a> is <var>oldNoCorsResponse</var>'s <a for=response>status</a>,
+        <a for=response>HTTPS state</a> is <var>oldNoCorsResponse</var>'s
+        <a for=response>HTTPS state</a>, and <a for=response>CSP list</a> is
+        <var>oldNoCorsResponse</var>'s <a for=response>CSP list</a>.
+
+        <p class="warning">To be an effective defense against side channel attacks,
+        <var>oldNoCorsResponse</var> cannot reach the process that initiated the request.
+      </ol>
 
      <li><p>Return <var>noCorsResponse</var>.
-
     </ol>
 
    <dt><var>request</var>'s <a for=request>current url</a>'s
