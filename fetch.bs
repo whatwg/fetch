@@ -1159,6 +1159,12 @@ Unless stated otherwise, it is "<code>basic</code>".
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=done-flag>done flag</dfn>.
 Unless stated otherwise, it is unset.
 
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=concept-request-reload-navigation-flag>reload-navigation flag</dfn>.
+Unless stated otherwise, it is unset.
+
+<p class="note no-backref">This flag is for exclusive use by HTML's navigate algorithm. [[!HTML]]
+
 <p class="note no-backref">A <a for=/>request</a>'s
 <a for=request>url list</a>,
 <a for=request>current url</a>,
@@ -3194,9 +3200,8 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
 
 <h3 id=http-redirect-fetch>HTTP-redirect fetch</h3>
 
-<p class="note no-backref">This algorithm will be used by <cite>HTML</cite>'s "navigate" algorithm
-in addition to <a>HTTP fetch</a> above.
-[[!HTML]]
+<p class="note no-backref">This algorithm is used by HTML's navigate algorithm in addition to
+<a>HTTP fetch</a> above. [[!HTML]]
 
 <p>To perform an <dfn export id=concept-http-redirect-fetch>HTTP-redirect fetch</dfn> using
 <var>request</var> and <var>response</var>, with an optional <i>CORS flag</i>, run these steps:
@@ -3284,8 +3289,8 @@ in addition to <a>HTTP fetch</a> above.
     <p><i>recursive flag</i> set if <var>request</var>'s <a for=request>redirect mode</a> is not
     "<code>manual</code>".
 
-    <p class=note>It can only be "<code>manual</code>" when invoked directly from
-    <cite>HTML</cite>'s "navigate" algorithm.
+    <p class=note>It can only be "<code>manual</code>" when invoked directly from HTML's navigate
+    algorithm.
   </ul>
 
   <p class="note no-backref">This has to invoke <a for=main>main fetch</a> to
@@ -4880,6 +4885,7 @@ interface Request {
   readonly attribute RequestRedirect redirect;
   readonly attribute DOMString integrity;
   readonly attribute boolean keepalive;
+  readonly attribute boolean isReloadNavigation;
   readonly attribute AbortSignal signal;
 
   [NewObject] Request clone();
@@ -5037,6 +5043,9 @@ initially a new {{AbortSignal}} object.
  <dd>Returns a boolean indicating whether or not <var>request</var> can outlive the global in which
  it was created.
 
+ <dt><code><var>request</var> . <a attribute for=Request>isReloadNavigation</a></code>
+ <dd>Returns a boolean indicating whether or not <var>request</var> is for a reload navigation.
+
  <dt><code><var>request</var> . <a attribute for=Request>signal</a></code>
  <dd>Returns the signal associated with <var>request</var>, which is an
  {{AbortSignal}} object indicating whether or not <var>request</var> has been aborted, and its abort
@@ -5139,8 +5148,10 @@ constructor must run these steps:
  <a for=request>redirect mode</a>,
  <a for=request>integrity metadata</a> is
  <var>request</var>'s
- <a for=request>integrity metadata</a>, and
- <a>keepalive flag</a> is <var>request</var>'s <a>keepalive flag</a>.
+ <a for=request>integrity metadata</a>,
+ <a>keepalive flag</a> is <var>request</var>'s <a>keepalive flag</a>, and
+ <a for=request>reload-navigation flag</a> is <var>request</var>'s
+ <a for=request>reload-navigation flag</a>.
 
 
  <li>
@@ -5150,6 +5161,8 @@ constructor must run these steps:
    <li><p>If <var>request</var>'s <a for=request>mode</a> is
    "<code>navigate</code>", then set it to "<code>same-origin</code>".
    <!-- This works because we have reset request's client too. -->
+
+   <li><p>Unset <var>request</var>'s <a for=request>reload-navigation flag</a>.
 
    <li><p>Set <var>request</var>'s <a for=request>referrer</a> to
    "<code>client</code>"
@@ -5426,6 +5439,10 @@ must return <a for=Request>request</a>'s
 <p>The <dfn attribute for=Request><code>keepalive</code></dfn> attribute's getter
 must return true if <a for=Request>request</a>'s <a>keepalive flag</a>
 is set, and false otherwise.
+
+<p>The <dfn attribute for=Request><code>isReloadNavigation</code></dfn> attribute's getter, when
+invoked, must return true if the <a>context object</a>'s <a for=Request>request</a>'s
+<a for=request>reload-navigation flag</a> is set, and false otherwise.
 
 <p>The <dfn attribute for=Request><code>signal</code></dfn> attribute's getter must return the
 associated <a for="Request">signal</a>.
