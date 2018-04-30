@@ -2356,7 +2356,21 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
 
 <h3 id=cross-origin-read-blocking>Cross-Origin Read Blocking (CORB)</h3>
 
-<h4 lt="should response to request be blocked due to corb" dfn id=should-response-to-request-be-blocked-due-to-corb?>Should
+<p>Cross-Origin Read Blocking (CORB) is an algorithm by which dubious
+cross-origin resource loads may be identified and blocked by web browsers
+before they reach the web page. CORB reduces the risk of leaking sensitive data
+by keeping it further from cross-origin web pages.
+
+<p><dfn>CORB-protected MIME type</dfn> is an <a>HTML MIME type</a>, a <a>JSON MIME type</a>, or
+ an <a>XML MIME type</a> (but not "<code>image/svg+xml</code>").
+
+<p class="note no-backref"> Accessing cross-origin resources with <a>CORB-protected MIME types</a> is either
+managed by the <a>CORS protocol</a> (e.g. in case of <a><code>fetch()</code></a> or {{XMLHttpRequest}}),
+not observable (e.g. in case of pings or CSP reports which ignore the response) or
+would result in an error (e.g. when failing to decode as an image an HTML document embedded in an <code>img</code> tag).
+This means that CORB can block <a>CORB-protected MIME types</a> resources without being disruptive to web pages.
+
+<h4 lt="should response to request be blocked due to corb" dfn>Should
 <var>response</var> to <var>request</var> be blocked due to CORB?</h4>
 
 <p>Run these steps:
@@ -2370,16 +2384,12 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
   <p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>'s
   <a for=url>scheme</a> is not an <a>HTTP(S) scheme</a>, then return <b>allowed</b>.
 
-  <p class="note no-backref">Checking the <a for=url>scheme</a> of <a for=request>current url</a>'s
-  <a for=url>origin</a>, rather than of <a for=request>current url</a>'s itself, ensures that
-  <code>blob:</code> URLs are handled correctly.
-
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
  <li><p>If <var>response</var>'s <a for=response>status</a> is <code>206</code> and
- <var>mimeType</var> (ignoring parameters) is an <a>HTML MIME type</a>, a <a>JSON MIME type</a>, or
- an <a>XML MIME type</a>, but not "<code>image/svg+xml</code>, then return <b>blocked</b>.
+ <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a>,
+ then return <b>blocked</b>.
 
  <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
  <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
@@ -2387,8 +2397,8 @@ pertain to them. Also, considering "<code>image</code>" was not compatible with 
  <a for=response>header list</a>.
 
  <li><p>If <var>nosniff</var> is not a failure and <var>mimeType</var> (ignoring parameters) is
- <code>text/plain</code>, an <a>HTML MIME type</a>, a <a>JSON MIME type</a>, or an
- <a>XML MIME type</a>, but not <code>image/svg+xml</code>, then return <b>blocked</b>.
+ is a <a>CORB-protected MIME type</a> or "<code>text/plain</code>",
+ then return <b>blocked</b>.
 
  <!-- TODO: MIME type confirmation sniffing -->
  <!-- TODO: JSON security prefix sniffing -->
