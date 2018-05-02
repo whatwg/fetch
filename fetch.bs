@@ -2555,32 +2555,7 @@ there is a need to support scenarios where bound credentials issued by one serve
 <a for=/>token binding ID</a> for a server other than the server to which the
 <a for=/>request</a> is being sent.
 
-Script code from an <a for=/>origin</a> can set a <a for=/>request</a>'s
-<var>useReferredTokenBinding</var> attribute to ask the user agent to send
-the <a for=/>token binding ID</a> for that <a for=/>origin</a> as a
-<a for=/>referred-token-binding ID</a>
-in the <a for=/>Token Binding Message</a> sent to a target server.
-
-<p>E.g., by doing
-
-<pre>
-fetch("https://idp.org/issueToken?...", { useReferredTokenBinding:true })
-    .then( /* … */ )
-</pre>
-
-a script from <a for=request>origin</a> <code>https://rp.org/</code>
-can make the user agent disclose the <a for=/>token binding ID</a>
-used by the user agent for its <a for=request>origin</a>
-<code>https://rp.org/</code> to the target <a for=request>origin</a>
-<code>https://idp.org/</code>.
-The user agent discloses the <a for=/>token binding ID</a> by including a
-<a for=/>referred-token-binding ID</a> for <a for=request>origin</a>
-<code>https://rp.org/</code> (in addition to the <a for=/>token binding ID</a>
-for <a for=request>origin</a> <code>https://idp.org/</code>)
-in the <a for=/>Token Binding Message</a> that is created for the
-<a for=/>request</a> to <code>https://idp.org/</code>.
-
-<p>Alternately, servers that redirect a user agent to a different server can use the
+<p>Servers that redirect a user agent to a different server can use the
 `<dfn http-header><code>Include-Referred-Token-Binding-ID</code></dfn>`
 response <a for=/>header</a>.
 
@@ -5371,7 +5346,6 @@ interface Request {
   readonly attribute ReferrerPolicy referrerPolicy;
   readonly attribute RequestMode mode;
   readonly attribute RequestCredentials credentials;
-  readonly attribute boolean useReferredTokenBinding;
   readonly attribute RequestCache cache;
   readonly attribute RequestRedirect redirect;
   readonly attribute DOMString integrity;
@@ -5390,7 +5364,6 @@ dictionary RequestInit {
   ReferrerPolicy referrerPolicy;
   RequestMode mode;
   RequestCredentials credentials;
-  boolean useReferredTokenBinding;
   RequestCache cache;
   RequestRedirect redirect;
   DOMString integrity;
@@ -5516,12 +5489,6 @@ initially a new {{AbortSignal}} object.
  indicating whether credentials will be sent with the request always, never, or only when sent to a
  same-origin URL.
 
- <dt><code><var>request</var> . <a attribute for=Request>useReferredTokenBinding</a></code>
- <dd>Returns a boolean indicating if <var>request</var>'s
- <a for=request>referred-token-binding origin</a> is non-null,
- which controls whether or not a <a for=/>referred-token-binding ID</a>
- will be sent with the request.
-
  <dt><code><var>request</var> . <a attribute for=Request>cache</a></code>
  <dd>Returns the <a>cache mode</a> associated with <var>request</var>, which is a string indicating
  how the the request will interact with the browser's cache when fetching.
@@ -5634,9 +5601,6 @@ constructor must run these steps:
  <a for=request>credentials mode</a> is
  <var>request</var>'s
  <a for=request>credentials mode</a>,
- <a for=request>referred-token-binding origin</a> is
- <var>request</var>'s
- <a for=request>referred-token-binding origin</a>,
  <a for=request>cache mode</a> is
  <var>request</var>'s
  <a for=request>cache mode</a>,
@@ -5730,10 +5694,6 @@ constructor must run these steps:
  <li><p>If <var>credentials</var> is non-null, set <var>request</var>'s
  <a for=request>credentials mode</a> to
  <var>credentials</var>.
-
- <li><p>If <var>useReferredTokenBinding</var> is true, set <var>request</var>'s
- <a for=request>referred-token-binding origin</a> to
- <var>origin</var>.
 
  <li><p>If <var>init</var>'s <code>cache</code> member is present, set
  <var>request</var>'s <a for=request>cache mode</a> to
@@ -5923,10 +5883,6 @@ getter must return <a for=Request>request</a>'s
 <p>The <dfn attribute for=Request><code>credentials</code></dfn> attribute's
 getter must return <a for=Request>request</a>'s
 <a for=request>credentials mode</a>.
-
-<p>The <dfn attribute for=Request><code>useReferredTokenBinding</code></dfn> attribute's
-getter must return true if <a for=Request>request</a>'s
-<a for=request>referred-token-binding origin</a> is not null, and false otherwise.
 
 <p>The <dfn attribute for=Request><code>cache</code></dfn> attribute's getter must
 return <a for=Request>request</a>'s
