@@ -2379,6 +2379,64 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
 pertain to them. Also, considering "<code>image</code>" was not compatible with deployed content.
 
 
+<h3 id=corb>CORB</h3>
+
+<p class="note">Cross-origin read blocking, better known as CORB, is an algorithm which identifies
+dubious cross-origin resource fetches (e.g., fetches that would fail anyway like attempts to render
+JSON inside an <code>img</code> element) and blocks them before they reach a web page. CORB reduces
+the risk of leaking sensitive data by keeping it further from cross-origin web pages.
+
+<p>A <dfn>CORB-protected MIME type</dfn> is an <a>HTML MIME type</a>, a <a>JSON MIME type</a>, or an
+<a>XML MIME type</a> excluding <code>image/svg+xml</code>.
+
+<p class="note no-backref">Even without CORB, accessing the content of cross-origin resources with
+<a>CORB-protected MIME types</a> is either managed by the <a>CORS protocol</a> (e.g., in case of
+{{XMLHttpRequest}}), not observable (e.g., in case of pings or CSP reports which ignore the
+response), or would result in an error (e.g., when failing to decode an HTML document embedded in an
+<code>img</code> element as an image). This means that CORB can block
+<a>CORB-protected MIME types</a> resources without being disruptive to web pages.
+
+<p>To perform a <dfn noexport>CORB check</dfn>, given a <var>request</var> and <var>response</var>,
+run these steps:</p>
+
+<ol>
+ <li>
+  <p>If <var>request</var>'s <a for=request>initiator</a> is "<code>download</code>", then return
+  <b>allowed</b>.
+
+  <p class=XXX>If we recast downloading as navigation this step can be removed.
+
+ <li><p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>scheme</a> is not an
+ <a>HTTP(S) scheme</a>, then return <b>allowed</b>.
+
+ <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
+ from <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>response</var>'s <a for=response>status</a> is <code>206</code> and
+ <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a>, then return
+ <b>blocked</b>.
+
+ <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
+ <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
+ match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
+ <a for=response>header list</a>.
+
+ <li>
+  <p>If <var>nosniff</var> is not failure and <var>mimeType</var> (ignoring parameters) is a
+  <a>CORB-protected MIME type</a> or <code>text/plain</code>, then return <b>blocked</b>.
+
+  <p class="note no-backref">CORB only protects <code>text/plain</code> responses with a
+  `<code>X-Content-Type-Options: nosniff</code>` header. Unfortunately, protecting such responses
+  without that header when their <a for=response>status</a> is <code>206</code> would break too many
+  existing video responses that have a <code>text/plain</code> MIME type.
+
+ <!-- TODO: MIME type confirmation sniffing -->
+ <!-- TODO: JSON security prefix sniffing -->
+
+ <li><p>Return <b>allowed</b>.
+</ol>
+
+
 
 <h2 id=fetching>Fetching</h2>
 
@@ -2713,9 +2771,25 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <a for=request>response tainting</a> to
      "<code>opaque</code>".
 
-     <li><p>Return the result of performing a <a>scheme fetch</a>
-     using <var>request</var>.
+     <li><p>Let <var>noCorsResponse</var> be the result of performing a <a>scheme fetch</a> using
+     <var>request</var>.
      <!-- file URLs end up here as they are not same-origin typically. -->
+
+     <li><p>If <var>noCorsResponse</var> is a <a>filtered response</a> or the <a>CORB check</a> with
+     <var>request</var> and <var>noCorsResponse</var> returns <b>allowed</b>, then return
+     <var>noCorsResponse</var>.
+
+     <li>
+      <p>Set <var>corbSanitizedResponse</var> to a new <a for=/>response</a> whose
+      <a for=response>status</a> is <var>noCorsResponse</var>'s <a for=response>status</a>,
+      <a for=response>HTTPS state</a> is <var>noCorsResponse</var>'s
+      <a for=response>HTTPS state</a>, and <a for=response>CSP list</a> is
+      <var>noCorsResponse</var>'s <a for=response>CSP list</a>.
+
+      <p class="warning">This is only an effective defense against side channel attacks if
+      <var>noCorsResponse</var> is kept isolated from the process that initiated the request.
+
+     <li><p>Return <var>corbSanitizedResponse</var>.
     </ol>
 
    <dt><var>request</var>'s <a for=request>current url</a>'s
@@ -6311,6 +6385,7 @@ Larry Masinter,
 Liam Brummitt,
 Louis Ryan,
 Lucas Gonze,
+Łukasz Anforowicz,
 呂康豪 (Kang-Hao Lu),
 Maciej Stachowiak,
 Malisa<!-- malisas; GitHub -->,
