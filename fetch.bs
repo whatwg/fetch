@@ -2517,6 +2517,58 @@ run these steps:</p>
 </ol>
 
 
+<h3 id=cross-origin-resource-policy-header>`<code>Cross-Origin-Resource-Policy</code>` header</h3>
+
+<p>The
+`<dfn export http-header id=http-cross-origin-resource-policy><code>Cross-Origin-Resource-Policy</code></dfn>`
+response <a for=/>header</a> can be used to require checking a <a for=/>request</a>'s
+<a for=request>current url</a>'s <a for=url>origin</a> against a <a for=/>request</a>'s
+<a for=request>origin</a> when <a for=/>request</a>'s <a for=request>mode</a> is
+"<code>no-cors</code>".
+
+<p>Its <a for=header>value</a> <a>ABNF</a>:
+
+<pre>
+Cross-Origin-Resource-Policy     = %x73.61.6D.65.2D.6F.72.69.67.69.6E / %x73.61.6D.65.2D.73.69.74.65 ; "same-origin" / "same-site", case-sensitive</pre>
+
+<p>To perform a <dfn>cross-origin resource policy check</dfn>, given a <var>request</var> and
+<var>response</var>, run these steps:</p>
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>", then return
+ <b>allowed</b>.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
+  <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>, then return
+  <b>allowed</b>.
+
+  <p class="note no-backref">A cross-origin response redirecting to a response that is
+  <a>same origin</a> or <a>same site</a> with the initial request and has a
+  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` header specified, does not affect
+  anything. I.e., <var>request</var>'s <a for=request>tainted origin flag</a> is not checked.
+
+ <li>
+  <p>Let <var>policy</var> be the <a>combined value</a> with
+  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` and <var>response</var>'s
+  <a for=response>header list</a>.
+
+  <p class=note>This means that `<code>Cross-Origin-Resource-Policy: same-site, same-origin</code>`
+  ends up as <b>allowed</b> below as it will never match anything. Two or more
+  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` headers will have the same effect.
+
+ <li><p>If <var>policy</var> is `<code>same-origin</code>`, then return <b>blocked</b>.
+
+ <li><p>If <var>request</var>'s <a for=request>origin</a>'s <a for=url>host</a> is <a>same site</a>
+ with <var>request</var>'s <a for=request>current url</a>'s <a for=url>host</a>, then return
+ <b>allowed</b>.
+
+ <li><p>If <var>policy</var> is `<code>same-site</code>`, then return <b>blocked</b>.
+
+ <li><p>Return <b>allowed</b>.
+</ol>
+
+
 
 <h2 id=fetching>Fetching</h2>
 
@@ -3849,6 +3901,10 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
  <li><p>If <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
  `<code>Range</code>`, then set <var>response</var>'s <a for=response>range-requested flag</a>.
+
+ <li><p>If the <i>CORS flag</i> is unset and the <a>cross-origin resource policy check</a> with
+ <var>request</var> and <var>response</var> returns <b>blocked</b>, then return a
+ <a>network error</a>.
 
  <li>
   <p>If <var>response</var>'s <a for=response>status</a> is <code>401</code>, <i>CORS flag</i>
@@ -6548,6 +6604,7 @@ Jeffrey Yasskin,
 Jesse M. Heines,
 Jinho Bang,
 Jochen Eisinger,
+John Wilander,
 Jonas Sicking,
 Jonathan Kingston,
 Jonathan Watt,
