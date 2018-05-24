@@ -1209,6 +1209,19 @@ or "<code>worker</code>".
 
 <hr>
 
+<p>To <dfn>serialize a request origin</dfn>, given a <a for=/>request</a> <var>request</var>, run
+these steps:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>tainted origin flag</a> is set, then return
+ `<code>null</code>`.
+
+ <li><p>Return <var>request</var>'s <a for=request>origin</a>,
+ <a lt="ASCII serialization of an origin">serialized</a> and <a>isomorphic encoded</a>.
+</ol>
+
+<hr>
+
 <p>To <dfn export for=request id=concept-request-clone>clone</dfn> a
 <a for=/>request</a> <var>request</var>, run these steps:
 
@@ -1288,6 +1301,7 @@ or "<code>worker</code>".
    <li><p><a>If aborted</a>, then abort these in-parallel steps.
   </ol>
 </ol>
+
 
 <h4 id=responses>Responses</h4>
 
@@ -3498,21 +3512,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <!-- XXX ideally we have an easier way to convert something ASCII-safe into bytes
             concept-as-bytes -->
 
-   <li>
-    <p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is neither
-    `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s <a for=request>mode</a>
-    is "<code>websocket</code>", then:</p>
-
-    <ol>
-     <li><p>Let <var>originHeaderValue</var> be <var>httpRequest</var>'s <a for=request>origin</a>,
-     <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>.
-
-     <li><p>If <var>httpRequest</var>'s <a for=request>tainted origin flag</a> is set, then set
-     <var>originHeaderValue</var> to `<code>null</code>`.
-
-     <li><p><a for="header list">Append</a> `<code>Origin</code>`/<var>originHeaderValue</var>, to
-     <var>httpRequest</var>'s <a for=request>header list</a>.
-    </ol>
+   <li><p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is
+   neither `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s
+   <a for=request>mode</a> is "<code>websocket</code>", then <a for="header list">append</a>
+   `<code>Origin</code>`/the result of <a>serializing a request origin</a> with
+   <var>httpRequest</var>, to <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
@@ -4276,7 +4280,7 @@ steps:
 entries where each entry has these fields:
 
 <ul class=brief>
- <li><dfn id=concept-cache-origin for=cache>origin</dfn> (an <a for=/>origin</a>)
+ <li><dfn id=concept-cache-origin for=cache>serialized origin</dfn> (a <a for=/>byte sequence</a>)
  <li><dfn id=concept-cache-url for=cache>url</dfn> (a <a for=/>URL</a>)
  <li><dfn id=concept-cache-max-age for=cache>max-age</dfn> (a number of seconds)
  <li><dfn id=concept-cache-credentials for=cache>credentials</dfn> (a boolean)
@@ -4295,8 +4299,8 @@ Entries may be removed before that moment arrives.
 <var>method</var>, and <var>headerName</var>, do so as follows:
 
 <dl>
- <dt><a for=cache>origin</a>
- <dd><var>request</var>'s <a for=request>origin</a>
+ <dt><a for=cache>serialized origin</a>
+ <dd>The result of <a>serializing a request origin</a> with <var>request</var>
 
  <dt><a for=cache>url</a>
  <dd><var>request</var>'s <a for=request>current url</a>
@@ -4316,25 +4320,21 @@ Entries may be removed before that moment arrives.
  <dd><var>headerName</var>
 </dl>
 
-<p>To <dfn id=concept-cache-clear for=cache>clear cache entries</dfn>, given a
-<var>request</var>, remove any entries in the
-<a>CORS-preflight cache</a> whose
-<a for=cache>origin</a> is <var>request</var>'s
-<a for=request>origin</a> and whose
-<a for=cache>url</a> is <var>request</var>'s
-<a for=request>current url</a>.
+<p>To <dfn id=concept-cache-clear for=cache>clear cache entries</dfn>, given a <var>request</var>,
+remove any entries in the <a>CORS-preflight cache</a> whose <a for=cache>serialized origin</a> is
+the result of <a>serializing a request origin</a> with <var>request</var> and whose
+<a for=cache>url</a> is <var>request</var>'s <a for=request>current url</a>.
 
-<p>There is a <dfn id=concept-cache-match for=cache>cache match</dfn> for
-<var>request</var> if <a for=cache>origin</a> is
-<var>request</var>'s <a for=request>origin</a>,
-<a for=cache>url</a> is <var>request</var>'s
-<a for=request>current url</a>, and one of
+<p>There is a <dfn id=concept-cache-match for=cache>cache match</dfn> for <var>request</var> if
+<a for=cache>serialized origin</a> is the result of <a>serializing a request origin</a> with
+<var>request</var>, <a for=cache>url</a> is <var>request</var>'s <a for=request>current url</a>, and
+one of
 
 <ul class=brief>
  <li><a for=cache>credentials</a> is true
  <li><a for=cache>credentials</a> is false and <var>request</var>'s
  <a for=request>credentials mode</a> is <em>not</em>
- "<code>include</code>"
+ "<code>include</code>".
 </ul>
 
 <p>is true.
@@ -4381,13 +4381,8 @@ Entries may be removed before that moment arrives.
  <a for=request>credentials mode</a> is not
  "<code>include</code>" and <var>origin</var> is `<code>*</code>`, return success.
 
- <li><p>Let <var>requestOriginValue</var> be <var>request</var>'s <a for=request>origin</a>,
- <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>.
-
- <li><p>If <var>request</var>'s <a for=request>tainted origin flag</a> is set, then set
- <var>requestOriginValue</var> to `<code>null</code>`.
-
- <li><p>If <var>requestOriginValue</var> is not <var>origin</var>, then return failure.
+ <li><p>If the result of <a>serializing a request origin</a> with <var>request</var> is not
+ <var>origin</var>, then return failure.
 
  <li><p>If <var>request</var>'s
  <a for=request>credentials mode</a> is not
