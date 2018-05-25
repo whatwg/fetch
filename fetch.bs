@@ -409,31 +409,64 @@ each other by 0x2C 0x20, in order.
 
 <hr>
 
-<p id=simple-header>A <dfn export>CORS-safelisted request-header</dfn> is a <a for=/>header</a>
-whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
+<p id=simple-header>To determine whether a <a for=/>header</a> <var>header</var> is a
+<dfn export>CORS-safelisted request-header</dfn>, run these steps:
 
-<ul class=brief>
- <li>`<code>Accept</code>`
- <li>`<code>Accept-Language</code>`
- <li>`<code>Content-Language</code>`
- <li>`<code>Content-Type</code>` and whose <a for=header>value</a>,
- <a lt="extract header values">once extracted</a>, has a MIME type (ignoring parameters)
- that is `<code>application/x-www-form-urlencoded</code>`,
- `<code>multipart/form-data</code>`, or `<code>text/plain</code>`
-</ul>
-<!-- XXX * needs better xref
-         * ignoring parameters has been the standard for a long time now
-         * interesting test: "Content-Type: text/plain;" -->
+<ol>
+ <li><p>Let <var>value</var> be <var>header</var>'s <a for=header>value</a>.
 
-<p>or whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for one of
+ <li>
+  <p><a>Byte-lowercase</a> <var>header</var>'s <a for=header>name</a> and switch on the result:
 
-<ul class=brief>
- <li>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
- <li>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#downlink>Downlink</a></code>`
- <li>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#save-data>Save-Data</a></code>`
- <li>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>Viewport-Width</a></code>`
- <li>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#width>Width</a></code>`
-</ul>
+  <dl class=switch>
+   <dt>`<code>accept</code>`
+   <dd>
+    <p>If one of the following is true
+
+    <ul class=brief>
+     <li><var>value</var> contains a byte less than 0x20 that is not 0x09 HT
+     <li><var>value</var> contains 0x22 ("), 0x28 (left parenthesis), 0x29 (right parenthesis),
+     0x3A (:), 0x3C (&lt;), 0x3E (>), 0x3F (?), 0x40 (@), 0x5B ([), 0x5C (\), 0x5D (]), 0x7B ({),
+     0x7D (}), or 0x7F DEL
+    </ul>
+    <!-- Delimiters from https://tools.ietf.org/html/rfc7230#section-3.2.6 except for ,/;= and
+         including DEL -->
+
+    <p>then return false.
+
+   <dt>`<code>accept-language</code>`
+   <dt>`<code>content-language</code>`
+   <dd><p>If <var>value</var> contains a byte that is not in the range 0x30 (0) to 0x39 (9),
+   inclusive, is not in the range 0x41 (A) to 0x5A (Z), inclusive, is not in the range 0x61 (a) to
+   0x7A (z), inclusive, and is not 0x20 (SP), 0x2A (*), 0x2C (,), 0x2D (-), 0x2E (.), 0x3B (;), or
+   0x3D (=), then return false.
+   <!-- Maybe give Infra "byte-alphanumeric"? -->
+
+   <dt>`<code>content-type</code>`
+   <dd><p>If <var>value</var>, <a lt="extract header values">once extracted</a>, does not have a
+   MIME type (ignoring parameters) that is <code>application/x-www-form-urlencoded</code>,
+   <code>multipart/form-data</code>, or <code>text/plain</code>, then return false.
+   <!-- XXX * needs better xref
+            * ignoring parameters has been the standard for a long time now
+            * interesting test: "Content-Type: text/plain;" -->
+
+   <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
+   <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#downlink>Downlink</a></code>`
+   <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#save-data>Save-Data</a></code>`
+   <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>Viewport-Width</a></code>`
+   <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#width>Width</a></code>`
+   <dd><p>If <var>value</var>, <a lt="extract header values">once extracted</a>, is failure, then
+   return false.
+
+   <dt>Otherwise
+   <dd><p>Return false.
+  </dl>
+
+ <li><p>If <var>value</var>'s <a for="byte sequence">length</a> is greater than 128, then return
+ false.
+
+ <li><p>Return true.
+</ol>
 
 <p>and whose <a for=header>value</a>, <a lt="extract header values">once extracted</a>, is not
 failure.
@@ -6638,6 +6671,7 @@ Jeff Carpenter,
 Jeff Hodges,
 Jeffrey Yasskin,
 Jesse M. Heines,
+Jianjun Chen,
 Jinho Bang,
 Jochen Eisinger,
 John Wilander,
