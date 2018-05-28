@@ -950,12 +950,9 @@ user-agent-defined object). Unless otherwise stated it is null.
 "<code>client</code>" or an <a for=/>origin</a>. Unless stated otherwise it is
 "<code>client</code>".
 
-<p class="note no-backref">"<code>client</code>" is changed to an
-<a for=/>origin</a> during <a lt=fetch for=/>fetching</a>. It
-provides a convenient way for standards to not have to set
+<p class="note no-backref">"<code>client</code>" is changed to an <a for=/>origin</a> during
+<a lt=fetch for=/>fetching</a>. It provides a convenient way for standards to not have to set
 <a for=/>request</a>'s <a for=request>origin</a>.
-<a for=/>Request</a>'s <a for=request>origin</a> can be
-changed during redirects too.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-referrer>referrer</dfn>, which is
@@ -1150,6 +1147,10 @@ determine whether requests or responses are to be blocked in a given context. [[
 <hr>
 
 <p>A <a for=/>request</a> has an associated
+<dfn for=request id=concept-request-tainted-origin>tainted origin flag</dfn>. Unless stated
+otherwise, it is unset.
+
+<p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-url-list>url list</dfn> (a list of one or more
 <a for=/>URLs</a>). Unless stated otherwise, it is a list containing a copy of
 <a for=/>request</a>'s <a for=request>url</a>.
@@ -1176,13 +1177,10 @@ Unless stated otherwise, it is unset.
 
 <p class="note no-backref">This flag is for exclusive use by HTML's navigate algorithm. [[!HTML]]
 
-<p class="note no-backref">A <a for=/>request</a>'s
-<a for=request>url list</a>,
-<a for=request>current url</a>,
-<a for=request>redirect count</a>,
-<a for=request>response tainting</a>, and
-<a>done flag</a> are used as bookkeeping details by the
-<a for=/>fetch</a> algorithm.
+<p class="note no-backref">A <a for=/>request</a>'s <a for=request>tainted origin flag</a>,
+<a for=request>url list</a>, <a for=request>current url</a>, <a for=request>redirect count</a>,
+<a for=request>response tainting</a>, and <a for=request>done flag</a> are used as bookkeeping
+details by the <a for=/>fetch</a> algorithm.
 
 <hr>
 
@@ -1208,6 +1206,19 @@ or "<code>worker</code>".
 
 <p class=note>See <a for=/>handle fetch</a> for usage of these terms.
 [[!SW]]
+
+<hr>
+
+<p><dfn>Serializing a request origin</dfn>, given a <a for=/>request</a> <var>request</var>, is to
+run these steps:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>tainted origin flag</a> is set, then return
+ `<code>null</code>`.
+
+ <li><p>Return <var>request</var>'s <a for=request>origin</a>,
+ <a lt="ASCII serialization of an origin">serialized</a> and <a>isomorphic encoded</a>.
+</ol>
 
 <hr>
 
@@ -1290,6 +1301,7 @@ or "<code>worker</code>".
    <li><p><a>If aborted</a>, then abort these in-parallel steps.
   </ol>
 </ol>
+
 
 <h4 id=responses>Responses</h4>
 
@@ -3316,13 +3328,11 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
  <a for=request>redirect count</a> by one.
 
  <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>cors</code>",
- <var>request</var>'s <a for=request>origin</a> is <em>not</em>
- <a>same origin</a> with <var>actualResponse</var>'s
- <a for=response>location URL</a>'s
- <a for=url>origin</a>, and <var>actualResponse</var>'s
- <a for=response>location URL</a>
- <a lt="include credential">includes credentials</a>, then return a
- <a>network error</a>.
+ <var>actualResponse</var>'s <a for=response>location URL</a>
+ <a lt="include credential">includes credentials</a>, and either <var>request</var>'s
+ <a for=request>tainted origin flag</a> is set or <var>request</var>'s <a for=request>origin</a> is
+ not <a>same origin</a> with <var>actualResponse</var>'s <a for=response>location URL</a>'s
+ <a for=url>origin</a>, then return a <a>network error</a>.
 
  <li>
   <p>If <i>CORS flag</i> is set and <var>actualResponse</var>'s
@@ -3336,10 +3346,11 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
  <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
  <a for=request>body</a>'s <a for=body>source</a> is null, then return a <a>network error</a>.
 
- <li><p>If <i>CORS flag</i> is set and <var>actualResponse</var>'s
- <a for=response>location URL</a>'s <a for=url>origin</a> is not <a>same origin</a> with
- <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>, then set
- <var>request</var>'s <a for=request>origin</a> to a unique <a>opaque origin</a>.
+ <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>'s <a for=url>origin</a> is
+ not <a>same origin</a> with <var>request</var>'s <a for=request>current url</a>'s
+ <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a>
+ with <var>request</var>'s <a for=request>current url</a>'s <a for=url>origin</a>, then set
+ <var>request</var>'s <a for=request>tainted origin flag</a>.
 
  <li><p>If either <var>actualResponse</var>'s <a for=response>status</a> is
  <code>301</code> or <code>302</code> and <var>request</var>'s
@@ -3504,10 +3515,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <li><p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is
    neither `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s
    <a for=request>mode</a> is "<code>websocket</code>", then <a for="header list">append</a>
-   `<code>Origin</code>`/<var>httpRequest</var>'s <a for=request>origin</a>,
-   <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>, to
-   <var>httpRequest</var>'s <a for=request>header list</a>.
-   <!-- XXX concept-as-bytes -->
+   `<code>Origin</code>`/the result of <a>serializing a request origin</a> with
+   <var>httpRequest</var>, to <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
@@ -4140,8 +4149,10 @@ steps:
   <a for=request>initiator</a> is <var>request</var>'s <a for=request>initiator</a>,
   <a for=request>destination</a> is <var>request</var>'s <a for=request>destination</a>,
   <a for=request>origin</a> is <var>request</var>'s <a for=request>origin</a>,
-  <a for=request>referrer</a> is <var>request</var>'s <a for=request>referrer</a>, and
-  <a for=request>referrer policy</a> is <var>request</var>'s <a for=request>referrer policy</a>.
+  <a for=request>referrer</a> is <var>request</var>'s <a for=request>referrer</a>,
+  <a for=request>referrer policy</a> is <var>request</var>'s <a for=request>referrer policy</a>, and
+  <a for=request>tainted origin flag</a> is <var>request</var>'s
+  <a for=request>tainted origin flag</a>.
 
   <p class="note no-backref">The <a for=request>service-workers mode</a> of <var>preflight</var>
   does not matter as this algorithm uses <a>HTTP-network-or-cache fetch</a> rather than
@@ -4269,7 +4280,7 @@ steps:
 entries where each entry has these fields:
 
 <ul class=brief>
- <li><dfn id=concept-cache-origin for=cache>origin</dfn> (an <a for=/>origin</a>)
+ <li><dfn id=concept-cache-origin for=cache>serialized origin</dfn> (a <a for=/>byte sequence</a>)
  <li><dfn id=concept-cache-url for=cache>url</dfn> (a <a for=/>URL</a>)
  <li><dfn id=concept-cache-max-age for=cache>max-age</dfn> (a number of seconds)
  <li><dfn id=concept-cache-credentials for=cache>credentials</dfn> (a boolean)
@@ -4288,8 +4299,8 @@ Entries may be removed before that moment arrives.
 <var>method</var>, and <var>headerName</var>, do so as follows:
 
 <dl>
- <dt><a for=cache>origin</a>
- <dd><var>request</var>'s <a for=request>origin</a>
+ <dt><a for=cache>serialized origin</a>
+ <dd>The result of <a>serializing a request origin</a> with <var>request</var>
 
  <dt><a for=cache>url</a>
  <dd><var>request</var>'s <a for=request>current url</a>
@@ -4309,25 +4320,21 @@ Entries may be removed before that moment arrives.
  <dd><var>headerName</var>
 </dl>
 
-<p>To <dfn id=concept-cache-clear for=cache>clear cache entries</dfn>, given a
-<var>request</var>, remove any entries in the
-<a>CORS-preflight cache</a> whose
-<a for=cache>origin</a> is <var>request</var>'s
-<a for=request>origin</a> and whose
-<a for=cache>url</a> is <var>request</var>'s
-<a for=request>current url</a>.
+<p>To <dfn id=concept-cache-clear for=cache>clear cache entries</dfn>, given a <var>request</var>,
+remove any entries in the <a>CORS-preflight cache</a> whose <a for=cache>serialized origin</a> is
+the result of <a>serializing a request origin</a> with <var>request</var> and whose
+<a for=cache>url</a> is <var>request</var>'s <a for=request>current url</a>.
 
-<p>There is a <dfn id=concept-cache-match for=cache>cache match</dfn> for
-<var>request</var> if <a for=cache>origin</a> is
-<var>request</var>'s <a for=request>origin</a>,
-<a for=cache>url</a> is <var>request</var>'s
-<a for=request>current url</a>, and one of
+<p>There is a <dfn id=concept-cache-match for=cache>cache match</dfn> for <var>request</var> if
+<a for=cache>serialized origin</a> is the result of <a>serializing a request origin</a> with
+<var>request</var>, <a for=cache>url</a> is <var>request</var>'s <a for=request>current url</a>, and
+one of
 
 <ul class=brief>
  <li><a for=cache>credentials</a> is true
  <li><a for=cache>credentials</a> is false and <var>request</var>'s
  <a for=request>credentials mode</a> is <em>not</em>
- "<code>include</code>"
+ "<code>include</code>".
 </ul>
 
 <p>is true.
@@ -4374,10 +4381,8 @@ Entries may be removed before that moment arrives.
  <a for=request>credentials mode</a> is not
  "<code>include</code>" and <var>origin</var> is `<code>*</code>`, return success.
 
- <li><p>If <var>request</var>'s <a for=request>origin</a>,
- <a lt="ASCII serialization of an origin">serialized</a> and <a>UTF-8 encoded</a>, is not
- <var>origin</var>, return failure.
- <!-- XXX concept-as-bytes -->
+ <li><p>If the result of <a>serializing a request origin</a> with <var>request</var> is not
+ <var>origin</var>, then return failure.
 
  <li><p>If <var>request</var>'s
  <a for=request>credentials mode</a> is not
@@ -6328,6 +6333,7 @@ Clement Pellerin,
 Collin Jackson,
 Daniel Robertson,
 Daniel Veditz,
+David Benjamin,
 David Håsäther,
 David Orchard,
 Dean Jackson,
