@@ -89,4 +89,4 @@ If you can commit to this repository, see the
 ### Tests
 
 Tests can be found in the `fetch/` directory of
-[web-platform-tests](https://github.com/w3c/web-platform-tests).
+[web-platform-tests/wpt](https://github.com/web-platform-tests/wpt).
