@@ -5,7 +5,9 @@ local: fetch.bs
 	bikeshed spec fetch.bs fetch.html --md-Text-Macro="SNAPSHOT-LINK LOCAL COPY"
 
 deploy: fetch.bs
-	curl --remote-name --fail https://resources.whatwg.org/build/deploy.sh && bash ./deploy.sh
+	curl --remote-name --fail https://resources.whatwg.org/build/deploy.sh
+	bash ./deploy.sh
 
 review: fetch.bs
-	curl --remote-name --fail https://resources.whatwg.org/build/review.sh && bash ./review.sh
+	curl --remote-name --fail https://resources.whatwg.org/build/review.sh
+	bash ./review.sh
