@@ -479,6 +479,36 @@ failure.
 <p class="note">There are limited exceptions to the `<code>Content-Type</code>` header safelist, as
 documented in <a href=#cors-protocol-exceptions>CORS protocol exceptions</a>.
 
+<p>The <dfn noexport>CORS-unsafe request-header names</dfn>, given a <a for=/>header list</a>
+<var>headers</var>, are determined as follows:
+
+<ol>
+ <li><p>Let <var>unsafeNames</var> be a new <a for=/>list</a>.
+
+ <li><p>Let <var>potentiallyUnsafeNames</var> be a new <a for=/>list</a>.
+
+ <li><p>Let <var>safelistValueSize</var> be 0.
+
+ <li>
+  <p><a for=list>For each</a> <var>header</var> of <var>headers</var>:
+
+  <ol>
+   <li><p>If <var>header</var> is not a <a>CORS-safelisted request-header</a>, then
+   <a for=list>append</a> <var>header</var>'s <a for=header>name</a> to <var>unsafeNames</var>.
+
+   <li><p>Otherwise, <a for=list>append</a> <var>header</var>'s <a for=header>name</a> to
+   <var>potentiallyUnsafeNames</var> and increase <var>safelistValueSize</var> by
+   <var>header</var>'s <a for=header>value</a>'s <a for="byte sequence">length</a>.
+  </ol>
+
+ <li><p>If <var>safelistValueSize</var> is greater than 1024, then <a for=list>for each</a>
+ <var>name</var> of <var>potentiallyUnsafeNames</var>, <a for=list>append</a> <var>name</var> to
+ <var>unsafeNames</var>.
+
+ <li><p>Return <var>unsafeNames</var>, <a lt="byte-lowercase">byte-lowercased</a>, excluding
+ duplicates, and sorted lexicographically.
+</ol>
+
 <p>A <dfn export>CORS non-wildcard request-header name</dfn> is a <a>byte-case-insensitive</a> match
 for `<code>Authorization</code>`.
 
@@ -2931,9 +2961,8 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
    <dt><var>request</var>'s <a>use-CORS-preflight flag</a> is set
    <dt><var>request</var>'s <a>unsafe-request flag</a> is set and either <var>request</var>'s
    <a for=request>method</a> is not a <a>CORS-safelisted method</a> or
-   a <a for=/>header</a> in <var>request</var>'s
-   <a for=request>header list</a> is not a
-   <a>CORS-safelisted request-header</a>
+   <a>CORS-unsafe request-header names</a> with <var>request</var>'s <a for=request>header list</a>
+   <a for=list>is not empty</a>
    <dd>
     <ol>
      <li><p>Set <var>request</var>'s
@@ -3340,11 +3369,9 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
      <a>CORS-safelisted method</a> or <var>request</var>'s
      <a>use-CORS-preflight flag</a> is set.
 
-     <li>There is at least one <a for=/>header</a> in
-     <var>request</var>'s <a for=request>header list</a>
-     for whose <a for=header>name</a> there is no
-     <a for=cache>header-name cache match</a> using
-     <var>request</var> and which is not a <a>CORS-safelisted request-header</a>.
+     <li>There is at least one <a for=list>item</a> in the <a>unsafe-CORS request-header names</a>
+     with <var>request</var>'s <a for=request>header list</a> for which there is no
+     <a for=cache>header-name cache match</a> using <var>request</var>.
     </ul>
 
     <p>Then:
@@ -4326,14 +4353,11 @@ run these steps:
  to <var>request</var>'s <a for=request>method</a> in <var>preflight</var>'s
  <a for=request>header list</a>.
 
- <li><p>Let <var>headers</var> be the <a lt=name for=header>names</a> of
- <var>request</var>'s <a for=request>header list</a>'s
- <a for=/>headers</a>, excluding
- <a>CORS-safelisted request-headers</a> and duplicates,
- sorted lexicographically, and <a lt="byte-lowercase">byte-lowercased</a>.
+ <li><p>Let <var>headers</var> be the <a>CORS-unsafe request-header names</a> with
+ <var>request</var>'s <a for=request>header list</a>.
 
  <li>
-  <p>If <var>headers</var> <a for=list lt="is empty">is not empty</a>, then:
+  <p>If <var>headers</var> <a for=list>is not empty</a>, then:
 
   <ol>
    <li><p>Let <var>value</var> be the items in <var>headers</var> separated from each other by
@@ -4391,12 +4415,12 @@ run these steps:
    <a>byte-case-insensitive</a> match for an <a for=list>item</a> in <var>headerNames</var>, then
    return a <a>network error</a>.
 
-   <li><p><a for=list>For each</a> <var>header</var> in <var>request</var>'s
-   <a for=request>header list</a>: if <var>header</var> is not a
-   <a>CORS-safelisted request-header</a>, <var>header</var>'s <a for=header>name</a> is not a
-   <a>byte-case-insensitive</a> match for an <a for=list>item</a> in <var>headerNames</var>, and
-   <var>request</var>'s <a for=request>credentials mode</a> is "<code>include</code>" or
-   <var>headerNames</var> does not contain `<code>*</code>`, then return a <a>network error</a>.
+   <li><p><a for=list>For each</a> <var>unsafeName</var> in the
+   <a>CORS-unsafe request-header names</a> with <var>request</var>'s
+   <a for=request>header list</a>, if <var>unsafeName</var> is not a <a>byte-case-insensitive</a>
+   match for an <a for=list>item</a> in <var>headerNames</var> and <var>request</var>'s
+   <a for=request>credentials mode</a> is "<code>include</code>" or <var>headerNames</var> does not
+   contain `<code>*</code>`, return a <a>network error</a>.
 
    <li><p>Let <var>max-age</var> be the result of <a>extracting header list values</a> given
    `<a http-header><code>Access-Control-Max-Age</code></a>` and <var>response</var>'s
