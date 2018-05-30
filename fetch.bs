@@ -511,6 +511,26 @@ for `<code>Authorization</code>`.
  <a>forbidden response-header name</a>.
 </ul>
 
+<p>To determine whether a <a for/>header</a> <var>header</var> is a
+<dfn noexport>no-CORS-safelisted request-header</dfn>, run these steps:
+
+<ol>
+ <li>
+  <p>If <var>header</var>'s <a for=header>name</a> is not a <a>byte-case-insensitive</a> match for
+  one of
+
+  <ul class=brief>
+   <li>`<code>Accept</code>`
+   <li>`<code>Accept-Language</code>`
+   <li>`<code>Content-Language</code>`
+   <li>`<code>Content-Type</code>`
+  </ul>
+
+  <p>then return false.
+
+ <li><p>Return whether <var>header</var> is a <a>CORS-safelisted request-header</a>.
+</ol>
+
 <p>A <dfn export>forbidden header name</dfn> is a <a for=/>header</a> <a for=header>name</a> that
 is a <a>byte-case-insensitive</a> match for one of
 
@@ -4759,7 +4779,7 @@ objects.</span>
  return.
 
  <li><p>Otherwise, if <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
- <var>name</var>/<var>value</var> is not a <a>CORS-safelisted request-header</a>, then return.
+ <var>name</var>/<var>value</var> is not a <a>no-CORS-safelisted request-header</a>, then return.
 
  <li><p>Otherwise, if <a for=Headers>guard</a> is
  "<code>response</code>" and <var>name</var> is a
@@ -4845,11 +4865,13 @@ method, when invoked, must run these steps:
 
  <li>
   <p>Otherwise, if <a for=Headers>guard</a> is "<code>request-no-cors</code>",
-  <var>name</var>/`<code>invalid</code>` is not a <a>CORS-safelisted request-header</a>, and
+  <var>name</var>/`<code>invalid</code>` is not a <a>no-CORS-safelisted request-header</a>, and
   <var>name</var> is not a <a>privileged no-cors request-header name</a>, then return.
 
   <p class=note>`<code>invalid</code>` is used because
   <a method for=Headers><code>delete()</code></a> is not passed a value as argument.
+ <!-- XXX This will always fail for Content-Type. Need to investigate under what scenarios you get a
+      Headers object guarded like this and figure out what the problems are... -->
 
  <li><p>Otherwise, if <a for=Headers>guard</a> is
  "<code>response</code>" and <var>name</var> is a
@@ -4908,7 +4930,7 @@ method, when invoked, must run these steps:
  return.
 
  <li><p>Otherwise, if <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
- <var>name</var>/<var>value</var> is not a <a>CORS-safelisted request-header</a>, then return.
+ <var>name</var>/<var>value</var> is not a <a>no-CORS-safelisted request-header</a>, then return.
 
  <li><p>Otherwise, if <a for=Headers>guard</a> is
  "<code>response</code>" and <var>name</var> is a
