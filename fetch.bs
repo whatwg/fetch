@@ -1824,7 +1824,6 @@ run these steps:
  <li><p>Return <b>allowed</b>.
 </ol>
 
-
 <h3 id=client-hints-list>Client hints list</h3>
 
 <p class=note>This section will be integrated into HTTP Client Hints.
@@ -1837,6 +1836,46 @@ run these steps:
 of which is one of `<code>DPR</code>`, `<code>Save-Data</code>`, `<code>Viewport-Width</code>`, or
 `<code>Width</code>`.
 
+
+<h3 id=accept-ch-cache>Accept-CH cache</h3>
+
+<p>An <dfn id=concept-accept-ch-cache>Accept-CH cache</dfn> is owned by the user agent and consists
+ of a collection of entries where each entry has these fields:
+
+<ul class=brief>
+ <li><dfn id=concept-accept-ch-cache-origin for=accept-ch-cache>origin</dfn> (an <a for=/>origin</a>)
+ <li><dfn id=concept-accept-ch-cache-max-age for=accept-ch-cache>max-age</dfn> (a number of seconds)
+ <li><dfn id=concept-accept-ch-cache-client-hints-list for=accept-ch-cache>client-hints list</dfn>
+</ul>
+
+<p>Entries must be removed after the seconds specified in the
+<a for=accept-ch-cache>max-age</a> field have passed since storing the entry.
+Entries may be removed before that moment arrives.
+
+<p>To <dfn id=concept-accept-ch-cache-create-entry for=accept-ch-cache>create a new entry</dfn> in
+the <a>Accept-CH cache</a>, given <var>origin</var>, <var>max-age</var>, and
+<var>client-hints list</var>, do so as follows:
+
+<dl>
+ <dt><a for=accept-ch-cache>origin</a>
+ <dd><var>origin</var>
+
+ <dt><a for=accept-ch-cache>max-age</a>
+ <dd><var>max-age</var>
+
+ <dt><a for=accept-ch-cache>client-hints list</a>
+ <dd><var>client-hints list</var>
+</dl>
+
+<p>To <dfn export id=concept-retrieve-client-hints-list-accept-ch-cache>retrieve client-hints list</dfn>,
+given an <var>origin</var>:
+<ol>
+<li>Let <var>client-hints list</var> be an empty list.
+<li>Fetch any entries from <a>Accept-CH cache</a> which <a for=accept-ch-cache>origin</a> is
+identical to <var>origin</var>.
+<li>For each entry, for each token in its <a for=accept-ch-cache>client-hints list</a>,
+if the token is not in <var>client-hints list</var>, add it.
+<li>Return <var>client-hints list</var>.
 
 <h3 id=streams>Streams</h3>
 
@@ -3038,6 +3077,19 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
 
  <li><p><a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>Set <var>internalResponse</var>'s CSP list</a>.
  [[!CSP]]
+
+ <li><p>If <var>response</var>'s
+ <a href=http://httpwg.org/http-extensions/client-hints.html#accept-ch>Accept-CH header</a>
+ is present, process the header and add its client-hints tokens to the <a>active document</a>'s
+ client-hints list.
+
+ <!--TODO: define the active document's client hints list -->
+
+ <li><p>If <var>response</var>'s
+ <a href=http://httpwg.org/http-extensions/client-hints.html#accept-ch-lifetime>Accept-CH-Lifetime header</a>
+ is present, call 
+ <a for=accept-ch-cache>create a new entry</a> with <var>response</var>'s <var>origin</var>, the
+ parsed <var>max-age</var>, and the <a>active document</a>'s client-hints list.
 
  <li>
   <p>If <var>response</var> is not a <a>network error</a> and any
