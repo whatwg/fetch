@@ -1296,6 +1296,15 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
 <a>environment settings object</a>.
 
 <p>A <a for=/>request</a> has an associated
+<dfn export for=request id=concept-request-client-hints-set>client-hints set</dfn>,
+which is a <a lt="client-hints set">client-hints set</a>. Unless stated
+otherwise, it is the empty set.
+
+<p class="note no-backref">This will be used to override a client-hints set associated with
+an <a>environment settings object</a>.
+[[!CLIENT-HINTS]]
+
+<p>A <a for=/>request</a> has an associated
 <dfn id=synchronous-flag export for=request>synchronous flag</dfn>. Unless stated otherwise it is
 unset.
 
@@ -2113,6 +2122,20 @@ run these steps:
 
  <li><p>Return <b>allowed</b>.
 </ol>
+
+
+<h3 id=client-hints-set>Client-hints set</h3>
+
+<p class=XXX>HTTP Client-Hints requires further integration. More details on the
+<a href="https://github.com/whatwg/fetch/issues/726">issue</a>.
+[[!CLIENT-HINTS]]
+<!-- XXX -->
+
+<p>A <dfn export id=concept-client-hints-list>client-hints set</dfn> is a
+<a for=/>set</a> of
+<a href=http://httpwg.org/http-extensions/client-hints.html#accept-ch>Client hint tokens</a>, each
+of which is one of `<code>DPR</code>`, `<code>Save-Data</code>`, `<code>Viewport-Width</code>`, or
+`<code>Width</code>`.
 
 
 <h3 id=streams>Streams</h3>
@@ -3062,6 +3085,10 @@ the request.
    <a for=request>origin</a> to  <var>request</var>'s
    <a for=request>client</a>'s <a for="environment settings object">origin</a>.
 
+   <li><p>Set <var>request</var>'s <a for=request>client-hints set</a> to be a <a for=list>clone</a>
+   of the <a for="environment settings object">client-hints set</a> of the <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">global object</a>.
+
    <li>
     <p>If <var>request</var>'s <a for=request>header list</a>
     <a for="header list">does not contain</a> `<code>Accept</code>`, then:
@@ -3107,20 +3134,73 @@ the request.
     HTTP/1 fetches.
 
    <li>
-    <p>If <var>request</var> is a <a>subresource request</a>, then:
+    <p>If <var>request</var> is a <a>navigation request</a>, a user agent should, for each
+    <a for=/>header</a> <a for=header>name</a> (<var>hintName</var>) in the first column of the
+    following table, if <var>request</var>'s <a for=request>header list</a>
+    <a for="header list">does not contain</a> <var>hintName</var>, then
+    <a for="header list">append</a>
+    <var>hintName</var>/the value given in the same row on the second column, to
+    <var>request</var>'s <a for=request>header list</a>.
 
-    <ol>
-     <li><p>Let <var>record</var> be a new
-     <a for="fetch group">fetch record</a> consisting of
-     <var>request</var> and this instance of the
-     <a for=/>fetch</a> algorithm.
+    <table>
+     <tbody><tr>
+      <th><a for=header>Name</a>
+      <th><a for=header>Value</a>
+     <tr>
+      <td>`<code>Save-Data</code>`
+      <td>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+    </table>
 
-     <li><p>Append <var>record</var> to <var>request</var>'s
-     <a for=request>client</a>'s
-     <a for=fetch>fetch group</a> list of
-     <a for="fetch group">fetch records</a>.
-    </ol>
-  </ol>
+    <li>
+
+     <p><a for=list>For each</a> <var>hintName</var> of <var>request</var>'s
+     <a for=client>client-hints set</a>:
+
+     <ol>
+      <li>
+       <p>Let <var>value</var> be the first matching statement, switching on <var>hintName</var>:
+
+       <dl class=switch>
+        <dt>`<code>DPR</code>`
+        <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#dpr>dpr value</a>
+        <dt>`<code>Save-Data</code>`
+        <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#save-data>save-data value</a>
+        <dt>`<code>Viewport-Width</code>`
+        <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#viewport-width>viewport-width value</a>
+        <dt>`<code>Width</code>`
+        <dd>a suitable <a href=http://httpwg.org/http-extensions/client-hints.html#width>width value</a>
+        <dt>`<code>Device-Memory</code>`
+        <dd>a suitable <a href=https://w3c.github.io/device-memory/#sec-device-memory-client-hint-header>Device-Memory value</a>
+        <dt>`<code>RTT</code>`
+        <dd>a suitable <a href=https://wicg.github.io/netinfo/#rtt-request-header-field>RTT value</a>
+        <dt>`<code>Downlink</code>`
+        <dd>a suitable <a href=https://wicg.github.io/netinfo/#downlink-request-header-field>Downlink value</a>
+        <dt>`<code>ECT</code>`
+        <dd>a suitable <a href=https://wicg.github.io/netinfo/#ect-request-header-field>ECT value</a>
+       </dl>
+
+      <li><p>If <var>request</var>'s <a for=request>header list</a> <a for="header list">does not
+      contain</a> <var>hintName</var>, a user agent should <a for="header list">append</a>
+      <var>hintName</var>/<var>value</var> to <var>request</var>'s <a for=request>header list</a>.
+     </ol>
+
+     <p class=XXX>The above step should be applicable only for same-origin requests. See
+     <a href="https://github.com/whatwg/fetch/issues/800">issue</a> for more details.</p>
+
+
+    <li><p>If <var>request</var> is a <a>subresource request</a>, then:
+     <ol>
+      <li><p>Let <var>record</var> be a new
+      <a for="fetch group">fetch record</a> consisting of
+      <var>request</var> and this instance of the
+      <a for=/>fetch</a> algorithm.
+
+      <li><p>Append <var>record</var> to <var>request</var>'s
+      <a for=request>client</a>'s
+      <a for=fetch>fetch group</a> list of
+      <a for="fetch group">fetch records</a>.
+     </ol>
+   </ol>
 
  <li>
   <p><a>If aborted</a>, then:
