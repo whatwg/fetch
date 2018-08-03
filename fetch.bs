@@ -1876,18 +1876,45 @@ with given <var>strategy</var>, <var>pull</var> action and <var>cancel</var> act
 are optional, run these steps:
 
 <ol>
- <li><p>Let <var>init</var> be a new object.
+ <li><p>Let <var>startAlg</var> be an algorithm that returns <code>undefined</code>.
 
- <li><p>If <var>pull</var> is given, set <var>init</var>["pull"] to a function that returns
- <var>pull</var>().
+ <li><p>Let <var>pullAlg</var> be an algorithm that returns:
 
- <li><p>If <var>cancel</var> is given, set <var>init</var>["cancel"] to a function taking a
- <var>reason</var> that returns <var>cancel</var>(<var>reason</var>).
+ <dl class=switch>
+ <dt>If <var>pull</var> is given
+ <dd>the result of [=promise-calling=] <var>pull</var>().
+ <dt>Otherwise
+ <dd>[=a promise resolved with=] <code>undefined</code>.
+ </dl>
 
- <li><p>Let <var>stream</var> be the result of calling the initial value of {{ReadableStream}} as
- constructor with <var>init</var> and <var>strategy</var> if given.
+ <li><p>Let <var>cancelAlg</var> be an algorithm that takes a <var>reason</var> and returns:
+ <dl class=switch>
+ <dt>If <var>cancel</var> is given
+ <dd>the result of [=promise-calling=] <var>cancel</var>(<var>reason</var>).
+ <dt>Otherwise
+ <dd>[=a promise resolved with=] <code>undefined</code>.
+ </dl>
 
- <li><p>Return <var>stream</var>.
+ <li><p>Let <var>highWaterMark</var> be:
+ <dl class=switch>
+ <dt>If <var>strategy</var> is given and <var>strategy</var>.<a spec=streams for="queuing
+ strategy">highWaterMark</a> exists
+ <dd><var>strategy</var>.<a spec=streams for="queuing strategy">highWaterMark</a>.
+ <dt>Otherwise
+ <dd><code>1</code>.
+ </dl>
+
+ <li><p>Let <var>sizeAlg</var> be:
+ <dl class=switch>
+ <dt>If <var>strategy</var> is given and <var>strategy</var>.<a idl spec=streams for="queuing
+ strategy" lt="size()">size</a> exists
+ <dd><var>strategy</var>.size.
+ <dt>Otherwise
+ <dd>an algorithm that returns <code>1</code>.
+ </dl>
+
+  <li><p>Return [$CreateReadableStream$](<var>startAlg</var>, <var>pullAlg</var>,
+ <var>cancelAlg</var>, <var>highWaterMark</var>, <var>sizeAlg</var>).
 </ol>
 
 <p>To
