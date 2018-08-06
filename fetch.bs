@@ -1872,49 +1872,33 @@ we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 
 <p>To
 <dfn export for=ReadableStream id=concept-construct-readablestream>construct a <code>ReadableStream</code> object</dfn>
-with given <var>strategy</var>, <var>pull</var> action and <var>cancel</var> action, all of which
-are optional, run these steps:
+with given <var>highWaterMark</var>, <var>sizeAlgorithm</var> algorithm, <var>pull</var> action and
+<var>cancel</var> action, all of which are optional, run these steps:
+
+<p class=note>This algorithm used to take a <var ignore>strategy</var> parameter, whose
+<code>highWaterMark</code> and <code>sizeAlgorithm</code> members were extracted to provide what are
+now separate parameters. If another specification still passes that <var ignore>strategy</var>
+parameter, please update it.
 
 <ol>
- <li><p>Let <var>startAlg</var> be an algorithm that returns <code>undefined</code>.
+ <li><p>Let <var>startAlgorithm</var> be an algorithm that returns <code>undefined</code>.
 
- <li><p>Let <var>pullAlg</var> be an algorithm that returns:
+ <li><p>If <var>pull</var> is absent, set it to an action that returns <code>undefined</code>.
 
- <dl class=switch>
- <dt>If <var>pull</var> is given
- <dd>the result of [=promise-calling=] <var>pull</var>().
- <dt>Otherwise
- <dd>[=a promise resolved with=] <code>undefined</code>.
- </dl>
+ <li><p>Let <var>pullAlgorithm</var> be an algorithm that returns the result of [=promise-calling=]
+ <var>pull</var>().
 
- <li><p>Let <var>cancelAlg</var> be an algorithm that takes a <var>reason</var> and returns:
- <dl class=switch>
- <dt>If <var>cancel</var> is given
- <dd>the result of [=promise-calling=] <var>cancel</var>(<var>reason</var>).
- <dt>Otherwise
- <dd>[=a promise resolved with=] <code>undefined</code>.
- </dl>
+ <li><p>If <var>cancel</var> is absent, set it to an action that returns <code>undefined</code>.
 
- <li><p>Let <var>highWaterMark</var> be:
- <dl class=switch>
- <dt>If <var>strategy</var> is given and <var>strategy</var>.<a spec=streams for="queuing
- strategy">highWaterMark</a> exists
- <dd><var>strategy</var>.<a spec=streams for="queuing strategy">highWaterMark</a>.
- <dt>Otherwise
- <dd><code>1</code>.
- </dl>
+ <li><p>Let <var>cancelAlgorithm</var> be an algorithm that takes a <var>reason</var> and returns
+ the result of [=promise-calling=] <var>cancel</var>(<var>reason</var>).
 
- <li><p>Let <var>sizeAlg</var> be:
- <dl class=switch>
- <dt>If <var>strategy</var> is given and <var>strategy</var>.<a idl spec=streams for="queuing
- strategy" lt="size()">size</a> exists
- <dd><var>strategy</var>.size.
- <dt>Otherwise
- <dd>an algorithm that returns <code>1</code>.
- </dl>
+ <li><p>If <var>highWaterMark</var> is absent, set it to <code>1</code>.
 
-  <li><p>Return [$CreateReadableStream$](<var>startAlg</var>, <var>pullAlg</var>,
- <var>cancelAlg</var>, <var>highWaterMark</var>, <var>sizeAlg</var>).
+ <li><p>If <var>sizeAlgorithm</var> is absent, set it to an algorithm that returns <code>1</code>.
+
+  <li><p>Return [$CreateReadableStream$](<var>startAlgorithm</var>, <var>pullAlgorithm</var>,
+ <var>cancelAlgorithm</var>, <var>highWaterMark</var>, <var>sizeAlgorithm</var>).
 </ol>
 
 <p>To
@@ -4151,10 +4135,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
   </ol>
 
  <li>
-  <p>Let <var>strategy</var> be an object. The user agent may choose any object.
+  <p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
-  <p class="note no-backref"><var>strategy</var> is used to control the queuing strategy of
-  <var>stream</var> constructed below.
+ <li>
+  <p>Let <var>sizeAlgorithm</var> be an algorithm that accepts a <a>chunk</a> object and returns a
+  non-negative, non-NaN, non-infinite number, chosen by the user agent.
 
  <li><p>Let <var>pull</var> be an action that <a lt=resumed for=fetch>resumes</a> the ongoing fetch
  if it is <a lt=suspend for=fetch>suspended</a>.
@@ -4165,7 +4150,7 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
  <li>
   <p>Let <var>stream</var> be the result of
   <a lt="construct a ReadableStream object" for=ReadableStream>constructing</a> a
-  {{ReadableStream}} object with <var>strategy</var>,
+  {{ReadableStream}} object with <var>highWaterMark</var>, <var>sizeAlgorithm</var>,
   <var>pull</var> and <var>cancel</var>.
   <p class="note no-backref">This construction operation will not throw an exception.
 
