@@ -3043,9 +3043,8 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <a>HTTP fetch</a> using <var>request</var> with <i>CORS flag</i>
      and <i>CORS-preflight flag</i> set.
 
-     <li><p>If <var>corsWithPreflightResponse</var> is a
-     <a>network error</a>, then
-     <a for=cache>clear cache entries</a> using <var>request</var>.
+     <li><p>If <var>corsWithPreflightResponse</var> is a <a>network error</a>, then
+     <a>clear cache entries</a> using <var>request</var>.
 
      <li><p>Return <var>corsWithPreflightResponse</var>.
     </ol>
@@ -3432,16 +3431,15 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
    <li>
     <p>If the <i>CORS-preflight flag</i> is set and one of these conditions is true:
 
-    <ul>
-     <li>There is no <a for=cache>method cache match</a> for
-     <var>request</var>'s <a for=request>method</a> using <var>request</var>,
-     and either <var>request</var>'s <a for=request>method</a> is a not a
-     <a>CORS-safelisted method</a> or <var>request</var>'s
+    <ul class=brief>
+     <li><p>There is no <a>method cache entry match</a> for <var>request</var>'s
+     <a for=request>method</a> using <var>request</var>, and either <var>request</var>'s
+     <a for=request>method</a> is a not a <a>CORS-safelisted method</a> or <var>request</var>'s
      <a>use-CORS-preflight flag</a> is set.
 
-     <li>There is at least one <a for=list>item</a> in the <a>unsafe-CORS request-header names</a>
+     <li>There is at least one <a for=list>item</a> in the <a>CORS-unsafe request-header names</a>
      with <var>request</var>'s <a for=request>header list</a> for which there is no
-     <a for=cache>header-name cache match</a> using <var>request</var>.
+     <a>header-name cache entry match</a> using <var>request</var>.
     </ul>
 
     <p>Then:
@@ -4504,31 +4502,26 @@ run these steps:
    <li><p>If <var>max-age</var> is failure or null, then set <var>max-age</var> to zero.
 
    <li><p>If <var>max-age</var> is greater than an imposed limit on
-   <a for=cache>max-age</a>, then set <var>max-age</var> to the imposed
-   limit.
+   <a for="cache entry">max-age</a>, then set <var>max-age</var> to the imposed limit.
 
    <li><p>If the user agent does not provide for a <a lt="CORS-preflight cache">cache</a>, then
    return <var>response</var>.
 
-   <li><p>For each <var>method</var> in <var>methods</var> for which there is
-   a <a for=cache>method cache match</a> using
-   <var>request</var>, set matching entry's
-   <a for=cache>max-age</a> to <var>max-age</var>.
+   <li><p>For each <var>method</var> in <var>methods</var> for which there is a
+   <a>method cache entry match</a> using <var>request</var>, set matching entry's
+   <a for="cache entry">max-age</a> to <var>max-age</var>.
 
-   <li><p>For each <var>method</var> in <var>methods</var> for which there is <em>no</em>
-   <a for=cache>method cache match</a> using <var>request</var>,
-   <a for=cache>create a new entry</a> with <var>request</var>,
-   <var>max-age</var>, <var>method</var>, and null.
+   <li><p>For each <var>method</var> in <var>methods</var> for which there is no
+   <a>method cache entry match</a> using <var>request</var>, <a>create a new cache entry</a> with
+   <var>request</var>, <var>max-age</var>, <var>method</var>, and null.
 
-   <li><p>For each <var>headerName</var> in <var>headerNames</var> for which
-   there is a <a for=cache>header-name cache match</a> using
-   <var>request</var>, set matching entry's
-   <a for=cache>max-age</a> to <var>max-age</var>.
+   <li><p>For each <var>headerName</var> in <var>headerNames</var> for which there is a
+   <a>header-name cache entry match</a> using <var>request</var>, set matching entry's
+   <a for="cache entry">max-age</a> to <var>max-age</var>.
 
-   <li><p>For each <var>headerName</var> in <var>headerNames</var> for which there is <em>no</em>
-   <a for=cache>header-name cache match</a> using <var>request</var>,
-   <a for=cache>create a new entry</a> with <var>request</var>,
-   <var>max-age</var>, null, and <var>headerName</var>.
+   <li><p>For each <var>headerName</var> in <var>headerNames</var> for which there is no
+   <a>header-name cache entry match</a> using <var>request</var>, <a>create a new cache entry</a>
+   with <var>request</var>, <var>max-age</var>, null, and <var>headerName</var>.
 
    <li><p>Return <var>response</var>.
   </ol>
@@ -4538,84 +4531,93 @@ run these steps:
 
 <h3 id=cors-preflight-cache>CORS-preflight cache</h3>
 
-<p>A <dfn id=concept-cache>CORS-preflight cache</dfn> consists of a collection of
-entries where each entry has these fields:
+<p>A user agent has an associated <a>CORS-preflight cache</a>. A
+<dfn id=concept-cache>CORS-preflight cache</dfn> is a <a for=/>list</a> of <a>cache entries</a>.
+
+<p>A <dfn>cache entry</dfn> consists of:
 
 <ul class=brief>
- <li><dfn id=concept-cache-origin for=cache>serialized origin</dfn> (a <a for=/>byte sequence</a>)
- <li><dfn id=concept-cache-url for=cache>url</dfn> (a <a for=/>URL</a>)
- <li><dfn id=concept-cache-max-age for=cache>max-age</dfn> (a number of seconds)
- <li><dfn id=concept-cache-credentials for=cache>credentials</dfn> (a boolean)
- <li><dfn id=concept-cache-method for=cache>method</dfn> (null, `<code>*</code>`, or a
+ <li><dfn id=concept-cache-origin for="cache entry">serialized origin</dfn> (a
+ <a for=/>byte sequence</a>)
+ <li><dfn id=concept-cache-url for="cache entry">url</dfn> (a <a for=/>URL</a>)
+ <li><dfn id=concept-cache-max-age for="cache entry">max-age</dfn> (a number of seconds)
+ <li><dfn id=concept-cache-credentials for="cache entry">credentials</dfn> (a boolean)
+ <li><dfn id=concept-cache-method for="cache entry">method</dfn> (null, `<code>*</code>`, or a
  <a for=/>method</a>)
- <li><dfn id=concept-cache-header-name for=cache>header name</dfn> (null, `<code>*</code>`, or a
- <a for=/>header</a> <a for=header>name</a>)
+ <li><dfn id=concept-cache-header-name for="cache entry">header name</dfn> (null, `<code>*</code>`,
+ or a <a for=/>header</a> <a for=header>name</a>)
 </ul>
 
-<p>Entries must be removed after the seconds specified in the
-<a for=cache>max-age</a> field have passed since storing the entry.
-Entries may be removed before that moment arrives.
+<p><a>Cache entries</a> must be removed after the seconds specified in their
+<a for="cache entry">max-age</a> field have passed since storing the entry. <a>Cache entries</a> may
+be removed before that moment arrives.
 
-<p>To <dfn id=concept-cache-create-entry for=cache>create a new entry</dfn> in the
-<a>CORS-preflight cache</a>, given <var>request</var>, <var>max-age</var>,
-<var>method</var>, and <var>headerName</var>, do so as follows:
+<p>To <dfn id=concept-cache-create-entry>create a new cache entry</dfn>, given <var>request</var>,
+<var>max-age</var>, <var>method</var>, and <var>headerName</var>, run these steps:
 
-<dl>
- <dt><a for=cache>serialized origin</a>
- <dd>The result of <a>serializing a request origin</a> with <var>request</var>
+<ol>
+ <li>
+  <p>Let <var>entry</var> be a <a>cache entry</a>, initialized as follows:
 
- <dt><a for=cache>url</a>
- <dd><var>request</var>'s <a for=request>current url</a>
+  <dl>
+   <dt><a for="cache entry">serialized origin</a>
+   <dd><p>The result of <a>serializing a request origin</a> with <var>request</var>
 
- <dt><a for=cache>max-age</a>
- <dd><var>max-age</var>
+   <dt><a for="cache entry">url</a>
+   <dd><p><var>request</var>'s <a for=request>current url</a>
 
- <dt><a for=cache>credentials</a>
- <dd>True if <var>request</var>'s
- <a for=request>credentials mode</a> is
- "<code>include</code>", and false otherwise
+   <dt><a for="cache entry">max-age</a>
+   <dd><p><var>max-age</var>
 
- <dt><a for=cache>method</a>
- <dd><var>method</var>
+   <dt><a for="cache entry">credentials</a>
+   <dd><p>True if <var>request</var>'s <a for=request>credentials mode</a> is
+   "<code>include</code>", and false otherwise
 
- <dt><a for=cache>header name</a>
- <dd><var>headerName</var>
-</dl>
+   <dt><a for="cache entry">method</a>
+   <dd><p><var>method</var>
 
-<p>To <dfn id=concept-cache-clear for=cache>clear cache entries</dfn>, given a <var>request</var>,
-remove any entries in the <a>CORS-preflight cache</a> whose <a for=cache>serialized origin</a> is
-the result of <a>serializing a request origin</a> with <var>request</var> and whose
-<a for=cache>url</a> is <var>request</var>'s <a for=request>current url</a>.
+   <dt><a for="cache entry">header name</a>
+   <dd><p><var>headerName</var>
+  </dl>
 
-<p>There is a <dfn id=concept-cache-match for=cache>cache match</dfn> for <var>request</var> if
-<a for=cache>serialized origin</a> is the result of <a>serializing a request origin</a> with
-<var>request</var>, <a for=cache>url</a> is <var>request</var>'s <a for=request>current url</a>, and
-one of
+ <li><p><a for=list>Append</a> <var>entry</var> to the user agent's <a>CORS-preflight cache</a>.
+</ol>
+
+<p>To <dfn id=concept-cache-clear>clear cache entries</dfn>, given a <var>request</var>,
+<a for=list>remove</a> any <a>cache entries</a> in the user agent's <a>CORS-preflight cache</a>
+whose <a for="cache entry">serialized origin</a> is the result of
+<a>serializing a request origin</a> with <var>request</var> and whose <a for="cache entry">url</a>
+is <var>request</var>'s <a for=request>current url</a>.
+
+<p>There is a <dfn id=concept-cache-match>cache entry match</dfn> for a <a>cache entry</a>
+<var>entry</var> with <var>request</var> if <var>entry</var>'s
+<a for="cache entry">serialized origin</a> is the result of <a>serializing a request origin</a> with
+<var>request</var>, <var>entry</var>'s <a for="cache entry">url</a> is <var>request</var>'s
+<a for=request>current url</a>, and one of
 
 <ul class=brief>
- <li><a for=cache>credentials</a> is true
- <li><a for=cache>credentials</a> is false and <var>request</var>'s
- <a for=request>credentials mode</a> is <em>not</em>
- "<code>include</code>".
+ <li><var>entry</var>'s <a for="cache entry">credentials</a> is true
+ <li><var>entry</var>'s <a for="cache entry">credentials</a> is false and <var>request</var>'s
+ <a for=request>credentials mode</a> is not "<code>include</code>".
 </ul>
 
 <p>is true.
 
-<p>There is a <dfn id=concept-cache-match-method for=cache>method cache match</dfn> for
-<var>method</var> using <var>request</var> when there is an entry in
-<a>CORS-preflight cache</a> for which there is a
-<a for=cache>cache match</a> for <var>request</var> and its
-<a for=cache>method</a> is <var>method</var> or `<code>*</code>`.
+<p>There is a <dfn id=concept-cache-match-method>method cache entry match</dfn> for
+<var>method</var> using <var>request</var> when there is a <a>cache entry</a> in the user agent's
+<a>CORS-preflight cache</a> for which there is a <a>cache entry match</a> with <var>request</var>
+and its <a for="cache entry">method</a> is <var>method</var> or `<code>*</code>`.
 
-<p>There is a <dfn id=concept-cache-match-header for=cache>header-name cache match</dfn> for
-<var>headerName</var> using <var>request</var> when there is an entry in
-<a>CORS-preflight cache</a> for which there is a
-<a for=cache>cache match</a> for <var>request</var> and one of
+<p>There is a <dfn id=concept-cache-match-header>header-name cache entry match</dfn> for
+<var>headerName</var> using <var>request</var> when there is a <a>cache entry</a> in the user
+agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a> with
+<var>request</var> and one of
 
 <ul class=brief>
- <li><a for=cache>header name</a> is a <a>byte-case-insensitive</a> match for <var>headerName</var>
- <li><a for=cache>header name</a> is `<code>*</code>` and
- <var>headerName</var> is <em>not</em> a <a>CORS non-wildcard request-header name</a>
+ <li>its <a for="cache entry">header name</a> is a <a>byte-case-insensitive</a> match for
+ <var>headerName</var>
+ <li>its <a for="cache entry">header name</a> is `<code>*</code>` and <var>headerName</var> is not
+ a <a>CORS non-wildcard request-header name</a>
 </ul>
 
 <p>is true.
