@@ -3585,11 +3585,11 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
 
  <li>
   <p>If <var>request</var>'s <a for=request>body</a> is non-null, then set <var>request</var>'s
-  <a for=request>body</a> to the first part of <a lt=extract for=BodyInit>extracting</a>
+  <a for=request>body</a> to the first part of <a for=BodyInit>safely extracting</a>
   <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>.
 
   <p class="note no-backref"><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s
-  nullity has already been checked. The <a lt=extract for=BodyInit>extracting</a> operation cannot
+  nullity has already been checked. The <a for=BodyInit>safely extracting</a> operation cannot
   throw as it was called for the same <a for=body>source</a> before.
 
  <li><p>Append <var>actualResponse</var>'s <a for=response>location URL</a> to <var>request</var>'s
@@ -4010,10 +4010,10 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
      <li>
       <p>Set <var>request</var>'s <a for=request>body</a> to the first part of
-      <a lt=extract for=BodyInit>extracting</a> <var>request</var>'s <a for=request>body</a>'s
+      <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>'s
       <a for=body>source</a>.
 
-      <p class="note no-backref">The <a lt=extract for=BodyInit>extracting</a> operation cannot
+      <p class="note no-backref">The <a for=BodyInit>safely extracting</a> operation cannot
       throw as it was called for the same <a for=body>source</a> before.
     </ol>
 
@@ -4953,6 +4953,21 @@ method, when invoked, must run these steps:
 <pre class=idl>
 typedef (Blob or BufferSource or FormData or URLSearchParams or ReadableStream or USVString) BodyInit;</pre>
 
+<p>To <dfn for=BodyInit export>safely extract</dfn> a <a for=/>body</a> and a
+`<code>Content-Type</code>` <a for=header>value</a> from <var>object</var>, run these steps:
+
+<ol>
+ <li>
+  <p>If <var>object</var> is a {{ReadableStream}} object, then:
+
+  <ol>
+   <li><p>Assert: <var>object</var> is neither <a for=ReadableStream>disturbed</a> nor
+   <a for=ReadableStream>locked</a>.
+  </ol>
+
+ <li><p>Return the results of <a for=BodyInit>extracting</a> <var>object</var>.
+</ol>
+
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
 `<code>Content-Type</code>` <a for=header>value</a> from
 <var>object</var>, with an optional <var>keepalive flag</var>, run these steps:
@@ -5027,15 +5042,18 @@ typedef (Blob or BufferSource or FormData or URLSearchParams or ReadableStream o
     <p>Set <var>source</var> to <var>object</var>.
 
    <dt>{{ReadableStream}}
-   <dd><p>Set <var>stream</var> to <var>object</var>.
+   <dd>
+    <p>If the <var>keepalive flag</var> is set, then <a>throw</a> a {{TypeError}}.
+
+    <p>If <var>object</var> is <a for=ReadableStream>disturbed</a> or
+    <a for=ReadableStream>locked</a>, then <a>throw</a> a {{TypeError}}.
+
+    <p>Set <var>stream</var> to <var>object</var>.
   </dl>
 
- <li><p>If <var>keepalive flag</var> is set and <var>object</var>'s type is a {{ReadableStream}}
- object, then <a>throw</a> a {{TypeError}}.
-
  <li>
-  <p>If <var>action</var> is non-null, run <var>action</var> <a>in
-  parallel</a>:
+  <p>If <var>action</var> is non-null, run <var>action</var> <a>in parallel</a>:
+
   <ol>
    <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes and
    <a for=ReadableStream>enqueue</a> a <code>Uint8Array</code> object
@@ -5723,11 +5741,11 @@ constructor must run these steps:
    <li><p>Let <var>Content-Type</var> be null.
 
    <li><p>If <var>init</var>["{{RequestInit/keepalive}}"] <a for=map>exists</a> and is true, then
-   set <var>body</var> and <var>Content-Type</var> to the result of <a lt=extract>extracting</a>
+   set <var>body</var> and <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a>
    <var>init</var>["{{RequestInit/body}}"], with the <var>keepalive flag</var> set.
 
    <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
-   <a lt=extract for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"].
+   <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"].
 
    <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a for=Request>headers</a>'s
    <a for=Headers>header list</a> <a for="header list">does not contain</a>
@@ -5746,9 +5764,6 @@ constructor must run these steps:
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
- <li><p>If <var>inputBody</var> is <var>body</var> and <var>input</var> is <a for=Body>disturbed</a>
- or <a for=Body>locked</a>, then <a>throw</a> a {{TypeError}}.
-
  <!-- Any steps after this must not throw. -->
 
  <li>
@@ -5762,7 +5777,7 @@ constructor must run these steps:
     <p class=XXX>This will be specified more precisely once
     <a href=https://streams.spec.whatwg.org/#ts-model>transform stream</a> and
     <a href=https://streams.spec.whatwg.org/#pipe-chains>piping</a> are precisely defined.
-    See <a href=https://github.com/whatwg/fetch/issues/463>the issue</a>.
+    See <a href=https://github.com/whatwg/fetch/issues/463>issue #463</a>.
 
     <p class="note no-backref">This makes <var>inputBody</var>'s <a for=body>stream</a>
     <a for=ReadableStream>locked</a> and <a for=ReadableStream>disturbed</a> immediately.
@@ -5962,9 +5977,8 @@ constructor, when invoked, must run these steps:
 
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
-   <a for=response>body</a> and <var>Content-Type</var> to the result of
-   <a lt=extract for=BodyInit>extracting</a> <var>body</var>.
+   <li><p>Set <var>r</var>'s <a for=Response>response</a>'s <a for=response>body</a> and
+   <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a> <var>body</var>.
 
    <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a for=Response>response</a>'s
    <a for=response>header list</a> <a for="header list">does not contain</a>
