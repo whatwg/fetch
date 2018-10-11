@@ -335,22 +335,6 @@ specialized multimap. An ordered list of key-value pairs with potentially duplic
  <var>name</var> and <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
 
-<p>To <dfn export for="header list" id=concept-header-list-combine>combine</dfn> a
-<a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair in a
-<a for=/>header list</a> (<var>list</var>), run these steps:
-
-<ol>
- <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
- <a for=header>value</a> of the first such <a for=/>header</a> to its <a for=header>value</a>,
- followed by 0x2C 0x20, followed by <var>value</var>.
-
- <li><p>Otherwise, <a for=list>append</a> a new <a for=/>header</a> whose <a for=header>name</a> is
- <var>name</var> and <a for=header>value</a> is <var>value</var> to <var>list</var>.
-</ol>
-
-<p class="note no-backref"><a for="header list">Combine</a> is used by {{XMLHttpRequest}} and the
-<a lt="establish a WebSocket connection">WebSocket protocol handshake</a>.
-
 <p>To
 <dfn export for="header list" id=concept-header-list-sort-and-combine>sort and combine</dfn>
 a <a for=/>header list</a> (<var>list</var>), run these steps:
@@ -376,6 +360,23 @@ a <a for=/>header list</a> (<var>list</var>), run these steps:
 
  <li><p>Return <var>headers</var>.
 </ol>
+
+<p>To <dfn export for="header list" id=concept-header-list-combine>naïvely combine</dfn> a
+<a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair in a
+<a for=/>header list</a> (<var>list</var>), run these steps:
+
+<ol>
+ <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
+ <a for=header>value</a> of the first such <a for=/>header</a> to its <a for=header>value</a>,
+ followed by 0x2C 0x20, followed by <var>value</var>.
+
+ <li><p>Otherwise, <a for=list>append</a> a new <a for=/>header</a> whose <a for=header>name</a> is
+ <var>name</var> and <a for=header>value</a> is <var>value</var> to <var>list</var>.
+</ol>
+
+<p class="note no-backref"><a for="header list">Naïvely combine</a> is used by {{XMLHttpRequest}}
+and the <a lt="establish a WebSocket connection">WebSocket protocol handshake</a>. It is naïve as it
+even combines values that are empty or solely contain whitespace.
 
 <hr>
 
@@ -403,9 +404,20 @@ production as
 
 <p>A <dfn export for=header id=concept-header-value-combined>combined value</dfn>, given a
 <a for=header>name</a> (<var>name</var>) and <a for=/>header list</a> (<var>list</var>), is the
-<a lt=value for=header>values</a> of all <a for=/>headers</a> in <var>list</var> whose
-<a for=header>name</a> is a <a>byte-case-insensitive</a> match for <var>name</var>, separated from
-each other by 0x2C 0x20, in order.
+result of running these steps:
+
+<ol>
+ <li><p>Assert: <var>list</var> <a for="header list">contains</a> <var>name</var>.
+
+ <li><p>Let <var>values</var> be the <a for=header>values</a> of all <a for=/>headers</a> in
+ <var>list</var> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
+ <var>name</var>, excluding any <a for=header>values</a> whose <a for="byte sequence">length</a> is
+ 0 or that solely contain <a>HTTP whitespace bytes</a>.
+
+ <li><p>If <var>values</var> <a for=list>is empty</a>, then return the empty <a>byte sequence</a>.
+
+ <li><p>Return <var>values</var>, separated from each other by 0x2C 0x20, in order.
+</ol>
 
 <hr>
 
@@ -4416,8 +4428,7 @@ run these steps:
    <var>preflight</var>'s <a for=request>header list</a>.
   </ol>
 
-  <p class=note>This intentionally does not use <a for="header list">combine</a>, as 0x20 following
-  0x2C is not the way this was implemented, for better or worse.
+  <p class=note>This intentionally does not use <a for="header list">naïvely combine</a>.
 
  <li><p>Let <var>response</var> be the result of performing an
  <a>HTTP-network-or-cache fetch</a> using <var>preflight</var> with the <i>CORS flag</i> set.
@@ -6401,9 +6412,9 @@ therefore not shareable, a WebSocket connection is very close to identical to an
  `<code>Sec-WebSocket-Version</code>`/`<code>13</code>` to
  <var>request</var>'s <a for=request>header list</a>.
 
- <li><p>For each <var>protocol</var> in <var>protocols</var>, <a for="header list">combine</a>
- `<code>Sec-WebSocket-Protocol</code>`/<var>protocol</var> in <var>request</var>'s
- <a for=request>header list</a>.
+ <li><p>For each <var>protocol</var> in <var>protocols</var>,
+ <a for="header list">naïvely combine</a> `<code>Sec-WebSocket-Protocol</code>`/<var>protocol</var>
+ in <var>request</var>'s <a for=request>header list</a>.
 
  <li>
   <p>Let <var>permessageDeflate</var> be a user-agent defined
