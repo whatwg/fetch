@@ -300,6 +300,16 @@ specialized multimap. An ordered list of key-value pairs with potentially duplic
 (<var>name</var>) if <var>list</var> <a for=list>contains</a> a <a for=/>header</a> whose
 <a for=header>name</a> is a <a>byte-case-insensitive</a> match for <var>name</var>.
 
+<p>To <dfn export for="header list" id=concept-header-list-get>get</dfn> a <a for=header>name</a>
+<var>name</var> from a <a for=/>header list</a> <var>list</var>, run these steps:
+
+<ol>
+ <li><p>If <var>list</var> <a for="header list">does not contain</a> <var>name</var>, then return
+ null.
+
+ <li><p>Return the <a for="header">combined value</a> with <var>name</var> and <var>list</var>.
+</ol>
+
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair to a
 <a for=/>header list</a> (<var>list</var>), run these steps:
@@ -368,7 +378,7 @@ a <a for=/>header list</a> (<var>list</var>), run these steps:
   <p><a for=list>For each</a> <var>name</var> in <var>names</var>:
 
   <ol>
-   <li><p>Let <var>value</var> be the <a for=header>combined value</a> given <var>name</var> and
+   <li><p>Let <var>value</var> be the <a for=header>combined value</a> with <var>name</var> and
    <var>list</var>.
 
    <li><p><a for=list>Append</a> <var>name</var>-<var>value</var> to <var>headers</var>.
@@ -2498,7 +2508,32 @@ response <a for=/>header</a> can be used to require checking of a <a for=/>respo
 `<code>Content-Type</code>` <a for=/>header</a> against the <a for=request>destination</a> of a
 <a for=/>request</a>.
 
-<p>Its <a for=header>value</a> <a>ABNF</a>:
+<p>To <dfn>determine nosniff</dfn>, given a <a for=/>header list</a> <var>list</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var>value</var> be the result of <a for="header list">getting</a>
+ `<a http-header><code>X-Content-Type-Options</code></a>` from <var>list</var>.
+
+ <li><p>If <var>value</var> is null, then return false.
+
+ <li><p>Let <var>stringValue</var> be the <a>isomorphic encode</a> of <var>value</var>.
+
+ <li>
+  <p>Let <var>tokens</var> be the result of
+  <a lt="split on commas">Spliting <var>stringValue</var> on commas</a>.
+
+  <p class="note">This intentionally strips U+000C FORM FEED, despite 0x0C not being being a
+  <a>HTTP whitespace byte</a>.
+
+ <li><p>If <var>tokens</var>[0] is an <a>ASCII case-insensitive</a> match for
+ "<code>nosniff</code>", then return true.
+
+ <li><p>Return false.
+</ol>
+
+<p>Web developers and conformance checkers must use the following <a for=header>value</a>
+<a>ABNF</a> for `<a http-header><code>X-Content-Type-Options</code></a>`:
 
 <pre>
 X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
@@ -2510,16 +2545,8 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
 <p>Run these steps:
 
 <ol>
- <li><p>If <var>response</var>'s <a for=response>header list</a>
- <a for="header list">does not contain</a> `<a http-header><code>X-Content-Type-Options</code></a>`,
- then return <b>allowed</b>.
-
- <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
- <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
- match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
- <a for=response>header list</a>.
-
- <li><p>If <var>nosniff</var> is failure, then return <b>allowed</b>.
+ <li><p>If <a>determine nosniff</a> with <var>response</var>'s <a for=response>header list</a> is
+ false, then return <b>allowed</b>.
 
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
@@ -2578,14 +2605,10 @@ run these steps:</p>
  <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a>, then return
  <b>blocked</b>.
 
- <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
- <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
- match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
- <a for=response>header list</a>.
-
  <li>
-  <p>If <var>nosniff</var> is not failure and <var>mimeType</var> (ignoring parameters) is a
-  <a>CORB-protected MIME type</a> or <code>text/plain</code>, then return <b>blocked</b>.
+  <p>If <a>determine nosniff</a> with <var>response</var>'s <a for=response>header list</a> is true
+  and <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a> or
+  <code>text/plain</code>, then return <b>blocked</b>.
 
   <p class="note no-backref">CORB only protects <code>text/plain</code> responses with a
   `<code>X-Content-Type-Options: nosniff</code>` header. Unfortunately, protecting such responses
@@ -4893,7 +4916,7 @@ invoked, must run these steps:
  <li><p>If the <a>context object</a>'s <a for=Headers>header list</a>
  <a for="header list">does not contain</a> <var>name</var>, then return null.
 
- <li><p>Return the <a for=header>combined value</a> given <var>name</var> and the
+ <li><p>Return the <a for=header>combined value</a> with <var>name</var> and the
  <a>context object</a>'s <a for=Headers>header list</a>.
 </ol>
 
