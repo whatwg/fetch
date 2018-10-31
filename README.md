@@ -15,7 +15,7 @@ started, leave a comment on the issue or ask around [on IRC](https://whatwg.org/
 
 ## Pull requests
 
-In short, change `fetch.bs` and submit your patch, with a
+In short, change `fetch.bs` and submit your patch with a
 [good commit message](https://github.com/whatwg/meta/blob/master/COMMITTING.md). Consider
 reading through the [WHATWG FAQ](https://whatwg.org/faq) if you are new here.
 
