@@ -236,7 +236,14 @@ implementations can store the <a for=url>fragment</a> nonetheless.
 borrows a number of concepts from HTTP and applies these to resources obtained via other
 means (e.g., <code>data</code> URLs).
 
-<p>The <dfn export>HTTP whitespace bytes</dfn> are 0x09, 0x0A, 0x0D, and 0x20.
+<p>An <dfn export>HTTP tab or space</dfn> is U+0009 TAB or U+0020 SPACE.
+
+<p>An <dfn export>HTTP newline byte</dfn> is 0x0A (LF) or 0x0D (CR).
+
+<p>An <dfn export>HTTP tab or space byte</dfn> is 0x09 (HT) or 0x20 (SP).
+
+<p>An <dfn export>HTTP whitespace byte</dfn> is an <a>HTTP newline byte</a> or
+<a>HTTP tab or space byte</a>.
 
 <p>An <dfn export id=concept-https-state-value>HTTPS state value</dfn> is "<code>none</code>",
 "<code>deprecated</code>", or "<code>modern</code>".
@@ -299,6 +306,16 @@ specialized multimap. An ordered list of key-value pairs with potentially duplic
 <dfn export for="header list" lt="contains|does not contain">contains</dfn> a <a for=header>name</a>
 (<var>name</var>) if <var>list</var> <a for=list>contains</a> a <a for=/>header</a> whose
 <a for=header>name</a> is a <a>byte-case-insensitive</a> match for <var>name</var>.
+
+<p>To <dfn export for="header list" id=concept-header-list-get>get</dfn> a <a for=header>name</a>
+<var>name</var> from a <a for=/>header list</a> <var>list</var>, run these steps:
+
+<ol>
+ <li><p>If <var>list</var> <a for="header list">does not contain</a> <var>name</var>, then return
+ null.
+
+ <li><p>Return the <a for="header">combined value</a> with <var>name</var> and <var>list</var>.
+</ol>
 
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a> (<var>name</var>/<var>value</var>) pair to a
@@ -368,7 +385,7 @@ a <a for=/>header list</a> (<var>list</var>), run these steps:
   <p><a for=list>For each</a> <var>name</var> in <var>names</var>:
 
   <ol>
-   <li><p>Let <var>value</var> be the <a for=header>combined value</a> given <var>name</var> and
+   <li><p>Let <var>value</var> be the <a for=header>combined value</a> with <var>name</var> and
    <var>list</var>.
 
    <li><p><a for=list>Append</a> <var>name</var>-<var>value</var> to <var>headers</var>.
@@ -389,8 +406,8 @@ token production.
 <p>A <a for=header>value</a> is a <a>byte sequence</a> that matches the following conditions:
 
 <ul class=brief>
- <li><p>Has no leading or trailing <a>HTTP whitespace bytes</a>.
- <li><p>Contains no 0x00, 0x0A or 0x0D bytes.
+ <li><p>Has no leading or trailing <a>HTTP tab or space bytes</a>.
+ <li><p>Contains no 0x00 (NUL) or <a>HTTP newline bytes</a>.
 </ul>
 
 <p class=note>The definition of <a for=header>value</a> is not defined in terms of an HTTP token
@@ -2495,7 +2512,31 @@ response <a for=/>header</a> can be used to require checking of a <a for=/>respo
 `<code>Content-Type</code>` <a for=/>header</a> against the <a for=request>destination</a> of a
 <a for=/>request</a>.
 
-<p>Its <a for=header>value</a> <a>ABNF</a>:
+<p>To <dfn>determine nosniff</dfn>, given a <a for=/>header list</a> <var>list</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var>value</var> be the result of <a for="header list">getting</a>
+ `<a http-header><code>X-Content-Type-Options</code></a>` from <var>list</var>.
+
+ <li><p>If <var>value</var> is null, then return false.
+
+ <li><p>Let <var>stringValue</var> be the <a>isomorphic decode</a> of <var>value</var>.
+
+ <li><p>Let <var>tokens</var> be the result of
+ <a lt="strictly split a string">strictly splitting</a> <var>stringValue</var> on U+002C (,).
+
+ <li><p>Let <var>firstToken</var> be the result of removing all <a>HTTP tab or space</a> from the
+ start and end of <var>tokens</var>[0].
+
+ <li><p>If <var>firstToken</var> is an <a>ASCII case-insensitive</a> match for
+ "<code>nosniff</code>", then return true.
+
+ <li><p>Return false.
+</ol>
+
+<p>Web developers and conformance checkers must use the following <a for=header>value</a>
+<a>ABNF</a> for `<a http-header><code>X-Content-Type-Options</code></a>`:
 
 <pre>
 X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
@@ -2507,16 +2548,8 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
 <p>Run these steps:
 
 <ol>
- <li><p>If <var>response</var>'s <a for=response>header list</a>
- <a for="header list">does not contain</a> `<a http-header><code>X-Content-Type-Options</code></a>`,
- then return <b>allowed</b>.
-
- <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
- <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
- match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
- <a for=response>header list</a>.
-
- <li><p>If <var>nosniff</var> is failure, then return <b>allowed</b>.
+ <li><p>If <a>determine nosniff</a> with <var>response</var>'s <a for=response>header list</a> is
+ false, then return <b>allowed</b>.
 
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
@@ -2575,14 +2608,10 @@ run these steps:</p>
  <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a>, then return
  <b>blocked</b>.
 
- <li><p>Let <var>nosniff</var> be the result of <a>extracting header values</a> from the
- <em>first</em> <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a>
- match for `<a http-header><code>X-Content-Type-Options</code></a>` in <var>response</var>'s
- <a for=response>header list</a>.
-
  <li>
-  <p>If <var>nosniff</var> is not failure and <var>mimeType</var> (ignoring parameters) is a
-  <a>CORB-protected MIME type</a> or <code>text/plain</code>, then return <b>blocked</b>.
+  <p>If <a>determine nosniff</a> with <var>response</var>'s <a for=response>header list</a> is true
+  and <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a> or
+  <code>text/plain</code>, then return <b>blocked</b>.
 
   <p class="note no-backref">CORB only protects <code>text/plain</code> responses with a
   `<code>X-Content-Type-Options: nosniff</code>` header. Unfortunately, protecting such responses
@@ -4863,7 +4892,7 @@ invoked, must run these steps:
  <li><p>If the <a>context object</a>'s <a for=Headers>header list</a>
  <a for="header list">does not contain</a> <var>name</var>, then return null.
 
- <li><p>Return the <a for=header>combined value</a> given <var>name</var> and the
+ <li><p>Return the <a for=header>combined value</a> with <var>name</var> and the
  <a>context object</a>'s <a for=Headers>header list</a>.
 </ol>
 
@@ -6602,6 +6631,7 @@ Anssi Kostiainen,
 Arkadiusz Michalski,
 Arne Johannessen,
 Arthur Barstow,
+Asanka Herath,
 Axel Rauschmayer,
 Ben Kelly,
 Benjamin Gruenbaum,
