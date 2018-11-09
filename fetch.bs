@@ -90,6 +90,12 @@ url:https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:df
 }
 </pre>
 
+<pre class=link-defaults>
+spec:infra; type:dfn; text:string
+</pre>
+
+
+
 <h2 id=goals class="no-num short">Goals</h2>
 
 <p>To unify fetching across the web platform this specification supplants a number of algorithms and
@@ -323,6 +329,111 @@ specialized multimap. An ordered list of key-value pairs with potentially duplic
 
  <li><p>Return the <a for="header">combined value</a> with <var>name</var> and <var>list</var>.
 </ol>
+
+<p>To
+<dfn export for="header list" lt="get, decode, and split|getting, decoding, and splitting" id=concept-header-list-get-decode-split>get, decode, and split</dfn>
+a <a for=header>name</a> <var>name</var> from <a for=/>header list</a> <var>list</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var>initialValue</var> be the result of <a for="header list">getting</a>
+ <var>name</var> from <var>list</var>.
+
+ <li><p>If <var>initialValue</var> is null, then return null.
+
+ <li><p>Let <var>input</var> be the result of <a>isomorphic decoding</a> <var>initialValue</var>.
+
+ <li><p>Let <var>position</var> be a <a for=string>position variable</a> for <var>input</var>,
+ initially pointing at the start of <var>input</var>.
+
+ <li><p>Let <var>values</var> be a <a for=/>list</a> of <a for=/>strings</a>, initially empty.
+
+ <li><p>Let <var>value</var> be null.
+
+ <li>
+  <p>While <var>position</var> is not past the end of <var>input</var>:
+
+  <ol>
+   <li>
+    <p>Let <var>temporaryValue</var> be the result of <a>collecting a sequence of code points</a>
+    that are not U+0022 (") or U+002C (,) from <var>input</var>, given <var>position</var>.
+
+    <p class=note><var>temporaryValue</var> might be the empty string.
+
+   <li><p>If <var>value</var> is null, then set <var>value</var> to <var>temporaryValue</var>, and
+   append <var>temporaryValue</var> to <var>value</var> otherwise.
+
+   <li>
+    <p>If <var>position</var> is not past the end of <var>input</var>, then:
+
+    <ol>
+     <li>
+      <p>If the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
+      U+0022 ("), then:
+
+      <ol>
+       <li><p>Append U+0022 (") to <var>value</var>.
+
+       <li><p>Append to <var>value</var> the result of <a>collecting a sequence of code points</a>
+       that are not U+0022 (") from <var>input</var>, given <var>position</var>.
+
+       <li>
+        <p>If <var>position</var> is not past the end of <var>input</var>, then:
+
+        <ol>
+         <li><p>Assert: the <a for=/>code point</a> at <var>position</var> within <var>input</var>
+         is U+0022 (").
+
+         <li><p>Advance <var>position</var> by 1.
+
+         <li><p>Append U+0022 (") to <var>value</var>.
+
+         <li><p><a for=iteration>Continue</a>.
+        </ol>
+      </ol>
+
+     <li>
+      <p>Otherwise:
+
+      <ol>
+       <li><p>Assert: the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
+       U+002C (,).
+
+       <li><p>Advance <var>position</var> by 1.
+      </ol>
+    </ol>
+
+   <li><p>Remove all <a>HTTP tab or space</a> from the start and end of <var>value</var>.
+
+   <li><p><a for=list>Append</a> <var>value</var> to <var>values</var>.
+
+   <li><p>Set <var>value</var> to null.
+  </ol>
+
+ <li><p>Return <var>values</var>.
+</ol>
+
+<div class=example id=example-header-list-get-decode-split>
+ <p>This is how <a>get, decode, and split</a> functions in practice:
+
+ <table>
+  <tr>
+   <th>Input
+   <th>Output
+  <tr>
+   <td>`<code>nosniff,</code>`
+   <td>"<code>nosniff</code>" and the empty string
+  <tr>
+   <td>`<code>text/html;", x/x</code>`
+   <td>"<code>text/html;", x/x</code>"
+  <tr>
+   <td>`<code>x/x;test="hi",y/y</code>`
+   <td>"<code>x/x;test="hi"</code>" and "<code>y/y</code>"
+  <tr>
+   <td>`<code>x / x,,,1</code>`
+   <td>"<code>x / x</code>", the empty string, the empty string, and "<code>1</code>"
+ </table>
+</div>
 
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a> <var>name</var>/<var>value</var> pair to a
@@ -690,12 +801,48 @@ run these steps:
 from a <a for=/>header list</a> <var>headers</var>, run these steps:
 
 <ol>
- <li><p>Let <var>mimeType</var> be the result of <a>extracting header list values</a> given
- `<code>Content-Type</code>` and <var>headers</var>.
+ <li><p>Let <var>charset</var> be null.
 
- <li><p>If <var>mimeType</var> is null or failure, then return the empty byte sequence.
+ <li><p>Let <var>essence</var> be null.
 
- <li><p>Return <var>mimeType</var>, <a lt="byte-lowercase">byte-lowercased</a>.
+ <li><p>Let <var>mimeType</var> be null.
+
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a> `<code>Content-Type</code>` from
+ <var>headers</var>.
+
+ <li>
+  <p><a for=list>For each</a> <var>value</var> of <var>values</var>:
+
+  <ol>
+   <li><p>Set <var>mimeType</var> to the result of <a lt="parse a MIME type">parsing</a>
+   <var>value</var>.
+
+   <li>
+    <p>If <var>mimeType</var> is not failure and <var>mimeType</var>'s
+    <a for="MIME type">essence</a> is not "<code>*/*</code>" or <var>essence</var>, then:
+
+    <ol>
+     <li><p>Set <var>charset</var> to null.
+
+     <li><p>If <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>charset</code>"]
+     <a for=map>exists</a>, then set <var>charset</var> to <var>mimeType</var>'s
+     <a for="MIME type">parameters</a>["<code>charset</code>"].
+
+     <li><p>Set <var>essence</var> to <var>mimeType</var>'s <a for="MIME type">essence</a>.
+    </ol>
+
+   <li>
+    <p>Otherwise, if <var>mimeType</var>'s <a for="MIME type">essence</a> is <var>essence</var>:
+
+    <ol>
+     <li><p>If <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>charset</code>"] does
+     not <a for=map>exist</a> and <var>charset</var> is non-null, then set <var>mimeType</var>'s
+     <a for="MIME type">parameters</a>["<code>charset</code>"] to <var>charset</var>.
+    </ol>
+  </ol>
+
+ <li><p>Return <var>mimeType</var>.
 </ol>
 
 <hr>
@@ -2532,20 +2679,13 @@ response <a for=/>header</a> can be used to require checking of a <a for=/>respo
 steps:
 
 <ol>
- <li><p>Let <var>value</var> be the result of <a for="header list">getting</a>
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a>
  `<a http-header><code>X-Content-Type-Options</code></a>` from <var>list</var>.
 
- <li><p>If <var>value</var> is null, then return false.
+ <li><p>If <var>values</var> is null, then return false.
 
- <li><p>Let <var>stringValue</var> be the <a>isomorphic decode</a> of <var>value</var>.
-
- <li><p>Let <var>tokens</var> be the result of
- <a lt="strictly split a string">strictly splitting</a> <var>stringValue</var> on U+002C (,).
-
- <li><p>Let <var>firstToken</var> be the result of removing all <a>HTTP tab or space</a> from the
- start and end of <var>tokens</var>[0].
-
- <li><p>If <var>firstToken</var> is an <a>ASCII case-insensitive</a> match for
+ <li><p>If <var>values</var>[0] is an <a>ASCII case-insensitive</a> match for
  "<code>nosniff</code>", then return true.
 
  <li><p>Return false.
