@@ -438,18 +438,7 @@ each other by 0x2C 0x20, in order.
   <dl class=switch>
    <dt>`<code>accept</code>`
    <dd>
-    <p>If one of the following is true
-
-    <ul class=brief>
-     <li><p><var>value</var> contains a byte less than 0x20 that is not 0x09 HT
-     <li><p><var>value</var> contains 0x22 ("), 0x28 (left parenthesis), 0x29 (right parenthesis),
-     0x3A (:), 0x3C (&lt;), 0x3E (>), 0x3F (?), 0x40 (@), 0x5B ([), 0x5C (\), 0x5D (]), 0x7B ({),
-     0x7D (}), or 0x7F DEL
-    </ul>
-    <!-- Delimiters from https://tools.ietf.org/html/rfc7230#section-3.2.6 except for ,/;= and
-         including DEL -->
-
-    <p>then return false.
+    <p>If <var>value</var> contains a <a>CORS-unsafe request-header byte</a>, then return false.
 
    <dt>`<code>accept-language</code>`
    <dt>`<code>content-language</code>`
@@ -460,12 +449,20 @@ each other by 0x2C 0x20, in order.
    <!-- Maybe give Infra "byte-alphanumeric"? -->
 
    <dt>`<code>content-type</code>`
-   <dd><p>If <var>value</var>, <a lt="extract header values">once extracted</a>, does not have a
-   MIME type (ignoring parameters) that is <code>application/x-www-form-urlencoded</code>,
-   <code>multipart/form-data</code>, or <code>text/plain</code>, then return false.
-   <!-- XXX * needs better xref
-            * ignoring parameters has been the standard for a long time now
-            * interesting test: "Content-Type: text/plain;" -->
+   <dd>
+    <ol>
+     <li><p>If <var>value</var> contains a <a>CORS-unsafe request-header byte</a>, then return
+     false.
+
+     <li><p>Let <var>mimeType</var> be the result of <a lt="parse a MIME type">parsing</a>
+     <var>value</var>.
+
+     <li><p>If <var>mimeType</var> is falure, then return false.
+
+     <li><p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is not
+     "<code>application/x-www-form-urlencoded</code>", "<code>multipart/form-data</code>", or
+     "<code>text/plain</code>", then return false.
+    </ol>
 
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#downlink>Downlink</a></code>`
@@ -487,6 +484,18 @@ each other by 0x2C 0x20, in order.
 
 <p class="note">There are limited exceptions to the `<code>Content-Type</code>` header safelist, as
 documented in <a href=#cors-protocol-exceptions>CORS protocol exceptions</a>.
+
+<p>A <dfn>CORS-unsafe request-header byte</dfn> is a byte <var>byte</var> for which one of the
+following is true:
+
+<ul class=brief>
+ <li><p><var>byte</var> is less than 0x20 and is not 0x09 HT
+ <li><p><var>byte</var> is 0x22 ("), 0x28 (left parenthesis), 0x29 (right parenthesis), 0x3A (:),
+ 0x3C (&lt;), 0x3E (>), 0x3F (?), 0x40 (@), 0x5B ([), 0x5C (\), 0x5D (]), 0x7B ({), 0x7D (}), or
+ 0x7F DEL.
+ <!-- Delimiters from https://tools.ietf.org/html/rfc7230#section-3.2.6 except for ,/;= and
+      including DEL -->
+</ul>
 
 <p>The <dfn noexport>CORS-unsafe request-header names</dfn>, given a <a for=/>header list</a>
 <var>headers</var>, are determined as follows:
