@@ -584,6 +584,9 @@ each other by 0x2C 0x20, in order.
      "<code>text/plain</code>", then return false.
     </ol>
 
+    <p class=warning>This intentionally does not use <a>extract a MIME type</a> as it is rather
+    forgiving and servers are not expected to implement it.
+
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#downlink>Downlink</a></code>`
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#save-data>Save-Data</a></code>`
@@ -796,54 +799,6 @@ run these steps:
   </ol>
 
  <li><p>Return <var>values</var>.
-</ol>
-
-<p>To
-<dfn export for="header list" lt="extract a MIME type|extracting a MIME type" id=concept-header-extract-mime-type>extract a MIME type</dfn>
-from a <a for=/>header list</a> <var>headers</var>, run these steps:
-
-<ol>
- <li><p>Let <var>charset</var> be null.
-
- <li><p>Let <var>essence</var> be null.
-
- <li><p>Let <var>mimeType</var> be null.
-
- <li><p>Let <var>values</var> be the result of
- <a for="header list">getting, decoding, and splitting</a> `<code>Content-Type</code>` from
- <var>headers</var>.
-
- <li><p>If <var>values</var> is null, then return failure.
-
- <li>
-  <p><a for=list>For each</a> <var>value</var> of <var>values</var>:
-
-  <ol>
-   <li><p>Set <var>mimeType</var> to the result of <a lt="parse a MIME type">parsing</a>
-   <var>value</var>.
-
-   <li>
-    <p>If <var>mimeType</var> is not failure and <var>mimeType</var>'s
-    <a for="MIME type">essence</a> is not "<code>*/*</code>" or <var>essence</var>, then:
-
-    <ol>
-     <li><p>Set <var>charset</var> to null.
-
-     <li><p>If <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>charset</code>"]
-     <a for=map>exists</a>, then set <var>charset</var> to <var>mimeType</var>'s
-     <a for="MIME type">parameters</a>["<code>charset</code>"].
-
-     <li><p>Set <var>essence</var> to <var>mimeType</var>'s <a for="MIME type">essence</a>.
-    </ol>
-
-   <li><p>Otherwise, if <var>mimeType</var> is not failure, <var>mimeType</var>'s
-   <a for="MIME type">essence</a> is <var>essence</var>, <var>mimeType</var>'s
-   <a for="MIME type">parameters</a>["<code>charset</code>"] does not <a for=map>exist</a>, and
-   <var>charset</var> is non-null, set <var>mimeType</var>'s
-   <a for="MIME type">parameters</a>["<code>charset</code>"] to <var>charset</var>.
-  </ol>
-
- <li><p>Return <var>mimeType</var>.
 </ol>
 
 <hr>
@@ -2666,6 +2621,68 @@ values:
 <p>Specifications should avoid introducing new exceptions and should only do so with careful
 consideration for the security consequences. New exceptions can be proposed by
 <a href=https://github.com/whatwg/fetch/issues/new>filing an issue</a>.
+
+
+<h3 id=content-type-header>`<code>Content-Type</code>` header</h3>
+
+<p>The `<code>Content-Type</code>` header is largely defined in HTTP. Its processing model is
+defined here as the ABNF defined in HTTP is not compatible with web content. [[HTTP]]
+
+<p>To
+<dfn export for="header list" lt="extract a MIME type|extracting a MIME type" id=concept-header-extract-mime-type>extract a MIME type</dfn>
+from a <a for=/>header list</a> <var>headers</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>charset</var> be null.
+
+ <li><p>Let <var>essence</var> be null.
+
+ <li><p>Let <var>mimeType</var> be null.
+
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a> `<code>Content-Type</code>` from
+ <var>headers</var>.
+
+ <li><p>If <var>values</var> is null, then return failure.
+
+ <li>
+  <p><a for=list>For each</a> <var>value</var> of <var>values</var>:
+
+  <ol>
+   <li><p>Set <var>mimeType</var> to the result of <a lt="parse a MIME type">parsing</a>
+   <var>value</var>.
+
+   <li>
+    <p>If <var>mimeType</var> is not failure and <var>mimeType</var>'s
+    <a for="MIME type">essence</a> is not "<code>*/*</code>" or <var>essence</var>, then:
+
+    <ol>
+     <li><p>Set <var>charset</var> to null.
+
+     <li><p>If <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>charset</code>"]
+     <a for=map>exists</a>, then set <var>charset</var> to <var>mimeType</var>'s
+     <a for="MIME type">parameters</a>["<code>charset</code>"].
+
+     <li><p>Set <var>essence</var> to <var>mimeType</var>'s <a for="MIME type">essence</a>.
+    </ol>
+
+   <li><p>Otherwise, if <var>mimeType</var> is not failure, <var>mimeType</var>'s
+   <a for="MIME type">essence</a> is <var>essence</var>, <var>mimeType</var>'s
+   <a for="MIME type">parameters</a>["<code>charset</code>"] does not <a for=map>exist</a>, and
+   <var>charset</var> is non-null, set <var>mimeType</var>'s
+   <a for="MIME type">parameters</a>["<code>charset</code>"] to <var>charset</var>.
+  </ol>
+
+ <li><p>Return <var>mimeType</var>.
+</ol>
+
+<p class=warning>Treat <a>extract a MIME type</a> returning failure or anything but the needed
+<a>MIME type</a>'s <a for="MIME type">essence</a> as a fatal error. Existing web platform features
+not following this has been a major source of security vulnerabilities over the years.
+
+<p class=note>A <a>MIME type</a>'s <a for="MIME type">parameters</a> are typically ignored and this
+practice has not been a problem.
+
 
 
 <h3 id=x-content-type-options-header>`<code>X-Content-Type-Options</code>` header</h3>
