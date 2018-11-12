@@ -2017,6 +2017,8 @@ run these steps:
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
+ <li><p>If <var>mimeType</var> is failure, then return <b>allowed</b>.
+
  <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
  <li>
@@ -2024,9 +2026,9 @@ run these steps:
   following is true, then return <b>blocked</b>:
 
   <ul class=brief>
-   <li><var>mimeType</var> starts with `<code>audio/</code>`, `<code>image/</code>`, or
-   `<code>video/</code>`.
-   <li><var>mimeType</var> is `<code>text/csv</code>`.
+   <li><var>mimeType</var>'s <a for="MIME type">essence</a> starts with "<code>audio/</code>",
+   "<code>image/</code>", or "<code>video/</code>".
+   <li><var>mimeType</var>'s <a for="MIME type">essence</a> is "<code>text/csv</code>".
   </ul>
 
  <li><p>Return <b>allowed</b>.
@@ -2677,11 +2679,11 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
 </ol>
 
 <p class=warning>Treat <a>extract a MIME type</a> returning failure or anything but the needed
-<a>MIME type</a>'s <a for="MIME type">essence</a> as a fatal error. Existing web platform features
-not following this has been a major source of security vulnerabilities over the years.
+<a for=/>MIME type</a>'s <a for="MIME type">essence</a> as a fatal error. Existing web platform
+features not following this has been a major source of security vulnerabilities over the years.
 
-<p class=note>A <a>MIME type</a>'s <a for="MIME type">parameters</a> are typically ignored and this
-practice has not been a problem.
+<p class=note>A <a for=/>MIME type</a>'s <a for="MIME type">parameters</a> are typically ignored and
+this practice has not been a problem.
 
 
 
@@ -2731,11 +2733,10 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
  <li><p>If <var>destination</var> is <a for=request/destination>script-like</a> and
- <var>mimeType</var> (ignoring parameters) is not a <a>JavaScript MIME type</a>, then return
- <b>blocked</b>.
+ <var>mimeType</var> is failure or is not a <a>JavaScript MIME type</a>, then return <b>blocked</b>.
 
- <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var>
- (ignoring parameters) is not `<code>text/css</code>`, then return <b>blocked</b>.
+ <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var> is failure or its
+ <a for="MIME type">essence</a> is not "<code>text/css</code>", then return <b>blocked</b>.
 
  <li><p>Return <b>allowed</b>.
 </ol>
@@ -2778,19 +2779,20 @@ run these steps:</p>
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
+ <li><p>If <var>mimeType</var> is failure, then return <b>allowed</b>.
+
  <li><p>If <var>response</var>'s <a for=response>status</a> is <code>206</code> and
- <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a>, then return
- <b>blocked</b>.
+ <var>mimeType</var> is a <a>CORB-protected MIME type</a>, then return <b>blocked</b>.
 
  <li>
   <p>If <a>determine nosniff</a> with <var>response</var>'s <a for=response>header list</a> is true
-  and <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a> or
-  <code>text/plain</code>, then return <b>blocked</b>.
+  and <var>mimeType</var> is a <a>CORB-protected MIME type</a> or its <a for="MIME type">essence</a>
+  is "<code>text/plain</code>", then return <b>blocked</b>.
 
   <p class="note no-backref">CORB only protects <code>text/plain</code> responses with a
   `<code>X-Content-Type-Options: nosniff</code>` header. Unfortunately, protecting such responses
   without that header when their <a for=response>status</a> is <code>206</code> would break too many
-  existing video responses that have a <code>text/plain</code> MIME type.
+  existing video responses that have a <code>text/plain</code> <a for=/>MIME type</a>.
 
  <!-- TODO: MIME type confirmation sniffing -->
  <!-- TODO: JSON security prefix sniffing -->
