@@ -360,8 +360,9 @@ steps:
 
     <p class=note><var>temporaryValue</var> might be the empty string.
 
-   <li><p>If <var>value</var> is null, then set <var>value</var> to <var>temporaryValue</var>, and
-   append <var>temporaryValue</var> to <var>value</var> otherwise.
+   <li><p>If <var>value</var> is null, then set <var>value</var> to <var>temporaryValue</var>.
+
+   <li><p>Otherwise, append <var>temporaryValue</var> to <var>value</var>.
 
    <li>
     <p>If <var>position</var> is not past the end of <var>input</var>, then:
@@ -416,24 +417,75 @@ steps:
 </ol>
 
 <div class=example id=example-header-list-get-decode-split>
- <p>This is how <a>get, decode, and split</a> functions in practice:
+ <p>This is how <a>get, decode, and split</a> functions in practice with `<code>A</code>` as
+ <var>name</var> argument:
 
  <table>
   <tr>
-   <th>Input
+   <th>Headers (as on the network)
    <th>Output
   <tr>
-   <td>`<code>nosniff,</code>`
-   <td>"<code>nosniff</code>" and the empty string
+   <td>
+    <pre><code>
+A: nosniff,
+</code></pre>
+   <td rowspan=2>« "<code>nosniff</code>", "" »
   <tr>
-   <td>`<code>text/html;", x/x</code>`
-   <td>"<code>text/html;", x/x</code>"
+   <td>
+    <pre><code>
+A: nosniff
+B: sniff
+A:
+</code></pre>
   <tr>
-   <td>`<code>x/x;test="hi",y/y</code>`
-   <td>"<code>x/x;test="hi"</code>" and "<code>y/y</code>"
+   <td>
+    <pre><code>A: text/html;", x/x</code></pre>
+   <td rowspan=2>« "<code>text/html;", x/x</code>" »
   <tr>
-   <td>`<code>x / x,,,1</code>`
-   <td>"<code>x / x</code>", the empty string, the empty string, and "<code>1</code>"
+   <td>
+    <pre><code>
+A: text/html;"
+A: x/x
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+A: x/x;test="hi",y/y
+</code></pre>
+   <td rowspan=2>« "<code>x/x;test="hi"</code>", "<code>y/y</code>" »
+  <tr>
+   <td>
+    <pre><code>
+A: x/x;test="hi"
+C: **bingo**
+A: y/y
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+A: x / x,,,1
+</code></pre>
+   <td rowspan=2>« "<code>x / x</code>", "", "", "<code>1</code>" »
+  <tr>
+   <td>
+    <pre><code>
+A: x / x
+A: ,
+A: 1
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+A: "1,2", 3
+</code></pre>
+   <td rowspan=2>« "<code>"1,2"</code>", "<code>3</code>" »
+  <tr>
+   <td>
+    <pre><code>
+A: "1,2"
+D: 4
+A: 3
+</code></pre>
  </table>
 </div>
 
@@ -584,8 +636,8 @@ each other by 0x2C 0x20, in order.
      "<code>text/plain</code>", then return false.
     </ol>
 
-    <p class=warning>This intentionally does not use <a>extract a MIME type</a> as it is rather
-    forgiving and servers are not expected to implement it.
+    <p class=warning>This intentionally does not use <a>extract a MIME type</a> as that algorithm is
+    rather forgiving and servers are not expected to implement it.
 
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#downlink>Downlink</a></code>`
@@ -2654,9 +2706,11 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
    <li><p>Set <var>mimeType</var> to the result of <a lt="parse a MIME type">parsing</a>
    <var>value</var>.
 
+   <li><p>If <var>mimeType</var> is failure, then <a for=iteration>continue</a>.
+
    <li>
-    <p>If <var>mimeType</var> is not failure and <var>mimeType</var>'s
-    <a for="MIME type">essence</a> is not "<code>*/*</code>" or <var>essence</var>, then:
+    <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is not "<code>*/*</code>" or
+    <var>essence</var>, then:
 
     <ol>
      <li><p>Set <var>charset</var> to null.
@@ -2668,22 +2722,52 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
      <li><p>Set <var>essence</var> to <var>mimeType</var>'s <a for="MIME type">essence</a>.
     </ol>
 
-   <li><p>Otherwise, if <var>mimeType</var> is not failure, <var>mimeType</var>'s
-   <a for="MIME type">essence</a> is <var>essence</var>, <var>mimeType</var>'s
-   <a for="MIME type">parameters</a>["<code>charset</code>"] does not <a for=map>exist</a>, and
-   <var>charset</var> is non-null, set <var>mimeType</var>'s
+   <li><p>Otherwise, if <var>mimeType</var>'s <a for="MIME type">essence</a> is <var>essence</var>,
+   <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>charset</code>"] does not
+   <a for=map>exist</a>, and <var>charset</var> is non-null, set <var>mimeType</var>'s
    <a for="MIME type">parameters</a>["<code>charset</code>"] to <var>charset</var>.
   </ol>
 
  <li><p>Return <var>mimeType</var>.
 </ol>
 
-<p class=warning>Treat <a>extract a MIME type</a> returning failure or anything but the needed
-<a for=/>MIME type</a>'s <a for="MIME type">essence</a> as a fatal error. Existing web platform
-features not following this has been a major source of security vulnerabilities over the years.
+<p class=warning>When <a>extract a MIME type</a> returns failure or a <a for=/>MIME type</a> whose
+<a for="MIME type">essence</a> is incorrect for a given format, treat this as a fatal error.
+Existing web platform features not always following this pattern has been a major source of security
+vulnerabilities over the years.
 
 <p class=note>A <a for=/>MIME type</a>'s <a for="MIME type">parameters</a> are typically ignored and
-this practice has not been a problem.
+this has not been a problem in practice.
+
+<div class=example>
+ <p>This is how <a>extract a MIME type</a> functions in practice:
+
+ <table>
+  <tr>
+   <th>Headers (as on the network)
+   <th>Output
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/plain;charset=gbk, text/html
+</code></pre>
+   <td><code>text/html</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html;charset=gbk, text/html;x=y
+</code></pre>
+   <td><code>text/html;x=y;charset=gbk</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html;charset=gbk
+Content-Type: x/x
+Content-Type: text/html;x=y
+</code></pre>
+   <td><code>text/html;x=y</code>
+ </table>
+</div>
 
 
 
