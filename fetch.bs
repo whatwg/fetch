@@ -571,22 +571,22 @@ for `<code>Authorization</code>`.
  <a>forbidden response-header name</a>.
 </ul>
 
+<p>A <dfn noexport>no-CORS-safelisted request-header name</dfn> is a <a for=/>header</a>
+<a for=header>name</a> that is a <a>byte-case-insensitive</a> match for one of
+
+<ul class=brief>
+ <li>`<code>Accept</code>`
+ <li>`<code>Accept-Language</code>`
+ <li>`<code>Content-Language</code>`
+ <li>`<code>Content-Type</code>`
+</ul>
+
 <p>To determine whether a <a for/>header</a> <var>header</var> is a
 <dfn noexport>no-CORS-safelisted request-header</dfn>, run these steps:
 
 <ol>
- <li>
-  <p>If <var>header</var>'s <a for=header>name</a> is not a <a>byte-case-insensitive</a> match for
-  one of
-
-  <ul class=brief>
-   <li>`<code>Accept</code>`
-   <li>`<code>Accept-Language</code>`
-   <li>`<code>Content-Language</code>`
-   <li>`<code>Content-Type</code>`
-  </ul>
-
-  <p>then return false.
+ <li><p>If <var>header</var>'s <a for=header>name</a> is not a
+ <a>no-CORS-safelisted request-header name</a>, then return false.
 
  <li><p>Return whether <var>header</var> is a <a>CORS-safelisted request-header</a>.
 </ol>
@@ -4784,9 +4784,19 @@ objects.</span>
  <li><p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>request</code>" and
  <var>name</var> is a <a>forbidden header name</a>, return.
 
- <li><p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is
- "<code>request-no-cors</code>" and <var>name</var>/<var>value</var> is not a
- <a>no-CORS-safelisted request-header</a>, return.
+ <li>
+  <p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>":
+
+  <ol>
+   <li><p>Let <var>temporaryValue</var> be the <a>combined value</a> with <var>name</var> and
+   <var>headers</var>'s <a for=Headers>header list</a>.
+
+   <li><p>Set <var>temporaryValue</var> to <var>temporaryValue</var>, followed by 0x2C 0x20,
+   followed by <var>value</var>.
+
+   <li><p>If <var>name</var>/<var>temporaryValue</var> is not a
+   <a>no-CORS-safelisted request-header</a>, then return.
+  </ol>
 
  <li><p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>response</code>" and
  <var>name</var> is a <a>forbidden response-header name</a>, return.
@@ -4866,16 +4876,10 @@ method, when invoked, must run these steps:
  <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is "<code>request</code>"
  and <var>name</var> is a <a>forbidden header name</a>, return.
 
- <li>
-  <p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is
-  "<code>request-no-cors</code>", <var>name</var>/`<code>invalid</code>` is not a
-  <a>no-CORS-safelisted request-header</a>, and <var>name</var> is not a
-  <a>privileged no-CORS request-header name</a>, return.
-
-  <p class=note>`<code>invalid</code>` is used because
-  <a method for=Headers><code>delete()</code></a> is not passed a value as argument.
- <!-- XXX This will always fail for Content-Type. Need to investigate under what scenarios you get a
-      Headers object guarded like this and figure out what the problems are... -->
+ <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is
+ "<code>request-no-cors</code>", <var>name</var> is not a
+ <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not a
+ <a>privileged no-CORS request-header name</a>, return.
 
  <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is
  "<code>response</code>" and <var>name</var> is a <a>forbidden response-header name</a>, return.
