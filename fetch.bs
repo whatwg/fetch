@@ -2751,14 +2751,16 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
   <p><a for=list>For each</a> <var>value</var> of <var>values</var>:
 
   <ol>
-   <li><p>Set <var>mimeType</var> to the result of <a lt="parse a MIME type">parsing</a>
+   <li><p>Let <var>temporaryMimeType</var> be the result of <a lt="parse a MIME type">parsing</a>
    <var>value</var>.
 
-   <li><p>If <var>mimeType</var> is failure, then <a for=iteration>continue</a>.
+   <li><p>If <var>temporaryMimeType</var> is failure or its <a for="MIME type">essence</a> is
+   "<code>*/*</code>", then <a for=iteration>continue</a>.
+
+   <li><p>Set <var>mimeType</var> to <var>temporaryMimeType</var>.
 
    <li>
-    <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is not "<code>*/*</code>" or
-    <var>essence</var>, then:
+    <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is not <var>essence</var>, then:
 
     <ol>
      <li><p>Set <var>charset</var> to null.
@@ -2770,11 +2772,13 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
      <li><p>Set <var>essence</var> to <var>mimeType</var>'s <a for="MIME type">essence</a>.
     </ol>
 
-   <li><p>Otherwise, if <var>mimeType</var>'s <a for="MIME type">essence</a> is <var>essence</var>,
-   <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>charset</code>"] does not
-   <a for=map>exist</a>, and <var>charset</var> is non-null, set <var>mimeType</var>'s
+   <li><p>Otherwise, if <var>mimeType</var>'s
+   <a for="MIME type">parameters</a>["<code>charset</code>"] does not <a for=map>exist</a>, and
+   <var>charset</var> is non-null, set <var>mimeType</var>'s
    <a for="MIME type">parameters</a>["<code>charset</code>"] to <var>charset</var>.
   </ol>
+
+ <li><p>If <var>mimeType</var> is null, then return failure.
 
  <li><p>Return <var>mimeType</var>.
 </ol>
@@ -2818,6 +2822,25 @@ Content-Type: x/x
 Content-Type: text/html;x=y
 </code></pre>
    <td><code>text/html;x=y</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html
+Content-Type: cannot-parse
+</code></pre>
+   <td rowspan=3><code>text/html</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html
+Content-Type: */*
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html
+Content-Type:
+</code></pre>
  </table>
 </div>
 
