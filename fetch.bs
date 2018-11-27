@@ -90,6 +90,12 @@ url:https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:df
 }
 </pre>
 
+<pre class=link-defaults>
+spec:infra; type:dfn; text:string
+</pre>
+
+
+
 <h2 id=goals class="no-num short">Goals</h2>
 
 <p>To unify fetching across the web platform this specification supplants a number of algorithms and
@@ -264,6 +270,68 @@ use "<code>deprecated</code>" is not defined by this specification. An
 <a>environment settings object</a> typically derives its
 <a for="environment settings object">HTTPS state</a> from a <a for=/>response</a>.
 
+<p>To
+<dfn export lt="collect an HTTP quoted string|collecting an HTTP quoted string">collect an HTTP quoted string</dfn>
+from a <a for=/>string</a> <var>input</var>, given a <a>position variable</a> <var>position</var>
+and optionally an <var>extract-value flag</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>positionStart</var> be <var>position</var>.
+
+ <li><p>Let <var>value</var> be the empty string.
+
+ <li><p>Assert: the <a>code point</a> at <var>position</var> within <var>input</var> is U+0022 (").
+
+ <li><p>Advance <var>position</var> by 1.
+
+ <li>
+  <p>While true:
+
+  <ol>
+   <li><p>Append the result of <a>collecting a sequence of code points</a> that are not U+0022 (")
+   or U+005C (\) from <var>input</var>, given <var>position</var>, to <var>value</var>.
+
+   <li><p>If <var>position</var> is past the end of <var>input</var>, then
+   <a for=iteration>break</a>.
+
+   <li><p>Let <var>quoteOrBackslash</var> be the <a>code point</a> at <var>position</var> within
+   <var>input</var>.
+
+   <li><p>Advance <var>position</var> by 1.
+
+   <li>
+    <p>If <var>quoteOrBackslash</var> is U+005C (\), then:
+
+    <ol>
+     <li><p>If <var>position</var> is past the end of <var>input</var>, then append U+005C (\) to
+     <var>value</var> and <a for=iteration>break</a>.
+
+     <li><p>Append the <a>code point</a> at <var>position</var> within <var>input</var> to
+     <var>value</var>.
+
+     <li><p>Advance <var>position</var> by 1.
+    </ol>
+
+   <li>
+    <p>Otherwise:
+
+    <ol>
+     <li><p>Assert: <var>quoteOrBackslash</var> is U+0022 (").
+
+     <li><p><a for=iteration>Break</a>.
+    </ol>
+  </ol>
+
+ <li><p>If the <var>extract-value flag</var> is set, then return <var>value</var>.
+
+ <li><p>Return the <a for=/>code points</a> from <var>positionStart</var> to <var>position</var>,
+ inclusive, within <var>input</var>.
+</ol>
+
+<p class="note no-backref">The <var>extract-value flag</var> argument makes this algorithm suitable
+for <a for="header list">getting, decoding, and splitting</a> and <a>parse a MIME type</a>, as well
+as other header value parsers that might need this.
+
 
 <h4 id=methods>Methods</h4>
 
@@ -323,6 +391,146 @@ specialized multimap. An ordered list of key-value pairs with potentially duplic
 
  <li><p>Return the <a for="header">combined value</a> with <var>name</var> and <var>list</var>.
 </ol>
+
+<p>To
+<dfn export for="header list" lt="get, decode, and split|getting, decoding, and splitting" id=concept-header-list-get-decode-split>get, decode, and split</dfn>
+a <a for=header>name</a> <var>name</var> from <a for=/>header list</a> <var>list</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var>initialValue</var> be the result of <a for="header list">getting</a>
+ <var>name</var> from <var>list</var>.
+
+ <li><p>If <var>initialValue</var> is null, then return null.
+
+ <li><p>Let <var>input</var> be the result of <a>isomorphic decoding</a> <var>initialValue</var>.
+
+ <li><p>Let <var>position</var> be a <a for=string>position variable</a> for <var>input</var>,
+ initially pointing at the start of <var>input</var>.
+
+ <li><p>Let <var>values</var> be a <a for=/>list</a> of <a for=/>strings</a>, initially empty.
+
+ <li><p>Let <var>value</var> be the empty string.
+
+ <li>
+  <p>While <var>position</var> is not past the end of <var>input</var>:
+
+  <ol>
+   <li>
+    <p>Append the result of <a>collecting a sequence of code points</a> that are not U+0022 (") or
+    U+002C (,) from <var>input</var>, given <var>position</var>, to <var>value</var>.
+
+    <p class=note>The result might be the empty string.
+
+   <li>
+    <p>If <var>position</var> is not past the end of <var>input</var>, then:
+
+    <ol>
+     <li>
+      <p>If the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
+      U+0022 ("), then:
+
+      <ol>
+       <li><p>Append the result of <a>collecting an HTTP quoted string</a> from <var>input</var>,
+       given <var>position</var>, to <var>value</var>.
+
+       <li>If <var>position</var> is not past the end of <var>input</var>, then
+       <a for=iteration>continue</a>.
+      </ol>
+
+     <li>
+      <p>Otherwise:
+
+      <ol>
+       <li><p>Assert: the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
+       U+002C (,).
+
+       <li><p>Advance <var>position</var> by 1.
+      </ol>
+    </ol>
+
+   <li><p>Remove all <a>HTTP tab or space</a> from the start and end of <var>value</var>.
+
+   <li><p><a for=list>Append</a> <var>value</var> to <var>values</var>.
+
+   <li><p>Set <var>value</var> to the empty string.
+  </ol>
+
+ <li><p>Return <var>values</var>.
+</ol>
+
+<div class=example id=example-header-list-get-decode-split>
+ <p>This is how <a>get, decode, and split</a> functions in practice with `<code>A</code>` as the
+ <var>name</var> argument:
+
+ <table>
+  <tr>
+   <th>Headers (as on the network)
+   <th>Output
+  <tr>
+   <td>
+    <pre><code>
+A: nosniff,
+</code></pre>
+   <td rowspan=2>« "<code>nosniff</code>", "" »
+  <tr>
+   <td>
+    <pre><code>
+A: nosniff
+B: sniff
+A:
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>A: text/html;", x/x</code></pre>
+   <td rowspan=2>« "<code>text/html;", x/x</code>" »
+  <tr>
+   <td>
+    <pre><code>
+A: text/html;"
+A: x/x
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+A: x/x;test="hi",y/y
+</code></pre>
+   <td rowspan=2>« "<code>x/x;test="hi"</code>", "<code>y/y</code>" »
+  <tr>
+   <td>
+    <pre><code>
+A: x/x;test="hi"
+C: **bingo**
+A: y/y
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+A: x / x,,,1
+</code></pre>
+   <td rowspan=2>« "<code>x / x</code>", "", "", "<code>1</code>" »
+  <tr>
+   <td>
+    <pre><code>
+A: x / x
+A: ,
+A: 1
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+A: "1,2", 3
+</code></pre>
+   <td rowspan=2>« "<code>"1,2"</code>", "<code>3</code>" »
+  <tr>
+   <td>
+    <pre><code>
+A: "1,2"
+D: 4
+A: 3
+</code></pre>
+ </table>
+</div>
 
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a> <var>name</var>/<var>value</var> pair to a
@@ -470,6 +678,26 @@ each other by 0x2C 0x20, in order.
      "<code>application/x-www-form-urlencoded</code>", "<code>multipart/form-data</code>", or
      "<code>text/plain</code>", then return false.
     </ol>
+
+    <p class=warning>This intentionally does not use <a>extract a MIME type</a> as that algorithm is
+    rather forgiving and servers are not expected to implement it.
+
+    <div class="example no-backref" id=example-cors-safelisted-request-header-content-type>
+     <p>If <a>extract a MIME type</a> were used the following request would not result in a CORS
+     preflight and a naïve parser on the server might treat the request body as JSON:
+
+     <pre><code>
+fetch("https://victim.example/naïve-endpoint", {
+  method: "POST",
+  headers: [
+    ["Content-Type", "application/json"],
+    ["Content-Type", "text/plain"]
+  ],
+  credentials: "include",
+  body: JSON.stringify(exerciseForTheReader)
+});
+</code></pre>
+    </div>
 
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#dpr>DPR</a></code>`
    <dt>`<code><a href=http://httpwg.org/http-extensions/client-hints.html#downlink>Downlink</a></code>`
@@ -683,19 +911,6 @@ run these steps:
   </ol>
 
  <li><p>Return <var>values</var>.
-</ol>
-
-<p>To
-<dfn export for="header list" lt="extract a MIME type|extracting a MIME type" id=concept-header-extract-mime-type>extract a MIME type</dfn>
-from a <a for=/>header list</a> <var>headers</var>, run these steps:
-
-<ol>
- <li><p>Let <var>mimeType</var> be the result of <a>extracting header list values</a> given
- `<code>Content-Type</code>` and <var>headers</var>.
-
- <li><p>If <var>mimeType</var> is null or failure, then return the empty byte sequence.
-
- <li><p>Return <var>mimeType</var>, <a lt="byte-lowercase">byte-lowercased</a>.
 </ol>
 
 <hr>
@@ -1914,6 +2129,8 @@ run these steps:
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
+ <li><p>If <var>mimeType</var> is failure, then return <b>allowed</b>.
+
  <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
  <li>
@@ -1921,9 +2138,9 @@ run these steps:
   following is true, then return <b>blocked</b>:
 
   <ul class=brief>
-   <li><var>mimeType</var> starts with `<code>audio/</code>`, `<code>image/</code>`, or
-   `<code>video/</code>`.
-   <li><var>mimeType</var> is `<code>text/csv</code>`.
+   <li><var>mimeType</var>'s <a for="MIME type">essence</a> starts with "<code>audio/</code>",
+   "<code>image/</code>", or "<code>video/</code>".
+   <li><var>mimeType</var>'s <a for="MIME type">essence</a> is "<code>text/csv</code>".
   </ul>
 
  <li><p>Return <b>allowed</b>.
@@ -2520,6 +2737,127 @@ consideration for the security consequences. New exceptions can be proposed by
 <a href=https://github.com/whatwg/fetch/issues/new>filing an issue</a>.
 
 
+<h3 id=content-type-header>`<code>Content-Type</code>` header</h3>
+
+<p>The `<code>Content-Type</code>` header is largely defined in HTTP. Its processing model is
+defined here as the ABNF defined in HTTP is not compatible with web content. [[HTTP]]
+
+<p>To
+<dfn export for="header list" lt="extract a MIME type|extracting a MIME type" id=concept-header-extract-mime-type>extract a MIME type</dfn>
+from a <a for=/>header list</a> <var>headers</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>charset</var> be null.
+
+ <li><p>Let <var>essence</var> be null.
+
+ <li><p>Let <var>mimeType</var> be null.
+
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a> `<code>Content-Type</code>` from
+ <var>headers</var>.
+
+ <li><p>If <var>values</var> is null, then return failure.
+
+ <li>
+  <p><a for=list>For each</a> <var>value</var> of <var>values</var>:
+
+  <ol>
+   <li><p>Let <var>temporaryMimeType</var> be the result of <a lt="parse a MIME type">parsing</a>
+   <var>value</var>.
+
+   <li><p>If <var>temporaryMimeType</var> is failure or its <a for="MIME type">essence</a> is
+   "<code>*/*</code>", then <a for=iteration>continue</a>.
+
+   <li><p>Set <var>mimeType</var> to <var>temporaryMimeType</var>.
+
+   <li>
+    <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is not <var>essence</var>, then:
+
+    <ol>
+     <li><p>Set <var>charset</var> to null.
+
+     <li><p>If <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>charset</code>"]
+     <a for=map>exists</a>, then set <var>charset</var> to <var>mimeType</var>'s
+     <a for="MIME type">parameters</a>["<code>charset</code>"].
+
+     <li><p>Set <var>essence</var> to <var>mimeType</var>'s <a for="MIME type">essence</a>.
+    </ol>
+
+   <li><p>Otherwise, if <var>mimeType</var>'s
+   <a for="MIME type">parameters</a>["<code>charset</code>"] does not <a for=map>exist</a>, and
+   <var>charset</var> is non-null, set <var>mimeType</var>'s
+   <a for="MIME type">parameters</a>["<code>charset</code>"] to <var>charset</var>.
+  </ol>
+
+ <li><p>If <var>mimeType</var> is null, then return failure.
+
+ <li><p>Return <var>mimeType</var>.
+</ol>
+
+<p class=warning>When <a>extract a MIME type</a> returns failure or a <a for=/>MIME type</a> whose
+<a for="MIME type">essence</a> is incorrect for a given format, treat this as a fatal error.
+Existing web platform features have not always followed this pattern, which has been a major source
+of security vulnerabilities in those features over the years. In contrast, a
+<a for=/>MIME type</a>'s <a for="MIME type">parameters</a> can typically be safely ignored.
+
+<div class=example id=example-extract-a-mime-type>
+ <p>This is how <a>extract a MIME type</a> functions in practice:
+
+ <table>
+  <tr>
+   <th>Headers (as on the network)
+   <th>Output (<a lt="serialize a MIME type">serialized</a>)
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/plain;charset=gbk, text/html
+</code></pre>
+   <td><code>text/html</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html;charset=gbk;a=b, text/html;x=y
+</code></pre>
+   <td rowspan=2><code>text/html;x=y;charset=gbk</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html;charset=gbk;a=b
+Content-Type: text/html;x=y
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html;charset=gbk
+Content-Type: x/x
+Content-Type: text/html;x=y
+</code></pre>
+   <td><code>text/html;x=y</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html
+Content-Type: cannot-parse
+</code></pre>
+   <td rowspan=3><code>text/html</code>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html
+Content-Type: */*
+</code></pre>
+  <tr>
+   <td>
+    <pre><code>
+Content-Type: text/html
+Content-Type:
+</code></pre>
+ </table>
+</div>
+
+
+
 <h3 id=x-content-type-options-header>`<code>X-Content-Type-Options</code>` header</h3>
 
 <p>The
@@ -2532,20 +2870,13 @@ response <a for=/>header</a> can be used to require checking of a <a for=/>respo
 steps:
 
 <ol>
- <li><p>Let <var>value</var> be the result of <a for="header list">getting</a>
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a>
  `<a http-header><code>X-Content-Type-Options</code></a>` from <var>list</var>.
 
- <li><p>If <var>value</var> is null, then return false.
+ <li><p>If <var>values</var> is null, then return false.
 
- <li><p>Let <var>stringValue</var> be the <a>isomorphic decode</a> of <var>value</var>.
-
- <li><p>Let <var>tokens</var> be the result of
- <a lt="strictly split a string">strictly splitting</a> <var>stringValue</var> on U+002C (,).
-
- <li><p>Let <var>firstToken</var> be the result of removing all <a>HTTP tab or space</a> from the
- start and end of <var>tokens</var>[0].
-
- <li><p>If <var>firstToken</var> is an <a>ASCII case-insensitive</a> match for
+ <li><p>If <var>values</var>[0] is an <a>ASCII case-insensitive</a> match for
  "<code>nosniff</code>", then return true.
 
  <li><p>Return false.
@@ -2573,11 +2904,10 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
  <li><p>Let <var>destination</var> be <var>request</var>'s <a for=request>destination</a>.
 
  <li><p>If <var>destination</var> is <a for=request/destination>script-like</a> and
- <var>mimeType</var> (ignoring parameters) is not a <a>JavaScript MIME type</a>, then return
- <b>blocked</b>.
+ <var>mimeType</var> is failure or is not a <a>JavaScript MIME type</a>, then return <b>blocked</b>.
 
- <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var>
- (ignoring parameters) is not `<code>text/css</code>`, then return <b>blocked</b>.
+ <li><p>If <var>destination</var> is "<code>style</code>" and <var>mimeType</var> is failure or its
+ <a for="MIME type">essence</a> is not "<code>text/css</code>", then return <b>blocked</b>.
 
  <li><p>Return <b>allowed</b>.
 </ol>
@@ -2620,19 +2950,20 @@ run these steps:</p>
  <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
  from <var>response</var>'s <a for=response>header list</a>.
 
+ <li><p>If <var>mimeType</var> is failure, then return <b>allowed</b>.
+
  <li><p>If <var>response</var>'s <a for=response>status</a> is <code>206</code> and
- <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a>, then return
- <b>blocked</b>.
+ <var>mimeType</var> is a <a>CORB-protected MIME type</a>, then return <b>blocked</b>.
 
  <li>
   <p>If <a>determine nosniff</a> with <var>response</var>'s <a for=response>header list</a> is true
-  and <var>mimeType</var> (ignoring parameters) is a <a>CORB-protected MIME type</a> or
-  <code>text/plain</code>, then return <b>blocked</b>.
+  and <var>mimeType</var> is a <a>CORB-protected MIME type</a> or its <a for="MIME type">essence</a>
+  is "<code>text/plain</code>", then return <b>blocked</b>.
 
   <p class="note no-backref">CORB only protects <code>text/plain</code> responses with a
   `<code>X-Content-Type-Options: nosniff</code>` header. Unfortunately, protecting such responses
   without that header when their <a for=response>status</a> is <code>206</code> would break too many
-  existing video responses that have a <code>text/plain</code> MIME type.
+  existing video responses that have a <code>text/plain</code> <a for=/>MIME type</a>.
 
  <!-- TODO: MIME type confirmation sniffing -->
  <!-- TODO: JSON security prefix sniffing -->
@@ -5098,7 +5429,7 @@ due course.
 
 <p>Objects implementing the {{Body}} mixin gain an associated
 <dfn id=concept-body-body for=Body>body</dfn> (null or a <a for=/>body</a>) and
-a <dfn id=concept-body-mime-type for=Body>MIME type</dfn> (initially the empty byte sequence).
+a <dfn id=concept-body-mime-type for=Body>MIME type</dfn> (failure or a <a for=/>MIME type</a>).
 
 <p>An object implementing the {{Body}} mixin is said to be
 <dfn export id=concept-body-disturbed for=Body>disturbed</dfn> if <a for=Body>body</a> is
@@ -5134,7 +5465,8 @@ runs the associated steps:
 
  <dt><i>FormData</i>
  <dd>
-  <p>If <var>mimeType</var> (ignoring parameters) is `<code>multipart/form-data</code>`, then:
+  <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is "<code>multipart/form-data</code>",
+  then:
 
   <ol>
    <li>
@@ -5171,8 +5503,8 @@ runs the associated steps:
   `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
   written. Volunteers welcome.
 
-  <p>Otherwise, if <var>mimeType</var> (ignoring parameters) is
-  `<code>application/x-www-form-urlencoded</code>`, then:
+  <p>Otherwise, if <var>mimeType</var>'s <a for="MIME type">essence</a> is
+  "<code>application/x-www-form-urlencoded</code>", then:
 
   <ol>
    <li><p>Let <var>entries</var> be the result of
