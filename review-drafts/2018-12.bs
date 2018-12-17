@@ -1,5 +1,6 @@
 <pre class=metadata>
 Group: WHATWG
+Date: 2018-12-11
 H1: Fetch
 Shortname: fetch
 Text Macro: TWITTER fetchstandard
@@ -158,8 +159,7 @@ Streams, and URL Standards.
 [[!STREAMS]]
 [[!URL]]
 
-<p><dfn>ABNF</dfn> means ABNF as augmented by HTTP (in particular the addition <code>#</code>) and
-RFC 7405. [[!RFC7405]]
+<p><dfn>ABNF</dfn> means ABNF as modified by HTTP (in particular the addition <code>#</code>).
 
 <hr>
 
@@ -472,62 +472,62 @@ steps:
    <th>Output
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: nosniff,
 </code></pre>
    <td rowspan=2>« "<code>nosniff</code>", "" »
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: nosniff
 B: sniff
 A:
 </code></pre>
   <tr>
    <td>
-    <pre><code class=lang-http>A: text/html;", x/x</code></pre>
+    <pre><code>A: text/html;", x/x</code></pre>
    <td rowspan=2>« "<code>text/html;", x/x</code>" »
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: text/html;"
 A: x/x
 </code></pre>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: x/x;test="hi",y/y
 </code></pre>
    <td rowspan=2>« "<code>x/x;test="hi"</code>", "<code>y/y</code>" »
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: x/x;test="hi"
 C: **bingo**
 A: y/y
 </code></pre>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: x / x,,,1
 </code></pre>
    <td rowspan=2>« "<code>x / x</code>", "", "", "<code>1</code>" »
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: x / x
 A: ,
 A: 1
 </code></pre>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: "1,2", 3
 </code></pre>
    <td rowspan=2>« "<code>"1,2"</code>", "<code>3</code>" »
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 A: "1,2"
 D: 4
 A: 3
@@ -685,7 +685,7 @@ production as
      <p>If <a>extract a MIME type</a> were used the following request would not result in a CORS
      preflight and a naïve parser on the server might treat the request body as JSON:
 
-     <pre><code class=lang-javascript>
+     <pre><code>
 fetch("https://victim.example/naïve-endpoint", {
   method: "POST",
   headers: [
@@ -2368,12 +2368,11 @@ compatibility constraints it is not included in all
 
 <p>Its <a for=header>value</a> <a>ABNF</a>:
 
-<pre><code class=lang-abnf>
+<pre>
 Origin                           = origin-or-null
 
-origin-or-null                   = origin / %s"null" ; case-sensitive
-origin                           = <a for=url>scheme</a> "://" <a for=url>host</a> [ ":" <a for=url>port</a> ]
-</code></pre>
+origin-or-null                   = origin / %x6E.75.6C.6C ; "null", case-sensitive
+origin                           = <a for=url>scheme</a> "://" <a for=url>host</a> [ ":" <a for=url>port</a> ]</pre>
 
 <p class="note no-backref">This supplants the `<code>Origin</code>`
 <a for=/>header</a>.
@@ -2503,18 +2502,17 @@ such HTTP responses.
 <p><a>ABNF</a> for the <a lt=value for=header>values</a> of the
 <a for=/>headers</a> used by the <a>CORS protocol</a>:
 
-<pre><code class=lang-abnf>
+<pre>
 Access-Control-Request-Method    = <a spec=http>method</a>
 Access-Control-Request-Headers   = 1#<a spec=http>field-name</a>
 
 wildcard                         = "*"
 Access-Control-Allow-Origin      = origin-or-null / wildcard
-Access-Control-Allow-Credentials = %s"true" ; case-sensitive
+Access-Control-Allow-Credentials = %x74.72.75.65 ; "true", case-sensitive
 Access-Control-Expose-Headers    = #<a spec=http>field-name</a>
 Access-Control-Max-Age           = <a spec=http-caching>delta-seconds</a>
 Access-Control-Allow-Methods     = #<a spec=http>method</a>
-Access-Control-Allow-Headers     = #<a spec=http>field-name</a>
-</code></pre>
+Access-Control-Allow-Headers     = #<a spec=http>field-name</a></pre>
 
 <p class=note>For `<code>Access-Control-Expose-Headers</code>`,
 `<code>Access-Control-Allow-Methods</code>`, and `<code>Access-Control-Allow-Headers</code>`
@@ -2538,12 +2536,11 @@ has an impact on the functioning of the <a>CORS protocol</a> other than includin
  <a for=/>request</a>'s
  <a for=request>credentials mode</a> to "<code>include</code>":
 
- <pre><code class=lang-javascript>
+ <pre>
 var client = new XMLHttpRequest()
 client.open("GET", "./")
 client.withCredentials = true
-/* … */
-</code></pre>
+/* … */</pre>
 
  <p>Nowadays, <code>fetch("./", { credentials:"include" }).then(/* … */)</code>
  suffices.
@@ -2638,18 +2635,16 @@ request to <code>https://rabbit.invalid/</code>:
  <code>https://bar.invalid/</code>. (Neither <a for=/>credentials</a> nor response header access is
  important.)
 
- <pre id=unicorn><code class=lang-javascript>
+ <pre id=unicorn>
 var url = "https://bar.invalid/api?key=730d67a37d7f3d802e96396d00280768773813fbe726d116944d814422fc1a45&amp;data=about:unicorn";
-fetch(url).then(success, failure)
-</code></pre>
+fetch(url).then(success, failure)</pre>
 
  <p>This will use the <a>CORS protocol</a>, though this is entirely transparent to the
  developer from <code>foo.invalid</code>. As part of the <a>CORS protocol</a>, the user agent
  will include the `<a http-header><code>Origin</code></a>` header in the request:
 
- <pre><code class=lang-http>
-Origin: https://foo.invalid
-</code></pre>
+ <pre>
+Origin: https://foo.invalid</pre>
 
  <p>Upon receiving a response from <code>bar.invalid</code>, the user agent will verify the
  `<a http-header><code>Access-Control-Allow-Origin</code></a>` response header. If its value is
@@ -2662,13 +2657,12 @@ Origin: https://foo.invalid
  <p>The developer of <code>foo.invalid</code> is back, and now wants to fetch some data from
  <code>bar.invalid</code> while also accessing a response header.
 
- <pre><code class=lang-javascript>
+ <pre>
 fetch(url).then(response => {
   var hsts = response.headers.get("strict-transport-security"),
       csp = response.headers.get("content-security-policy")
   log(hsts, csp)
-})
-</code></pre>
+})</pre>
 
  <p><code>bar.invalid</code> provides a correct
  `<a http-header><code>Access-Control-Allow-Origin</code></a>` response header per the earlier
@@ -2676,11 +2670,10 @@ fetch(url).then(response => {
  `<a http-header><code>Access-Control-Expose-Headers</code></a>` response header. For example, if
  the response included the following headers
 
- <pre><code class=lang-http>
+ <pre>
 Content-Security-Policy: default-src 'self'
 Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
-Access-Control-Expose-Headers: Content-Security-Policy
-</code></pre>
+Access-Control-Expose-Headers: Content-Security-Policy</pre>
 
  <p>then <code>hsts</code> would be null and <code>csp</code> would be
  "<code>default-src 'self'</code>", even though the response did include both headers. This is
@@ -2700,9 +2693,8 @@ Access-Control-Expose-Headers: Content-Security-Policy
  <a>CORS protocol</a> is no longer transparent to the developer as <a for=/>credentials</a>
  require an explicit opt-in:
 
- <pre><code class=lang-javascript>
-fetch(url, { credentials:"include" }).then(success, failure)
-</code></pre>
+ <pre>
+fetch(url, { credentials:"include" }).then(success, failure)</pre>
 
  <p>This also makes any `<code>Set-Cookie</code>` response headers <code>bar.invalid</code>
  includes fully functional (they are ignored otherwise).
@@ -2714,10 +2706,9 @@ fetch(url, { credentials:"include" }).then(success, failure)
  allowed when <a for=/>credentials</a> are involved), the
  `<a http-header><code>Access-Control-Allow-Credentials</code></a>` header has to be present too:
 
- <pre><code class=lang-http>
+ <pre>
 Access-Control-Allow-Origin: https://foo.invalid
-Access-Control-Allow-Credentials: true
-</code></pre>
+Access-Control-Allow-Credentials: true</pre>
 
  <p>If the response does not include those two headers with those values, the <code>failure</code>
  callback will be invoked and any `<code>Set-Cookie</code>` response headers will end up being
@@ -2818,25 +2809,25 @@ of security vulnerabilities in those features over the years. In contrast, a
    <th>Output (<a lt="serialize a MIME type">serialized</a>)
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 Content-Type: text/plain;charset=gbk, text/html
 </code></pre>
    <td><code>text/html</code>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 Content-Type: text/html;charset=gbk;a=b, text/html;x=y
 </code></pre>
    <td rowspan=2><code>text/html;x=y;charset=gbk</code>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 Content-Type: text/html;charset=gbk;a=b
 Content-Type: text/html;x=y
 </code></pre>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 Content-Type: text/html;charset=gbk
 Content-Type: x/x
 Content-Type: text/html;x=y
@@ -2844,20 +2835,20 @@ Content-Type: text/html;x=y
    <td><code>text/html;x=y</code>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 Content-Type: text/html
 Content-Type: cannot-parse
 </code></pre>
    <td rowspan=3><code>text/html</code>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 Content-Type: text/html
 Content-Type: */*
 </code></pre>
   <tr>
    <td>
-    <pre><code class=lang-http>
+    <pre><code>
 Content-Type: text/html
 Content-Type:
 </code></pre>
@@ -2893,9 +2884,8 @@ steps:
 <p>Web developers and conformance checkers must use the following <a for=header>value</a>
 <a>ABNF</a> for `<a http-header><code>X-Content-Type-Options</code></a>`:
 
-<pre><code class=lang-abnf>
-X-Content-Type-Options           = "nosniff" ; case-insensitive
-</code></pre>
+<pre>
+X-Content-Type-Options           = "nosniff" ; case-insensitive</pre>
 
 
 <h4 lt="should response to request be blocked due to nosniff" dfn id=should-response-to-request-be-blocked-due-to-nosniff?>Should
@@ -2992,9 +2982,8 @@ response <a for=/>header</a> can be used to require checking a <a for=/>request<
 
 <p>Its <a for=header>value</a> <a>ABNF</a>:
 
-<pre><code class=lang-abnf>
-Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" ; case-sensitive
-</code></pre>
+<pre>
+Cross-Origin-Resource-Policy     = %x73.61.6D.65.2D.6F.72.69.67.69.6E / %x73.61.6D.65.2D.73.69.74.65 ; "same-origin" / "same-site", case-sensitive</pre>
 
 <p>To perform a <dfn>cross-origin resource policy check</dfn>, given a <var>request</var> and
 <var>response</var>, run these steps:</p>
@@ -3711,32 +3700,10 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
   </ol>
 
  <dt>"<code>file</code>"
- <dd>
-  <p>For now, unfortunate as it is, <code>file</code> <a for=/>URLs</a> are left as an exercise for
-  the reader.
-
-  <p>When in doubt, return a <a>network error</a>.
-
  <dt>"<code>ftp</code>"
  <dd>
-  <p>For now, unfortunate as it is, <code>ftp</code> <a for=/>URLs</a> are mostly left as an
-  exercise for the reader.
-
-  <ol>
-   <li><p>Let <var>body</var> be the result of the user agent obtaining content from
-   <var>request</var>'s <a for=request>current URL</a> from the network via FTP. [[!RFC959]]
-
-   <li><p>Let </var>mime</var> be `<code>application/octet-stream</code>`.
-
-   <li><p>If <var>body</var> is the result of the user agent generating a directory listing page for
-   the result of FTP's LIST command, then set |mime| to `<code>text/ftp-dir</code>`.
-
-   <li><p>Return a <a for=/>response</a> whose <a for="response">status message</a> is
-   `<code>OK</code>`, <a for=response>header list</a> consists of a single <a for=/>header</a>
-   whose <a for=header>name</a> is `<code>Content-Type</code>` and whose <a for=header>value</a> is
-   <var>mime</var>, <a for=response>body</a> is <var>body</var>, and
-   <a for=response>HTTPS state</a> is "<code>none</code>".
-  </ol>
+  <p>For now, unfortunate as it is, <code>file</code> and <code>ftp</code> <a for=/>URLs</a> are
+  left as an exercise for the reader.
 
   <p>When in doubt, return a <a>network error</a>.
 
@@ -4161,6 +4128,29 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    `<code>If-Match</code>`, or
    `<code>If-Range</code>`, then set <var>httpRequest</var>'s
    <a for=request>cache mode</a> to "<code>no-store</code>".
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>" and
+   <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
+   `<code>Cache-Control</code>`, then <a for="header list">append</a>
+   `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+
+   <li>
+    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-store</code>" or
+    "<code>reload</code>", then:
+
+    <ol>
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Pragma</code>`, then
+     <a for="header list">append</a> `<code>Pragma</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
+     <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+     <!-- Technically this only applies to HTTP/1.1 and up -->
+    </ol>
 
    <li>
     <p>If <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
@@ -4996,22 +4986,20 @@ currently lacking when it comes to request progression (not response progression
  to <a for=/>fetch</a> a resource and extract its contents as a
  {{Blob}}:
 
- <pre><code class=lang-javascript>
+ <pre>
 fetch("/music/pk/altes-kamuffel.flac")
-  .then(res => res.blob()).then(playBlob)
-</code></pre>
+  .then(res => res.blob()).then(playBlob)</pre>
 
  <p>If you just care to log a particular response header:
 
- <pre><code class=lang-javascript>
+ <pre>
 fetch("/", {method:"HEAD"})
-  .then(res => log(res.headers.get("strict-transport-security")))
-</code></pre>
+  .then(res => log(res.headers.get("strict-transport-security")))</pre>
 
  <p>If you want to check a particular response header and then process the response of a
  cross-origin resources:
 
- <pre><code class=lang-javascript>
+ <pre>
 fetch("https://pk.example/berlin-calling.json", {mode:"cors"})
   .then(res => {
     if(res.headers.get("content-type") &amp;&amp;
@@ -5020,21 +5008,19 @@ fetch("https://pk.example/berlin-calling.json", {mode:"cors"})
     } else {
       throw new TypeError()
     }
-  }).then(processJSON)
-</code></pre>
+  }).then(processJSON)</pre>
 
  <p>If you want to work with URL query parameters:
 
- <pre><code class=lang-javascript>
+ <pre>
 var url = new URL("https://geo.example.org/api"),
     params = {lat:35.696233, long:139.570431}
 Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
-fetch(url).then(/* … */)
-</code></pre>
+fetch(url).then(/* … */)</pre>
 
  <p>If you want to receive the body data progressively:
 
- <pre><code class=lang-javascript>
+ <pre>
 function consume(reader) {
   var total = 0
   return pump()
@@ -5053,8 +5039,7 @@ function consume(reader) {
 fetch("/music/pk/altes-kamuffel.flac")
   .then(res => consume(res.body.getReader()))
   .then(() => log("consumed the entire body without keeping the whole thing in memory!"))
-  .catch(e => log("something went wrong: " + e))
-</code></pre>
+  .catch(e => log("something went wrong: " + e))</pre>
 </div>
 
 
@@ -5085,7 +5070,7 @@ Implementations could chose the more efficient {{Headers}} object representation
 <div class=example id=example-headers-class>
  <p>A {{Headers}} object can be initialized with various JavaScript data structures:
 
- <pre><code class=lang-javascript>
+ <pre>
 var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
 new Headers(meta)
 
@@ -5094,8 +5079,7 @@ var meta = [
   [ "Content-Type", "text/xml" ],
   [ "Breaking-Bad", "&lt;3" ]
 ]
-new Headers(meta)
-</code></pre>
+new Headers(meta)</pre>
 </div>
 
 <p>A {{Headers}} object has an associated
@@ -6623,41 +6607,35 @@ with {{WebSocket}} and {{XMLHttpRequest}} objects.
 
 <div id=terminate-examples class="example no-backref">
  <p>The user agent can terminate the fetch because the termination cannot be observed.
- <pre><code class=lang-javascript>
-fetch("https://www.example.com/")
-</code></pre>
+ <pre>
+fetch("https://www.example.com/")</pre>
 
  <p>The user agent cannot terminate the fetch because the termination can be observed through
  the promise.
- <pre><code class=lang-javascript>
-window.promise = fetch("https://www.example.com/")
-</code></pre>
+ <pre>
+window.promise = fetch("https://www.example.com/")</pre>
 
  <p>The user agent can terminate the fetch because the associated body is not observable.
- <pre><code class=lang-javascript>
-window.promise = fetch("https://www.example.com/").then(res => res.headers)
-</code></pre>
+ <pre>
+window.promise = fetch("https://www.example.com/").then(res => res.headers)</pre>
 
  <p>The user agent can terminate the fetch because the termination cannot be observed.
- <pre><code class=lang-javascript>
-fetch("https://www.example.com/").then(res => res.body.getReader().closed)
-</code></pre>
+ <pre>
+fetch("https://www.example.com/").then(res => res.body.getReader().closed)</pre>
 
  <p>The user agent cannot terminate the fetch because one can observe the termination by registering
  a handler for the promise object.
- <pre><code class=lang-javascript>
+ <pre>
 window.promise = fetch("https://www.example.com/")
-  .then(res => res.body.getReader().closed)
-</code></pre>
+  .then(res => res.body.getReader().closed)</pre>
 
  <p>The user agent cannot terminate the fetch as termination would be observable via the registered
  handler.
- <pre><code class=lang-javascript>
+ <pre>
 fetch("https://www.example.com/")
   .then(res => {
     res.body.getReader().closed.then(() => console.log("stream closed!"))
-  })
-</code></pre>
+  })</pre>
 
   <p>(The above examples of non-observability assume that built-in properties and functions, such as
   {{ReadableStream/getReader()|body.getReader()}}, have not been overwritten.)
@@ -6749,12 +6727,12 @@ therefore not shareable, a WebSocket connection is very close to identical to an
 
  <li>
   <p>Let <var>keyValue</var> be a nonce consisting of a randomly selected 16-byte value that has
-  been <a lt="forgiving-base64 encode">forgiving-base64-encoded</a> and <a>isomorphic encoded</a>.
+  been base64-encoded (see <a href=https://tools.ietf.org/html/rfc4648#section-4>section 4</a> of
+  [[!RFC4648]]).
 
   <p id=example-random-value class=example>If the randomly selected value was the byte sequence 0x01 0x02 0x03 0x04 0x05
   0x06 0x07 0x08 0x09 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f 0x10, <var>keyValue</var> would be
-  forgiving-base64-encoded to "<code>AQIDBAUGBwgJCgsMDQ4PEC==</code>" and isomorphic encoded
-  to `<code>AQIDBAUGBwgJCgsMDQ4PEC==</code>`.
+  `<code>AQIDBAUGBwgJCgsMDQ4PEC==</code>`.
 
  <li><p><a for="header list">Append</a>
  `<code>Sec-WebSocket-Key</code>`/<var>keyValue</var> to
@@ -6934,9 +6912,8 @@ invented.)
 <p>However, otherwise using the following <a for=/>header</a> is
 <strong>safe</strong>:
 
-<pre><code class=lang-http>
-Access-Control-Allow-Origin: *
-</code></pre>
+<pre>
+Access-Control-Allow-Origin: *</pre>
 
 <p>Even if a resource exposes additional information based on cookie or HTTP
 authentication, using the above <a for=/>header</a> will not reveal
@@ -6958,9 +6935,7 @@ however, it is perfectly fine to do so.
 [[!HTML]]
 [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
-<pre id=example-vary-origin class=example><code class=lang-http>
-Vary: Origin
-</code></pre>
+<pre id=example-vary-origin class=example>Vary: Origin</pre>
 
 <p>In particular, consider what happens if `<code>Vary</code>` is <em>not</em> used and a server is
 configured to send `<a http-header><code>Access-Control-Allow-Origin</code></a>` for a certain
@@ -7033,7 +7008,6 @@ Eric Lawrence,
 François Marier,
 Frank Ellerman,
 Frederick Hirsch,
-Gary Blackwood,
 Gavin Carothers,
 Glenn Maynard,
 Graham Klyne,
