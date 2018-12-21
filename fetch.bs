@@ -41,6 +41,9 @@ url:https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:df
     "REFERRER": {
         "aliasOf": "referrer-policy"
     },
+    "STALE-WHILE-REVALIDATE": {
+        "aliasOf": "RFC5861"
+    },
     "SW": {
         "aliasOf": "service-workers"
     },
@@ -1378,10 +1381,14 @@ Unless stated otherwise, it is unset.
 <div class="note no-backref">
  <dl>
   <dt>"<code>default</code>"
-  <dd><a for=/>Fetch</a> will inspect the HTTP cache on the way to the network.
-  If there is a fresh response it will be used. If there is a stale response a conditional request
-  will be created, and a normal request otherwise. It then updates the HTTP cache with the response.
-  [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+  <dd><a for=/>Fetch</a> will inspect the HTTP cache on the way to the network. If the HTTP cache
+  contains a matching <a>fresh response</a> it will be returned. If the HTTP cache contains a
+  matching <a>stale-while-revalidate response</a> it will be returned, and a conditional network
+  fetch will be made to update the entry in the HTTP cache. If the HTTP cache contains a matching
+  <a>stale response</a>, a conditional network fetch will be returned to update the entry in
+  the HTTP cache. Otherwise, a non-conditional network fetch will be returned to update the entry
+  in the HTTP cache.
+  [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]] [[!STALE-WHILE-REVALIDATE]]
 
   <dt>"<code>no-store</code>"
   <dd>Fetch behaves as if there is no HTTP cache at all.
@@ -1494,6 +1501,10 @@ Unless stated otherwise, it is zero.
 <dfn export for=request id=concept-request-response-tainting>response tainting</dfn>,
 which is "<code>basic</code>", "<code>cors</code>", or "<code>opaque</code>".
 Unless stated otherwise, it is "<code>basic</code>".
+
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=no-cache-prevent-cache-control>prevent no-cache cache-control header modification flag</dfn>.
+Unless stated otherwise, it is unset.
 
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=done-flag>done flag</dfn>.
 Unless stated otherwise, it is unset.
@@ -1869,6 +1880,17 @@ is a <a>filtered response</a> whose
 
  <li><p>Return <var>newResponse</var>.
 </ol>
+
+<p>A <dfn export id=concept-fresh-response>fresh response</dfn> is a <a for=/>response</a> whose
+age is within its <a href=https://tools.ietf.org/html/rfc7234#section-4.2.1>freshness lifetime</a>.
+
+<p>A <dfn export id=concept-stale-while-revalidate-response>stale-while-revalidate response</dfn> is a
+<a for=/>response</a> that is not a <a>fresh response</a>, and its current age is within
+the <a href=https://tools.ietf.org/html/rfc5861#section-3>stale-while-revalidate lifetime</a>.
+
+<p>A <dfn export id=concept-stale-response>stale response</dfn> is
+a <a for=/>response</a> is a response that is not a <a>fresh response</a> or a
+<a>stale-while-revalidate response</a>.
 
 
 <h4 id=miscellaneous>Miscellaneous</h4>
@@ -4065,10 +4087,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    `<code>If-Range</code>`, then set <var>httpRequest</var>'s
    <a for=request>cache mode</a> to "<code>no-store</code>".
 
-   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>" and
-   <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
-   `<code>Cache-Control</code>`, then <a for="header list">append</a>
-   `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
+   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>",
+   <var>httpRequest</var>'s <a for=request>prevent no-cache cache-control header modification flag</a>
+   is unset, and <var>httpRequest</var>'s <a for=request>header list</a>
+   <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
+   <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
    <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li>
@@ -4197,32 +4220,57 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
       <!-- cache hit -->
       <ol>
-       <li><p>If <var>storedResponse</var> requires validation (i.e., it is not fresh), then set the
-       <var>revalidatingFlag</var>.
-
        <li>
-        <p>If the <var>revalidatingFlag</var> is set and <var>httpRequest</var>'s
-        <a for=request>cache mode</a> is neither "<code>force-cache</code>" nor
-        "<code>only-if-cached</code>", then:
-
+        <p>If <a for=request>cache mode</a> is "<code>default</code>" and
+        <var>storedResponse</var> is a <a>stale-while-revalidate response</a>, then:
         <ol>
-         <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-         <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
-         `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
-         <a for=request>header list</a>.
+         <li><p>Set <var>response</var> to <var>storedResponse</var>.
+         <li><p>Set <var>response</var>'s <a for=response>cache state</a> to "<code>local</code>".
+         <li><p>Let <var>revalidateRequest</var> be a <a for=request>clone</a> of <var>request</var>.
+         <li><p>Set <var>revalidateRequest</var>'s <a for=request>cache mode</a> set to
+         "<code>no-cache</code>".
+         <li><p>Set <var>revalidateRequest</var>'s <a for=request>prevent no-cache cache-control header modification flag</a>.
+         <li><p>Set <var>revalidateRequest</var>'s <a for=request>service-workers mode</a> set to
+         "<code>none</code>".
+         <li>
+          <p><a>In parallel</a> perform <a for=main>main fetch</a> using <var>revalidateRequest</var>.
 
-         <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
-         <a for="header list">contains</a> `<code>Last-Modified</code>`, then
-         <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
-         <var>httpRequest</var>'s <a for=request>header list</a>.
+          <p class=note>Note the parallel fetch is only meant to update the state of the HTTP cache
+          and the response will be unused until another cache access. The stale response will be used
+          as the response to current request. The parallel fetch will be issued in the context of
+          the browsing context so if it is destroyed the request will be aborted.
+
         </ol>
+       <li>
+        <p>Otherwise:
+        <ol>
+         <li><p>If <var>storedResponse</var> is a <a>stale response</a>, then set the
+         <var>revalidatingFlag</var>.
 
-        <p class=note>See also the
-        "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
-        chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+         <li>
+          <p>If the <var>revalidatingFlag</var> is set and <var>httpRequest</var>'s
+          <a for=request>cache mode</a> is neither "<code>force-cache</code>" nor
+          "<code>only-if-cached</code>", then:
 
-       <li><p>Otherwise, set <var>response</var> to <var>storedResponse</var> and set
-       <var>response</var>'s <a for=response>cache state</a> to "<code>local</code>".
+          <ol>
+           <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+           <a for="header list">contains</a> `<code>ETag</code>`, then <a for="header list">append</a>
+           `<code>If-None-Match</code>` with its value to <var>httpRequest</var>'s
+           <a for=request>header list</a>.
+
+           <li><p>If <var>storedResponse</var>'s <a for=response>header list</a>
+           <a for="header list">contains</a> `<code>Last-Modified</code>`, then
+           <a for="header list">append</a> `<code>If-Modified-Since</code>` with its value to
+           <var>httpRequest</var>'s <a for=request>header list</a>.
+          </ol>
+
+          <p class=note>See also the
+          "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
+          chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+
+         <li><p>Otherwise, set <var>response</var> to <var>storedResponse</var> and set
+         <var>response</var>'s <a for=response>cache state</a> to "<code>local</code>".
+        </ol>
       </ol>
     </ol>
   </ol>
@@ -6942,6 +6990,7 @@ Clement Pellerin,
 Collin Jackson,
 Daniel Robertson,
 Daniel Veditz,
+Dave Tapuska,
 David Benjamin,
 David Håsäther,
 David Orchard,
