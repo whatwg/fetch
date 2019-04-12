@@ -2940,35 +2940,33 @@ run these steps:</p>
 
 <h3 id=cross-origin-resource-policy-header>`<code>Cross-Origin-Resource-Policy</code>` header</h3>
 
-<p>The
+<p>Servers can use the
 `<dfn export http-header id=http-cross-origin-resource-policy><code>Cross-Origin-Resource-Policy</code></dfn>`
-response <a for=/>header</a> can be used to require checking a <a for=/>request</a>'s
-<a for=request>current URL</a>'s <a for=url>origin</a> against a <a for=/>request</a>'s
-<a for=request>origin</a> when <a for=/>request</a>'s <a for=request>mode</a> is
-"<code>no-cors</code>".
+response <a for=/>header</a> to control the contexts into which a given resource may be loaded. The
+restrictions asserted by this header apply to "<code>no-cors</code>" subresource requests and to
+<a>navigational requests</a> that target a frame or a window that's accessible from the request's
+initiator.
 
 <p>Its <a for=header>value</a> <a>ABNF</a>:
 
 <pre><code class=lang-abnf>
-Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" ; case-sensitive
+Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-site" ; case-sensitive
 </code></pre>
 
 <p>To perform a <dfn>cross-origin resource policy check</dfn>, given a <var>request</var> and
 <var>response</var>, run these steps:</p>
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>", then return
- <b>allowed</b>.
-
  <li>
-  <p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
-  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, then return
-  <b>allowed</b>.
+  <p>Return <b>allowed</b> if either of the following statements is true:
+  <ul class=brief>
+   <li><p><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>",
+   "<code>cors</code>", or "<code>websocket</code>".
 
-  <p class="note no-backref">While redirects that carry  a
-  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` header are checked, redirects
-  without such a header resulting in <var>response</var> do not contribute to this algorithm. I.e.,
-  <var>request</var>'s <a for=request>tainted origin flag</a> is not checked.
+   <li><p><var>request</var> is a <a>navigation request</a> whose <a for=request>reserved client</a>
+   is an <a for=/>environment</a> whose <a for=environment>target browsing context</a> is neither a
+   <a>nested browsing context</a> nor an <a>auxiliary browsing context</a>.
+  </ul>
 
  <li>
   <p>Let <var>policy</var> be the result of <a for="header list">getting</a>
@@ -2976,31 +2974,65 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" ; case-sensit
   <a for=response>header list</a>.
 
   <p class=note>This means that `<code>Cross-Origin-Resource-Policy: same-site, same-origin</code>`
-  ends up as <b>allowed</b> below as it will never match anything. Two or more
-  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` headers will have the same effect.
-
- <li><p>If <var>policy</var> is `<code>same-origin</code>`, then return <b>blocked</b>.
+  ends up as <b>allowed</b> as it will not match any of the explicit options in the switch below.
+  Two or more `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` headers delivered in
+  the same response will similarly fall through to <b>allowed</b> below.
 
  <li>
-  <p>If the following are true
+  <p>If <var>policy</var> is null, and <a>request</a>'s <a for=request>client</a>'s
+  <a for="environment settings object">responsible browsing context</a>'s <a>active document</a>'s
+  <b>x-bikeshed-cross-origin-resource-policy-policy flag</b> is set, then set <var>policy</var> to
+  "<code>same-origin</code>".
 
-  <ul class=brief>
-   <li><var>request</var>'s <a for=request>origin</a>'s <a for=url>host</a> is <a>same site</a> with
-   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>
-   <li><var>request</var>'s <a for=request>origin</a>'s <a for=url>scheme</a> is
-   "<code>https</code>" or <var>response</var>'s <a for=response>HTTPS state</a> is
-   "<code>none</code>"
-  </ul>
+  <p class=XXX>This is a straw-proposal to clarify a suggestion in
+  <a href=https://github.com/whatwg/html/issues/4175>issue #4175</a>. The flag isn't yet defined,
+  and might end up looking completely different.
 
-  <p>then return <b>allowed</b>.
+ <li>Switch on <var>policy</var>:
+  <dl class=switch>
+   <dt>"<code>same-origin</code>"
+   <dd>
+    <ol>
+     <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
+     <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, return
+     <b>allowed</b>.
+     <li>Otherwise return <b>blocked</b>.
+    </ol>
 
-  <p class=note>This prevents HTTPS responses with
-  `<code>Cross-Origin-Resource-Policy: same-site</code>` from being accessed without secure
-  transport.
+   <dt>"<code>same-site</code>"
+   <dd>
+    <ol>
+     <li>
+      <p>Return <b>allowed</b> if the following are true:
+      <ul class=brief>
+       <li><var>request</var>'s <a for=request>origin</a>'s <a for=url>host</a> is <a>same site</a>
+       with <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>
 
- <li><p>If <var>policy</var> is `<code>same-site</code>`, then return <b>blocked</b>.
+       <li><var>request</var>'s <a for=request>origin</a>'s <a for=url>scheme</a> is
+       "<code>https</code>" or <var>response</var>'s <a for=response>HTTPS state</a> is
+       "<code>none</code>"
+      </ul>
+      <p class=note>`<code>Cross-Origin-Resource-Policy: same-site</code>` does not consider a
+      response delivered via a secure transport to match a non-secure requesting origin, even if
+      their hosts are otherwise <a>same-site</a>. Securely-transported responses will only match a
+      securely-transported initiator.
 
- <li><p>Return <b>allowed</b>.
+     <li><p>Otherwise, return <b>blocked</b>.
+    </ol>
+
+   <dt>"<code>cross-site</code>"
+   <dd>Return <b>allowed</b>.
+
+   <dt>Otherwise
+   <dd>
+    <p>Return <b>allowed</b>.
+
+  </dl>
+
+  <p class="note no-backref">While redirects that carry  a
+  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` header are checked, redirects
+  without such a header resulting in <var>response</var> do not contribute to this algorithm. I.e.,
+  <var>request</var>'s <a for=request>tainted origin flag</a> is not checked.
 </ol>
 
 
