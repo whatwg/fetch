@@ -1,5 +1,6 @@
 <pre class=metadata>
 Group: WHATWG
+Date: 2019-06-17
 H1: Fetch
 Shortname: fetch
 Text Macro: TWITTER fetchstandard
@@ -1502,6 +1503,10 @@ Unless stated otherwise, it is zero.
 which is "<code>basic</code>", "<code>cors</code>", or "<code>opaque</code>".
 Unless stated otherwise, it is "<code>basic</code>".
 
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=no-cache-prevent-cache-control>prevent no-cache cache-control header modification flag</dfn>.
+Unless stated otherwise, it is unset.
+
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=done-flag>done flag</dfn>.
 Unless stated otherwise, it is unset.
 
@@ -2354,58 +2359,6 @@ origin                           = <a for=url>scheme</a> "://" <a for=url>host</
 <p class="note no-backref">This supplants the `<code>Origin</code>`
 <a for=/>header</a>.
 [[ORIGIN]]
-
-<hr>
-
-<p>To <dfn id=append-a-request-origin-header>append a request `<code>Origin</code>` header</dfn>,
-given a <a for=/>request</a> <var>request</var> with an optional <i>CORS flag</i>, run these steps:
-
-<ol>
- <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
- <var>request</var>.
-
- <li><p>If the <i>CORS flag</i> is set or <var>request</var>'s <a for=request>mode</a> is
- "<code>websocket</code>", then <a for="header list">append</a>
- `<code>Origin</code>`/<var>serializedOrigin</var> to <var>request</var>'s
- <a for=request>header list</a>.
-
- <li>
-  <p>Otherwise, if <var>request</var>'s <a for=request>method</a> is neither `<code>GET</code>` nor
-  `<code>HEAD</code>`, then:
-
-  <ol>
-   <li>
-    <p>Switch on <var>request</var>'s <a for=request>referrer policy</a>:
-
-    <dl class=switch>
-     <dt>"<code>no-referrer</code>"
-     <dd><p>Set <var>serializedOrigin</var> to `<code>null</code>`.
-
-     <dt>"<code>no-referrer-when-downgrade</code>"
-     <dt>"<code>strict-origin</code>"
-     <dt>"<code>strict-origin-when-cross-origin</code>"
-     <dd><p>If <var>request</var>'s <a for=request>origin</a> is a <a>tuple origin</a>, its
-     <var>scheme</var> is "<code>https</code>", and <var>request</var>'s
-     <a for=request>current URL</a>'s <var>scheme</var> is not "<code>https</code>", then set
-     <var>serializedOrigin</var> to `<code>null</code>`.
-
-     <dt>"<code>same-origin</code>"
-     <dd><p>If <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a> with
-     <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, then set
-     <var>serializedOrigin</var> to `<code>null</code>`.
-
-     <dt>Otherwise
-     <dd>Do nothing.
-    </dl>
-
-   <li><p><a for="header list">Append</a> `<code>Origin</code>`/<var>serializedOrigin</var> to
-   <var>request</var>'s <a for=request>header list</a>.
-  </ol>
-</ol>
-
-<p class=note>A <a for=/>request</a>'s <a for=request>referrer policy</a> is taken into account for
-all fetches where the fetcher did not explicitly opt into sharing their <a for=/>origin</a> with the
-server, e.g., via using the <a>CORS protocol</a>.
 
 
 <h3 id=http-cors-protocol>CORS protocol</h3>
@@ -3977,7 +3930,7 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
  <li>
   <p>Return the result of performing a <a for=main>main fetch</a> using <var>request</var> with
 
-  <ul>
+  <ul class=brief>
    <li><p><i>CORS flag</i> if set and
    <li>
     <p><i>recursive flag</i> set if <var>request</var>'s <a for=request>redirect mode</a> is not
@@ -4116,8 +4069,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <a for=request>referrer</a>, <a lt="url serializer">serialized</a> and <a>isomorphic encoded</a>,
    to <var>httpRequest</var>'s <a for=request>header list</a>.
 
-   <li><p><a>Append a request `<code>Origin</code>` header</a> for <var>httpRequest</var> with the
-   <i>CORS flag</i> if set.
+   <li><p>If the <i>CORS flag</i> is set, <var>httpRequest</var>'s <a for=request>method</a> is
+   neither `<code>GET</code>` nor `<code>HEAD</code>`, or <var>httpRequest</var>'s
+   <a for=request>mode</a> is "<code>websocket</code>", then <a for="header list">append</a>
+   `<code>Origin</code>`/the result of <a>serializing a request origin</a> with
+   <var>httpRequest</var>, to <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
@@ -4133,6 +4089,30 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    `<code>If-Match</code>`, or
    `<code>If-Range</code>`, then set <var>httpRequest</var>'s
    <a for=request>cache mode</a> to "<code>no-store</code>".
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-cache</code>",
+   <var>httpRequest</var>'s <a for=request>prevent no-cache cache-control header modification flag</a>
+   is unset, and <var>httpRequest</var>'s <a for=request>header list</a>
+   <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
+   <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>max-age=0</code>` to
+   <var>httpRequest</var>'s <a for=request>header list</a>.
+
+   <li>
+    <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is "<code>no-store</code>" or
+    "<code>reload</code>", then:
+
+    <ol>
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Pragma</code>`, then
+     <a for="header list">append</a> `<code>Pragma</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+
+     <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
+     <a for="header list">does not contain</a> `<code>Cache-Control</code>`, then
+     <a for="header list">append</a> `<code>Cache-Control</code>`/`<code>no-cache</code>` to
+     <var>httpRequest</var>'s <a for=request>header list</a>.
+     <!-- Technically this only applies to HTTP/1.1 and up -->
+    </ol>
 
    <li>
     <p>If <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
@@ -4258,6 +4238,9 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
          <li><p>Set <var>revalidateRequest</var>'s <a for=request>cache mode</a> set to
          "<code>no-cache</code>".
+
+         <li><p>Set <var>revalidateRequest</var>'s
+         <a for=request>prevent no-cache cache-control header modification flag</a>.
 
          <li><p>Set <var>revalidateRequest</var>'s <a for=request>service-workers mode</a> set to
          "<code>none</code>".
