@@ -1548,10 +1548,15 @@ Unless stated otherwise, it is unset.
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=done-flag>done flag</dfn>.
 Unless stated otherwise, it is unset.
 
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=timing-allow-failed-flag>timing allow failed flag</dfn>. Unless stated
+otherwise, it is unset.
+
 <p class="note no-backref">A <a for=/>request</a>'s <a for=request>tainted origin flag</a>,
 <a for=request>URL list</a>, <a for=request>current URL</a>, <a for=request>redirect count</a>,
-<a for=request>response tainting</a>, and <a for=request>done flag</a> are used as bookkeeping
-details by the <a for=/>fetch</a> algorithm.
+<a for=request>response tainting</a>, <a for=request>done flag</a>, and
+<a for=request>timing allow failed flag</a> are used as bookkeeping details by the
+<a for=/>fetch</a> algorithm.
 
 <hr>
 
@@ -3896,6 +3901,9 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     or <a for=/>responses</a> from a service worker for that matter, it is applied here.
   </ol>
 
+ <li><p>If the <a>TAO check</a> for <var>request</var> and <var>response</var> returns failure, then
+  set <var>request</var>'s <a for=request>timing allow failed flag</a>.
+
  <li>
   <p>If <var>actualResponse</var>'s <a for=response>status</a> is a <a>redirect status</a>, then:
 
@@ -5072,6 +5080,34 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <li><p>If <var>credentials</var> is `<code>true</code>`, then return success.
 
  <li><p>Return failure.
+</ol>
+
+
+<h3 id=tao-check>TAO check</h3>
+
+<p>To perform a <dfn id=concept-tao-check>TAO check</dfn> for a <var>request</var> and
+<var>response</var>, run these steps:
+
+<ol>
+ <li><p>If <var>response</var>'s <a for=request>timing allow failed flag</a> is set, then return
+ failure.
+
+ <li><p>If <var>request</var>'s <a for=request>tainted origin flag</a> is unset and
+ <var>response</var>'s <a for=response>location URL</a>'s <a for=url>origin</a> is
+ <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, then return success.
+
+ <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
+ <var>request</var>.
+
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a>
+ `<code>Timing-Allow-Origin</code></a>` from <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>values</var> contains `<code>*</code>`, then return success.
+
+ <li><p>Otherwise, if <var>values</var> contains <var>serializedOrigin</var>, then return success.
+
+ <li><p>Otherwise, return failure.
 </ol>
 
 
@@ -7207,6 +7243,7 @@ Mohammed Zubair Ahmed<!-- M-ZubairAhmed; GitHub -->,
 Moritz Kneilmann,
 Ms2ger,
 Nico Schlömer,
+Nicolás Peña Moreno,
 Nikhil Marathe,
 Nikki Bee,
 Nikunj Mehta,
