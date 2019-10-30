@@ -1805,6 +1805,15 @@ initially unset.
 being provided to an API that didn't make a range request. See the flag's usage for a detailed
 description of the attack.
 
+<p>A <a for=/>response</a> has an associated
+<dfn for=response id=concept-response-timing-allow-failed-flag>timing allow failed flag</dfn>, which
+is initially unset.
+
+<p class=note>This is used so that the caller to a fetch can determine if sensitive timing data is
+allowed on the resource fetched by looking at the flag of the response returned. Because the flag on
+the response of a redirect must be set if it was set for previous responses in the redirect chain,
+this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
+
 <p>A <a for=/>response</a> can have an associated
 <dfn export for=response id=concept-response-location-url>location URL</dfn> (null, failure, or a
 <a for=/>URL</a>). Unless specified otherwise, <a for=/>response</a> has no
@@ -3901,7 +3910,8 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     or <a for=/>responses</a> from a service worker for that matter, it is applied here.
 
    <li><p>If the <a>TAO check</a> for <var>request</var> and <var>response</var> returns failure,
-   then set <var>request</var>'s <a for=request>timing allow failed flag</a>.
+   then set <var>request</var>'s <a for=request>timing allow failed flag</a> and set
+   <var>response</var>'s <a for=response>timing allow failed flag</a>.
   </ol>
 
  <li>
@@ -5089,15 +5099,15 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 <var>response</var>, run these steps:
 
 <ol>
- <li><p>If <var>response</var>'s <a for=request>timing allow failed flag</a> is set, then return
+ <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is set, then return
  failure.
 
- <li><p>If <var>request</var>'s <a for=request>response tainting</a> is not "<code>basic</code>" and
+ <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>" and
  <var>response</var>'s <a for=response>location URL</a>'s <a for=url>origin</a> is
  <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, then return success.
 
- <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
- <var>request</var>.
+ <li><p>Let <var>serializedOrigin</var> be <var>request</var>'s <a for=request>origin</a>,
+ <a lt="ASCII serialization of an origin">serialized</a> and <a>isomorphic encoded</a>.
 
  <li><p>Let <var>values</var> be the result of
  <a for="header list">getting, decoding, and splitting</a>
