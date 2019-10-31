@@ -3542,6 +3542,8 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
  <!-- If you are ever tempted to move this around, carefully consider responses from about URLs,
       blob URLs, service workers, HTTP cache, HTTP network, etc. -->
 
+ <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is set, then set <var>internalResponse</var>'s <a for=response>timing allow failed flag</a>.
+
  <li><p><a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>Set <var>internalResponse</var>'s CSP list</a>.
  [[!CSP]]
 
@@ -3910,8 +3912,7 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     or <a for=/>responses</a> from a service worker for that matter, it is applied here.
 
    <li><p>If the <a>TAO check</a> for <var>request</var> and <var>response</var> returns failure,
-   then set <var>request</var>'s <a for=request>timing allow failed flag</a> and set
-   <var>response</var>'s <a for=response>timing allow failed flag</a>.
+   then set <var>request</var>'s <a for=request>timing allow failed flag</a>.
   </ol>
 
  <li>
@@ -5106,16 +5107,16 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <var>response</var>'s <a for=response>location URL</a>'s <a for=url>origin</a> is
  <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, then return success.
 
- <li><p>Let <var>serializedOrigin</var> be <var>request</var>'s <a for=request>origin</a>,
- <a lt="ASCII serialization of an origin">serialized</a> and <a>isomorphic encoded</a>.
-
  <li><p>Let <var>values</var> be the result of
  <a for="header list">getting, decoding, and splitting</a>
  `<code>Timing-Allow-Origin</code></a>` from <var>response</var>'s <a for=response>header list</a>.
 
  <li><p>If <var>values</var> contains `<code>*</code>`, then return success.
 
- <li><p>Otherwise, if <var>values</var> contains <var>serializedOrigin</var>, then return success.
+ <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
+ <var>request</var>.
+
+ <li><p>If <var>values</var> contains <var>serializedOrigin</var>, then return success.
 
  <li><p>Otherwise, return failure.
 </ol>
