@@ -2387,13 +2387,12 @@ if the result of calling
 request <a for=/>header</a> indicates where a
 <a for=/>fetch</a> originates from.
 
-<p class="note no-backref">The `<a http-header><code>Origin</code></a>` header is a version
-of the `<code>Referer</code>` [sic] header that does not reveal a
-<a for=url>path</a>. It is used for
-all <a lt="HTTP fetch">HTTP fetches</a> whose <i>CORS flag</i> is
-set as well as those where <a for=/>request</a>'s
-<a for=request>method</a> is neither `<code>GET</code>` nor `<code>HEAD</code>`. Due to
-compatibility constraints it is not included in all
+<p class="note no-backref">The `<a http-header><code>Origin</code></a>` header is a version of the
+`<code>Referer</code>` [sic] header that does not reveal a <a for=url>path</a>. It is used for all
+<a lt="HTTP fetch">HTTP fetches</a> whose <a for=/>request</a>'s
+<a for=request>response tainting</a> is "<code>cors</code>" as well as those where
+<a for=/>request</a>'s <a for=request>method</a> is neither `<code>GET</code>` nor
+`<code>HEAD</code>`. Due to compatibility constraints it is not included in all
 <a lt=fetch for=/>fetches</a>.
 <!-- Ian Hickson told me Adam Barth researched that -->
 
@@ -2413,16 +2412,16 @@ origin                           = <a for=url>scheme</a> "://" <a for=url>host</
 <hr>
 
 <p>To <dfn id=append-a-request-origin-header>append a request `<code>Origin</code>` header</dfn>,
-given a <a for=/>request</a> <var>request</var> with an optional <i>CORS flag</i>, run these steps:
+given a <a for=/>request</a> <var>request</var>, run these steps:
 
 <ol>
  <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
  <var>request</var>.
 
- <li><p>If the <i>CORS flag</i> is set or <var>request</var>'s <a for=request>mode</a> is
- "<code>websocket</code>", then <a for="header list">append</a>
- `<code>Origin</code>`/<var>serializedOrigin</var> to <var>request</var>'s
- <a for=request>header list</a>.
+ <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" or
+ <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>", then
+ <a for="header list">append</a> `<code>Origin</code>`/<var>serializedOrigin</var> to
+ <var>request</var>'s <a for=request>header list</a>.
 
  <li>
   <p>Otherwise, if <var>request</var>'s <a for=request>method</a> is neither `<code>GET</code>` nor
@@ -3267,11 +3266,11 @@ the request.
 
 <h3 id=main-fetch>Main fetch</h3>
 
-<p>To perform a <dfn id=concept-main-fetch for=main>main fetch</dfn> using <var>request</var>, optionally
-with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
+<p>To perform a <dfn id=concept-main-fetch for=main>main fetch</dfn> using <var>request</var>,
+optionally with a <i>recursive flag</i>, run these steps:
 
 <p class=note>When <a for=main>main fetch</a> is invoked recursively
-<i>recursive flag</i> is set. <i>CORS flag</i> is a bookkeeping detail for handling redirects.
+<i>recursive flag</i> is set.
 
 <ol>
  <li><p>Let <var>response</var> be null.
@@ -3375,8 +3374,8 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
 
   <dl class=switch>
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> is
-   <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, <var>request</var>'s
-   <a for=request>tainted origin flag</a> is unset, and the <i>CORS flag</i> is unset
+   <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, and <var>request</var>'s
+   <a for=request>response tainting</a> is "<code>basic</code>"
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
    "<code>data</code>"
    <dt><var>request</var>'s <a for=request>mode</a> is
@@ -3448,8 +3447,7 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      "<code>cors</code>".
 
      <li><p>Let <var>corsWithPreflightResponse</var> be the result of performing an
-     <a>HTTP fetch</a> using <var>request</var> with <i>CORS flag</i>
-     and <i>CORS-preflight flag</i> set.
+     <a>HTTP fetch</a> using <var>request</var> with the <i>CORS-preflight flag</i> set.
 
      <li><p>If <var>corsWithPreflightResponse</var> is a <a>network error</a>, then
      <a>clear cache entries</a> using <var>request</var>.
@@ -3464,8 +3462,7 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
      <a for=request>response tainting</a> to
      "<code>cors</code>".
 
-     <li><p>Return the result of performing an <a>HTTP fetch</a>
-     using <var>request</var> with <i>CORS flag</i> set.
+     <li><p>Return the result of performing an <a>HTTP fetch</a> using <var>request</var>.
     </ol>
   </dl>
 
@@ -3790,10 +3787,10 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
 <h3 id=http-fetch>HTTP fetch</h3>
 
 <p>To perform an <dfn id=concept-http-fetch export>HTTP fetch</dfn> using <var>request</var> with an
-optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
+optional <i>CORS-preflight flag</i>, run these steps:
 
-<p class="note no-backref"><i>CORS flag</i> is still a bookkeeping detail. As is
-<i>CORS-preflight flag</i>; it indicates a <a>CORS-preflight request</a> is needed.
+<p class="note no-backref">The <i>CORS-preflight flag</i> bookkeeping detail indicates a
+<a>CORS-preflight request</a> is needed.
 
 <ol>
  <li><p>Let <var>response</var> be null.
@@ -3884,12 +3881,12 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
     worker) are not to be exposed to a service worker.
 
    <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of performing an
-   <a>HTTP-network-or-cache fetch</a> using
-   <var>request</var> with <i>CORS flag</i> if set.
+   <a>HTTP-network-or-cache fetch</a> using <var>request</var>.
 
    <li>
-    <p>If <i>CORS flag</i> is set and a <a>CORS check</a> for <var>request</var> and
-    <var>response</var> returns failure, then return a <a>network error</a>.
+    <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and a
+    <a>CORS check</a> for <var>request</var> and <var>response</var> returns failure, then return a
+    <a>network error</a>.
 
     <p class="note no-backref">As the <a>CORS check</a> is not to be applied to
     <a for=/>responses</a> whose <a for=response>status</a> is <code>304</code> or <code>407</code>,
@@ -3932,9 +3929,8 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
      <var>actualResponse</var>.
 
      <dt>"<code>follow</code>"
-     <dd><p>Set <var>response</var> to the result of performing
-     <a>HTTP-redirect fetch</a> using <var>request</var> and
-     <var>response</var> with <i>CORS flag</i> if set.
+     <dd><p>Set <var>response</var> to the result of performing <a>HTTP-redirect fetch</a> using
+     <var>request</var> and <var>response</var>.
     </dl>
     <!-- not resetting actualResponse since it's no longer used anyway -->
   </ol>
@@ -3951,7 +3947,7 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
 <a>HTTP fetch</a> above. [[!HTML]]
 
 <p>To perform an <dfn export id=concept-http-redirect-fetch>HTTP-redirect fetch</dfn> using
-<var>request</var> and <var>response</var>, with an optional <i>CORS flag</i>, run these steps:
+<var>request</var> and <var>response</var>, run these steps:
 
 <ol>
  <li><p>Let <var>actualResponse</var> be <var>response</var>, if <var>response</var> is not a
@@ -3985,10 +3981,9 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
  <a for=url>origin</a>, then return a <a>network error</a>.
 
  <li>
-  <p>If <i>CORS flag</i> is set and <var>actualResponse</var>'s
-  <a for=response>location URL</a>
-  <a lt="include credential">includes credentials</a>, then return a
-  <a>network error</a>.
+  <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and
+  <var>actualResponse</var>'s <a for=response>location URL</a>
+  <a lt="include credential">includes credentials</a>, then return a <a>network error</a>.
 
   <p class=note>This catches a cross-origin resource redirecting to a same-origin URL.
 
@@ -4031,16 +4026,11 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
 
  <li>
   <p>Return the result of performing a <a for=main>main fetch</a> using <var>request</var> with
+  <i>recursive flag</i> set if <var>request</var>'s <a for=request>redirect mode</a> is not
+  "<code>manual</code>".
 
-  <ul>
-   <li><p><i>CORS flag</i> if set and
-   <li>
-    <p><i>recursive flag</i> set if <var>request</var>'s <a for=request>redirect mode</a> is not
-    "<code>manual</code>".
-
-    <p class=note>It can only be "<code>manual</code>" when invoked directly from HTML's navigate
-    algorithm.
-  </ul>
+  <p class=note>It can only be "<code>manual</code>" when invoked directly from HTML's navigate
+  algorithm.
 
   <p class="note no-backref">This has to invoke <a for=main>main fetch</a> to
   get <a for=request>response tainting</a> correct.
@@ -4051,11 +4041,9 @@ optional <i>CORS flag</i> and <i>CORS-preflight flag</i>, run these steps:
 
 <p>To perform an
 <dfn id=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</dfn> using
-<var>request</var> with an optional <i>CORS flag</i> and <i>authentication-fetch flag</i>, run these
-steps:
+<var>request</var> with an optional <i>authentication-fetch flag</i>, run these steps:
 
-<p class=note><i>CORS flag</i> is still a bookkeeping detail. As is
-<i>authentication-fetch flag</i>.
+<p class=note>The <i>authentication-fetch flag</i> is a bookkeeping detail.
 
 <p class=note>Some implementations might support caching of partial content, as per <cite>HTTP
 Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by browser caches.
@@ -4171,8 +4159,7 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <a for=request>referrer</a>, <a lt="url serializer">serialized</a> and <a>isomorphic encoded</a>,
    to <var>httpRequest</var>'s <a for=request>header list</a>.
 
-   <li><p><a>Append a request `<code>Origin</code>` header</a> for <var>httpRequest</var> with the
-   <i>CORS flag</i> if set.
+   <li><p><a>Append a request `<code>Origin</code>` header</a> for <var>httpRequest</var>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
@@ -4454,13 +4441,14 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
  <li><p>If <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
  `<code>Range</code>`, then set <var>response</var>'s <a for=response>range-requested flag</a>.
 
- <li><p>If the <i>CORS flag</i> is unset and the <a>cross-origin resource policy check</a> with
- <var>request</var> and <var>response</var> returns <b>blocked</b>, then return a
- <a>network error</a>.
+ <li><p>If <var>httpRequest</var>'s <a for=request>response tainting</a> is not "<code>cors</code>"
+ and the <a>cross-origin resource policy check</a> with <var>request</var> and <var>response</var>
+ returns <b>blocked</b>, then return a <a>network error</a>.
 
  <li>
-  <p>If <var>response</var>'s <a for=response>status</a> is <code>401</code>, <i>CORS flag</i>
-  is unset, <i>credentials flag</i> is set, and <var>request</var>'s <a for=request>window</a> is an
+  <p>If <var>response</var>'s <a for=response>status</a> is <code>401</code>,
+  <var>httpRequest</var>'s <a for=request>response tainting</a> is not "<code>cors</code>", the
+  <i>credentials flag</i> is set, and <var>request</var>'s <a for=request>window</a> is an
   <a>environment settings object</a>, then:
 
   <ol>
@@ -4539,9 +4527,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
     <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
 
-   <li><p>Set <var>response</var> to the result of performing an
-   <a>HTTP-network-or-cache fetch</a> using
-   <var>request</var> with <i>CORS flag</i> if set.
+   <li><p>Set <var>response</var> to the result of performing an <a>HTTP-network-or-cache fetch</a>
+   using <var>request</var>.
   </ol>
 
  <li><p>If <i>authentication-fetch flag</i> is set, then create an <a>authentication entry</a>
@@ -4830,9 +4817,10 @@ run these steps:
   <a for=request>origin</a> is <var>request</var>'s <a for=request>origin</a>,
   <a for=request>referrer</a> is <var>request</var>'s <a for=request>referrer</a>,
   <a for=request>referrer policy</a> is <var>request</var>'s <a for=request>referrer policy</a>,
-  <a for=request>mode</a> is "<code>cors</code>", and
+  <a for=request>mode</a> is "<code>cors</code>",
   <a for=request>tainted origin flag</a> is <var>request</var>'s
-  <a for=request>tainted origin flag</a>.
+  <a for=request>tainted origin flag</a>, and
+  <a for=request>response tainting</a> is "<code>cors</code>".
 
   <p class="note no-backref">The <a for=request>service-workers mode</a> of <var>preflight</var>
   does not matter as this algorithm uses <a>HTTP-network-or-cache fetch</a> rather than
@@ -4863,8 +4851,8 @@ run these steps:
   <p class=note>This intentionally does not use <a for="header list">combine</a>, as 0x20 following
   0x2C is not the way this was implemented, for better or worse.
 
- <li><p>Let <var>response</var> be the result of performing an
- <a>HTTP-network-or-cache fetch</a> using <var>preflight</var> with the <i>CORS flag</i> set.
+ <li><p>Let <var>response</var> be the result of performing an <a>HTTP-network-or-cache fetch</a>
+ using <var>preflight</var>.
 
  <li>
   <p>If a <a>CORS check</a> for <var>request</var> and <var>response</var> returns success and
