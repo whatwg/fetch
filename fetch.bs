@@ -1590,11 +1590,15 @@ run these steps:
 
 <ol>
  <li><p>If <var>request</var>'s <a for=request>tainted origin flag</a> is set, then return
- `<code>null</code>`.
+ "<code>null</code>".
 
  <li><p>Return <var>request</var>'s <a for=request>origin</a>,
- <a lt="ASCII serialization of an origin">serialized</a> and <a>isomorphic encoded</a>.
+ <a lt="ASCII serialization of an origin">serialized</a>.
 </ol>
+
+<p><dfn>Byte-serializing a request origin</dfn>, given a <a for=/>request</a> <var>request</var>,
+is to return the result of <a>serializing a request origin</a> with <var>request</var>,
+<a>isomorphic encoded</a>.
 
 <hr>
 
@@ -2430,8 +2434,8 @@ origin                           = <a for=url>scheme</a> "://" <a for=url>host</
 given a <a for=/>request</a> <var>request</var> with an optional <i>CORS flag</i>, run these steps:
 
 <ol>
- <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
- <var>request</var>.
+ <li><p>Let <var>serializedOrigin</var> be the result of <a>byte-serializing a request origin</a>
+ with <var>request</var>.
 
  <li><p>If the <i>CORS flag</i> is set or <var>request</var>'s <a for=request>mode</a> is
  "<code>websocket</code>", then <a for="header list">append</a>
@@ -3542,7 +3546,8 @@ with a <i>CORS flag</i> and <i>recursive flag</i>, run these steps:
  <!-- If you are ever tempted to move this around, carefully consider responses from about URLs,
       blob URLs, service workers, HTTP cache, HTTP network, etc. -->
 
- <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
+ <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set
+ <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
 
  <li><p><a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>Set <var>internalResponse</var>'s CSP list</a>.
  [[!CSP]]
@@ -4998,7 +5003,7 @@ be removed before that moment arrives.
 
   <dl>
    <dt><a for="cache entry">serialized origin</a>
-   <dd><p>The result of <a>serializing a request origin</a> with <var>request</var>
+   <dd><p>The result of <a>byte-serializing a request origin</a> with <var>request</var>
 
    <dt><a for="cache entry">URL</a>
    <dd><p><var>request</var>'s <a for=request>current URL</a>
@@ -5023,13 +5028,13 @@ be removed before that moment arrives.
 <p>To <dfn id=concept-cache-clear>clear cache entries</dfn>, given a <var>request</var>,
 <a for=list>remove</a> any <a>cache entries</a> in the user agent's <a>CORS-preflight cache</a>
 whose <a for="cache entry">serialized origin</a> is the result of
-<a>serializing a request origin</a> with <var>request</var> and whose <a for="cache entry">URL</a>
-is <var>request</var>'s <a for=request>current URL</a>.
+<a>byte-serializing a request origin</a> with <var>request</var> and whose
+<a for="cache entry">URL</a> is <var>request</var>'s <a for=request>current URL</a>.
 
 <p>There is a <dfn id=concept-cache-match>cache entry match</dfn> for a <a>cache entry</a>
 <var>entry</var> with <var>request</var> if <var>entry</var>'s
-<a for="cache entry">serialized origin</a> is the result of <a>serializing a request origin</a> with
-<var>request</var>, <var>entry</var>'s <a for="cache entry">URL</a> is <var>request</var>'s
+<a for="cache entry">serialized origin</a> is the result of <a>byte-serializing a request origin</a>
+with <var>request</var>, <var>entry</var>'s <a for="cache entry">URL</a> is <var>request</var>'s
 <a for=request>current URL</a>, and one of
 
 <ul class=brief>
@@ -5078,7 +5083,7 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <li><p>If <var>request</var>'s <a for=request>credentials mode</a> is not "<code>include</code>"
  and <var>origin</var> is `<code>*</code>`, then return success.
 
- <li><p>If the result of <a>serializing a request origin</a> with <var>request</var> is not
+ <li><p>If the result of <a>byte-serializing a request origin</a> with <var>request</var> is not
  <var>origin</var>, then return failure.
 
  <li><p>If <var>request</var>'s <a for=request>credentials mode</a> is not "<code>include</code>",
@@ -5103,20 +5108,19 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is set, then return
  failure.
 
- <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>", then return success.
+ <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>", then
+ return success.
 
  <li><p>Let <var>values</var> be the result of
- <a for="header list">getting, decoding, and splitting</a>
- `<code>Timing-Allow-Origin</code></a>` from <var>response</var>'s <a for=response>header list</a>.
+ <a for="header list">getting, decoding, and splitting</a> `<code>Timing-Allow-Origin</code>` from
+ <var>response</var>'s <a for=response>header list</a>.
 
- <li><p>If <var>values</var> contains `<code>*</code>`, then return success.
+ <li><p>If <var>values</var> <a for=list>contains</a> "<code>*</code>", then return success.
 
- <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
- <var>request</var>.
+ <li><p>If <var>values</var> <a for=list>contains</a> the result of
+ <a>serializing a request origin</a> with <var>request</var>, then return success.
 
- <li><p>If <var>values</var> contains <var>serializedOrigin</var>, then return success.
-
- <li><p>Otherwise, return failure.
+ <li><p>Return failure.
 </ol>
 
 
