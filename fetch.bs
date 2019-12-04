@@ -1548,10 +1548,15 @@ Unless stated otherwise, it is unset.
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=done-flag>done flag</dfn>.
 Unless stated otherwise, it is unset.
 
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=timing-allow-failed>timing allow failed flag</dfn>. Unless stated
+otherwise, it is unset.
+
 <p class="note no-backref">A <a for=/>request</a>'s <a for=request>tainted origin flag</a>,
 <a for=request>URL list</a>, <a for=request>current URL</a>, <a for=request>redirect count</a>,
-<a for=request>response tainting</a>, and <a for=request>done flag</a> are used as bookkeeping
-details by the <a for=/>fetch</a> algorithm.
+<a for=request>response tainting</a>, <a for=request>done flag</a>, and
+<a for=request>timing allow failed flag</a> are used as bookkeeping details by the
+<a for=/>fetch</a> algorithm.
 
 <hr>
 
@@ -1585,11 +1590,15 @@ run these steps:
 
 <ol>
  <li><p>If <var>request</var>'s <a for=request>tainted origin flag</a> is set, then return
- `<code>null</code>`.
+ "<code>null</code>".
 
  <li><p>Return <var>request</var>'s <a for=request>origin</a>,
- <a lt="ASCII serialization of an origin">serialized</a> and <a>isomorphic encoded</a>.
+ <a lt="ASCII serialization of an origin">serialized</a>.
 </ol>
+
+<p><dfn>Byte-serializing a request origin</dfn>, given a <a for=/>request</a> <var>request</var>,
+is to return the result of <a>serializing a request origin</a> with <var>request</var>,
+<a>isomorphic encoded</a>.
 
 <hr>
 
@@ -1799,6 +1808,15 @@ initially unset.
 <p class=note>This is used to ensure to prevent a partial response from an earlier ranged request
 being provided to an API that didn't make a range request. See the flag's usage for a detailed
 description of the attack.
+
+<p>A <a for=/>response</a> has an associated
+<dfn for=response id=concept-response-timing-allow-passed>timing allow passed flag</dfn>, which is
+initially unset.
+
+<p class=note>This is used so that the caller to a fetch can determine if sensitive timing data is
+allowed on the resource fetched by looking at the flag of the response returned. Because the flag on
+the response of a redirect has to be set if it was set for previous responses in the redirect chain,
+this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
 
 <p>A <a for=/>response</a> can have an associated
 <dfn export for=response id=concept-response-location-url>location URL</dfn> (null, failure, or a
@@ -2415,8 +2433,8 @@ origin                           = <a for=url>scheme</a> "://" <a for=url>host</
 given a <a for=/>request</a> <var>request</var>, run these steps:
 
 <ol>
- <li><p>Let <var>serializedOrigin</var> be the result of <a>serializing a request origin</a> with
- <var>request</var>.
+ <li><p>Let <var>serializedOrigin</var> be the result of <a>byte-serializing a request origin</a>
+ with <var>request</var>.
 
  <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" or
  <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>", then
@@ -3526,6 +3544,9 @@ optionally with a <i>recursive flag</i>, run these steps:
  <!-- If you are ever tempted to move this around, carefully consider responses from about URLs,
       blob URLs, service workers, HTTP cache, HTTP network, etc. -->
 
+ <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set
+ <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
+
  <li><p><a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>Set <var>internalResponse</var>'s CSP list</a>.
  [[!CSP]]
 
@@ -3892,6 +3913,9 @@ optional <i>CORS-preflight flag</i>, run these steps:
     <p class="note no-backref">As the <a>CORS check</a> is not to be applied to
     <a for=/>responses</a> whose <a for=response>status</a> is <code>304</code> or <code>407</code>,
     or <a for=/>responses</a> from a service worker for that matter, it is applied here.
+
+   <li><p>If the <a>TAO check</a> for <var>request</var> and <var>response</var> returns failure,
+   then set <var>request</var>'s <a for=request>timing allow failed flag</a>.
   </ol>
 
  <li>
@@ -4943,7 +4967,7 @@ run these steps:
 <p>A <dfn>cache entry</dfn> consists of:
 
 <ul class=brief>
- <li><dfn id=concept-cache-origin for="cache entry">serialized origin</dfn> (a
+ <li><dfn id=concept-cache-origin for="cache entry">byte-serialized origin</dfn> (a
  <a for=/>byte sequence</a>)
  <li><dfn id=concept-cache-url for="cache entry">URL</dfn> (a <a for=/>URL</a>)
  <li><dfn id=concept-cache-max-age for="cache entry">max-age</dfn> (a number of seconds)
@@ -4966,8 +4990,8 @@ be removed before that moment arrives.
   <p>Let <var>entry</var> be a <a>cache entry</a>, initialized as follows:
 
   <dl>
-   <dt><a for="cache entry">serialized origin</a>
-   <dd><p>The result of <a>serializing a request origin</a> with <var>request</var>
+   <dt><a for="cache entry">byte-serialized origin</a>
+   <dd><p>The result of <a>byte-serializing a request origin</a> with <var>request</var>
 
    <dt><a for="cache entry">URL</a>
    <dd><p><var>request</var>'s <a for=request>current URL</a>
@@ -4991,15 +5015,15 @@ be removed before that moment arrives.
 
 <p>To <dfn id=concept-cache-clear>clear cache entries</dfn>, given a <var>request</var>,
 <a for=list>remove</a> any <a>cache entries</a> in the user agent's <a>CORS-preflight cache</a>
-whose <a for="cache entry">serialized origin</a> is the result of
-<a>serializing a request origin</a> with <var>request</var> and whose <a for="cache entry">URL</a>
-is <var>request</var>'s <a for=request>current URL</a>.
+whose <a for="cache entry">byte-serialized origin</a> is the result of
+<a>byte-serializing a request origin</a> with <var>request</var> and whose
+<a for="cache entry">URL</a> is <var>request</var>'s <a for=request>current URL</a>.
 
 <p>There is a <dfn id=concept-cache-match>cache entry match</dfn> for a <a>cache entry</a>
 <var>entry</var> with <var>request</var> if <var>entry</var>'s
-<a for="cache entry">serialized origin</a> is the result of <a>serializing a request origin</a> with
-<var>request</var>, <var>entry</var>'s <a for="cache entry">URL</a> is <var>request</var>'s
-<a for=request>current URL</a>, and one of
+<a for="cache entry">byte-serialized origin</a> is the result of
+<a>byte-serializing a request origin</a> with <var>request</var>, <var>entry</var>'s
+<a for="cache entry">URL</a> is <var>request</var>'s <a for=request>current URL</a>, and one of
 
 <ul class=brief>
  <li><var>entry</var>'s <a for="cache entry">credentials</a> is true
@@ -5047,7 +5071,7 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <li><p>If <var>request</var>'s <a for=request>credentials mode</a> is not "<code>include</code>"
  and <var>origin</var> is `<code>*</code>`, then return success.
 
- <li><p>If the result of <a>serializing a request origin</a> with <var>request</var> is not
+ <li><p>If the result of <a>byte-serializing a request origin</a> with <var>request</var> is not
  <var>origin</var>, then return failure.
 
  <li><p>If <var>request</var>'s <a for=request>credentials mode</a> is not "<code>include</code>",
@@ -5058,6 +5082,31 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <a for=response>header list</a>.
 
  <li><p>If <var>credentials</var> is `<code>true</code>`, then return success.
+
+ <li><p>Return failure.
+</ol>
+
+
+<h3 id=tao-check>TAO check</h3>
+
+<p>To perform a <dfn id=concept-tao-check>TAO check</dfn> for a <var>request</var> and
+<var>response</var>, run these steps:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is set, then return
+ failure.
+
+ <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>", then
+ return success.
+
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a> `<code>Timing-Allow-Origin</code>` from
+ <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>values</var> <a for=list>contains</a> "<code>*</code>", then return success.
+
+ <li><p>If <var>values</var> <a for=list>contains</a> the result of
+ <a>serializing a request origin</a> with <var>request</var>, then return success.
 
  <li><p>Return failure.
 </ol>
@@ -7196,6 +7245,7 @@ Mohammed Zubair Ahmed<!-- M-ZubairAhmed; GitHub -->,
 Moritz Kneilmann,
 Ms2ger,
 Nico Schlömer,
+Nicolás Peña Moreno,
 Nikhil Marathe,
 Nikki Bee,
 Nikunj Mehta,
