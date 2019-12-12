@@ -1775,14 +1775,6 @@ message as HTTP/2 does not support them.
 <a for=/>body</a>). Unless stated otherwise it is null.
 
 <p>A <a for=/>response</a> has an associated
-<dfn export for=response id=concept-response-trailer>trailer</dfn> (a
-<a for=/>header list</a>). Unless stated otherwise it is empty.
-
-<p>A <a for=/>response</a> has an associated
-<dfn export for=response id=concept-response-trailer-failed>trailer failed flag</dfn>, which is
-initially unset.
-
-<p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-cache-state>cache state</dfn> (the empty string or
 "<code>local</code>"). Unlesss stated otherwise, it is the empty string.
 
@@ -1852,9 +1844,8 @@ known as an <dfn export id=concept-aborted-network-error>aborted network error</
 <a for=/>response</a> whose
 <a for=response>status</a> is always <code>0</code>,
 <a for=response>status message</a> is always the empty byte sequence,
-<a for=response>header list</a> is always empty,
-<a for=response>body</a> is always null, and
-<a for=response>trailer</a> is always empty.
+<a for=response>header list</a> is always empty, and
+<a for=response>body</a> is always null.
 
 <hr>
 
@@ -1883,7 +1874,7 @@ which is only "accessible" to internal specification algorithms and is never a
 
 <p>A <dfn export id=concept-filtered-response-cors>CORS filtered response</dfn> is a
 <a>filtered response</a> whose
-<a for=response>type</a> is "<code>cors</code>",
+<a for=response>type</a> is "<code>cors</code>" and
 <a for=response>header list</a> excludes any
 <a for=/>headers</a> in
 <a for=internal>internal response</a>'s
@@ -1891,8 +1882,7 @@ which is only "accessible" to internal specification algorithms and is never a
 <a for=header>name</a> is <em>not</em> a
 <a>CORS-safelisted response-header name</a>, given
 <a for=internal>internal response</a>'s
-<a for=response>CORS-exposed header-name list</a>, and
-<a for=response>trailer</a> is empty.
+<a for=response>CORS-exposed header-name list</a>.
 
 <p>An <dfn export id=concept-filtered-response-opaque>opaque filtered response</dfn> is a
 <a>filtered response</a> whose
@@ -1900,9 +1890,8 @@ which is only "accessible" to internal specification algorithms and is never a
 <a for=response>URL list</a> is the empty list,
 <a for=response>status</a> is <code>0</code>,
 <a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is empty,
-<a for=response>body</a> is null, and
-<a for=response>trailer</a> is empty.
+<a for=response>header list</a> is empty, and
+<a for=response>body</a> is null.
 
 <p>An
 <dfn export id=concept-filtered-response-opaque-redirect>opaque-redirect filtered response</dfn>
@@ -1910,9 +1899,8 @@ is a <a>filtered response</a> whose
 <a for=response>type</a> is "<code>opaqueredirect</code>",
 <a for=response>status</a> is <code>0</code>,
 <a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is empty,
-<a for=response>body</a> is null, and
-<a for=response>trailer</a> is empty.
+<a for=response>header list</a> is empty, and
+<a for=response>body</a> is null.
 
 <div class="note no-backref">
  <p>Exposing the <a for=response>URL list</a> for
@@ -3658,14 +3646,6 @@ optionally with a <i>recursive flag</i>, run these steps:
 
  <li><p><a>Queue a fetch task</a> on <var>request</var> to
  <a>process response end-of-body</a> for <var>response</var>.
-
- <li><p>Wait for either <var>internalResponse</var>'s <a for=response>trailer</a>,
- if any, or for the ongoing fetch to <a for=fetch lt=terminated>terminate</a>. <span class=note>See
- <a href=https://tools.ietf.org/html/rfc7230#section-4.1.2>section 4.1.2</a> of
- [[!HTTP]].</span>
-
- <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then set <var>internalResponse</var>'s
- <a for=response>trailer failed flag</a>.
 
  <li><p>Set <var>request</var>'s <a>done flag</a>.
 
@@ -6414,7 +6394,6 @@ interface Response {
   readonly attribute boolean ok;
   readonly attribute ByteString statusText;
   [SameObject] readonly attribute Headers headers;
-  readonly attribute Promise&lt;Headers> trailer;
 
   [NewObject] Response clone();
 };
@@ -6435,10 +6414,6 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 
 <p>A {{Response}} object also has an associated <dfn for=Response export>headers</dfn> (null or a
 {{Headers}} object), initially null.
-
-<p>A {{Response}} object also has an associated
-<dfn id=concept-response-trailer-promise for=Response>trailer promise</dfn> (a promise). <span class=note>Used
-for the {{Response/trailer}} attribute.</span>
 
 <p>A {{Response}} object's <a for=Body>body</a> is its
 <a for=Response>response</a>'s <a for=response>body</a>.
@@ -6501,10 +6476,6 @@ constructor, when invoked, must run these steps:
  <a for=response>HTTPS state</a> to
  <a>current settings object</a>'s
  <a for="environment settings object">HTTPS state</a>.
-
- <li><p>Resolve <var>r</var>'s <a for=Response>trailer promise</a>
- with a new {{Headers}} object whose <a for=Headers>guard</a> is
- "<code>immutable</code>".
 
  <li><p>Return <var>r</var>.
 </ol>
@@ -6584,9 +6555,6 @@ must return the <a>context object</a>'s <a for=Response>response</a>'s
 <p>The <dfn attribute for=Response><code>headers</code></dfn> attribute's getter, when invoked, must
 return the <a>context object</a>'s <a for=Response>headers</a>.
 
-<p>The <dfn attribute for=Response><code>trailer</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Response>trailer promise</a>.
-
 <hr>
 
 <p>The <dfn method for=Response><code>clone()</code></dfn> method, when invoked, must
@@ -6608,11 +6576,6 @@ run these steps:
  whose <a for=Headers>header list</a> is set to <var>clonedResponse</var>'s
  <a for=Headers>header list</a>, and <a for=Headers>guard</a> is the <a>context object</a>'s
  <a for=Response>headers</a>'s <a for=Headers>guard</a>.
-
- <li><p>Upon fulfillment of the <a>context object</a>'s <a for=Response>trailer promise</a>, resolve
- <var>clonedResponseObject</var>'s <a for=Response>trailer promise</a> with a new {{Headers}} object
- whose <a for=Headers>guard</a> is "<code>immutable</code>", and whose
- <a for="Headers">header list</a> is <var>clonedResponse</var>'s <a for=response>trailer</a>.
 
  <li><p>Return <var>clonedResponseObject</var>.
 
@@ -6700,36 +6663,6 @@ method, must run these steps:
    <li><p>Resolve <var>p</var> with <var>responseObject</var>.
   </ol>
 
-  <p>To <a>process response done</a> for <var>response</var>, run these substeps:
-
-  <ol>
-   <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
-
-   <li><p>Let <var>trailerObject</var> be a new {{Headers}} object whose
-   <a for=Headers>guard</a> is "<code>immutable</code>".
-
-   <li>
-    <p>If <var>response</var>'s <a for=response>trailer failed flag</a> is set, then:
-
-    <ol>
-     <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, reject
-     <var>responseObject</var>'s <a for=Response>trailer promise</a> with an
-     "<code><a exception>AbortError</a></code>" {{DOMException}}.
-
-     <li><p>Otherwise, reject <var>responseObject</var>'s <a for=Response>trailer promise</a> with
-     a {{TypeError}}.
-
-     <li><p>Terminate these substeps.
-    </ol>
-
-   <li><p>Associate <var>trailerObject</var> with <var>response</var>'s
-   <a for=response>trailer</a>.
-
-   <li><p>Resolve <var>responseObject</var>'s
-   <a for=Response>trailer promise</a> with
-   <var>trailerObject</var>.
-  </ol>
-
  <li><p>Return <var>p</var>.
 </ol>
 
@@ -6749,12 +6682,6 @@ method, must run these steps:
  <a for=request>body</a> with <var>error</var>.
 
  <li><p>If <var>responseObject</var> is null, then return.
-
- <li>
-  <p>Reject <var>responseObject</var>'s <a for=Response>trailer promise</a> with <var>error</var>.
-
-  <p class=note>This is a no-op if <var>responseObject</var>'s <a for=Response>trailer promise</a>
-  has already fulfilled.
 
  <li><p>Let <var>response</var> be <var>responseObject</var>'s <a for=Response>response</a>.
 
