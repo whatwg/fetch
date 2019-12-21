@@ -381,6 +381,50 @@ for consistency.
 <p class="note no-backref">A <a for=/>header list</a> is essentially a
 specialized multimap. An ordered list of key-value pairs with potentially duplicate keys.
 
+<p>To
+<dfn export for="header list" id=concept-header-list-get-structured-header>get a structured header</dfn>
+given a <var>name</var> and a <var>type</var> from a <a for=/>header list</a> <var>list</var>, run
+these steps:
+
+<ol>
+ <li><p>Assert: <var>type</var> is one of "<code>dictionary</code>", "<code>list</code>", or
+ "<code>item</code>".
+
+ <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var> from
+ <var>list</var>.
+
+ <li><p>If <var>value</var> is null, then return null.
+
+ <li><p>Let <var>result</var> be the result of executing the <a>parsing structured headers</a>
+ algorithm with <var ignore>input_string</var> set to <var>value</var>, and
+ <var ignore>header_type</var> set to <var>type</var>.
+
+ <li><p>If parsing failed, then return failure.
+
+ <li><p>Return <var>result</var>.
+</ol>
+
+<p>To
+<dfn export for="header list" id=concept-header-list-set-structured-header>set a structured header</dfn>
+<a for=header>name</a>/<a>structured header value</a> <var>name</var>/<var>structuredValue</var>
+pair in a <a for=/>header list</a> <var>list</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>serializedValue</var> be the result of executing the
+ <a>serializing structured headers</a> algorithm on <var>structuredValue</var>.
+
+ <li><p><a for="header list">Set</a> <var>name</var>/<var>serializedValue</var> in <var>list</var>.
+</ol>
+
+<p class=note><a>Structured header values</a> are defined as objects which HTTP can (eventually)
+serialize in interesting and efficient ways. For the moment, Fetch only supports <a for=/>header</a>
+<a for=header>values</a> as <a for=/>byte sequences</a>, which means that these objects can be set
+in <a for=/>header lists</a> only via serialization, and they can be obtained from
+<a for=/>header lists</a> only by parsing. In the future the fact that they are objects might be
+preserved end-to-end. [[!HEADER-STRUCTURE]]
+
+<hr>
+
 <p>A <a for=/>header list</a> <var>list</var>
 <dfn export for="header list" lt="contains|does not contain">contains</dfn> a <a for=header>name</a>
 <var>name</var> if <var>list</var> <a for=list>contains</a> a <a for=/>header</a> whose
@@ -572,43 +616,6 @@ A: 3
  <li><p>Otherwise, <a for=list>append</a> a new <a for=/>header</a> whose <a for=header>name</a> is
  <var>name</var> and <a for=header>value</a> is <var>value</var> to <var>list</var>.
 </ol>
-
-<p>To
-<dfn export for="header list" id=concept-header-list-set-structured-header>set a structured header</dfn>
-<a for=header>name</a>/<a>structured header value</a> <var>name</var>/<var>structuredValue</var>
-pair in a <a for=/>header list</a> <var>list</var>, run these steps:
-
-<ol>
- <li><p>Let <var>serializedValue</var> be the result of executing the
- <a>serializing structured headers</a> algorithm on <var>structuredValue</var>.
-
- <li><p><a for="header list">Set</a> <var>name</var>/<var>serializedValue</var> in <var>list</var>.
-</ol>
-
-<p>To
-<dfn export for="header list" id=concept-header-list-get-structured-header>get a structured header</dfn>
-given a <var>name</var> and a <var>type</var> from a <a for=/>header list</a> <var>list</var>, run
-these steps:
-
-<ol>
- <li><p>Assert: <var>type</var> is one of "<code>dictionary</code>", "<code>list</code>", or
- "<code>item</code>".
- <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var> from
- <var>list</var>.
- <li><p>If <var>value</var> is null, then return null.
- <li><p>Let <var>result</var> be the result of executing the <a>parsing structured headers</a>
- algorithm with <var ignore>input_string</var> set to <var>value</var>, and
- <var ignore>header_type</var> set to <var>type</var>.
- <li><p>If parsing failed, then return failure.
- <li><p>Return <var>result</var>.
-</ol>
-
-<p class=note><a>Structured header values</a> are defined as objects which HTTP can (eventually)
-serialize in interesting and efficient ways. For the moment, Fetch only supports <a for=/>header</a>
-<a for=header>values</a> as <a for=/>byte sequences</a>, which means that these objects can be set
-in <a for=/>header lists</a> only via serialization, and they can be obtained from
-<a for=/>header lists</a> only by parsing. In the future the fact that they are objects might be
-preserved end-to-end. [[!HEADER-STRUCTURE]]
 
 <p>To <dfn export for="header list" id=concept-header-list-combine>combine</dfn> a
 <a for=header>name</a>/<a for=header>value</a> <var>name</var>/<var>value</var> pair in a
