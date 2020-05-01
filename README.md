@@ -40,7 +40,7 @@ requirement.
  on <var>response</var>. <span data-anolis-ref>CSP</span>
 ```
 is okay and
-  ```html
+ ```html
  <li><p>Execute
  <a href=https://w3c.github.io/webappsec-csp/#set-response-csp-list>set <var>response</var>'s CSP
  list</a> on <var>response</var>. <span data-anolis-ref>CSP</span>
@@ -71,9 +71,9 @@ Do not indent for anything except a new "block" element. For instance
 is not indented, but
 ```html
  <li>
-  <p>Run these substeps <span data-anolis-spec=html>in parallel</span>:
+ <p>Run these substeps <span data-anolis-spec=html>in parallel</span>:
 
-  <ol>
+ <ol>
 ```
 is.
 
