@@ -81,7 +81,7 @@ End tags must be omitted when possible and attribute values must not be quoted (
 double quotes).
 
 Place one new line between paragraphs (including list elements). Place two or more new lines before
-headings (e.g., <h3>). This doesn't apply when a nested heading follows the parent heading.
+headings (e.g., `<h3>`). This doesn't apply when a nested heading follows the parent heading.
 
 ```html
 <ul>
