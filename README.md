@@ -108,10 +108,9 @@ etc.
 ```html
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-redirect-mode>redirect mode</dfn>,...
-
-...
+```
+```html
 <p>Let <var>redirectMode</var> be <var>request</var>'s <a for=request>redirect mode</a>.
-...
 ```
 
 ## Merge policy
