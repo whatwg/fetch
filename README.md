@@ -80,9 +80,9 @@ is.
 End tags must be omitted when possible and attribute values must not be quoted (if necessary, use
 double quotes).
 
-Place one newline between paragraphs (including list elements). Place three newlines before
-`<h2>`, and two newlines before other headings. This doesn't apply when a nested heading
-follows the parent heading.
+Place one newline between paragraphs (including list elements). Place three newlines before `<h2>`,
+and two newlines before other headings. This does not apply when a nested heading follows the parent
+heading.
 
 ```html
 <ul>
@@ -102,9 +102,8 @@ follows the parent heading.
 <h4>Place two newlines above.</h4>
 ```
 
-Use camelCase for variable names. On the other hand, use spaced names for defined names
-(properties, algorithms, etc).
-
+Use camel case for variable names and sentence case use spaced names for definitions, algorithms,
+etc.
 
 ```html
 <p>A <a for=/>request</a> has an associated
