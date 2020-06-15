@@ -80,29 +80,30 @@ is.
 End tags must be omitted when possible and attribute values must not be quoted (if necessary, use
 double quotes).
 
-Place one new line between paragraphs (including list elements). Place two or more new lines before
-headings (e.g., `<h3>`). This doesn't apply when a nested heading follows the parent heading.
+Place one newline between paragraphs (including list elements). Place three newlines before
+`<h2>`, and two newlines before other headings. This doesn't apply when a nested heading
+follows the parent heading.
 
 ```html
 <ul>
- <li><p>Do not place a new line above.
+ <li><p>Do not place a newline above.
 
- <li><p>Place a new line above.
+ <li><p>Place a newline above.
 </ul>
 
-<p>Place a new line above.
+<p>Place a newline above.
 
 
-<h3>Place two or more new lines above.</h3>
+<h3>Place two newlines above.</h3>
 
-<h4>Placing one new line is OK here.</h4>
+<h4>Placing one newline is OK here.</h4>
 
 
-<h4>Place two or more new lines above.</h4>
+<h4>Place two newlines above.</h4>
 ```
 
-Use camelCase for variable names. On the other hand, it is OK to use spaced names for defined
-names (properties, algorithms, etc).
+Use camelCase for variable names. On the other hand, use spaced names for defined names
+(properties, algorithms, etc).
 
 
 ```html
