@@ -1751,14 +1751,17 @@ source of security bugs. Please seek security review for features that deal with
 
 <hr>
 
-<p>To <dfn export>serialize a request URL for reporting</dfn>, given a <a for=/>request</a>
-<var>request</var>, run these steps:
+<p>To <dfn export>serialize a response URL for reporting</dfn>, given a <a for=/>response</a>
+<var>response</var>, run these steps:
 
 <ol>
- <li>
-  <p>Let <var>url</var> be a copy of <var>request</var>'s <a for=request>URL</a>.
+ <li><p>Assert: <var>response</var>'s <a for=response>URL list</a> <a for=list>is not empty</a>.
 
-  <p class="note">This is not <var>request</var>'s <a for=request>current URL</a> in order to avoid
+ <li>
+  <p>Let <var>url</var> be a copy of <var>response</var>'s <a for=response>URL list</a>'s first
+  element.
+
+  <p class="note">This is not <var>response</var>'s <a for=response>URL</a> in order to avoid
   leaking information about redirect targets (see
   <a href="https://w3c.github.io/webappsec-csp/#security-violation-reports">similar considerations for CSP reporting</a>
   too). [[CSP]]
@@ -3147,23 +3150,56 @@ response <a for=/>header</a> can be used to require checking a <a for=/>request<
 Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-origin" ; case-sensitive
 </code></pre>
 
-<p>To perform a <dfn>cross-origin resource policy check</dfn>, given a <var>request</var> and
-<var>response</var>, run these steps:</p>
+<p>To perform a <dfn export>cross-origin resource policy check</dfn>, given an <a for=url>origin</a>
+<var>origin</var>, an <a for=/>environment settings object</a> <var>settingsObject</var>, a
+<a for=/>response</a> <var>response</var>, and an optional boolean <var>forNavigation</var>, run
+these steps:
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>", then return
- <b>allowed</b>.
+ <li><p>Set <var>forNavigation</var> to false if it is not given.
+
+ <li><p>Let <var>embedderPolicy</var> be <var>settingsObject</var>'s
+ <a for="environment settings object">embedder policy</a>.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
-  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, then return
-  <b>allowed</b>.
+  <p>If the <a>cross-origin resource policy internal check</a> with <var>origin</var>,
+  "<code><a for="embedder policy value">unsafe-none</a></code>", <var>response</var>, and
+  <var>forNavigation</var> returns <b>blocked</b>, then return <b>blocked</b>.
 
-  <p class="note no-backref">While redirects that carry  a
-  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` header are checked, redirects
-  without such a header resulting in <var>response</var> do not affect the outcome as the default is
-  <b>allowed</b>.
-  <!-- This changes with COEP's cross-origin value. -->
+  <p class="note">This step is needed because we don't want to report violations not related to
+  Cross-Origin Embedder Policy below.
+
+ <li><p>If the <a>cross-origin resource policy internal check</a> with <var>origin</var>,
+ <var>embedderPolicy</var>'s <a for="embedder policy">report only value</a>, <var>response</var>,
+ and <var>forNavigation</var> returns <b>blocked</b>, then
+ <a>queue a cross-origin embedder policy CORP violation report</a> with <var>response</var>,
+ <var>settingsObject</var>, and true.
+
+ <li><p>If the <a>cross-origin resource policy internal check</a> with <var>origin</var>,
+ <var>embedderPolicy</var>'s <a for="embedder policy">value</a>, <var>response</var>, and
+ <var>forNavigation</var> returns <b>allowed</b>, then return <b>allowed</b>.
+
+ <li><p><a>Queue a cross-origin embedder policy CORP violation report</a> with <var>response</var>,
+ <var>settingsObject</var>, and false.
+
+ <li><p>Return <b>blocked</b>.
+</ol>
+
+<p class="note no-backref">Only HTML's navigate algorithm uses this check with
+<var>forNavigation</var> set to true, and it's always for nested navigations. Otherwise,
+<var>response</var> is either the <a for=internal>internal response</a> of an
+<a>opaque filtered response</a> or a <a for=/>response</a> which will be the
+<a for=internal>internal response</a> of an
+<a>opaque filtered response</a>. [[HTML]]
+
+<p>To perform a <dfn>cross-origin resource policy internal check</dfn>, given an
+<a for=url>origin</a> <var>origin</var>, an <a for=/>embedder policy value</a>
+<var>embedderPolicyValue</var>, a <a for=/>response</a> <var>response</var>, and a boolean
+<var>forNavigation</var>, run these steps:
+
+<ol>
+ <li><p>If <var>forNavigation</var> is true and <var>embedderPolicyValue</var> is
+ "<code><a for="embedder policy value">unsafe-none</a></code>", then return <b>allowed</b>.
 
  <li>
   <p>Let <var>policy</var> be the result of <a for="header list">getting</a>
@@ -3171,31 +3207,93 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
   <a for=response>header list</a>.
 
   <p class=note>This means that `<code>Cross-Origin-Resource-Policy: same-site, same-origin</code>`
-  ends up as <b>allowed</b> below as it will never match anything. Two or more
-  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` headers will have the same effect.
+  ends up as <b>allowed</b> below as it will never match anything, as long as
+  <var>embedderPolicyValue</var> is "<code><a for="embedder policy value">unsafe-none</a></code>".
+  Two or more `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` headers will have the
+  same effect.
 
- <li><p>If <var>policy</var> is `<code>same-origin</code>`, then return <b>blocked</b>.
+ <li><p>If <var>policy</var> is neither `<code>same-origin</code>`, `<code>same-site</code>`, nor
+ `<code>cross-origin</code>`, then set <var>policy</var> to null.
+
+ <li><p>If <var>policy</var> is null and <var>embedderPolicyValue</var> is
+ "<code><a for="embedder policy value">require-corp</a></code>", then set <var>policy</var> to
+ `<code>same-origin</code>`.
 
  <li>
-  <p>If the following are true
+  <p>Switch on <var>policy</var>:
 
-  <ul class=brief>
-   <li><var>request</var>'s <a for=request>origin</a> is <a>schemelessly same site</a> with
-   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>
-   <li><var>request</var>'s <a for=request>origin</a>'s <a for=url>scheme</a> is
-   "<code>https</code>" or <var>response</var>'s <a for=response>HTTPS state</a> is
-   "<code>none</code>"
-  </ul>
+  <dl class=switch>
+   <dt>null
+   <dt>`<code>cross-origin</code>`
+   <dd><p>Return <b>allowed</b>.
 
-  <p>then return <b>allowed</b>.
+   <dt>`<code>same-origin</code>`
+   <dd>
+    <p>If <var>origin</var> is <a>same origin</a> with <var>response</var>'s <a for=response>URL</a>'s
+    <a for=url>origin</a>, then return <b>allowed</b>.
 
-  <p class=note>This prevents HTTPS responses with
-  `<code>Cross-Origin-Resource-Policy: same-site</code>` from being accessed without secure
-  transport.
+    <p>Otherwise, return <b>blocked</b>.
 
- <li><p>If <var>policy</var> is `<code>same-site</code>`, then return <b>blocked</b>.
+   <dt>`<code>same-site</code>`
+   <dd>
+    <p>If the following are true
 
- <li><p>Return <b>allowed</b>.
+    <ul class=brief>
+     <li><p><var>origin</var> is <a>schemelessly same site</a> with <var>response</var>'s
+     <a for=response>URL</a>'s <a for=url>origin</a>
+
+     <li><p><var>origin</var>'s <a for=url>scheme</a> is "<code>https</code>" or
+     <var>response</var>'s <a for=response>HTTPS state</a> is "<code>none</code>"
+    </ul>
+
+    <p>then return <b>allowed</b>.
+
+    <p>Otherwise, return <b>blocked</b>.
+
+    <p class=note>`<code>Cross-Origin-Resource-Policy: same-site</code>` does not consider a
+    response delivered via a secure transport to match a non-secure requesting origin,
+    even if their hosts are otherwise same site. Securely-transported responses will only
+    match a securely-transported initiator.
+  </dl>
+</ol>
+
+<p>To <dfn>queue a cross-origin embedder policy CORP violation report</dfn>, given a
+<a for=/>response</a> <var>response</var>, an <a for=/>environment settings object</a>
+<var>settingsObject</var>, and a boolean <var>reportOnly</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>endpoint</var> be <var>settingsObject</var>'s
+ <a for="environment settings object">embedder policy</a>'s
+ <a for="embedder policy">report only reporting endpoint</a> if <var>reportOnly</var> is true and
+ <var>settingsObject</var>'s <a for="environment settings object">embedder policy</a>'s
+ <a for="embedder policy">reporting endpoint</a> otherwise.
+
+ <li><p>Let <var>serialized url</var> be the result of
+ <a lt="serialize a response URL for reporting">serializing a response URL for reporting</a> with
+ <var>response</var>.
+
+ <li>
+  <p>Let <var>body</var> be a new object containing the following properties:
+
+  <table>
+   <thead>
+    <th>key
+    <th>value
+   </thead>
+   <tbody>
+    <tr>
+     <td>"<code>type</code>"
+     <td>"<code>corp</code>"
+    </tr>
+    <tr>
+     <td>"<code>blocked-url</code>"
+     <td><var>serialized url</var>
+    </tr>
+   </tbody>
+  </table>
+
+ <li><p><a for="reporting">Queue</a> <var>body</var> as the <a>"<code>coep</code>" report type</a> for
+ <var>endpoint</var> on <var>settingsObject</var>. [[!REPORTING]]
 </ol>
 
 
@@ -3589,9 +3687,8 @@ optionally with a <i>recursive flag</i>, run these steps:
   <p>If <var>internalResponse</var>'s <a for=response>URL list</a> <a for=list>is empty</a>, then
   set it to a <a for=list>clone</a> of <var>request</var>'s <a for=request>URL list</a>.
 
-  <p class=note>A <a for=/>response</a>'s <a for=response>URL list</a> will typically be empty at
-  this point, unless it came from a service worker, in which case it will only be empty if it was
-  created through <a lt="Response()" constructor><code>new Response()</code></a>.
+  <p class=note>A <a for=/>response</a>'s <a for=response>URL list</a> can be empty (for example,
+  when the response represents an <code>about</code> URL).
  <!-- If you are ever tempted to move this around, carefully consider responses from about URLs,
       blob URLs, service workers, HTTP cache, HTTP network, etc. -->
 
@@ -3960,6 +4057,18 @@ optional <i>CORS-preflight flag</i>, run these steps:
    <li><p>If the <a>TAO check</a> for <var>request</var> and <var>response</var> returns failure,
    then set <var>request</var>'s <a for=request>timing allow failed flag</a>.
   </ol>
+
+ <li>
+  <p>If either <var>request</var>'s <a for=request>response tainting</a> or <var>response</var>'s
+  <a for=response>type</a> is "<code>opaque</code>", and the
+  <a>cross-origin resource policy check</a> with <var>request</var>'s <a for=request>origin</a>,
+  <var>request</var>'s <a for=request>client</a>, and <var>actualResponse</var> returns
+  <b>blocked</b>, then return a <a>network error</a>.
+
+  <p class=note>The <a>cross-origin resource policy check</a> runs for responses coming from the
+  network and responses coming from the service worker. This is different from the
+  <a>CORS check</a>, as <var>request</var>'s <a for=request>client</a> and the service worker can
+  have different embedder policies.
 
  <li>
   <p>If <var>actualResponse</var>'s <a for=response>status</a> is a <a>redirect status</a>, then:
@@ -4513,12 +4622,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
     </ol>
   </ol>
 
+ <li><p>Set <var>response</var>'s <a for=response>URL list</a> to a <a for=list>clone</a> of
+ <var>httpRequest</var>'s <a for=request>URL list</a>.
+
  <li><p>If <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
  `<code>Range</code>`, then set <var>response</var>'s <a for=response>range-requested flag</a>.
-
- <li><p>If <var>httpRequest</var>'s <a for=request>response tainting</a> is not "<code>cors</code>"
- and the <a>cross-origin resource policy check</a> with <var>request</var> and <var>response</var>
- returns <b>blocked</b>, then return a <a>network error</a>.
 
  <li>
   <p>If <var>response</var>'s <a for=response>status</a> is <code>401</code>,
