@@ -2121,6 +2121,50 @@ clearly stipulates that <a>connections</a> are keyed on
      WebSocket saner -->
 
 
+<h3 id=http-cache-partitions>HTTP cache partitions</h3>
+
+<p>To
+<dfn lt="determine the HTTP cache partition|determining the HTTP cache partition">determine the HTTP cache partition</dfn>,
+given <var>request</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>topLevelOrigin</var> be null.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>reserved client</a> is non-null, then:
+
+  <ol>
+   <li><p>Set <var>topLevelOrigin</var> to <var>request</var>'s <a for=request>reserved client</a>'s
+   <a for="environment">top-level origin</a>.
+
+   <li>
+    <p>If <var>topLevelOrigin</var> is null, then set <var>topLevelOrigin</var> to
+    <var>request</var>'s <a for=request>reserved client</a>'s
+    <a for="environment">top-level creation URL</a>'s <a for=url>origin</a>.
+
+    <p class=note>This happens for top-level navigations only.
+  </ol>
+
+ <li><p>Otherwise, if <var>request</var>'s <a for=request>client</a> is non-null, set
+ <var>topLevelOrigin</var> to <var>request</var>'s <a for=request>client</a>'s
+ <a for="environment">top-level origin</a>.
+
+ <li><p>Otherwise, return null.
+
+ <li><p>Assert: <var>topLevelOrigin</var> is an <a for=/>origin</a>.
+
+ <li><p>Let <var>topLevelSite</var> be the result of <a lt="obtain a site">obtaining a site</a>,
+ given <var>topLevelOrigin</var>.
+
+ <li>
+  <p>Return the HTTP cache associated with <var>topLevelSite</var> and, possibly, a second key.
+  [[!HTTP-CACHING]]
+
+  <p class=XXX>The second key is intentionally a little vague as the finer points are still
+  evolving. See <a href=https://github.com/whatwg/fetch/issues/1035>issue #1035</a>.
+</ol>
+
+
 <h3 id=port-blocking>Port blocking</h3>
 
 <p>To determine whether fetching a <a for=/>request</a> <var>request</var>
@@ -4239,6 +4283,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
  <li><p>Let <var>storedResponse</var> be null.
 
+ <li><p>Let <var>httpCache</var> be null.
+
  <li><p>Let the <var>revalidatingFlag</var> be unset.
 
  <li>
@@ -4474,14 +4520,20 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
     <var>httpRequest</var>'s
     <a for=request>credentials mode</a>.
 
+   <li><p>Set <var>httpCache</var> to the result of <a>determining the HTTP cache partition</a>,
+   given <var>httpRequest</var>.
+
+   <li><p>If <var>httpCache</var> is null, then set <var>httpRequest</var>'s
+   <a for=request>cache mode</a> to "<code>no-store</code>".
+
    <li>
     <p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is neither "<code>no-store</code>"
     nor "<code>reload</code>", then:
 
     <ol>
      <li>
-      <p>Set <var>storedResponse</var> to the result of selecting a response from the HTTP cache,
-      possibly needing validation, as per the
+      <p>Set <var>storedResponse</var> to the result of selecting a response from the
+      <var>httpCache</var>, possibly needing validation, as per the
       "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
       chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
 
@@ -4519,10 +4571,10 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
           <p><a>In parallel</a>, perform <a for=main>main fetch</a> using
           <var>revalidateRequest</var>.
 
-          <p class=note>This fetch is only meant to update the state of the HTTP cache and the
-          response will be unused until another cache access. The stale response will be used as the
-          response to current request. This fetch is issued in the context of a client so if it goes
-          away the request will be terminated.
+          <p class=note>This fetch is only meant to update the state of <var>httpCache</var>
+          and the response will be unused until another cache access. The stale response will be used
+          as the response to current request. This fetch is issued in the context of a client so if
+          it goes away the request will be terminated.
         </ol>
 
        <li>
@@ -4585,8 +4637,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is
    <a href=https://tools.ietf.org/html/rfc7231#safe.methods>unsafe</a> and
    <var>forwardResponse</var>'s <a for=response>status</a> is in the range <code>200</code> to
-   <code>399</code>, inclusive, invalidate appropriate stored responses in the HTTP cache, as per
-   the "<a href=https://tools.ietf.org/html/rfc7234#section-4.4>Invalidation</a>" chapter of
+   <code>399</code>, inclusive, invalidate appropriate stored responses in <var>httpCache</var>, as
+   per the "<a href=https://tools.ietf.org/html/rfc7234#section-4.4>Invalidation</a>" chapter of
    <cite>HTTP Caching</cite>, and set <var>storedResponse</var> to null. [[!HTTP-CACHING]]
 
    <li>
@@ -4613,8 +4665,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
      <li><p>Set <var>response</var> to <var>forwardResponse</var>.
 
      <li>
-      <p>Store <var>httpRequest</var> and <var>forwardResponse</var> in the HTTP cache, as per the
-      "<a href=https://tools.ietf.org/html/rfc7234#section-3>Storing Responses in Caches</a>"
+      <p>Store <var>httpRequest</var> and <var>forwardResponse</var> in <var>httpCache</var>, as per
+      the "<a href=https://tools.ietf.org/html/rfc7234#section-3>Storing Responses in Caches</a>"
       chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
 
       <p class=note>If <var>forwardResponse</var> is a <a>network error</a>, this effectively caches
@@ -4732,6 +4784,12 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
  <li><p>Let <var>credentials</var> be true if <i>credentials flag</i> is set, and false otherwise.
 
  <li><p>Let <var>response</var> be null.
+
+ <li><p>Let <var>httpCache</var> be the result of <a>determining the HTTP cache partition</a>, given
+ <var>httpRequest</var>.
+
+ <li><p>If <var>httpCache</var> is null, then set <var>request</var>'s <a for=request>cache mode</a>
+ to "<code>no-store</code>".
 
  <li>
   <p>Switch on <var>request</var>'s <a for=request>mode</a>:
@@ -4859,11 +4917,9 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
    <a for=body>total bytes</a> to that payload body length.
    <!-- XXX xref payload body -->
 
-   <li><p>If <var>response</var> is not a
-   <a>network error</a> and <var>request</var>'s
-   <a for=request>cache mode</a> is not "<code>no-store</code>",
-   update <var>response</var> in the HTTP cache for <var>request</var>.
-   <!-- XXX xref HTTP cache -->
+   <li><p>If <var>response</var> is not a <a>network error</a> and <var>request</var>'s
+   <a for=request>cache mode</a> is not "<code>no-store</code>", then update <var>response</var> in
+   <var>httpCache</var> for <var>request</var>.
 
    <li>
     <p>If <i>credentials flag</i> is set and the user agent is not configured to block cookies for
@@ -7376,6 +7432,7 @@ Sendil Kumar N,
 Shao-xuan Kang,
 Sharath Udupa,
 Shivakumar Jagalur Matt,
+Shivani Sharma,
 Sigbjørn Finne,
 Simon Pieters,
 Simon Sapin,
