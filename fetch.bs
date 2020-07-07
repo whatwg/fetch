@@ -94,8 +94,10 @@ url:https://tools.ietf.org/html/draft-ietf-httpbis-header-structure#section-4.2;
 }
 </pre>
 
+<!-- TODO: remove ReadableStream once the linking databases have settled down -->
 <pre class=link-defaults>
 spec:infra; type:dfn; text:string
+spec:streams; type:interface; text:ReadableStream
 </pre>
 
 
@@ -1673,53 +1675,68 @@ is to return the result of <a>serializing a request origin</a> with <var>request
 
   <p class="note no-backref">This operation cannot throw an exception.
 
- <li><p>Let <var>read</var> be the result of <a lt="read a chunk" for=ReadableStream>reading a
- chunk</a> from <var>body</var>'s <a for=body>stream</a> with <var>reader</var>.
+ <li><p>Perform the <a>transmit-body loop</a> given <var>request</var>, <var>body</var>, and
+ <var>reader</var>.
+</ol>
 
+<p>To perform the <dfn>transmit-body loop</dfn> given <var>request</var>, <var>body</var>, and
+<var>reader</var>:
+
+<ol>
  <li>
-  <p><a>In parallel</a>, while true:
+  <p>Let <var>readRequest</var> be the following <a>read request</a>:
 
-  <ol>
-   <li>
-    <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
-
+  <dl>
+   <dt><a for="read request">chunk steps</a>, given <var>chunk</var>
+   <dd>
     <ol>
-     <li><p>Wait for <var>read</var> to be fulfilled or rejected.
+     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+     <li><p>If <var>chunk</var> is not a {{Uint8Array}} object,
+     <a lt=terminated for=fetch>terminate</a> the ongoing fetch and abort these steps.
+
+     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the {{Uint8Array}} object.
 
      <li>
-      <p>If <var>read</var> is fulfilled with an object whose <code>done</code> property is false
-      and whose <code>value</code> property is a <code>Uint8Array</code> object, then run these
-      steps:
+      <p><a>In parallel</a>:
 
       <ol>
-       <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the
-       <code>Uint8Array</code> object.
+       <li><p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+       <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+       <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+       for <var>request</var>.
 
-       <li>
-        <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
-        <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
-        <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
-        for <var>request</var>.
+       <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
 
-        <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
+      <li><p>If the ongoing fetch is not <a for=fetch>terminated</a>, then <a>queue a fetch task</a>
+      on <var>request</var> to perform the <a>transmit-body loop</a> given <var>request</var>,
+      <var>body</var>, and <var>reader</var>.
+     </ol>
+    </ol>
 
-       <li><p>Set <var>read</var> to the result of <a lt="read a chunk" for=ReadableStream>reading a
-       chunk</a> from <var>body</var>'s <a for=body>stream</a> with <var>reader</var>.
-      </ol>
+   <dt><a for="read request">close steps</a>
+   <dd>
+    <ol>
+     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
 
-     <li><p>Otherwise, if <var>read</var> is fulfilled with an object whose <code>done</code>
-     property is true, then <a>queue a fetch task</a> on <var>request</var> to
-     <a>process request end-of-body</a> for <var>request</var> and abort these in-parallel steps.
+     <li><p><a>Queue a fetch task</a> on <var>request</var> to <a>process request end-of-body</a>
+     for <var>request</var>.
+    </ol>
 
-     <li><p>Otherwise, if <var>read</var> is rejected with an
-     "<code><a exception>AbortError</a></code>" {{DOMException}},
+   <dt><a for="read request">error steps</a>, given <var>e</var>
+   <dd>
+    <ol>
+     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+     <li><p>If <var>e</var> is an "<code><a exception>AbortError</a></code>" {{DOMException}}, then
      <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
 
      <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
     </ol>
+  </dl>
 
-   <li><p><a>If aborted</a>, then abort these in-parallel steps.
-  </ol>
+ <li><p><a lt="read a chunk" for=ReadableStream>Read a chunk</a> from <var>body</var>'s
+ <a for=body>stream</a> with <var>reader</var> given <var>readRequest</var>.
 </ol>
 
 <hr>
@@ -2293,16 +2310,13 @@ run these steps:
 </ol>
 
 
-<h3 id=streams>Streams</h3>
+<h3 id=streams oldids="readablestream,concept-readablestream">Streams</h3>
 
-<p class="note no-backref">This section might be integrated into other standards, such as IDL.
+<p class="note no-backref">This section might be integrated into other standards, such as
+<cite>Streams</cite> itself. See
+<a href="https://github.com/whatwg/streams/issues/372">whatwg/streams#372</a>.
 
-
-<h4 id=readablestream>ReadableStream</h4>
-
-<p>A <dfn export interface id=concept-readablestream><code>ReadableStream</code></dfn> object
-represents a <a href=https://streams.spec.whatwg.org/#rs-class>stream of data</a>. In this section,
-we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
+<p>In this section, we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 
 <p>To <dfn export for=ReadableStream id=concept-enqueue-readablestream>enqueue</dfn>
 <var>chunk</var> into a {{ReadableStream}} object <var>stream</var>, run these steps:
@@ -2326,7 +2340,7 @@ we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 
 <ol>
  <li><p>Call
- <a abstract-op>ReadableStreamDefaultControllerError</a>(<var>stream</var>.\[[readableStreamController]]).
+ <a abstract-op>ReadableStreamDefaultControllerError</a>(<var>stream</var>.\[[readableStreamController]]),
  <var>reason</var>).
 </ol>
 
@@ -2334,11 +2348,6 @@ we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 <dfn export for=ReadableStream id=concept-construct-readablestream>construct a <code>ReadableStream</code> object</dfn>
 optionally with a <var>highWaterMark</var>, <var>sizeAlgorithm</var> algorithm, <var>pull</var>
 action, and <var>cancel</var> action, run these steps:
-
-<p class=note>This algorithm used to take a <var ignore>strategy</var> parameter, whose
-<code>highWaterMark</code> and <code>sizeAlgorithm</code> members were extracted to provide what are
-now separate parameters. If another specification still passes that <var ignore>strategy</var>
-parameter, please update it.
 
 <ol>
  <li><p>Let <var>startAlgorithm</var> be an algorithm that returns undefined.
@@ -2402,8 +2411,9 @@ with given <var>chunks</var>, run these steps:
 
 <p>To
 <dfn export for=ReadableStream id=concept-read-chunk-from-readablestream>read a chunk</dfn> from a
-{{ReadableStream}} object with <var>reader</var>, return the result of calling
-<a abstract-op>ReadableStreamDefaultReaderRead</a>(<var>reader</var>).
+{{ReadableStream}} object with <var>reader</var>, given a <a>read request</a>
+<var>readRequest</var>, perform
+<a abstract-op>ReadableStreamDefaultReaderRead</a>(<var>reader</var>, <var>readRequest</var>).
 
 <p>To
 <dfn export for=ReadableStream id=concept-read-all-bytes-from-readablestream>read all bytes</dfn>
@@ -2414,35 +2424,52 @@ from a {{ReadableStream}} object with <var>reader</var>, run these steps:
 
  <li><p>Let <var>bytes</var> be an empty byte sequence.
 
- <li>
- <p>Let <var>read</var> be the result of calling
- <a abstract-op>ReadableStreamDefaultReaderRead</a>(<var>reader</var>).
-
- <ul>
-  <li><p>When <var>read</var> is fulfilled with an object whose <code>done</code>
-  property is false and whose <code>value</code> property is a
-  <code>Uint8Array</code> object, append the <code>value</code> property to
-  <var>bytes</var> and run the above step again.
-
-  <li><p>When <var>read</var> is fulfilled with an object whose <code>done</code>
-  property is true, resolve <var>promise</var> with <var>bytes</var>.
-
-  <li><p>When <var>read</var> is fulfilled with a value that matches with neither of the
-  above patterns, reject <var>promise</var> with a {{TypeError}}.
-
-  <li><p>When <var>read</var> is rejected with an error, reject <var>promise</var>
-  with that error.
- </ul>
+ <li><p><a>Read-loop</a> given <var>reader</var>, <var>bytes</var>, and <var>promise</var>.
 
  <li><p>Return <var>promise</var>.
 </ol>
 
-<p>To <dfn export for=ReadableStream id=concept-cancel-readablestream>cancel</dfn> a
-{{ReadableStream}} object <var>stream</var> with <var>reason</var>, return the result of calling
-<a abstract-op>ReadableStreamCancel</a>(<var>stream</var>, <var>reason</var>).
+<p>To <dfn>read-loop</dfn> given <var>reader</var>, <var>bytes</var>, and <var>promise</var>:
+
+<ol>
+ <li>
+  <p>Let <var>readRequest</var> be a new <a>read request</a> with the following
+  <a for=struct>items</a>:
+
+  <dl>
+   <dt><a for="read request">chunk steps</a>, given <var>chunk</var>
+   <dd>
+    <ol>
+     <li><p>Assert: <var>chunk</var> is a {{Uint8Array}} object.
+
+     <li><p>Append <var>chunk</var> to <var>bytes</var>.
+
+     <li><p><a>Read-loop</a> given <var>reader</var>, <var>bytes</var>, and <var>promise</var>.
+    </ol>
+
+   <dt><a for="read request">close steps</a>
+   <dd>
+    <ol>
+     <li><p><a for=/>Resolve</a> <var>promise</var> with <var>bytes</var>.</p></li>
+    </ol>
+
+   <dt><a for="read request">error steps</a>, given <var>e</var>
+   <dd>
+    <ol>
+     <li><p><a>Reject</a> <var>promise</var> with <var>e</var>.
+    </ol>
+  </dl>
+
+ <li><p>Perform <a abstract-op>ReadableStreamDefaultReaderRead</a>(<var>reader</var>,
+ <var>readRequest</var>).
+</ol>
 
 <p class="note no-backref">Because the reader grants exclusive access, the actual mechanism of how
 to read cannot be observed. Implementations could use more direct mechanism if convenient.
+
+<p>To <dfn export for=ReadableStream id=concept-cancel-readablestream>cancel</dfn> a
+{{ReadableStream}} object <var>stream</var> with <var>reason</var>, return the result of calling
+<a abstract-op>ReadableStreamCancel</a>(<var>stream</var>, <var>reason</var>).
 
 <p>To <dfn export for=ReadableStream id=concept-tee-readablestream>tee</dfn> a {{ReadableStream}}
 object <var>stream</var>, run these steps:
@@ -2483,7 +2510,7 @@ if the following conditions hold:
  <li><p><var>stream</var> is <a for=ReadableStream>readable</a>.
 
  <li><p>The result of calling
- <a abstract-op>ReadableStreamDefaultControllerGetDesiredSize</a>(<var>stream</var>.\[[readableStreamController]]).
+ <a abstract-op>ReadableStreamDefaultControllerGetDesiredSize</a>(<var>stream</var>.\[[readableStreamController]])
  is positive.
 </ul>
 
