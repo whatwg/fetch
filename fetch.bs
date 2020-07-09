@@ -1143,6 +1143,9 @@ explicitly set <a for=/>request</a>'s
 <p id=keep-alive-flag>A <a for=/>request</a> has an associated
 <dfn for=request export>keepalive flag</dfn>. Unless stated otherwise it is unset.
 
+<p id=speculative-flag>A <a for=/>request</a> has an associated
+<dfn for=request export>speculative flag</dfn>. Unless stated otherwise it is unset.
+
 <p class="note no-backref">This can be used to allow the request to outlive the
 <a>environment settings object</a>, e.g.,
 <code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
@@ -2072,8 +2075,8 @@ functionality.
 <p>When a <a for=fetch>fetch group</a> is
 <dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>,
 for each associated <a for="fetch group">fetch record</a> whose
-<a for="fetch record">request</a>'s <a>done flag</a> or
-<a>keepalive flag</a> is unset,
+<a for="fetch record">request</a>'s <a>done flag</a>,
+<a>keepalive flag</a>, and <a>speculative flag</a> are all unset,
 <a lt=terminated for=fetch>terminate</a> the
 <a for="fetch group">fetch record</a>'s
 <a for="fetch record">fetch</a>.
@@ -3426,6 +3429,11 @@ the request.
    <a for=request>origin</a> to  <var>request</var>'s
    <a for=request>client</a>'s <a for="environment settings object">origin</a>.
 
+   <li><p>If a <var>request</var>'s <a for=request>speculative flag</a> is set, then the user agent
+   may <a for=fetch lt=terminated>terminate</a> the <a for=/>fetch</a> and return an <a>aborted
+   network error</a>, in cases where it's reasonable to believe it will result in better user
+   experience.
+
    <li>
     <p>If <var>request</var>'s <a for=request>header list</a>
     <a for="header list">does not contain</a> `<code>Accept</code>`, then:
@@ -3464,8 +3472,9 @@ the request.
 
    <li>
     <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
-    <a for=request>initiator</a> and <a for=request>destination</a> appropriately in setting
-    <var>request</var>'s <a for=request>priority</a> to a user-agent-defined object.
+    <a for=request>initiator</a>, <a for=request>destination</a>, and <a for=request>speculative
+    flag</a> appropriately in setting <var>request</var>'s <a for=request>priority</a> to a
+    user-agent-defined object.
 
     <p class=note>The user-agent-defined object could encompass stream weight and dependency
     for HTTP/2, and equivalent information used to prioritize dispatch and processing of
@@ -4357,6 +4366,12 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
     </ul>
 
     <p>is true, and unset otherwise.
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>speculative flag</a> is set,
+   <a for="header list">append</a>
+   `<code>Sec-Purpose</code>`/`<code>prefetch</code>` to
+   <var>httpRequest</var>'s
+   <a for=request>header list</a>.
 
    <li><p>Let <var>contentLengthValue</var> be null.
 
@@ -5993,6 +6008,7 @@ interface Request {
   readonly attribute RequestRedirect redirect;
   readonly attribute DOMString integrity;
   readonly attribute boolean keepalive;
+  readonly attribute boolean speculative;
   readonly attribute boolean isReloadNavigation;
   readonly attribute boolean isHistoryNavigation;
   readonly attribute AbortSignal signal;
@@ -6153,6 +6169,11 @@ initially a new {{AbortSignal}} object.
  <dd>Returns a boolean indicating whether or not <var>request</var> can outlive the global in which
  it was created.
 
+ <dt><code><var>request</var> . <a attribute for=Request>speculative</a></code>
+ <dd>Returns a boolean indicating whether or not <var>request</var> is a speculative fetch, which
+ means it could be ignored by the user agent, have low priority, and can outlive the global in which
+ it was created.
+
  <dt><code><var>request</var> . <a attribute for=Request>isReloadNavigation</a></code>
  <dd>Returns a boolean indicating whether or not <var>request</var> is for a reload navigation.
 
@@ -6283,6 +6304,9 @@ constructor must run these steps:
 
    <dt><a>keepalive flag</a>
    <dd><var>request</var>'s <a>keepalive flag</a>.
+
+   <dt><a>speculative flag</a>
+   <dd><var>request</var>'s <a>speculative flag</a>.
 
    <dt><a for=request>reload-navigation flag</a>
    <dd><var>request</var>'s <a for=request>reload-navigation flag</a>.
@@ -6576,6 +6600,10 @@ must return the <a>context object</a>'s <a for=Request>request</a>'s
 
 <p>The <dfn attribute for=Request><code>keepalive</code></dfn> attribute's getter, when invoked,
 must return true if the <a>context object</a>'s <a for=Request>request</a>'s <a>keepalive flag</a>
+is set, and false otherwise.
+
+<p>The <dfn attribute for=Request><code>speculative</code></dfn> attribute's getter, when invoked,
+must return true if the <a>context object</a>'s <a for=Request>request</a>'s <a>speculative flag</a>
 is set, and false otherwise.
 
 <p>The <dfn attribute for=Request><code>isReloadNavigation</code></dfn> attribute's getter, when
