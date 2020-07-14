@@ -94,12 +94,6 @@ url:https://tools.ietf.org/html/draft-ietf-httpbis-header-structure#section-4.2;
 }
 </pre>
 
-<!-- TODO: remove ReadableStream once the linking databases have settled down -->
-<pre class=link-defaults>
-spec:infra; type:dfn; text:string
-spec:streams; type:interface; text:ReadableStream
-</pre>
-
 
 
 <h2 id=goals class="no-num short">Goals</h2>
@@ -5530,9 +5524,8 @@ objects.</span>
  <a for=Headers>remove privileged no-CORS request headers</a> from <var>headers</var>.
 </ol>
 
-<p>To <dfn export for=Headers id=concept-headers-fill>fill</dfn> a
-{{Headers}} object (<var>headers</var>) with a given object (<var>object</var>),
-run these steps:
+<p>To <dfn export for=Headers id=concept-headers-fill>fill</dfn> a {{Headers}} object
+<var>headers</var> with a given object <var>object</var>, run these steps:
 
 <ol>
  <li>
@@ -5569,76 +5562,66 @@ from a {{Headers}} object (<var>headers</var>), run these steps:
 <p class=note>This is called when headers are modified by unprivileged code.
 
 <p>The
-<dfn id=dom-headers export for=Headers constructor><code>Headers(<var>init</var>)</code></dfn>
-constructor, when invoked, must run these steps:
+<dfn id=dom-headers export for=Headers constructor lt="Headers(init)"><code>new Headers(<var>init</var>)</code></dfn>
+constructor steps are:
 
 <ol>
- <li><p>Let <var>headers</var> be a new {{Headers}} object whose
- <a for=Headers>guard</a> is "<code>none</code>".
+ <li><p>Set <a>this</a>'s <a for=Headers>guard</a> to "<code>none</code>".
 
- <li><p>If <var>init</var> is given, then <a for=Headers>fill</a> <var>headers</var> with
- <var>init</var>.
-
- <li><p>Return <var>headers</var>.
+ <li><p>If <var>init</var> is given, then <a for=Headers>fill</a> <a>this</a> with <var>init</var>.
 </ol>
 
 <p>The <dfn export for=Headers method><code>append(<var>name</var>, <var>value</var>)</code></dfn>
-method, when invoked, must <a for=Headers>append</a> <var>name</var>/<var>value</var> to the
-<a>context object</a>.
+method steps are to <a for=Headers>append</a> <var>name</var>/<var>value</var> to <a>this</a>.
 
-<p>The <dfn export for=Headers method><code>delete(<var>name</var>)</code></dfn>
-method, when invoked, must run these steps:
+<p>The <dfn export for=Headers method><code>delete(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
  <li><p>If <var>name</var> is not a <a for=header>name</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>If the <a>context object</a>'s <a for=Headers>guard</a> is "<code>immutable</code>", then
- <a>throw</a> a {{TypeError}}.
+ <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>immutable</code>", then <a>throw</a> a
+ {{TypeError}}.
 
- <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is "<code>request</code>"
- and <var>name</var> is a <a>forbidden header name</a>, return.
+ <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request</code>" and
+ <var>name</var> is a <a>forbidden header name</a>, return.
 
- <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is
- "<code>request-no-cors</code>", <var>name</var> is not a
- <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not a
- <a>privileged no-CORS request-header name</a>, return.
+ <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>",
+ <var>name</var> is not a <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not
+ a <a>privileged no-CORS request-header name</a>, return.
 
- <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is
- "<code>response</code>" and <var>name</var> is a <a>forbidden response-header name</a>, return.
+ <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>response</code>" and
+ <var>name</var> is a <a>forbidden response-header name</a>, return.
 
- <li><p>If the <a>context object</a>'s <a for=Headers>header list</a> does not
- <a for="header list">contain</a> <var>name</var>, then return.
+ <li><p>If <a>this</a>'s <a for=Headers>header list</a> does not <a for="header list">contain</a>
+ <var>name</var>, then return.
 
- <li><p><a for="header list">Delete</a> <var>name</var> from the <a>context object</a>'s
+ <li><p><a for="header list">Delete</a> <var>name</var> from <a>this</a>'s
  <a for=Headers>header list</a>.
 
- <li><p>If the <a>context object</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>",
- then <a for=Headers>remove privileged no-CORS request headers</a> from the <a>context object</a>.
+ <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
+ <a for=Headers>remove privileged no-CORS request headers</a> from <a>this</a>.
 </ol>
 
-<p>The <dfn export for=Headers method><code>get(<var>name</var>)</code></dfn> method, when
-invoked, must run these steps:
+<p>The <dfn export for=Headers method><code>get(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
  <li><p>If <var>name</var> is not a <a for=header>name</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Return the result of <a for="header list">getting</a> <var>name</var> from the
- <a>context object</a>'s <a for=Headers>header list</a>.
+ <li><p>Return the result of <a for="header list">getting</a> <var>name</var> from <a>this</a>'s
+ <a for=Headers>header list</a>.
 </ol>
 
-<p>The <dfn export for=Headers method><code>has(<var>name</var>)</code></dfn> method,
-when invoked, must run these steps:
+<p>The <dfn export for=Headers method><code>has(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
  <li><p>If <var>name</var> is not a <a for=header>name</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Return true if the <a>context object</a>'s <a for=Headers>header list</a>
- <a for="header list">contains</a> <var>name</var>, and false otherwise.
+ <li><p>Return true if <a>this</a>'s <a for=Headers>header list</a>
+ <a for="header list">contains</a> <var>name</var>; otherwise false.
 </ol>
 
-<p>The
-<dfn export for=Headers method><code>set(<var>name</var>, <var>value</var>)</code></dfn>
-method, when invoked, must run these steps:
+<p>The <dfn export for=Headers method><code>set(<var>name</var>, <var>value</var>)</code></dfn>
+method steps are:
 
 <ol>
  <li><p><a lt=normalize for=header/value>Normalize</a> <var>value</var>.
@@ -5646,29 +5629,27 @@ method, when invoked, must run these steps:
  <li><p>If <var>name</var> is not a <a for=header>name</a> or <var>value</var> is not a
  <a for=header>value</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>If the <a>context object</a>'s <a for=Headers>guard</a> is "<code>immutable</code>", then
- <a>throw</a> a {{TypeError}}.
+ <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>immutable</code>", then <a>throw</a> a
+ {{TypeError}}.
 
- <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is "<code>request</code>"
- and <var>name</var> is a <a>forbidden header name</a>, return.
+ <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request</code>" and
+ <var>name</var> is a <a>forbidden header name</a>, return.
 
- <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is
- "<code>request-no-cors</code>" and <var>name</var>/<var>value</var> is not a
- <a>no-CORS-safelisted request-header</a>, return.
+ <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
+ <var>name</var>/<var>value</var> is not a <a>no-CORS-safelisted request-header</a>, return.
 
- <li><p>Otherwise, if the <a>context object</a>'s <a for=Headers>guard</a> is
- "<code>response</code>" and <var>name</var> is a <a>forbidden response-header name</a>, return.
+ <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>response</code>" and
+ <var>name</var> is a <a>forbidden response-header name</a>, return.
 
- <li><p><a for="header list">Set</a> <var>name</var>/<var>value</var> in the <a>context object</a>'s
+ <li><p><a for="header list">Set</a> <var>name</var>/<var>value</var> in <a>this</a>'s
  <a for=Headers>header list</a>.
 
- <li><p>If the <a>context object</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>",
- then <a for=Headers>remove privileged no-CORS request headers</a> from the <a>context object</a>.
+ <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
+ <a for=Headers>remove privileged no-CORS request headers</a> from <a>this</a>.
 </ol>
 
 <p>The <a>value pairs to iterate over</a> are the return value of running
-<a for="header list">sort and combine</a> with the <a>context object</a>'s
-<a for=Headers>header list</a>.
+<a for="header list">sort and combine</a> with <a>this</a>'s <a for=Headers>header list</a>.
 
 
 <h3 id=body-mixin>Body mixin</h3>
@@ -5822,20 +5803,20 @@ due course.
 a <dfn id=concept-body-mime-type for=Body>MIME type</dfn> (failure or a <a for=/>MIME type</a>).
 
 <p>An object implementing the {{Body}} mixin is said to be
-<dfn export id=concept-body-disturbed for=Body>disturbed</dfn> if <a for=Body>body</a> is
-non-null and its <a for=body>stream</a> is
-<a for=ReadableStream>disturbed</a>.
+<dfn export id=concept-body-disturbed for=Body>disturbed</dfn> if its <a for=Body>body</a> is
+non-null and its <a for=body>stream</a> is <a for=ReadableStream>disturbed</a>.
 
 <p>An object implementing the {{Body}} mixin is said to be
 <dfn export id=concept-body-locked for=Body>locked</dfn> if <a for=Body>body</a> is
 non-null and its <a for=body>stream</a> is
 <a for=ReadableStream>locked</a>.
 
-<p>The <dfn attribute for=Body><code>body</code></dfn> attribute's getter must return null if
-<a for=Body>body</a> is null and <a for=Body>body</a>'s <a for=body>stream</a> otherwise.
+<p>The <dfn attribute for=Body><code>body</code></dfn> getter steps are to return null if
+<a>this</a>'s <a for=Body>body</a> is null; otherwise <a>this</a>'s <a for=Body>body</a>'s
+<a for=body>stream</a>.
 
-<p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> attribute's getter must
-return true if <a for=Body>disturbed</a>, and false otherwise.
+<p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> getter steps are to return true if
+<a>this</a> is <a for=Body>disturbed</a>; otherwise false.
 
 <p>Objects implementing the {{Body}} mixin also have an associated
 <dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
@@ -5946,25 +5927,20 @@ runs these steps:
           https://www.w3.org/2001/tag/doc/promises-guide -->
 </ol>
 
-<p>The <dfn method for=Body><code>arrayBuffer()</code></dfn>
-method, when invoked, must return the result of running
-<a for=Body>consume body</a> with <i>ArrayBuffer</i>.
+<p>The <dfn method for=Body><code>arrayBuffer()</code></dfn> method steps are to return the result
+of running <a for=Body>consume body</a> with <i>ArrayBuffer</i>.
 
-<p>The <dfn method for=Body><code>blob()</code></dfn> method, when
-invoked, must return the result of running
-<a for=Body>consume body</a> with <i>Blob</i>.
+<p>The <dfn method for=Body><code>blob()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <i>Blob</i>.
 
-<p>The <dfn method for=Body><code>formData()</code></dfn> method,
-when invoked, must return the result of running
-<a for=Body>consume body</a> with <i>FormData</i>.
+<p>The <dfn method for=Body><code>formData()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <i>FormData</i>.
 
-<p>The <dfn method for=Body><code>json()</code></dfn> method, when
-invoked, must return the result of running
-<a for=Body>consume body</a> with <i>JSON</i>.
+<p>The <dfn method for=Body><code>json()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <i>JSON</i>.
 
-<p>The <dfn method for=Body><code>text()</code></dfn> method, when
-invoked, must return the result of running
-<a for=Body>consume body</a> with <i>text</i>.
+<p>The <dfn method for=Body><code>text()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <i>text</i>.
 
 
 <h3 id=request-class>Request class</h3>
@@ -6169,8 +6145,8 @@ initially a new {{AbortSignal}} object.
 <hr>
 
 <p>The
-<dfn constructor for=Request id=dom-request><code>Request(<var>input</var>, <var>init</var>)</code></dfn>
-constructor must run these steps:
+<dfn constructor for=Request id=dom-request lt="Request(input, init)"><code>new Request(<var>input</var>, <var>init</var>)</code></dfn>
+constructor steps are:
 
 <ol>
  <li><p>Let <var>request</var> be null.
@@ -6179,7 +6155,7 @@ constructor must run these steps:
 
  <li><p>Let <var>fallbackCredentials</var> be null.
 
- <li><p>Let <var>baseURL</var> be <a>current settings object</a>'s
+ <li><p>Let <var>baseURL</var> be <a>this</a>'s <a>relevant settings object</a>'s
  <a for="environment settings object">API base URL</a>.
 
  <li><p>Let <var>signal</var> be null.
@@ -6206,16 +6182,18 @@ constructor must run these steps:
   </ol>
 
  <li>
-  <p>Otherwise (<var>input</var> is a {{Request}} object):
+  <p>Otherwise:
 
   <ol>
+   <li><p>Assert: <var>input</var> is a {{Request}} object.
+
    <li><p>Set <var>request</var> to <var>input</var>'s
    <a for=Request>request</a>.
 
    <li><p>Set <var>signal</var> to <var>input</var>'s <a for=Request>signal</a>.
   </ol>
 
- <li><p>Let <var>origin</var> be <a>current settings object</a>'s
+ <li><p>Let <var>origin</var> be <a>this</a>'s <a>relevant settings object</a>'s
  <a for="environment settings object">origin</a>.
 
  <li><p>Let <var>window</var> be "<code>client</code>".
@@ -6223,7 +6201,7 @@ constructor must run these steps:
  <li><p>If <var>request</var>'s <a for=request>window</a> is
  an <a>environment settings object</a> and its
  <a for="environment settings object">origin</a> is <a>same origin</a> with
- <var>origin</var>, set <var>window</var> to <var>request</var>'s
+ <var>origin</var>, then set <var>window</var> to <var>request</var>'s
  <a for=request>window</a>.
 
  <li><p>If <var>init</var>["{{RequestInit/window}}"] <a for=map>exists</a> and is non-null, then
@@ -6408,12 +6386,12 @@ constructor must run these steps:
  <li><p>If <var>init</var>["{{RequestInit/signal}}"] <a for=map>exists</a>, then set
  <var>signal</var> to it.
 
- <li><p>Let <var>r</var> be a new {{Request}} object associated with <var>request</var>.
+ <li><p>Set <a>this</a>'s <a for=Request>request</a> to <var>request</var>.
 
- <li><p>If <var>signal</var> is not null, then make <var>r</var>'s <a for=Request>signal</a>
+ <li><p>If <var>signal</var> is not null, then make <a>this</a>'s <a for=Request>signal</a>
  <a for=AbortSignal>follow</a> <var>signal</var>.
 
- <li><p>Set <var>r</var>'s <a for=Request>headers</a> to a new {{Headers}} object, whose
+ <li><p>Set <a>this</a>'s <a for=Request>headers</a> to a new {{Headers}} object, whose
  <a for=Headers>header list</a> is <var>request</var>'s <a for=request>header list</a>, and
  <a for=Headers>guard</a> is "<code>request</code>".
 
@@ -6425,23 +6403,23 @@ constructor must run these steps:
   API.
 
   <ol>
-   <li><p>Let <var>headers</var> be a copy of <var>r</var>'s <a for=Request>headers</a> and its
+   <li><p>Let <var>headers</var> be a copy of <a>this</a>'s <a for=Request>headers</a> and its
    associated <a for=Headers>header list</a>.
 
    <li><p>If <var>init</var>["{{RequestInit/headers}}"] <a for=map>exists</a>, then set
    <var>headers</var> to <var>init</var>["{{RequestInit/headers}}"].
 
-   <li><p>Empty <var>r</var>'s <a for=Request>headers</a>'s <a for=Headers>header list</a>.
+   <li><p>Empty <a>this</a>'s <a for=Request>headers</a>'s <a for=Headers>header list</a>.
 
    <li>
-    <p>If <var>r</var>'s <a for=Request>request</a>'s <a for=request>mode</a> is
+    <p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is
     "<code>no-cors</code>", then:
 
     <ol>
-     <li><p>If <var>r</var>'s <a for=Request>request</a>'s <a for=request>method</a> is not a
+     <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>method</a> is not a
      <a>CORS-safelisted method</a>, then <a>throw</a> a {{TypeError}}.
 
-     <li><p>Set <var>r</var>'s <a for=Request>headers</a>'s <a for=Headers>guard</a> to
+     <li><p>Set <a>this</a>'s <a for=Request>headers</a>'s <a for=Headers>guard</a> to
      "<code>request-no-cors</code>".
     </ol>
    </li>
@@ -6449,9 +6427,9 @@ constructor must run these steps:
    <li><p>If <var>headers</var> is a <code>Headers</code> object, then <a for=list>for each</a>
    <var>header</var> in its <a for=Headers>header list</a>, <a for=Headers>append</a>
    <var>header</var>'s <a for=header>name</a>/<var>header</var>'s <a for=header>value</a> to
-   <var>r</var>'s {{Headers}} object.
+   <a>this</a>'s <a for=Request>headers</a>.
 
-   <li><p>Otherwise, <a for=Headers>fill</a> <var>r</var>'s {{Headers}} object with
+   <li><p>Otherwise, <a for=Headers>fill</a> <a>this</a>'s <a for=Request>headers</a> with
    <var>headers</var>.
   </ol>
  </li>
@@ -6479,20 +6457,20 @@ constructor must run these steps:
    <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
    <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"].
 
-   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a for=Request>headers</a>'s
+   <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Request>headers</a>'s
    <a for=Headers>header list</a> <a for="header list">does not contain</a>
    `<code>Content-Type</code>`, then <a for=Headers>append</a>
-   `<code>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s <a for=Request>headers</a>.
+   `<code>Content-Type</code>`/<var>Content-Type</var> to <a>this</a>'s <a for=Request>headers</a>.
   </ol>
 
  <li>
   <p>If <var>body</var> is non-null and <var>body</var>'s <a for=body>source</a> is null, then:
 
   <ol>
-   <li><p>If <var>r</var>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
+   <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
    "<code>same-origin</code>" nor "<code>cors</code>", then throw a {{TypeError}}.
 
-   <li><p>Set <var>r</var>'s <a for=Request>request</a>'s
+   <li><p>Set <a>this</a>'s <a for=Request>request</a>'s
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
@@ -6524,84 +6502,75 @@ constructor must run these steps:
    whose <a for=body>total bytes</a> is <var>inputBody</var>'s <a for=body>total bytes</a>.
   </ol>
 
- <li><p>Set <var>r</var>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
+ <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
 
- <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to the result of
- <a for="header list">extracting a MIME type</a> from <var>r</var>'s <a for=Request>request</a>'s
+ <li><p>Set <a>this</a>'s <a for=Body>MIME type</a> to the result of
+ <a for="header list">extracting a MIME type</a> from <a>this</a>'s <a for=Request>request</a>'s
  <a for=request>header list</a>.
-
- <li><p>Return <var>r</var>.
 </ol>
 
-<p>The <dfn attribute for=Request><code>method</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Request>request</a>'s <a for=request>method</a>.
+<p>The <dfn attribute for=Request><code>method</code></dfn> getter steps are to return <a>this</a>'s
+<a for=Request>request</a>'s <a for=request>method</a>.
 
-<p>The <dfn attribute for=Request><code>url</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Request>request</a>'s <a for=request>URL</a>,
+<p>The <dfn attribute for=Request><code>url</code></dfn> getter steps are to return <a>this</a>'s
+<a for=Request>request</a>'s <a for=request>URL</a>, <a lt="url serializer">serialized</a>.
+
+<p>The <dfn attribute for=Request><code>headers</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Request>headers</a>.
+
+<p>The <dfn attribute for=Request><code>destination</code></dfn> getter are to return <a>this</a>'s
+<a for=Request>request</a>'s <a for=request>destination</a>.
+
+<p>The <dfn attribute for=Request><code>referrer</code></dfn> getter steps are to return
+the empty string if <a>this</a>'s <a for=Request>request</a>'s <a for=request>referrer</a> is
+"<code>no-referrer</code>", "<code>about:client</code>" if <a>this</a>'s
+<a for=Request>request</a>'s <a for=request>referrer</a> is "<code>client</code>"; otherwise
+<a>this</a>'s <a for=Request>request</a>'s <a for=request>referrer</a>,
 <a lt="url serializer">serialized</a>.
 
-<p>The <dfn attribute for=Request><code>headers</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Request>headers</a>.
+<p>The <dfn attribute for=Request><code>referrerPolicy</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Request>request</a>'s <a for=request>referrer policy</a>.
 
-<p>The <dfn attribute for=Request><code>destination</code></dfn> attribute's getter, when invoked,
-must return the <a>context object</a>'s <a for=Request>request</a>'s <a for=request>destination</a>.
+<p>The <dfn attribute for=Request><code>mode</code></dfn> getter steps are to return <a>this</a>'s
+<a for=Request>request</a>'s <a for=request>mode</a>.
 
-<p>The <dfn attribute for=Request><code>referrer</code></dfn> attribute's getter, when invoked, must
-return the empty string if the <a>context object</a>'s <a for=Request>request</a>'s
-<a for=request>referrer</a> is "<code>no-referrer</code>", "<code>about:client</code>" if the
-<a>context object</a>'s <a for=Request>request</a>'s <a for=request>referrer</a> is
-"<code>client</code>", and the <a>context object</a>'s <a for=Request>request</a>'s
-<a for=request>referrer</a>, <a lt="url serializer">serialized</a>, otherwise.
+<p>The <dfn attribute for=Request><code>credentials</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Request>request</a>'s <a for=request>credentials mode</a>.
 
-<p>The <dfn attribute for=Request><code>referrerPolicy</code></dfn> attribute's getter, when
-invoked, must return the <a>context object</a>'s <a for=Request>request</a>'s
-<a for=request>referrer policy</a>.
+<p>The <dfn attribute for=Request><code>cache</code></dfn> getter steps are to return <a>this</a>'s
+<a for=Request>request</a>'s <a for=request>cache mode</a>.
 
-<p>The <dfn attribute for=Request><code>mode</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Request>request</a>'s <a for=request>mode</a>.
+<p>The <dfn attribute for=Request><code>redirect</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Request>request</a>'s <a for=request>redirect mode</a>.
 
-<p>The <dfn attribute for=Request><code>credentials</code></dfn> attribute's getter, when invoked,
-must return the <a>context object</a>'s <a for=Request>request</a>'s
-<a for=request>credentials mode</a>.
+<p>The <dfn attribute for=Request><code>integrity</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Request>request</a>'s <a for=request>integrity metadata</a>.
 
-<p>The <dfn attribute for=Request><code>cache</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Request>request</a>'s <a for=request>cache mode</a>.
+<p>The <dfn attribute for=Request><code>keepalive</code></dfn> getter steps are to return true if
+<a>this</a>'s <a for=Request>request</a>'s <a>keepalive flag</a> is set; otherwise false.
 
-<p>The <dfn attribute for=Request><code>redirect</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Request>request</a>'s <a for=request>redirect mode</a>.
+<p>The <dfn attribute for=Request><code>isReloadNavigation</code></dfn> getter steps are to return
+true if <a>this</a>'s <a for=Request>request</a>'s <a for=request>reload-navigation flag</a> is set;
+otherwise false.
 
-<p>The <dfn attribute for=Request><code>integrity</code></dfn> attribute's getter, when invoked,
-must return the <a>context object</a>'s <a for=Request>request</a>'s
-<a for=request>integrity metadata</a>.
+<p>The <dfn attribute for=Request><code>isHistoryNavigation</code></dfn> getter steps are to return
+true if <a>this</a>'s <a for=Request>request</a>'s <a for=request>history-navigation flag</a> is
+set; otherwise false.
 
-<p>The <dfn attribute for=Request><code>keepalive</code></dfn> attribute's getter, when invoked,
-must return true if the <a>context object</a>'s <a for=Request>request</a>'s <a>keepalive flag</a>
-is set, and false otherwise.
-
-<p>The <dfn attribute for=Request><code>isReloadNavigation</code></dfn> attribute's getter, when
-invoked, must return true if the <a>context object</a>'s <a for=Request>request</a>'s
-<a for=request>reload-navigation flag</a> is set, and false otherwise.
-
-<p>The <dfn attribute for=Request><code>isHistoryNavigation</code></dfn> attribute's getter, when
-invoked, must return true if the <a>context object</a>'s <a for=Request>request</a>'s
-<a for=request>history-navigation flag</a> is set, and false otherwise.
-
-<p>The <dfn attribute for=Request><code>signal</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for="Request">signal</a>.
+<p>The <dfn attribute for=Request><code>signal</code></dfn> getter steps are to return <a>this</a>'s
+<a for="Request">signal</a>.
 
 <hr>
 
-<p>The <dfn method for=Request><code>clone()</code></dfn> method, when invoked, must
-run these steps:
+<p>The <dfn method for=Request><code>clone()</code></dfn> method steps are:
 
 <ol>
- <li><p>If the <a>context object</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then
- <a>throw</a> a {{TypeError}}.
+ <li><p>If <a>this</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then <a>throw</a> a
+ {{TypeError}}.
 
  <li><p>Let <var>clonedRequestObject</var> be a new {{Request}} object.
 
- <li><p>Let <var>clonedRequest</var> be the result of <a lt=clone for=request>cloning</a> the
- <a>context object</a>'s <a for=Request>request</a>.
+ <li><p>Let <var>clonedRequest</var> be the result of <a lt=clone for=request>cloning</a> <a>this</a>'s <a for=Request>request</a>.
 
  <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>request</a> to <var>clonedRequest</var>.
 
@@ -6614,12 +6583,12 @@ run these steps:
    <dd><var>clonedRequest</var>'s <a for=Headers>header list</a>.
 
    <dt><a for=Headers>guard</a>
-   <dd>The <a>context object</a>'s <a for=Request>headers</a>'s <a for=Headers>guard</a>.
+   <dd><a>This</a>'s <a for=Request>headers</a>'s <a for=Headers>guard</a>.
   </dl>
  </li>
 
  <li><p>Make <var>clonedRequestObject</var>'s <a for=Request>signal</a>
- <a for=AbortSignal>follow</a> the <a>context object</a>'s <a for=Request>signal</a>.
+ <a for=AbortSignal>follow</a> <a>this</a>'s <a for=Request>signal</a>.
 
  <li><p>Return <var>clonedRequestObject</var>.
 </ol>
@@ -6667,8 +6636,8 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <a for=Response>response</a>'s <a for=response>body</a>.
 
 <p>The
-<dfn constructor for=Response id=dom-response><code>Response(<var>body</var>, <var>init</var>)</code></dfn>
-constructor, when invoked, must run these steps:
+<dfn constructor for=Response id=dom-response lt="Response(body, init)"><code>new Response(<var>body</var>, <var>init</var>)</code></dfn>
+constructor steps are:
 
 <ol>
  <li><p>If <var>init</var>["{{ResponseInit/status}}"] is not in the range <code>200</code> to
@@ -6677,20 +6646,20 @@ constructor, when invoked, must run these steps:
  <li><p>If <var>init</var>["{{ResponseInit/statusText}}"] does not match the
  <a spec=http>reason-phrase</a> token production, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Let <var>r</var> be a new {{Response}} object associated with a new <a for=/>response</a>.
+ <li><p>Set <a>this</a>'s <a for=Response>response</a> to a new <a for=/>response</a>.
 
- <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object, whose
+ <li><p>Set <a>this</a>'s <a for=Response>headers</a> to a new {{Headers}} object, whose
  <a for=Headers>header list</a> is <var>r</var>'s <a for=Response>response</a>'s
  <a for=response>header list</a>, and <a for=Headers>guard</a> is "<code>response</code>".
 
- <li><p>Set <var>r</var>'s <a for=Response>response</a>'s <a for=response>status</a> to
+ <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>status</a> to
  <var>init</var>["{{ResponseInit/status}}"].
 
- <li><p>Set <var>r</var>'s <a for=Response>response</a>'s <a for=response>status message</a> to
+ <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>status message</a> to
  <var>init</var>["{{ResponseInit/statusText}}"].
 
  <li><p>If <var>init</var>["{{ResponseInit/headers}}"] <a for=map>exists</a>, then
- <a for=Headers>fill</a> <var>r</var>'s <a for=Response>headers</a> with
+ <a for=Headers>fill</a> <a>this</a>'s <a for=Response>headers</a> with
  <var>init</var>["{{ResponseInit/headers}}"].
 
  <li>
@@ -6706,30 +6675,26 @@ constructor, when invoked, must run these steps:
 
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>r</var>'s <a for=Response>response</a>'s <a for=response>body</a> and
+   <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>body</a> and
    <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a> <var>body</var>.
 
-   <li><p>If <var>Content-Type</var> is non-null and <var>r</var>'s <a for=Response>response</a>'s
+   <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Response>response</a>'s
    <a for=response>header list</a> <a for="header list">does not contain</a>
    `<code>Content-Type</code>`, then <a for="header list">append</a>
-   `<code>Content-Type</code>`/<var>Content-Type</var> to <var>r</var>'s
+   `<code>Content-Type</code>`/<var>Content-Type</var> to <a>this</a>'s
    <a for=Response>response</a>'s <a for=response>header list</a>.
   </ol>
 
- <li><p>Set <var>r</var>'s <a for=Body>MIME type</a> to the result of
- <a for="header list">extracting a MIME type</a> from <var>r</var>'s <a for=Response>response</a>'s
+ <li><p>Set <a>this</a>'s <a for=Body>MIME type</a> to the result of
+ <a for="header list">extracting a MIME type</a> from <a>this</a>'s <a for=Response>response</a>'s
  <a for=response>header list</a>.
 
- <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
- <a for=response>HTTPS state</a> to
- <a>current settings object</a>'s
+ <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>HTTPS state</a> to
+ <a>this</a>'s <a>relevant settings object</a>'s
  <a for="environment settings object">HTTPS state</a>.
-
- <li><p>Return <var>r</var>.
 </ol>
 
-<p>The static <dfn method for=Response><code>error()</code></dfn> method, when invoked, must run
-these steps:
+<p>The static <dfn method for=Response><code>error()</code></dfn> method steps are:
 
 <ol>
  <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
@@ -6742,8 +6707,8 @@ these steps:
 </ol>
 
 <p>The static
-<dfn method for=Response><code>redirect(<var>url</var>, <var>status</var>)</code></dfn>
-method, when invoked, must run these steps:
+<dfn method for=Response><code>redirect(<var>url</var>, <var>status</var>)</code></dfn> method steps
+are:
 
 <ol>
  <li><p>Let <var>parsedURL</var> be the result of
@@ -6772,57 +6737,54 @@ method, when invoked, must run these steps:
  <li><p>Return <var>r</var>.
 </ol>
 
-<p>The <dfn attribute for=Response><code>type</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Response>response</a>'s <a for=response>type</a>.
+<p>The <dfn attribute for=Response><code>type</code></dfn> getter steps are to return <a>this</a>'s
+<a for=Response>response</a>'s <a for=response>type</a>.
 
-<p>The <dfn attribute for=Response><code>url</code></dfn> attribute's getter, when invoked, must
-return the empty string if the <a>context object</a>'s <a for=Response>response</a>'s
-<a for=response>URL</a> is null and the <a>context object</a>'s <a for=Response>response</a>'s
-<a for=response>URL</a>, <a lt="url serializer">serialized</a> with the <i>exclude-fragment flag</i>
-set, otherwise. [[!URL]]
+<p>The <dfn attribute for=Response><code>url</code></dfn> getter steps are to return
+the empty string if <a>this</a>'s <a for=Response>response</a>'s <a for=response>URL</a> is null;
+otherwise <a>this</a>'s <a for=Response>response</a>'s <a for=response>URL</a>,
+<a lt="url serializer">serialized</a> with the <i>exclude-fragment flag</i> set. [[!URL]]
 
-<p>The <dfn attribute for=Response><code>redirected</code></dfn> attribute's getter, when invoked,
-must return true if the <a>context object</a>'s <a for=Response>response</a>'s
-<a for=response>URL list</a> has more than one item, and false otherwise.
+<p>The <dfn attribute for=Response><code>redirected</code></dfn> getter steps are to return true if
+<a>this</a>'s <a for=Response>response</a>'s <a for=response>URL list</a> has more than one item;
+otherwise false.
 
 <p class=note>To filter out <a for=/>responses</a> that are the result of a
 redirect, do this directly through the API, e.g., <code>fetch(url, { redirect:"error" })</code>.
 This way a potentially unsafe <a for=/>response</a> cannot accidentally leak.
 
-<p>The <dfn attribute for=Response><code>status</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Response>response</a>'s <a for=response>status</a>.
+<p>The <dfn attribute for=Response><code>status</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Response>response</a>'s <a for=response>status</a>.
 
-<p>The <dfn attribute for=Response><code>ok</code></dfn> attribute's getter, when invoked, must
-return true if the <a>context object</a>'s <a for=Response>response</a>'s <a for=response>status</a>
-is an <a>ok status</a>, and false otherwise.
+<p>The <dfn attribute for=Response><code>ok</code></dfn> getter steps are to return true if
+<a>this</a>'s <a for=Response>response</a>'s <a for=response>status</a> is an <a>ok status</a>;
+otherwise false.
 
-<p>The <dfn attribute for=Response><code>statusText</code></dfn> attribute's getter, when invoked,
-must return the <a>context object</a>'s <a for=Response>response</a>'s
-<a for=response>status message</a>.
+<p>The <dfn attribute for=Response><code>statusText</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Response>response</a>'s <a for=response>status message</a>.
 
-<p>The <dfn attribute for=Response><code>headers</code></dfn> attribute's getter, when invoked, must
-return the <a>context object</a>'s <a for=Response>headers</a>.
+<p>The <dfn attribute for=Response><code>headers</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Response>headers</a>.
 
 <hr>
 
-<p>The <dfn method for=Response><code>clone()</code></dfn> method, when invoked, must
-run these steps:
+<p>The <dfn method for=Response><code>clone()</code></dfn> method steps are:
 
 <ol>
- <li><p>If the <a>context object</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then
- <a>throw</a> a {{TypeError}}.
+ <li><p>If <a>this</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then <a>throw</a> a
+ {{TypeError}}.
 
  <li><p>Let <var>clonedResponseObject</var> be a new {{Response}} object.
 
- <li><p>Let <var>clonedResponse</var> be the result of <a lt=clone for=response>cloning</a> the
- <a>context object</a>'s <a for=Response>response</a>.
+ <li><p>Let <var>clonedResponse</var> be the result of <a lt=clone for=response>cloning</a>
+ <a>this</a>'s <a for=Response>response</a>.
 
  <li><p>Set <var>clonedResponseObject</var>'s <a for=Response>response</a> to
  <var>clonedResponse</var>.
 
  <li><p>Set <var>clonedResponseObject</var>'s <a for=Request>headers</a> to a new {{Headers}} object
  whose <a for=Headers>header list</a> is set to <var>clonedResponse</var>'s
- <a for=Headers>header list</a>, and <a for=Headers>guard</a> is the <a>context object</a>'s
+ <a for=Headers>header list</a>, and <a for=Headers>guard</a> is <a>this</a>'s
  <a for=Response>headers</a>'s <a for=Headers>guard</a>.
 
  <li><p>Return <var>clonedResponseObject</var>.
@@ -6841,7 +6803,7 @@ partial interface mixin WindowOrWorkerGlobalScope {
 
 <p>The
 <dfn id=dom-global-fetch method for=WindowOrWorkerGlobalScope><code>fetch(<var>input</var>, <var>init</var>)</code></dfn>
-method, must run these steps:
+method steps are:
 
 <ol>
  <li><p>Let <var>p</var> be a new promise.
