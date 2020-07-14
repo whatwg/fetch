@@ -2450,7 +2450,7 @@ from a {{ReadableStream}} object with <var>reader</var>, run these steps:
    <dt><a for="read request">error steps</a>, given <var>e</var>
    <dd>
     <ol>
-     <li><p><a>Reject</a> <var>promise</var> with <var>e</var>.
+     <li><p><a for=/>Reject</a> <var>promise</var> with <var>e</var>.
     </ol>
   </dl>
 
@@ -5804,12 +5804,12 @@ a <dfn id=concept-body-mime-type for=Body>MIME type</dfn> (failure or a <a for=/
 
 <p>An object implementing the {{Body}} mixin is said to be
 <dfn export id=concept-body-disturbed for=Body>disturbed</dfn> if its <a for=Body>body</a> is
-non-null and its <a for=body>stream</a> is <a for=ReadableStream>disturbed</a>.
+non-null and its <a for=Body>body</a>'s <a for=body>stream</a> is
+<a for=ReadableStream>disturbed</a>.
 
 <p>An object implementing the {{Body}} mixin is said to be
-<dfn export id=concept-body-locked for=Body>locked</dfn> if <a for=Body>body</a> is
-non-null and its <a for=body>stream</a> is
-<a for=ReadableStream>locked</a>.
+<dfn export id=concept-body-locked for=Body>locked</dfn> if its <a for=Body>body</a> is non-null and
+its <a for=Body>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>locked</a>.
 
 <p>The <dfn attribute for=Body><code>body</code></dfn> getter steps are to return null if
 <a>this</a>'s <a for=Body>body</a> is null; otherwise <a>this</a>'s <a for=Body>body</a>'s
@@ -5818,10 +5818,9 @@ non-null and its <a for=body>stream</a> is
 <p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> getter steps are to return true if
 <a>this</a> is <a for=Body>disturbed</a>; otherwise false.
 
-<p>Objects implementing the {{Body}} mixin also have an associated
-<dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
-<var>bytes</var>, a <var>type</var> and a <var>mimeType</var>, switches on <var>type</var>, and
-runs the associated steps:
+<p>The <dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
+<var>bytes</var>, <var>type</var>, and a <var>mimeType</var>, switches on <var>type</var>, and runs
+the associated steps:
 
 <dl class=switch>
  <dt><i>ArrayBuffer</i>
@@ -5898,33 +5897,29 @@ runs the associated steps:
  <var>bytes</var>.
 </dl>
 
-<p>Objects implementing the {{Body}} mixin also have an associated
-<dfn id=concept-body-consume-body for=Body>consume body</dfn> algorithm, given a <var>type</var>,
-runs these steps:
+<p>The <dfn id=concept-body-consume-body for=Body>consume body</dfn> algorithm, given an
+<var>object</var> and <var>type</var>, runs these steps:
 
 <ol>
- <li><p>If this object is <a for=Body>disturbed</a> or <a for=Body>locked</a>, return a new promise
- rejected with a {{TypeError}}.
+ <li><p>If <var>object</var> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then return a
+ <a>rejected promise</a> with a {{TypeError}}.
 
- <li><p>Let <var>stream</var> be <a for=Body>body</a>'s
- <a for=body>stream</a> if <a for=Body>body</a> is
- non-null, or an <a>empty</a>
- {{ReadableStream}} object otherwise.
+ <li><p>Let <var>stream</var> be <var>object</var>'s <a for=Body>body</a>'s <a for=body>stream</a>
+ if <var>object</var>'s <a for=Body>body</a> is non-null; otherwise an <a>empty</a>
+ {{ReadableStream}} object.
 
- <li><p>Let <var>reader</var> be the result of <a lt="get a reader" for=ReadableStream>getting
- a reader</a> from <var>stream</var>. If that threw an exception, return a new promise rejected
- with that exception.
+ <li><p>Let <var>reader</var> be the result of
+ <a lt="get a reader" for=ReadableStream>getting a reader</a> from <var>stream</var>. If that threw
+ an exception, return a <a>rejected promise</a> with that exception.
 
  <li><p>Let <var>promise</var> be the result of
- <a lt="read all bytes" for=ReadableStream>reading all bytes</a> from
- <var>stream</var> with <var>reader</var>.
+ <a lt="read all bytes" for=ReadableStream>reading all bytes</a> from <var>stream</var> with
+ <var>reader</var>.
 
- <li><p>Return the result of transforming <var>promise</var> by a fulfillment handler that
- returns the result of the <a>package data</a> algorithm
- with its first argument, <var>type</var> and this object's
- <a for=Body>MIME type</a>.
- <!-- XXX IDL really needs to define "transforming". For now it is defined in
-          https://www.w3.org/2001/tag/doc/promises-guide -->
+ <li><p>Let <var>steps</var> be to return the result of <a>package data</a> with the first argument
+ given, <var>type</var>, and <var>object</var>'s <a for=Body>MIME type</a>.
+
+ <li><p>Return the result of <a>upon fulfillment</a> of <var>promise</var> given <var>steps</var>.
 </ol>
 
 <p>The <dfn method for=Body><code>arrayBuffer()</code></dfn> method steps are to return the result
@@ -6810,7 +6805,7 @@ method steps are:
 
  <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
  constructor with <var>input</var> and <var>init</var> as arguments. If this throws an exception,
- reject <var>p</var> with it and return <var>p</var>.
+ <a for=/>reject</a> <var>p</var> with it and return <var>p</var>.
 
  <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
 
@@ -6865,12 +6860,12 @@ method steps are:
    with <var>p</var>, <var>request</var>, and <var>responseObject</var>, and terminate these
    substeps.
 
-   <li><p>If <var>response</var> is a <a>network error</a>, then reject <var>p</var> with a
-   {{TypeError}} and terminate these substeps.
+   <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
+   with a {{TypeError}} and terminate these substeps.
 
    <li><p>Associate <var>responseObject</var> with <var>response</var>.
 
-   <li><p>Resolve <var>p</var> with <var>responseObject</var>.
+   <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
 
  <li><p>Return <var>p</var>.
@@ -6883,7 +6878,7 @@ method steps are:
  <li><p>Let <var>error</var> be an "<code><a exception>AbortError</a></code>" {{DOMException}}.
 
  <li>
-  <p>Reject <var>promise</var> with <var>error</var>.
+  <p><a for=/>Reject</a> <var>promise</var> with <var>error</var>.
 
   <p class=note>This is a no-op if <var>promise</var> has already fulfilled.
 
