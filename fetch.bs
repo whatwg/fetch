@@ -2070,17 +2070,16 @@ for each associated <a for="fetch group">fetch record</a> whose
 <dfn export id=concept-connection-pool for=connection>connection pool</dfn>. A
 <a for=connection>connection pool</a> consists of zero or more
 <dfn lt=connection export id=concept-connection>connections</dfn>. Each
-<a>connection</a> is identified by an <b>origin</b> (an
-<a for=/>origin</a>), <b>credentials</b> (a boolean), and
-<b>networkPartitionKey</b> (a <a for=/>site</a> list or null).
+<a>connection</a> is identified by a <b>key</b> (a <a>network partition key</a>), an
+<b>origin</b> (an <a for=/>origin</a>), and <b>credentials</b> (a boolean).
 
 <p>To <dfn export id=concept-connection-obtain for=connection>obtain a connection</dfn>, given an
 <var>origin</var>, <var>credentials</var>, and <var>networkPartitionKey</var>, run these steps:
 
 <ol>
- <li><p>If <a for=connection>connection pool</a> contains a <a>connection</a> whose <b>origin</b> is
- <var>origin</var>, <b>credentials</b> is <var>credentials</var>, and <b>networkPartitionKey</b>
- is <var>networkPartitionKey</var>, then return that <a>connection</a>.
+ <li><p>If <a for=connection>connection pool</a> contains a <a>connection</a> whose <b>key</b> is
+ <var>key</var>, <b>origin</b> is <var>origin</var>, and <b>credentials</b> is <var>credentials</var>,
+ then return that <a>connection</a>.
 
  <li><p>Let <var>connection</var> be null.
 
@@ -2108,9 +2107,9 @@ for each associated <a for="fetch group">fetch record</a> whose
    <li><p>Return failure.
   </ol>
 
- <li><p>Add <var>connection</var> to the <a for=connection>connection pool</a> with <b>origin</b>
- being <var>origin</var>, <b>credentials</b> being <var>credentials</var>, and
- <b>networkPartitionKey</b> being <var>networkPartitionKey</var>.
+ <li><p>Add <var>connection</var> to the <a for=connection>connection pool</a> with <b>key</b>
+ being <var>key</var>, <b>origin</b> being <var>origin</var>, and <b>credentials</b> being
+ <var>credentials</var>.
 
  <li><p>Return <var>connection</var>.
 </ol>
@@ -2125,7 +2124,10 @@ clearly stipulates that <a>connections</a> are keyed on
      WebSocket saner -->
 
 
-<h3 id=http-state-partition>Network partition key</h3>
+<h3 id=network-partition-keys>Network partition keys</h3>
+
+<p>A <dfn>network partition key</dfn> is a tuple consisting of a site and null or an
+<a>implementation-defined</a> value.
 
 <p>To
 <dfn lt="determine the network partition key|determining the network partition key">
@@ -2153,21 +2155,19 @@ determine the network partition key</dfn>, given <var>request</var>, run these s
  <var>topLevelOrigin</var> to <var>request</var>'s <a for=request>client</a>'s
  <a for="environment">top-level origin</a>.
 
- <li><p>Otherwise, return null.
+ <li><p>Return null.
 
  <li><p>Assert: <var>topLevelOrigin</var> is an <a for=/>origin</a>.
 
  <li><p>Let <var>topLevelSite</var> be the result of <a lt="obtain a site">obtaining a site</a>,
  given <var>topLevelOrigin</var>.
 
- <li><p>Let <var>secondKey</var> be the second key, or null.
+ <li><p>Let <var>secondKey</var> be null or an <a>implementation-defined</a> value.
 
   <p class=XXX>The second key is intentionally a little vague as the finer points are still
   evolving. See <a href=https://github.com/whatwg/fetch/issues/1035>issue #1035</a>.
 
- <li><p>If <var>secondKey</var> is not null, return (<var>topLevelSite</var>, <var>secondKey</var>).
-
- <li><p>Return (<var>topLevelSite</var>)
+ <li><p>Return (<var>topLevelSite</var>, <var>secondKey</var>).
 
 </ol>
 
@@ -2179,9 +2179,9 @@ determine the network partition key</dfn>, given <var>request</var>, run these s
 given <var>request</var>, run these steps:
 
 <ol>
- <li><p>Set <var>networkPartitionKey</var> to the result of <a>determining the network partition key</a>.
+ <li><p>Let <var>networkPartitionKey</var> be the result of <a>determining the network partition key</a>.
 
- <li><p>If <var>networkPartitionKey</var> is non-null, return null.
+ <li><p>If <var>networkPartitionKey</var> is null, then return null.
 
  <li><p>Otherwise, Return the unique HTTP cache associated with the <var>networkPartitionKey</var>.
  [[!HTTP-CACHING]]
