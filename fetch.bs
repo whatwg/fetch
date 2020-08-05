@@ -249,18 +249,6 @@ preferred. Unlike <a>ASCII whitespace</a> this excludes U+000C FF.
 <p>An <dfn export>HTTP whitespace byte</dfn> is an <a>HTTP newline byte</a> or
 <a>HTTP tab or space byte</a>.
 
-<p>An <dfn export id=concept-https-state-value>HTTPS state value</dfn> is "<code>none</code>",
-"<code>deprecated</code>", or "<code>modern</code>".
-
-<p class="note no-backref">A <a for=/>response</a> delivered over HTTPS will
-typically have its <a for=response>HTTPS state</a> set to
-"<code>modern</code>". A user agent can use "<code>deprecated</code>" in a transition
-period. E.g., while removing support for a hash function, weak cipher suites, certificates for an
-"Internal Name", or certificates with an overly long validity period. How exactly a user agent can
-use "<code>deprecated</code>" is not defined by this specification. An
-<a>environment settings object</a> typically derives its
-<a for="environment settings object">HTTPS state</a> from a <a for=/>response</a>.
-
 <p>To
 <dfn export lt="collect an HTTP quoted string|collecting an HTTP quoted string">collect an HTTP quoted string</dfn>
 from a <a for=/>string</a> <var>input</var>, given a <a>position variable</a> <var>position</var>
@@ -1841,11 +1829,6 @@ message as HTTP/2 does not support them.
      need to mask it, whether the cache API needs to store it, etc. -->
 
 <p>A <a for=/>response</a> has an associated
-<dfn export for=response id=concept-response-https-state>HTTPS state</dfn> (an
-<a>HTTPS state value</a>). Unless stated otherwise, it is
-"<code>none</code>".
-
-<p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-csp-list>CSP list</dfn>, which is a
 list of <a href=https://w3c.github.io/webappsec-csp/#policy>Content Security Policy objects</a>
 for the <a for=/>response</a>. The list is empty unless otherwise
@@ -3299,7 +3282,8 @@ these steps:
      <a for=response>URL</a>'s <a for=url>origin</a>
 
      <li><p><var>origin</var>'s <a for=url>scheme</a> is "<code>https</code>" or
-     <var>response</var>'s <a for=response>HTTPS state</a> is "<code>none</code>"
+     <var>response</var>'s <a for=response>URL</a>'s <a for=url>scheme</a> is not
+     "<code>https</code>"
     </ul>
 
     <p>then return <b>allowed</b>.
@@ -3646,8 +3630,7 @@ optionally with a <i>recursive flag</i>, run these steps:
 
      <li>
       <p>Return a new <a for=/>response</a> whose <a for=response>status</a> is
-      <var>noCorsResponse</var>'s <a for=response>status</a>, <a for=response>HTTPS state</a> is
-      <var>noCorsResponse</var>'s <a for=response>HTTPS state</a>, and <a for=response>CSP list</a>
+      <var>noCorsResponse</var>'s <a for=response>status</a>, and <a for=response>CSP list</a>
       is <var>noCorsResponse</var>'s <a for=response>CSP list</a>.
 
       <p class="warning">This is only an effective defense against side channel attacks if
@@ -3873,10 +3856,7 @@ optionally with a <i>recursive flag</i>, run these steps:
   <a for=/>response</a> whose <a for=response>status message</a> is `<code>OK</code>`,
   <a for=response>header list</a> consist of a single <a for=/>header</a> whose
   <a for=header>name</a> is `<code>Content-Type</code>` and <a for=header>value</a> is
-  `<code>text/html;charset=utf-8</code>`, <a for=response>body</a> is the empty byte sequence, and
-  <a for=response>HTTPS state</a> is <var>request</var>'s <a for=request>client</a>'s
-  <a for="environment settings object">HTTPS state</a> if <var>request</var>'s
-  <a for=request>client</a> is non-null.
+  `<code>text/html;charset=utf-8</code>`, and <a for=response>body</a> is the empty byte sequence.
 
   <p>Otherwise, return a <a>network error</a>.
 
@@ -3916,11 +3896,6 @@ optionally with a <i>recursive flag</i>, run these steps:
      <var>response</var>'s
      <a for=response>header list</a>.
 
-     <li><p>Set <var>response</var>'s
-     <a for=response>HTTPS state</a> to <var>request</var>'s
-     <a for=request>client</a>'s <a for="environment settings object">HTTPS state</a>
-     if <var>request</var>'s <a for=request>client</a> is non-null.
-
      <li><p>Set <var>response</var>'s <a for=response>body</a> to
      the result of performing the <a spec=fileapi>read operation</a> on
      <var>blob</var>.
@@ -3954,11 +3929,8 @@ optionally with a <i>recursive flag</i>, run these steps:
    `<code>OK</code>`, <a for=response>header list</a> consist of a single <a for=/>header</a> whose
    <a for=header>name</a> is `<code>Content-Type</code>` and <a for=header>value</a> is
    <var>dataURLStruct</var>'s <a for="data: URL struct">MIME type</a>,
-   <a lt="serialize a MIME type to bytes">serialized</a>, <a for=response>body</a> is
-   <var>dataURLStruct</var>'s <a for="data: URL struct">body</a>, and
-   <a for=response>HTTPS state</a> is <var>request</var>'s <a for=request>client</a>'s
-   <a for="environment settings object">HTTPS state</a> if <var>request</var>'s
-   <a for=request>client</a> is non-null.
+   <a lt="serialize a MIME type to bytes">serialized</a>, and <a for=response>body</a> is
+   <var>dataURLStruct</var>'s <a for="data: URL struct">body</a>.
   </ol>
 
  <dt>"<code>file</code>"
@@ -3985,8 +3957,7 @@ optionally with a <i>recursive flag</i>, run these steps:
    <li><p>Return a <a for=/>response</a> whose <a for="response">status message</a> is
    `<code>OK</code>`, <a for=response>header list</a> consists of a single <a for=/>header</a>
    whose <a for=header>name</a> is `<code>Content-Type</code>` and whose <a for=header>value</a> is
-   <var>mime</var>, <a for=response>body</a> is <var>body</var>, and
-   <a for=response>HTTPS state</a> is "<code>none</code>".
+   <var>mime</var>, and <a for=response>body</a> is <var>body</var>.
   </ol>
 
   <p>When in doubt, return a <a>network error</a>.
@@ -4866,18 +4837,6 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
      <li><p>Otherwise, return a <a>network error</a>.
     </ol>
-
-    <p>If <var>response</var> was retrieved over HTTPS, set its
-    <a for=response>HTTPS state</a> to either
-    "<code>deprecated</code>" or "<code>modern</code>".
-    [[!TLS]]
-
-    <p class="note no-backref">The exact determination here is up to user agents for the
-    time being. User agents are strongly encouraged to only succeed HTTPS connections with
-    strong security properties and return
-    <a>network errors</a> otherwise. Using the
-    "<code>deprecated</code>" state value ought to be a temporary and last resort kind
-    of option.
 
     <p><a for=request>Transmit body</a> for <var>request</var>.
   </ol>
@@ -6679,10 +6638,6 @@ constructor steps are:
  <li><p>Set <a>this</a>'s <a for=Body>MIME type</a> to the result of
  <a for="header list">extracting a MIME type</a> from <a>this</a>'s <a for=Response>response</a>'s
  <a for=response>header list</a>.
-
- <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>HTTPS state</a> to
- <a>this</a>'s <a>relevant settings object</a>'s
- <a for="environment settings object">HTTPS state</a>.
 </ol>
 
 <p>The static <dfn method for=Response><code>error()</code></dfn> method steps are:
