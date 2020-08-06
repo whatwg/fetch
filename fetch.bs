@@ -2049,20 +2049,19 @@ for each associated <a for="fetch group">fetch record</a> whose
 
 <h3 id=connections>Connections</h3>
 
-<p>A user agent has an associated
-<dfn export id=concept-connection-pool for=connection>connection pool</dfn>. A
-<a for=connection>connection pool</a> consists of zero or more
-<dfn lt=connection export id=concept-connection>connections</dfn>. Each
-<a>connection</a> is identified by an <b>origin</b> (an
-<a for=/>origin</a>) and <b>credentials</b> (a boolean).
+<p>A user agent has an associated <dfn export id=concept-connection-pool>connection pool</dfn>. A
+<a>connection pool</a> consists of zero or more
+<dfn lt=connection export id=concept-connection>connections</dfn>. Each <a>connection</a> is
+identified by a <b>key</b> (a <a>network partition key</a>), an <b>origin</b> (an
+<a for=/>origin</a>), and <b>credentials</b> (a boolean).
 
-<p>To <dfn export id=concept-connection-obtain for=connection>obtain a connection</dfn>, given an
-<var>origin</var> and <var>credentials</var>, run these steps:
+<p>To <dfn export id=concept-connection-obtain>obtain a connection</dfn>, given a <var>key</var>,
+<var>origin</var>, and <var>credentials</var>, run these steps:
 
 <ol>
- <li><p>If <a for=connection>connection pool</a> contains a <a>connection</a> whose <b>origin</b> is
- <var>origin</var> and <b>credentials</b> is <var>credentials</var>, then return that
- <a>connection</a>.
+ <li><p>If the user agent's <a>connection pool</a> contains a <a>connection</a> whose <b>key</b> is
+ <var>key</var>, <b>origin</b> is <var>origin</var>, and <b>credentials</b> is
+ <var>credentials</var>, then return that <a>connection</a>.
 
  <li><p>Let <var>connection</var> be null.
 
@@ -2090,8 +2089,9 @@ for each associated <a for="fetch group">fetch record</a> whose
    <li><p>Return failure.
   </ol>
 
- <li><p>Add <var>connection</var> to the <a for=connection>connection pool</a> with <b>origin</b>
- being <var>origin</var> and <b>credentials</b> being <var>credentials</var>.
+ <li><p>Add <var>connection</var> to the user agent's <a>connection pool</a> with <b>key</b> being
+ <var>key</var>, <b>origin</b> being <var>origin</var>, and <b>credentials</b> being
+ <var>credentials</var>.
 
  <li><p>Return <var>connection</var>.
 </ol>
@@ -2106,10 +2106,13 @@ clearly stipulates that <a>connections</a> are keyed on
      WebSocket saner -->
 
 
-<h3 id=http-cache-partitions>HTTP cache partitions</h3>
+<h3 id=network-partition-keys>Network partition keys</h3>
+
+<p>A <dfn>network partition key</dfn> is a tuple consisting of a <a for=/>site</a> and null or
+an <a>implementation-defined</a> value.
 
 <p>To
-<dfn lt="determine the HTTP cache partition|determining the HTTP cache partition">determine the HTTP cache partition</dfn>,
+<dfn lt="determine the network partition key|determining the network partition key">determine the network partition key</dfn>,
 given <var>request</var>, run these steps:
 
 <ol>
@@ -2142,11 +2145,28 @@ given <var>request</var>, run these steps:
  given <var>topLevelOrigin</var>.
 
  <li>
-  <p>Return the HTTP cache associated with <var>topLevelSite</var> and, possibly, a second key.
-  [[!HTTP-CACHING]]
+  <p>Let <var>secondKey</var> be null or an <a>implementation-defined</a> value.
 
   <p class=XXX>The second key is intentionally a little vague as the finer points are still
   evolving. See <a href=https://github.com/whatwg/fetch/issues/1035>issue #1035</a>.
+
+ <li><p>Return (<var>topLevelSite</var>, <var>secondKey</var>).
+</ol>
+
+
+<h3 id=http-cache-partitions>HTTP cache partitions</h3>
+
+<p>To
+<dfn lt="determine the HTTP cache partition|determining the HTTP cache partition">determine the HTTP cache partition</dfn>,
+given <var>request</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>key</var> be the result of <a>determining the network partition key</a> given
+ <var>request</var>.
+
+ <li><p>If <var>key</var> is null, then return null.
+
+ <li><p>Return the unique HTTP cache associated with <var>key</var>. [[!HTTP-CACHING]]
 </ol>
 
 
@@ -4773,6 +4793,9 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
  <li><p>If <var>httpCache</var> is null, then set <var>request</var>'s <a for=request>cache mode</a>
  to "<code>no-store</code>".
 
+ <li><p>Let <var>networkPartitionKey</var> be the result of
+ <a>determining the network partition key</a> given <var>request</var>.
+
  <li>
   <p>Switch on <var>request</var>'s <a for=request>mode</a>:
 
@@ -4784,8 +4807,9 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
    <dt>Otherwise
    <dd><p>Let <var>connection</var> be the result of
-   <a lt="obtain a connection" for=connection>obtaining a connection</a>, given <var>request</var>'s
-   <a for=request>current URL</a>'s <a for=url>origin</a> and <var>credentials</var>.
+   <a lt="obtain a connection">obtaining a connection</a>, given <var>networkPartitionKey</var>,
+   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, and
+   <var>credentials</var>.
   </dl>
 
 
