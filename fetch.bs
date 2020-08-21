@@ -3232,9 +3232,9 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
 </code></pre>
 
 <p>To perform a <dfn export>cross-origin resource policy check</dfn>, given an <a for=url>origin</a>
-<var>origin</var>, an <a for=/>environment settings object</a> <var>settingsObject</var>, a
-<a for=/>response</a> <var>response</var>, and an optional boolean <var>forNavigation</var>, run
-these steps:
+<var>origin</var>, an <a for=/>environment settings object</a> <var>settingsObject</var>, a string
+<var>destination</var>, a <a for=/>response</a> <var>response</var>, and an optional boolean
+<var>forNavigation</var>, run these steps:
 
 <ol>
  <li><p>Set <var>forNavigation</var> to false if it is not given.
@@ -3254,14 +3254,14 @@ these steps:
  <var>embedderPolicy</var>'s <a for="embedder policy">report only value</a>, <var>response</var>,
  and <var>forNavigation</var> returns <b>blocked</b>, then
  <a>queue a cross-origin embedder policy CORP violation report</a> with <var>response</var>,
- <var>settingsObject</var>, and true.
+ <var>settingsObject</var>, <var>destination</var>, and true.
 
  <li><p>If the <a>cross-origin resource policy internal check</a> with <var>origin</var>,
  <var>embedderPolicy</var>'s <a for="embedder policy">value</a>, <var>response</var>, and
  <var>forNavigation</var> returns <b>allowed</b>, then return <b>allowed</b>.
 
  <li><p><a>Queue a cross-origin embedder policy CORP violation report</a> with <var>response</var>,
- <var>settingsObject</var>, and false.
+ <var>settingsObject</var>, <var>destination</var>, and false.
 
  <li><p>Return <b>blocked</b>.
 </ol>
@@ -3341,7 +3341,8 @@ these steps:
 
 <p>To <dfn>queue a cross-origin embedder policy CORP violation report</dfn>, given a
 <a for=/>response</a> <var>response</var>, an <a for=/>environment settings object</a>
-<var>settingsObject</var>, and a boolean <var>reportOnly</var>, run these steps:
+<var>settingsObject</var>, a string <var>destination</var>, and a boolean <var>reportOnly</var>,
+run these steps:
 
 <ol>
  <li><p>Let <var>endpoint</var> be <var>settingsObject</var>'s
@@ -3350,9 +3351,12 @@ these steps:
  <var>settingsObject</var>'s <a for="environment settings object">embedder policy</a>'s
  <a for="embedder policy">reporting endpoint</a> otherwise.
 
- <li><p>Let <var>serialized url</var> be the result of
+ <li><p>Let <var>serializedURL</var> be the result of
  <a lt="serialize a response URL for reporting">serializing a response URL for reporting</a> with
  <var>response</var>.
+
+ <li><p>Let <var>disposition</var> be "<code>reporting</code>" if <var>reportOnly</var> is true;
+ otherwise "<code>enforce</code>".
 
  <li>
   <p>Let <var>body</var> be a new object containing the following properties:
@@ -3368,8 +3372,16 @@ these steps:
      <td>"<code>corp</code>"
     </tr>
     <tr>
-     <td>"<code>blocked-url</code>"
-     <td><var>serialized url</var>
+     <td>"<code>blockedURL</code>"
+     <td><var>serializedURL</var>
+    </tr>
+    <tr>
+     <td>"<code>destination</code>"
+     <td><var>destination</var>
+    </tr>
+    <tr>
+     <td>"<code>disposition</code>"
+     <td><var>disposition</var>
     </tr>
    </tbody>
   </table>
@@ -4130,8 +4142,9 @@ optional <i>CORS-preflight flag</i>, run these steps:
   <p>If either <var>request</var>'s <a for=request>response tainting</a> or <var>response</var>'s
   <a for=response>type</a> is "<code>opaque</code>", and the
   <a>cross-origin resource policy check</a> with <var>request</var>'s <a for=request>origin</a>,
-  <var>request</var>'s <a for=request>client</a>, and <var>actualResponse</var> returns
-  <b>blocked</b>, then return a <a>network error</a>.
+  <var>request</var>'s <a for=request>client</a>, <var>request</var>'s
+  <a for=request>destination</a>, and <var>actualResponse</var> returns <b>blocked</b>, then return
+  a <a>network error</a>.
 
   <p class=note>The <a>cross-origin resource policy check</a> runs for responses coming from the
   network and responses coming from the service worker. This is different from the
