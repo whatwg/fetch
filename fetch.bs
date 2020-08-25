@@ -2329,10 +2329,14 @@ run these steps:
 
 <p>In this section, we define common operations for {{ReadableStream}} objects. [[!STREAMS]]
 
-<p>To <dfn export for=ReadableStream id=concept-enqueue-readablestream>enqueue</dfn>
-<var>chunk</var> into a {{ReadableStream}} object <var>stream</var>, run these steps:
+<p>To <dfn export for=ReadableStream id=concept-enqueue-readablestream>enqueue bytes</dfn>, given a
+<a for=/>byte sequence</a> <var>bytes</var> and a {{ReadableStream}} object <var>stream</var>:
 
 <ol>
+ <li><p>Let <var>chunk</var> be a {{Uint8Array}} object wrapping an {{ArrayBuffer}} object
+ containing <var>bytes</var>. If that threw an exception, <a abstract-op>error</a> <var>stream</var>
+ with that exception and return.</p></li>
+
  <li><p>Call
  <a abstract-op>ReadableStreamDefaultControllerEnqueue</a>(<var>stream</var>.\[[readableStreamController]],
  <var>chunk</var>).
@@ -2356,7 +2360,7 @@ run these steps:
 </ol>
 
 <p>To
-<dfn export for=ReadableStream id=concept-construct-readablestream>construct a <code>ReadableStream</code> object</dfn>
+<dfn export id=concept-construct-readablestream lt="construct a ReadableStream object|constructing a ReadableStream object">construct a <code>ReadableStream</code> object</dfn>
 optionally with a <var>highWaterMark</var>, <var>sizeAlgorithm</var> algorithm, <var>pull</var>
 action, and <var>cancel</var> action, run these steps:
 
@@ -2391,23 +2395,6 @@ action, and <var>cancel</var> action, run these steps:
 
  <li><p>Return [$CreateReadableStream$](<var>startAlgorithm</var>, <var>pullAlgorithm</var>,
  <var>cancelAlgorithm</var>, <var>highWaterMark</var>, <var>sizeAlgorithm</var>).
-</ol>
-
-<p>To
-<dfn export for=ReadableStream id=concept-construct-fixed-readablestream>construct a fixed <code>ReadableStream</code> object</dfn>
-with given <var>chunks</var>, run these steps:
-
-<ol>
- <li><p>Let <var>stream</var> be the result of
- <a lt="construct a ReadableStream object" for=ReadableStream>constructing</a> a {{ReadableStream}}
- object.
-
- <li><p>For each <var>chunk</var> in <var>chunks</var>, <a for=ReadableStream>enqueue</a>
- <var>chunk</var> into <var>stream</var>.
-
- <li><p><a lt=close abstract-op>Close</a> <var>stream</var>.
-
- <li>Return <var>stream</var>.
 </ol>
 
 <p>To <dfn export for=ReadableStream id=concept-get-reader>get a reader</dfn> from a
@@ -2490,8 +2477,15 @@ object <var>stream</var>, run these steps:
 </ol>
 
 <p>An <dfn export for=ReadableStream id=concept-empty-readablestream>empty</dfn> {{ReadableStream}}
-object is the result of <a lt="construct a fixed ReadableStream object">constructing</a> a fixed
-{{ReadableStream}} object with an empty list.
+object, run these steps:
+
+<ol>
+ <li><p>Let <var>stream</var> be the result of <a>constructing a {{ReadableStream}} object</a>.
+
+ <li><p><a lt=close abstract-op>Close</a> <var>stream</var>.
+
+ <li>Return <var>stream</var>.
+</ol>
 
 <p class="note no-backref">Constructing an <a>empty</a> {{ReadableStream}} object will not throw an
 exception.
@@ -4937,10 +4931,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
  ongoing fetch with the aborted flag set.
 
  <li>
-  <p>Let <var>stream</var> be the result of
-  <a lt="construct a ReadableStream object" for=ReadableStream>constructing</a> a {{ReadableStream}}
-  object with <var>highWaterMark</var>, <var>sizeAlgorithm</var>, <var>pull</var>, and
-  <var>cancel</var>.
+  <p>Let <var>stream</var> be the result of <a>constructing a {{ReadableStream}} object</a> with
+  <var>highWaterMark</var>, <var>sizeAlgorithm</var>, <var>pull</var>, and <var>cancel</var>.
 
   <p class="note no-backref">This construction operation will not throw an exception.
 
@@ -5019,9 +5011,11 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
          <li><p>If <var>bytes</var> is failure, then <a lt=terminated for=fetch>terminate</a> the
          ongoing fetch.
 
-         <li><p><a for=ReadableStream>Enqueue</a> <a>view wrapped</a> <var>bytes</var> to
-         <var>stream</var>. If that threw an exception, <a lt=terminated for=fetch>terminate</a> the
-         ongoing fetch, and <a abstract-op>error</a> <var>stream</var> with that exception.
+         <li><p><a for=ReadableStream>Enqueue bytes</a> given <var>bytes</var> and
+         <var>stream</var>.
+
+         <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
+         <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
 
          <li><p>If <var>stream</var> doesn't <a lt="need more data" for=ReadableStream>need more
          data</a> and <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent to
@@ -5701,9 +5695,7 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 these steps:
 
 <ol>
- <li><p>Let <var>stream</var> be the result of
- <a lt="construct a ReadableStream object" for=ReadableStream>constructing</a> a
- {{ReadableStream}} object.
+ <li><p>Let <var>stream</var> be the result of <a>constructing a {{ReadableStream}} object</a>.
 
  <li><p>Let <var>Content-Type</var> be null.
 
@@ -5726,18 +5718,15 @@ these steps:
 
    <dt><a for=/>byte sequence</a>
    <dd>
-    <p><a for=ReadableStream>Enqueue</a> a <a>view wrapped</a> <var>object</var> to
-    <var>stream</var> and <a abstract-op>close</a> <var>stream</var>. If that threw an exception,
-    <a abstract-op>error</a> <var>stream</var> with that exception.
+    <p><a for=ReadableStream>Enqueue bytes</a> given <var>object</var> and <var>stream</var>.
 
     <p>Set <var>source</var> to <var>object</var>.
 
    <dt><code>BufferSource</code>
    <dd>
-    <p><a for=ReadableStream>Enqueue</a> a <a>view wrapped</a>
-    <a lt="get a copy of the buffer source">copy of the bytes</a> held by <var>object</var> to
-    <var>stream</var> and <a abstract-op>close</a> <var>stream</var>. If that threw an exception,
-    <a abstract-op>error</a> <var>stream</var> with that exception.
+    <p><a for=ReadableStream>Enqueue bytes</a> given a
+    <a lt="get a copy of the buffer source">copy of the bytes</a> held by <var>object</var> and
+    <var>stream</var>.
 
     <p>Set <var>source</var> to <var>object</var>.
 
@@ -5790,10 +5779,9 @@ these steps:
   <p>If <var>action</var> is non-null, run <var>action</var> <a>in parallel</a>:
 
   <ol>
-   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be those bytes and
-   <a for=ReadableStream>enqueue</a> <a>view wrapped</a> <var>bytes</var> to <var>stream</var>. If
-   that threw an exception, <a abstract-op>error</a> <var>stream</var> with that exception and
-   cancel running <var>action</var>.
+   <li><p>Whenever one or more bytes are available and <var>stream</var> is not
+   <a for=ReadableStream>errored</a>, <a for=ReadableStream>enqueue bytes</a> given the available
+   bytes and <var>stream</var>.
 
    <li><p>When running <var>action</var> is done, <a abstract-op>close</a> <var>stream</var>.
   </ol>
@@ -5803,10 +5791,6 @@ these steps:
 
  <li><p>Return <var>body</var> and <var>Content-Type</var>.
 </ol>
-
-<p>To <dfn lt="view wrap|view wrapped">view wrap</dfn> a <a>byte sequence</a> <var>bytes</var>,
-return a {{Uint8Array}} object wrapping an {{ArrayBuffer}} object containing <var>bytes</var>.
-<span class=note>This operation can throw due to allocation failing.</span>
 
 
 <h3 id=body-mixin>Body mixin</h3>
