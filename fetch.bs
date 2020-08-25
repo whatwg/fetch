@@ -1090,11 +1090,12 @@ outlawing <a>forbidden methods</a> and
 <a>forbidden header names</a>.
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-body>body</dfn> (null or a
-<a for=/>body</a>). Unless stated otherwise it is null.
+<dfn export for=request id=concept-request-body>body</dfn> (null, a <a for=/>byte sequence</a>, a
+<a for=/>scalar value string</a>, or a <a for=/>body</a>). Unless stated otherwise it is null.
 
-<p class="note no-backref">This can be updated during redirects to null as described in
-<a>HTTP fetch</a>.
+<p class="note no-backref">A <a for=/>byte sequence</a> and a <a for=/>scalar value string</a> will
+be <a for=BodyInit>safely extracted</a> into a <a for=/>body</a> early on in <a for=/>fetch</a>. As
+part of <a>HTTP fetch</a> it is possible for this field to be set to null due to certain redirects.
 
 <hr>
 
@@ -3435,6 +3436,17 @@ the request.
   <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
 
   <ol>
+   <li>
+    <p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a> or a
+    <a for=/>scalar value string</a>, then:
+
+    <ol>
+     <li><p>Let <var>body</var> and <var ignore>ignoreType</var> be the result of
+     <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
+
+     <li><p>Set <var>request</var>'s <a for=request>body</a> to <var>body</var>.
+    </ol>
+
    <li><p>If <var>request</var>'s <a for=request>window</a> is
    "<code>client</code>", set <var>request</var>'s
    <a for=request>window</a> to <var>request</var>'s
@@ -5007,10 +5019,9 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
          <li><p>If <var>bytes</var> is failure, then <a lt=terminated for=fetch>terminate</a> the
          ongoing fetch.
 
-         <li><p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code> object wrapping an
-         <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If that threw an
-         exception, <a lt=terminated for=fetch>terminate</a> the ongoing fetch, and
-         <a abstract-op>error</a> <var>stream</var> with that exception.
+         <li><p><a for=ReadableStream>Enqueue</a> <a>view wrapped</a> <var>bytes</var> to
+         <var>stream</var>. If that threw an exception, <a lt=terminated for=fetch>terminate</a> the
+         ongoing fetch, and <a abstract-op>error</a> <var>stream</var> with that exception.
 
          <li><p>If <var>stream</var> doesn't <a lt="need more data" for=ReadableStream>need more
          data</a> and <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent to
@@ -5659,7 +5670,7 @@ method steps are:
 <a for="header list">sort and combine</a> with <a>this</a>'s <a for=Headers>header list</a>.
 
 
-<h3 id=body-mixin>Body mixin</h3>
+<h3 id=bodyinit-unions>BodyInit unions</h3>
 
 <pre class=idl>
 typedef (Blob or BufferSource or FormData or URLSearchParams or USVString) XMLHttpRequestBodyInit;
@@ -5686,7 +5697,8 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
 `<code>Content-Type</code>` <a for=header>value</a> from
-<var>object</var>, with an optional <var>keepalive flag</var>, run these steps:
+<var>object</var>, with an optional boolean <dfn><var>keepalive</var></dfn> (default false), run
+these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be the result of
@@ -5700,7 +5712,7 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
  <li><p>Let <var>source</var> be null.
 
  <li>
-  <p>Switch on <var>object</var>'s type:
+  <p>Switch on <var>object</var>:
 
   <dl class=switch>
    <dt>{{Blob}}
@@ -5712,12 +5724,19 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 
     <p>Set <var>source</var> to <var>object</var>.
 
+   <dt><a for-/>byte sequence</a>
+   <dd>
+    <p><a for=ReadableStream>Enqueue</a> a <a>view wrapped</a> <var>object</var> to
+    <var>stream</var> and <a abstract-op>close</a> <var>stream</var>. If that threw an exception,
+    <a abstract-op>error</a> <var>stream</var> with that exception.
+
+    <p>Set <var>source</var> to <var>object</var>.
+
    <dt><code>BufferSource</code>
    <dd>
-    <p><a for=ReadableStream>Enqueue</a> a <code>Uint8Array</code> object
-    wrapping an <code>ArrayBuffer</code> containing a copy of the bytes held by <var>object</var>
-    to <var>stream</var> and <a abstract-op>close</a>
-    <var>stream</var>. If that threw an exception,
+    <p><a for=ReadableStream>Enqueue</a> a <a>view wrapped</a>
+    <a lt="get a copy of the buffer source">copy of the bytes</a> held by <var>object</var> to
+    <var>stream</var> and <a abstract-op>close</a> <var>stream</var>. If that threw an exception,
     <a abstract-op>error</a> <var>stream</var> with that exception.
 
     <p>Set <var>source</var> to <var>object</var>.
@@ -5749,7 +5768,7 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 
     <p>Set <var>source</var> to <var>object</var>.
 
-   <dt><code>USVString</code>
+   <dt><a for=/>scalar value string</a>
    <dd>
     <p>Set <var>action</var> to an action that runs <a>UTF-8 encode</a> on <var>object</var>.
 
@@ -5759,7 +5778,7 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 
    <dt>{{ReadableStream}}
    <dd>
-    <p>If the <var>keepalive flag</var> is set, then <a>throw</a> a {{TypeError}}.
+    <p>If <a><var>keepalive</var></a> is true, then <a>throw</a> a {{TypeError}}.
 
     <p>If <var>object</var> is <a for=ReadableStream>disturbed</a> or
     <a for=ReadableStream>locked</a>, then <a>throw</a> a {{TypeError}}.
@@ -5771,15 +5790,12 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
   <p>If <var>action</var> is non-null, run <var>action</var> <a>in parallel</a>:
 
   <ol>
-   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be the bytes and
-   <a for=ReadableStream>enqueue</a> a <code>Uint8Array</code> object
-   wrapping an <code>ArrayBuffer</code> containing <var>bytes</var> to <var>stream</var>. If
-   creating the <code>ArrayBuffer</code> threw an exception,
-   <a abstract-op>error</a> <var>stream</var> with that exception
-   and cancel running <var>action</var>.
+   <li><p>Whenever one or more bytes are available, let <var>bytes</var> be those bytes and
+   <a for=ReadableStream>enqueue</a> <a>view wrapped</a> <var>bytes</var> to <var>stream</var>. If
+   that threw an exception, <a abstract-op>error</a> <var>stream</var> with that exception and
+   cancel running <var>action</var>.
 
-   <li><p>When running <var>action</var> is done,
-   <a abstract-op>close</a> <var>stream</var>.
+   <li><p>When running <var>action</var> is done, <a abstract-op>close</a> <var>stream</var>.
   </ol>
 
  <li><p>Let <var>body</var> be a <a for=/>body</a> whose <a for=body>stream</a> is
@@ -5788,6 +5804,12 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
  <li><p>Return <var>body</var> and <var>Content-Type</var>.
 </ol>
 
+<p>To <dfn lt="view wrap|view wrapped">view wrap</dfn> a <a>byte sequence</a> <var>bytes</var>,
+return a {{Uint8Array}} object wrapping an {{ArrayBuffer}} object containing <var>bytes</var>.
+<span class=note>This operation can throw due to allocation failing.</span>
+
+
+<h3 id=body-mixin>Body mixin</h3>
 
 <pre class=idl>
 interface mixin Body {
@@ -6458,7 +6480,7 @@ constructor steps are:
 
    <li><p>If <var>init</var>["{{RequestInit/keepalive}}"] <a for=map>exists</a> and is true, then
    set <var>body</var> and <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a>
-   <var>init</var>["{{RequestInit/body}}"], with the <var>keepalive flag</var> set.
+   <var>init</var>["{{RequestInit/body}}"], with <a><var>keepalive</var></a> set to true.
 
    <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
    <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"].
