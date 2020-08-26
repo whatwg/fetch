@@ -2476,21 +2476,6 @@ object <var>stream</var>, run these steps:
  <li><p>Return the result of calling <a abstract-op>ReadableStreamTee</a>(<var>stream</var>, true).
 </ol>
 
-<p>An <dfn export for=ReadableStream id=concept-empty-readablestream>empty</dfn> {{ReadableStream}}
-object, run these steps:
-
-<ol>
- <li><p>Let <var>stream</var> be the result of
- <a>constructing a <code>ReadableStream</code> object</a>.
-
- <li><p><a lt=close abstract-op>Close</a> <var>stream</var>.
-
- <li>Return <var>stream</var>.
-</ol>
-
-<p class="note no-backref">Constructing an <a>empty</a> {{ReadableStream}} object will not throw an
-exception.
-
 <p>A {{ReadableStream}} object <var>stream</var> is said to be
 <dfn export for=ReadableStream id=concept-readablestream-readable>readable</dfn> if
 <var>stream</var>.\[[state]] is "readable".
@@ -5717,12 +5702,11 @@ these steps:
     attribute is not the empty byte sequence, set <var>Content-Type</var> to its value.
 
    <dt><a for=/>byte sequence</a>
-   <dd><p><a for=ReadableStream>Enqueue bytes</a> given <var>object</var> and <var>stream</var>.
+   <dd><p>Set <var>action</var> to an action that returns <var>object</var>.
 
    <dt><code>BufferSource</code>
-   <dd><p><a for=ReadableStream>Enqueue bytes</a> given a
-   <a lt="get a copy of the buffer source">copy of the bytes</a> held by <var>object</var> and
-   <var>stream</var>.
+   <dd><p>Set <var>action</var> to an action that returns a
+   <a lt="get a copy of the buffer source">copy of the bytes</a> held by <var>object</var>.
 
    <dt>{{FormData}}
    <dd>
@@ -5903,17 +5887,24 @@ the associated steps:
  <li><p>If <var>object</var> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then return
  <a>a promise rejected with</a> a {{TypeError}}.
 
- <li><p>Let <var>stream</var> be <var>object</var>'s <a for=Body>body</a>'s <a for=body>stream</a>
- if <var>object</var>'s <a for=Body>body</a> is non-null; otherwise an <a>empty</a>
- {{ReadableStream}} object.
+ <li><p>Let <var>promise</var> be <a>a promise resolved with</a> an empty
+ <a for=/>byte sequence</a>.
 
- <li><p>Let <var>reader</var> be the result of
- <a lt="get a reader" for=ReadableStream>getting a reader</a> from <var>stream</var>. If that threw
- an exception, return <a>a promise rejected with</a> that exception.
+ <li>
+  <p>If <var>object</var>'s <a for=Body>body</a> is non-null, then:
 
- <li><p>Let <var>promise</var> be the result of
- <a lt="read all bytes" for=ReadableStream>reading all bytes</a> from <var>stream</var> with
- <var>reader</var>.
+  <ol>
+   <li><p>Let <var>stream</var> be <var>object</var>'s <a for=Body>body</a>'s
+   <a for=body>stream</a>.
+
+   <li><p>Let <var>reader</var> be the result of
+   <a lt="get a reader" for=ReadableStream>getting a reader</a> from <var>stream</var>. If that
+   threw an exception, then return <a>a promise rejected with</a> that exception.
+
+   <li><p>Set <var>promise</var> to the result of
+   <a lt="read all bytes" for=ReadableStream>reading all bytes</a> from <var>stream</var> with
+   <var>reader</var>.
+  </ol>
 
  <li><p>Let <var>steps</var> be to return the result of <a>package data</a> with the first argument
  given, <var>type</var>, and <var>object</var>'s <a for=Body>MIME type</a>.
