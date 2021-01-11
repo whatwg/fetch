@@ -5587,9 +5587,12 @@ HTML, will likely not be exposed here. Rather, an HTML parser API might accept a
 due course.
 <!-- https://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>Objects implementing the {{Body}} mixin gain an associated
-<dfn id=concept-body-body for=Body>body</dfn> (null or a <a for=/>body</a>) and
-a <dfn id=concept-body-mime-type for=Body>MIME type</dfn> (failure or a <a for=/>MIME type</a>).
+<p>Objects implementing the {{Body}} mixin need to define an associated
+<dfn id=concept-body-mime-type for=Body>get MIME type</dfn> algorithm which takes no arguments and
+returns failure or a <a for=/>MIME type</a>.
+
+<p>Objects implementing the {{Body}} mixin have an associated
+<dfn id=concept-body-body for=Body>body</dfn> (null or a <a for=/>body</a>).
 
 <p>An object implementing the {{Body}} mixin is said to be
 <dfn export id=concept-body-disturbed for=Body>disturbed</dfn> if its <a for=Body>body</a> is
@@ -5711,8 +5714,11 @@ the associated steps:
    <a for=ReadableStreamDefaultReader>reading all bytes</a> from <var>reader</var>.
   </ol>
 
+ <li><p>Let <var>mimeType</var> be the result of running <var>object</var>'s
+ <a for=Body>get MIME type</a>.
+
  <li><p>Let <var>steps</var> be to return the result of <a>package data</a> with the first argument
- given, <var>type</var>, and <var>object</var>'s <a for=Body>MIME type</a>.
+ given, <var>type</var>, and <var>mimeType</var>.
 
  <li><p>Return the result of <a>upon fulfillment</a> of <var>promise</var> given <var>steps</var>.
 </ol>
@@ -5804,6 +5810,10 @@ omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor obser
 
 <p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (an {{AbortSignal}} object),
 initially a new {{AbortSignal}} object.
+
+<p>A {{Request}} object's <a for=Body>get MIME type</a> is to return the result of
+<a for="header list">extracting a MIME type</a> from its <a for=Request>request</a>'s
+<a for=request>header list</a>.
 
 <p>A {{Request}} object's <a for=Body>body</a> is its
 <a for=Request>request</a>'s
@@ -6278,10 +6288,6 @@ constructor steps are:
  <var>inputBody</var>.
 
  <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
-
- <li><p>Set <a>this</a>'s <a for=Body>MIME type</a> to the result of
- <a for="header list">extracting a MIME type</a> from <a>this</a>'s <a for=Request>request</a>'s
- <a for=request>header list</a>.
 </ol>
 
 <p>The <dfn attribute for=Request><code>method</code></dfn> getter steps are to return <a>this</a>'s
@@ -6414,6 +6420,10 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <p>A {{Response}} object also has an associated <dfn for=Response export>headers</dfn> (null or a
 {{Headers}} object), initially null.
 
+<p>A {{Response}} object's <a for=Body>get MIME type</a> is to return the result of
+<a for="header list">extracting a MIME type</a> from its <a for=Response>response</a>'s
+<a for=response>header list</a>.
+
 <p>A {{Response}} object's <a for=Body>body</a> is its
 <a for=Response>response</a>'s <a for=response>body</a>.
 
@@ -6466,10 +6476,6 @@ constructor steps are:
    `<code>Content-Type</code>`/<var>Content-Type</var> to <a>this</a>'s
    <a for=Response>response</a>'s <a for=response>header list</a>.
   </ol>
-
- <li><p>Set <a>this</a>'s <a for=Body>MIME type</a> to the result of
- <a for="header list">extracting a MIME type</a> from <a>this</a>'s <a for=Response>response</a>'s
- <a for=response>header list</a>.
 </ol>
 
 <p>The static <dfn method for=Response><code>error()</code></dfn> method steps are:
