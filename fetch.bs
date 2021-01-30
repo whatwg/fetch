@@ -6241,7 +6241,7 @@ constructor steps are:
  <var>inputBody</var> is non-null, and <var>request</var>'s <a for=request>method</a> is
  `<code>GET</code>` or `<code>HEAD</code>`, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Let <var>body</var> be <var>inputBody</var>.
+ <li><p>Let <var>initBody</var> be null.
 
  <li>
   <p>If <var>init</var>["{{RequestInit/body}}"] <a for=map>exists</a> and is non-null, then:
@@ -6249,7 +6249,7 @@ constructor steps are:
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>body</var> and <var>Content-Type</var> to the result of
+   <li><p>Set <var>initBody</var> and <var>Content-Type</var> to the result of
    <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"], with
    <a for=BodyInit/extract><var>keepalive</var></a> set to <var>request</var>'s
    <a for=request>keepalive</a>.
@@ -6260,8 +6260,12 @@ constructor steps are:
    `<code>Content-Type</code>`/<var>Content-Type</var> to <a>this</a>'s <a for=Request>headers</a>.
   </ol>
 
+ <li><p>Let <var>inputOrInitBody</var> be <var>initBody</var> if it is non-null; otherwise
+ <var>inputBody</var>.
+
  <li>
-  <p>If <var>body</var> is non-null and <var>body</var>'s <a for=body>source</a> is null, then:
+  <p>If <var>inputOrInitBody</var> is non-null and <var>inputOrInitBody</var>'s
+  <a for=body>source</a> is null, then:
 
   <ol>
    <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
@@ -6271,16 +6275,19 @@ constructor steps are:
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
- <li><p>If <var>inputBody</var> is <var>body</var> and <var>input</var> is <a for=Body>unusable</a>,
- then <a>throw</a> a {{TypeError}}.
+ <li><p>If <var>initBody</var> is null and <var>input</var> is <a for=Body>unusable</a>, then
+ <a>throw</a> a {{TypeError}}.
 
  <!-- Any steps after this must not throw. -->
 
- <li><p>If <var>inputBody</var> is <var>body</var> and <var>inputBody</var> is non-null, then set
- <var>body</var> to the result of <a for=ReadableStream>creating a proxy</a> for
+ <li><p>Let <var>finalBody</var> be <var>inputOrInitBody</var>.
+
+ <li><p>If <var>initBody</var> is null and <var>inputBody</var> is non-null, then set
+ <var>finalBody</var> to the result of <a for=ReadableStream>creating a proxy</a> for
  <var>inputBody</var>.
 
- <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
+ <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to
+ <var>finalBody</var>.
 
  <li><p>Set <a>this</a>'s <a for=Request>signal</a> to a <a for=/>new</a> {{AbortSignal}} object
  with <a>this</a>'s <a>relevant Realm</a>.
