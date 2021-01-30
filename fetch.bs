@@ -1136,8 +1136,9 @@ requests, but not service worker requests. It references an
 explicitly set <a for=/>request</a>'s
 <a for=request>window</a>.
 
-<p id=keep-alive-flag>A <a for=/>request</a> has an associated
-<dfn for=request export>keepalive flag</dfn>. Unless stated otherwise it is unset.
+<p id=keep-alive-flag>A <a for=/>request</a> has an associated boolean
+<dfn for=request export id=request-keepalive-flag>keepalive</dfn>. Unless stated otherwise it is
+false.
 
 <p class="note no-backref">This can be used to allow the request to outlive the
 <a>environment settings object</a>, e.g.,
@@ -2057,13 +2058,10 @@ functionality.
 <hr>
 
 <p>When a <a for=fetch>fetch group</a> is
-<dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>,
-for each associated <a for="fetch group">fetch record</a> whose
-<a for="fetch record">request</a>'s <a>done flag</a> or
-<a>keepalive flag</a> is unset,
-<a lt=terminated for=fetch>terminate</a> the
-<a for="fetch group">fetch record</a>'s
-<a for="fetch record">fetch</a>.
+<dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>, for each associated
+<a for="fetch group">fetch record</a> whose <a for="fetch record">request</a>'s <a>done flag</a> is
+unset or <a for=request>keepalive</a> is false, <a lt=terminated for=fetch>terminate</a> the
+<a for="fetch group">fetch record</a>'s <a for="fetch record">fetch</a>.
 
 
 <h3 id=connections>Connections</h3>
@@ -4176,7 +4174,7 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
 
    <li>
     <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
-    <a for=request>keepalive flag</a> is set, then:
+    <a for=request>keepalive</a> is true, then:
 
     <ol>
      <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
@@ -4185,8 +4183,8 @@ Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by b
      <a>fetch group</a>.
 
      <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
-     <var>group</var> whose <a for="fetch record">request</a> has its
-     <a for=request>keepalive flag</a> set and <a>done flag</a> unset.
+     <var>group</var> whose <a for="fetch record">request</a>'s <a for=request>keepalive</a> is true
+     and <a>done flag</a> is unset.
 
      <li>
       <p><a for=set>For each</a> <var>fetchRecord</var> in <var>inflightRecords</var>:
@@ -5473,9 +5471,9 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 <a for=BodyInit>extract</a> operation that is guaranteed to not throw an exception.
 
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=header>value</a> from
-<var>object</var>, with an optional boolean <dfn><var>keepalive</var></dfn> (default false), run
-these steps:
+`<code>Content-Type</code>` <a for=header>value</a> from <var>object</var>, with an optional boolean
+<dfn id=keepalive for=BodyInit/extract export><var>keepalive</var></dfn> (default false), run these
+steps:
 
 <ol>
  <li><p>Let <var>stream</var> be <var>object</var> if <var>object</var> is a {{ReadableStream}}
@@ -6062,8 +6060,8 @@ constructor steps are:
    <dt><a for=request>integrity metadata</a>
    <dd><var>request</var>'s <a for=request>integrity metadata</a>.
 
-   <dt><a>keepalive flag</a>
-   <dd><var>request</var>'s <a>keepalive flag</a>.
+   <dt><a for=request>keepalive</a>
+   <dd><var>request</var>'s <a for=request>keepalive</a>.
 
    <dt><a for=request>reload-navigation flag</a>
    <dd><var>request</var>'s <a for=request>reload-navigation flag</a>.
@@ -6165,8 +6163,7 @@ constructor steps are:
  <var>request</var>'s <a for=request>integrity metadata</a> to it.
 
  <li><p>If <var>init</var>["{{RequestInit/keepalive}}"] <a for=map>exists</a>, then set
- <var>request</var>'s <a>keepalive flag</a> if <var>init</var>["{{RequestInit/keepalive}}"] is true,
- and unset it otherwise.
+ <var>request</var>'s <a for=request>keepalive</a> to it.
 
  <li>
   <p>If <var>init</var>["{{RequestInit/method}}"] <a for=map>exists</a>, then:
@@ -6237,9 +6234,8 @@ constructor steps are:
   </ol>
  </li>
 
- <li><p>Let <var>inputBody</var> be <var>input</var>'s
- <a for=Request>request</a>'s <a for=request>body</a>
- if <var>input</var> is a {{Request}} object, and null otherwise.
+ <li><p>Let <var>inputBody</var> be <var>input</var>'s <a for=Request>request</a>'s
+ <a for=request>body</a> if <var>input</var> is a {{Request}} object; otherwise null.
 
  <li><p>If either <var>init</var>["{{RequestInit/body}}"] <a for=map>exists</a> and is non-null or
  <var>inputBody</var> is non-null, and <var>request</var>'s <a for=request>method</a> is
@@ -6253,12 +6249,10 @@ constructor steps are:
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>If <var>init</var>["{{RequestInit/keepalive}}"] <a for=map>exists</a> and is true, then
-   set <var>body</var> and <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a>
-   <var>init</var>["{{RequestInit/body}}"], with <a><var>keepalive</var></a> set to true.
-
-   <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
-   <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"].
+   <li><p>Set <var>body</var> and <var>Content-Type</var> to the result of
+   <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"], with
+   <a for=BodyInit/extract><var>keepalive</var></a> set to <var>request</var>'s
+   <a for=request>keepalive</a>.
 
    <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Request>headers</a>'s
    <a for=Headers>header list</a> <a for="header list">does not contain</a>
@@ -6335,8 +6329,8 @@ constructor steps are:
 <p>The <dfn attribute for=Request><code>integrity</code></dfn> getter steps are to return
 <a>this</a>'s <a for=Request>request</a>'s <a for=request>integrity metadata</a>.
 
-<p>The <dfn attribute for=Request><code>keepalive</code></dfn> getter steps are to return true if
-<a>this</a>'s <a for=Request>request</a>'s <a>keepalive flag</a> is set; otherwise false.
+<p>The <dfn attribute for=Request><code>keepalive</code></dfn> getter steps are to return
+<a>this</a>'s <a for=Request>request</a>'s <a for=request>keepalive</a>.
 
 <p>The <dfn attribute for=Request><code>isReloadNavigation</code></dfn> getter steps are to return
 true if <a>this</a>'s <a for=Request>request</a>'s <a for=request>reload-navigation flag</a> is set;
