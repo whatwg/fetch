@@ -5470,8 +5470,7 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
   <p>If <var>object</var> is a {{ReadableStream}} object, then:
 
   <ol>
-   <li><p>Assert: <var>object</var> is neither <a for=ReadableStream>disturbed</a> nor
-   <a for=ReadableStream>locked</a>.
+   <li><p>Assert: <var>object</var> is not <a for=ReadableStream>unusable</a>.
   </ol>
 
  <li><p>Return the results of <a for=BodyInit>extracting</a> <var>object</var>.
@@ -5547,8 +5546,8 @@ these steps:
    <dd>
     <p>If <var>keepalive</var> is true, then <a>throw</a> a {{TypeError}}.
 
-    <p>If <var>object</var> is <a for=ReadableStream>disturbed</a> or
-    <a for=ReadableStream>locked</a>, then <a>throw</a> a {{TypeError}}.
+    <p>If <var>object</var> is <a for=ReadableStream>unusable</a>, then <a>throw</a> a
+    {{TypeError}}.
   </dl>
 
  <li>
@@ -5587,28 +5586,25 @@ HTML, will likely not be exposed here. Rather, an HTML parser API might accept a
 due course.
 <!-- https://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>Objects implementing the {{Body}} mixin need to define an associated
+<p>Objects including the {{Body}} interface mixin need to define an associated
 <dfn id=concept-body-mime-type for=Body>MIME type</dfn> algorithm which takes no arguments and
 returns failure or a <a for=/>MIME type</a>.
 
-<p>Objects implementing the {{Body}} mixin have an associated
+<p>Objects including the {{Body}} interface mixin have an associated
 <dfn id=concept-body-body for=Body>body</dfn> (null or a <a for=/>body</a>).
 
-<p>An object implementing the {{Body}} mixin is said to be
-<dfn export id=concept-body-disturbed for=Body>disturbed</dfn> if its <a for=Body>body</a> is
-non-null and its <a for=Body>body</a>'s <a for=body>stream</a> is
-<a for=ReadableStream>disturbed</a>.
-
-<p>An object implementing the {{Body}} mixin is said to be
-<dfn export id=concept-body-locked for=Body>locked</dfn> if its <a for=Body>body</a> is non-null and
-its <a for=Body>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>locked</a>.
+<p>An object including the {{Body}} interface mixin is said to be
+<dfn export for=Body>unusable</dfn> if its <a for=Body>body</a> is non-null and its
+<a for=Body>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>disturbed</a> or
+<a for=ReadableStream>locked</a>.
 
 <p>The <dfn attribute for=Body><code>body</code></dfn> getter steps are to return null if
 <a>this</a>'s <a for=Body>body</a> is null; otherwise <a>this</a>'s <a for=Body>body</a>'s
 <a for=body>stream</a>.
 
 <p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> getter steps are to return true if
-<a>this</a> is <a for=Body>disturbed</a>; otherwise false.
+<a>this</a>'s <a for=Body>body</a> is non-null and <a>this</a>'s <a for=Body>body</a>'s
+<a for=body>stream</a> is <a for=ReadableStream>disturbed</a>; otherwise false.
 
 <p>The <dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
 <var>bytes</var>, <var>type</var>, and a <var>mimeType</var>, switches on <var>type</var>, and runs
@@ -5617,9 +5613,9 @@ the associated steps:
 <dl class=switch>
  <dt><i>ArrayBuffer</i>
  <dd>
-  <p>Return a new <code>ArrayBuffer</code> whose contents are <var>bytes</var>.
+  <p>Return a new {{ArrayBuffer}} whose contents are <var>bytes</var>.
 
-  <p class="note">Allocating an <code>ArrayBuffer</code> can throw a {{RangeError}}.
+  <p class=note>Allocating an {{ArrayBuffer}} can throw a {{RangeError}}.
 
  <dt><i>Blob</i>
  <dd><p>Return a {{Blob}} whose contents are <var>bytes</var> and {{Blob/type}} attribute is
@@ -5693,8 +5689,8 @@ the associated steps:
 <var>object</var> and <var>type</var>, runs these steps:
 
 <ol>
- <li><p>If <var>object</var> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then return
- <a>a promise rejected with</a> a {{TypeError}}.
+ <li><p>If <var>object</var> is <a for=Body>unusable</a>, then return <a>a promise rejected with</a>
+ a {{TypeError}}.
 
  <li><p>Let <var>promise</var> be <a>a promise resolved with</a> an empty
  <a for=/>byte sequence</a>.
@@ -6275,8 +6271,8 @@ constructor steps are:
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
- <li><p>If <var>inputBody</var> is <var>body</var> and <var>input</var> is <a for=Body>disturbed</a>
- or <a for=Body>locked</a>, then <a>throw</a> a {{TypeError}}.
+ <li><p>If <var>inputBody</var> is <var>body</var> and <var>input</var> is <a for=Body>unusable</a>,
+ then <a>throw</a> a {{TypeError}}.
 
  <!-- Any steps after this must not throw. -->
 
@@ -6349,8 +6345,7 @@ set; otherwise false.
 <p>The <dfn method for=Request><code>clone()</code></dfn> method steps are:
 
 <ol>
- <li><p>If <a>this</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then <a>throw</a> a
- {{TypeError}}.
+ <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
 
  <li><p>Let <var>clonedRequestObject</var> be a new {{Request}} object.
 
@@ -6545,8 +6540,7 @@ otherwise false.
 <p>The <dfn method for=Response><code>clone()</code></dfn> method steps are:
 
 <ol>
- <li><p>If <a>this</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then <a>throw</a> a
- {{TypeError}}.
+ <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
 
  <li><p>Let <var>clonedResponseObject</var> be a new {{Response}} object.
 
