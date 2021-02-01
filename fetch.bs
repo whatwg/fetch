@@ -5938,6 +5938,25 @@ initially a new {{AbortSignal}} object.
 
 <hr>
 
+<p>To
+<dfn export lt="create a Request object|creating a Request object">create a <code>Request</code> object</dfn>,
+given a <a for=/>request</a> <var>request</var> and header guard <var>guard</var>, run these steps:
+<!-- Still need to deal with Realms; maybe create AbortSignal explicitly? -->
+
+<ol>
+ <li><p>Let <var>requestObject</var> be a new <code>Request</code> object.
+
+ <li><p>Set <var>requestObject</var>'s <a for=Request>request</a> to <var>request</var>.
+
+ <li><p>Set <var>requestObject</var>'s <a for=Request>headers</a> to a new <code>Headers</code>
+ object whose <a for=Headers>headers list</a> is <var>request</var>'s
+ <a for=request>headers list</a> and <a for=Headers>guard</a> is <var>guard</var>.
+
+ <li><p>Return <var>request</var>.
+</ol>
+
+<hr>
+
 <p>The
 <dfn constructor for=Request id=dom-request lt="Request(input, init)"><code>new Request(<var>input</var>, <var>init</var>)</code></dfn>
 constructor steps are:
@@ -6348,17 +6367,12 @@ set; otherwise false.
 <ol>
  <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Let <var>clonedRequestObject</var> be a new {{Request}} object.
-
  <li><p>Let <var>clonedRequest</var> be the result of <a lt=clone for=request>cloning</a>
  <a>this</a>'s <a for=Request>request</a>.
 
- <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>request</a> to <var>clonedRequest</var>.
-
- <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>headers</a> to a new {{Headers}} object
- whose <a for=Headers>header list</a> is <var>clonedRequest</var>'s <a for=Headers>header list</a>
- and <a for=Headers>guard</a> is <a>this</a>'s <a for=Request>headers</a>'s
- <a for=Headers>guard</a>.
+ <li><p>Let <var>clonedRequestObject</var> be the result of
+ <a>creating a <code>Request</code> object</a> given <var>clonedRequest</var> and <a>this</a>'s
+ <a for=Request>headers</a>'s <a for=Headers>guard</a>.
 
  <li><p>Make <var>clonedRequestObject</var>'s <a for=Request>signal</a>
  <a for=AbortSignal>follow</a> <a>this</a>'s <a for=Request>signal</a>.
@@ -6412,6 +6426,27 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <p>A {{Response}} object's <a for=Body>body</a> is its
 <a for=Response>response</a>'s <a for=response>body</a>.
 
+<hr>
+
+<p>To
+<dfn export lt="create a Response object|creating a Response object">create a <code>Response</code> object</dfn>,
+given a <a for=/>response</a> <var>response</var> and headers guard <var>guard</var>, run these
+steps:
+
+<ol>
+ <li><p>Let <var>responseObject</var> be a new <code>Response</code> object.
+
+ <li><p>Set <var>responseObject</var>'s <a for=Response>response</a> to <var>response</var>.
+
+ <li><p>Set <var>responseObject</var>'s <a for=Response>headers</a> to a new <code>Headers</code>
+ object whose <a for=Headers>headers list</a> is <var>response</var>'s
+ <a for=response>headers list</a> and <a for=Headers>guard</a> is <var>guard</var>.
+
+ <li><p>Return <var>responseObject</var>.
+</ol>
+
+<hr>
+
 <p>The
 <dfn constructor for=Response id=dom-response lt="Response(body, init)"><code>new Response(<var>body</var>, <var>init</var>)</code></dfn>
 constructor steps are:
@@ -6425,9 +6460,9 @@ constructor steps are:
 
  <li><p>Set <a>this</a>'s <a for=Response>response</a> to a new <a for=/>response</a>.
 
- <li><p>Set <a>this</a>'s <a for=Response>headers</a> to a new {{Headers}} object, whose
- <a for=Headers>header list</a> is <var>r</var>'s <a for=Response>response</a>'s
- <a for=response>header list</a>, and <a for=Headers>guard</a> is "<code>response</code>".
+ <li><p>Set <a>this</a>'s <a for=Response>headers</a> to a new {{Headers}} object whose
+ <a for=Headers>header list</a> is <a>this</a>'s <a for=Response>response</a>'s
+ <a for=response>header list</a> and <a for=Headers>guard</a> is "<code>response</code>".
 
  <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>status</a> to
  <var>init</var>["{{ResponseInit/status}}"].
@@ -6463,17 +6498,9 @@ constructor steps are:
   </ol>
 </ol>
 
-<p>The static <dfn method for=Response><code>error()</code></dfn> method steps are:
-
-<ol>
- <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
- <a>network error</a>.
-
- <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
- <a for=Headers>guard</a> is "<code>immutable</code>".
-
- <li><p>Return <var>r</var>.
-</ol>
+<p>The static <dfn method for=Response><code>error()</code></dfn> method steps are to return the
+result of <a>creating a <code>Response</code> object</a> given a new <a>network error</a> and
+"<code>immutable</code>".
 
 <p>The static
 <dfn method for=Response><code>redirect(<var>url</var>, <var>status</var>)</code></dfn> method steps
@@ -6487,22 +6514,20 @@ are:
 
  <li><p>If <var>status</var> is not a <a>redirect status</a>, then <a>throw</a> a {{RangeError}}.
 
- <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
- <a for=/>response</a>.
+ <li><p>Let <var>responseObject</var> be the result of
+ <a>creating a <code>Response</code> object</a> given a new <a for=/>response</a> and
+ "<code>immutable</code>".
 
- <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
- <a for=Headers>guard</a> is "<code>immutable</code>".
-
- <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
- <a for=response>status</a> to <var>status</var>.
+ <li><p>Set <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>status</a> to
+ <var>status</var>.
 
  <li><p>Let <var>value</var> be <var>parsedURL</var>, <a lt="URL serializer">serialized</a> and
  <a>isomorphic encoded</a>.
 
- <li><p><a for="header list">Append</a> `<code>Location</code>`/<var>value</var> to <var>r</var>'s
- <a for=Response>response</a>'s <a for=response>header list</a>.
+ <li><p><a for="header list">Append</a> `<code>Location</code>`/<var>value</var> to
+ <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>header list</a>.
 
- <li><p>Return <var>r</var>.
+ <li><p>Return <var>responseObject</var>.
 </ol>
 
 <p>The <dfn attribute for=Response><code>type</code></dfn> getter steps are to return <a>this</a>'s
@@ -6541,20 +6566,11 @@ otherwise false.
 <ol>
  <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Let <var>clonedResponseObject</var> be a new {{Response}} object.
-
  <li><p>Let <var>clonedResponse</var> be the result of <a lt=clone for=response>cloning</a>
  <a>this</a>'s <a for=Response>response</a>.
 
- <li><p>Set <var>clonedResponseObject</var>'s <a for=Response>response</a> to
- <var>clonedResponse</var>.
-
- <li><p>Set <var>clonedResponseObject</var>'s <a for=Response>headers</a> to a new {{Headers}}
- object whose <a for=Headers>header list</a> is <var>clonedResponse</var>'s
- <a for=Headers>header list</a> and <a for=Headers>guard</a> is <a>this</a>'s
- <a for=Response>headers</a>'s <a for=Headers>guard</a>.
-
- <li><p>Return <var>clonedResponseObject</var>.
+ <li><p>Return the result of <a>creating a <code>Response</code> object</a> given
+ <var>clonedResponse</var> and <a>this</a>'s <a for=Response>headers</a>'s <a for=Headers>guard</a>.
 </ol>
 
 
@@ -6593,9 +6609,7 @@ method steps are:
  <a for="environment settings object">global object</a> is a {{ServiceWorkerGlobalScope}} object,
  then set <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
- <li><p>Let <var>responseObject</var> be a new {{Response}} object and a new associated
- {{Headers}} object whose <a for=Headers>guard</a> is
- "<code>immutable</code>".
+ <li><p>Let <var>responseObject</var> be null.
 
  <li>
   <p>Let <var>locallyAborted</var> be false.
@@ -6608,12 +6622,11 @@ method steps are:
   <a for=Request>signal</a>:
 
   <ol>
-    <li><p>Set <var>locallyAborted</var> to true.
+   <li><p>Set <var>locallyAborted</var> to true.
 
-    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and
-    <var>responseObject</var>.
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
 
-    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
+   <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
   </ol>
 
  <li>
@@ -6633,7 +6646,9 @@ method steps are:
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
 
-   <li><p>Associate <var>responseObject</var> with <var>response</var>.
+   <li><p>Set <var>responseObject</var> to the result of
+   <a>creating a <code>Response</code> object</a> given <var>response</var> and
+   "<code>immutable</code>".
 
    <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
