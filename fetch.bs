@@ -1912,12 +1912,12 @@ known as an <dfn export id=concept-aborted-network-error>aborted network error</
 <a>network error</a>. This
 <a for=/>response</a> is referred to as the
 <a>filtered response</a>'s associated
-<dfn export id=concept-internal-response for=internal>internal response</dfn>.
+<dfn export id=concept-internal-response for="filtered response">internal response</dfn>.
 
 <p class="note no-backref">The <a for=/>fetch</a> algorithm returns such a view to ensure APIs do
 not accidentally leak information. If the information needs to be exposed for legacy reasons, e.g.,
-to feed image data to a decoder, the associated <a for=internal>internal response</a> can be used,
-which is only "accessible" to internal specification algorithms and is never a
+to feed image data to a decoder, the associated <a for="filtered response">internal response</a> can
+be used, which is only "accessible" to internal specification algorithms and is never a
 <a>filtered response</a> itself.
 
 <p>A <dfn export id=concept-filtered-response-basic>basic filtered response</dfn> is a
@@ -1925,7 +1925,7 @@ which is only "accessible" to internal specification algorithms and is never a
 <a for=response>type</a> is "<code>basic</code>" and
 <a for=response>header list</a> excludes any
 <a for=/>headers</a> in
-<a for=internal>internal response</a>'s
+<a for="filtered response">internal response</a>'s
 <a for=response>header list</a> whose
 <a for=header>name</a> is a
 <a>forbidden response-header name</a>.
@@ -1935,11 +1935,11 @@ which is only "accessible" to internal specification algorithms and is never a
 <a for=response>type</a> is "<code>cors</code>" and
 <a for=response>header list</a> excludes any
 <a for=/>headers</a> in
-<a for=internal>internal response</a>'s
+<a for="filtered response">internal response</a>'s
 <a for=response>header list</a> whose
 <a for=header>name</a> is <em>not</em> a
 <a>CORS-safelisted response-header name</a>, given
-<a for=internal>internal response</a>'s
+<a for="filtered response">internal response</a>'s
 <a for=response>CORS-exposed header-name list</a>.
 
 <p>An <dfn export id=concept-filtered-response-opaque>opaque filtered response</dfn> is a
@@ -1965,24 +1965,23 @@ is a <a>filtered response</a> whose
  <a lt="opaque-redirect filtered response">opaque-redirect filtered responses</a> is harmless since
  no redirects are followed.
 
- <p>In other words, an <a>opaque filtered response</a>
- and an
- <a>opaque-redirect filtered response</a> are
- nearly indistinguishable from a <a>network error</a>. When
- introducing new APIs, do not use the <a for=internal>internal response</a>
- for internal specification algorithms as that will leak information.
+ <p>In other words, an <a>opaque filtered response</a> and an
+ <a>opaque-redirect filtered response</a> are nearly indistinguishable from a <a>network error</a>.
+ When introducing new APIs, do not use the <a for="filtered response">internal response</a> for
+ internal specification algorithms as that will leak information.
 
- <p>This also means that JavaScript APIs, such as <a attribute for=Response lt=ok><code>response.ok</code></a>,
- will return rather useless results.
+ <p>This also means that JavaScript APIs, such as
+ <a attribute for=Response lt=ok><code>response.ok</code></a>, will return rather useless results.
 </div>
 
 <p>To <dfn export for=response id=concept-response-clone>clone</dfn> a
 <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
- <li><p>If <var>response</var> is a <a>filtered response</a>, then return a new identical filtered
- response whose <a lt="internal response" for=internal>internal response</a> is a
- <a for=response>clone</a> of <var>response</var>'s <a for=internal>internal response</a>.
+ <li><p>If <var>response</var> is a <a>filtered response</a>, then return a new identical
+ <a>filtered response</a> whose <a for="filtered response">internal response</a> is a
+ <a for=response>clone</a> of <var>response</var>'s
+ <a for="filtered response">internal response</a>.
 
  <li><p>Let <var>newResponse</var> be a copy of <var>response</var>, except for its
  <a for=response>body</a>.
@@ -3059,10 +3058,9 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
 
 <p class="note no-backref">Only HTML's navigate algorithm uses this check with
 <var>forNavigation</var> set to true, and it's always for nested navigations. Otherwise,
-<var>response</var> is either the <a for=internal>internal response</a> of an
+<var>response</var> is either the <a for="filtered response">internal response</a> of an
 <a>opaque filtered response</a> or a <a for=/>response</a> which will be the
-<a for=internal>internal response</a> of an
-<a>opaque filtered response</a>. [[HTML]]
+<a for="filtered response">internal response</a> of an <a>opaque filtered response</a>. [[HTML]]
 
 <p>To perform a <dfn>cross-origin resource policy internal check</dfn>, given an
 <a for=url>origin</a> <var>origin</var>, an <a for=/>embedder policy value</a>
@@ -3550,10 +3548,9 @@ optionally with a <i>recursive flag</i>, run these steps:
     </ol>
 
    <li>
-    <p>Set <var>response</var> to the following
-    <a>filtered response</a> with <var>response</var> as its
-    <a for=internal>internal response</a>, depending on
-    <var>request</var>'s <a for=request>response tainting</a>:
+    <p>Set <var>response</var> to the following <a>filtered response</a> with <var>response</var> as
+    its <a for="filtered response">internal response</a>, depending on <var>request</var>'s
+    <a for=request>response tainting</a>:
 
     <dl class="switch compact">
      <dt>"<code>basic</code>"
@@ -3566,8 +3563,8 @@ optionally with a <i>recursive flag</i>, run these steps:
   </ol>
 
  <li><p>Let <var>internalResponse</var> be <var>response</var>, if <var>response</var> is a
- <a>network error</a>, and <var>response</var>'s
- <a for=internal>internal response</a> otherwise.
+ <a>network error</a>, and <var>response</var>'s <a for="filtered response">internal response</a>
+ otherwise.
 
  <li>
   <p>If <var>internalResponse</var>'s <a for=response>URL list</a> <a for=list>is empty</a>, then
@@ -3845,7 +3842,7 @@ optional <i>CORS-preflight flag</i>, run these steps:
 
      <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
      <a>filtered response</a>, and to <var>response</var>'s
-     <a for=internal>internal response</a> otherwise.
+     <a for="filtered response">internal response</a> otherwise.
 
      <li>
       <p>If one of the following is true
@@ -3972,10 +3969,8 @@ optional <i>CORS-preflight flag</i>, run these steps:
      <dd><p>Set <var>response</var> to a <a>network error</a>.
 
      <dt>"<code>manual</code>"
-     <dd><p>Set <var>response</var> to an
-     <a>opaque-redirect filtered response</a>
-     whose <a for=internal>internal response</a> is
-     <var>actualResponse</var>.
+     <dd><p>Set <var>response</var> to an <a>opaque-redirect filtered response</a> whose
+     <a for="filtered response">internal response</a> is <var>actualResponse</var>.
 
      <dt>"<code>follow</code>"
      <dd><p>Set <var>response</var> to the result of performing <a>HTTP-redirect fetch</a> using
@@ -4001,7 +3996,7 @@ optional <i>CORS-preflight flag</i>, run these steps:
 <ol>
  <li><p>Let <var>actualResponse</var> be <var>response</var>, if <var>response</var> is not a
  <a>filtered response</a>, and <var>response</var>'s
- <a for=internal>internal response</a> otherwise.
+ <a for="filtered response">internal response</a> otherwise.
 
  <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>
  is null, then return <var>response</var>.
@@ -6966,12 +6961,10 @@ Developers have almost no control over
 
 <h3 id=atomic-http-redirect-handling dfn class=no-num>Atomic HTTP redirect handling</h3>
 
-<p>Redirects (a <a for=/>response</a> whose
-<a for=response>status</a> or
-<a for=internal>internal response</a>'s (if any)
-<a for=response>status</a> is a <a>redirect status</a>) are not exposed
-to APIs. Exposing redirects might leak information not otherwise available through a cross-site
-scripting attack.
+<p>Redirects (a <a for=/>response</a> whose <a for=response>status</a> or
+<a for="filtered response">internal response</a>'s (if any) <a for=response>status</a> is a
+<a>redirect status</a>) are not exposed to APIs. Exposing redirects might leak information not
+otherwise available through a cross-site scripting attack.
 
 <p id=example-xss-redirect class=example>A fetch to <code>https://example.org/auth</code> that includes a
 <code>Cookie</code> marked <code>HttpOnly</code> could result in a redirect to
