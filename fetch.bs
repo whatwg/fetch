@@ -5271,12 +5271,9 @@ of a <a for=/>request</a> as demonstrated by {{Request}}
 objects.</span>
 
 <p>A {{Headers}} object also has an associated
-<dfn export for=Headers id=concept-headers-guard>guard</dfn>, which is
-"<code>immutable</code>",
-"<code>request</code>",
-"<code>request-no-cors</code>",
-"<code>response</code>" or
-"<code>none</code>".
+<dfn export for=Headers id=concept-headers-guard>guard</dfn>, which is a <dfn>headers guard</dfn>. A
+<a for=/>headers guard</a> is "<code>immutable</code>", "<code>request</code>",
+"<code>request-no-cors</code>", "<code>response</code>" or "<code>none</code>".
 
 <p>To <dfn export for=Headers id=concept-headers-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a>
@@ -5797,8 +5794,8 @@ omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor obser
 <p>A {{Request}} object also has an associated <dfn for=Request export>headers</dfn> (null or a
 {{Headers}} object), initially null.
 
-<p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (an {{AbortSignal}} object),
-initially a new {{AbortSignal}} object.
+<p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (null or an {{AbortSignal}}
+object), initially null.
 
 <p>A {{Request}} object's <a for=Body>MIME type</a> is to return the result of
 <a for="header list">extracting a MIME type</a> from its <a for=Request>request</a>'s
@@ -5930,6 +5927,27 @@ initially a new {{AbortSignal}} object.
  {{AbortSignal}} object indicating whether or not <var>request</var> has been aborted, and its abort
  event handler.
 </dl>
+
+<hr>
+
+<p>To <dfn export for=Request lt=create|creating>create</dfn> a {{Request}} object, given a
+<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
+<var>realm</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>requestObject</var> be a <a for=/>new</a> {{Request}} object with <var>realm</var>.
+
+ <li><p>Set <var>requestObject</var>'s <a for=Request>request</a> to <var>request</var>.
+
+ <li><p>Set <var>requestObject</var>'s <a for=Request>headers</a> to a <a for=/>new</a> {{Headers}}
+ object with <var>realm</var>, whose <a for=Headers>headers list</a> is <var>request</var>'s
+ <a for=request>headers list</a> and <a for=Headers>guard</a> is <var>guard</var>.
+
+ <li><p>Set <var>requestObject</var>'s <a for=Request>signal</a> to a <a for=/>new</a>
+ {{AbortSignal}} object with <var>realm</var>.
+
+ <li><p>Return <var>request</var>.
+</ol>
 
 <hr>
 
@@ -6172,9 +6190,9 @@ constructor steps are:
  <li><p>If <var>signal</var> is not null, then make <a>this</a>'s <a for=Request>signal</a>
  <a for=AbortSignal>follow</a> <var>signal</var>.
 
- <li><p>Set <a>this</a>'s <a for=Request>headers</a> to a new {{Headers}} object, whose
- <a for=Headers>header list</a> is <var>request</var>'s <a for=request>header list</a>, and
- <a for=Headers>guard</a> is "<code>request</code>".
+ <li><p>Set <a>this</a>'s <a for=Request>headers</a> to a <a for=/>new</a> {{Headers}} object with
+ <a>this</a>'s <a>relevant Realm</a>, whose <a for=Headers>header list</a> is <var>request</var>'s
+ <a for=request>header list</a> and <a for=Headers>guard</a> is "<code>request</code>".
 
  <li>
   <p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is
@@ -6269,6 +6287,9 @@ constructor steps are:
  <var>inputBody</var>.
 
  <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
+
+ <li><p>Set <a>this</a>'s <a for=Request>signal</a> to a <a for=/>new</a> {{AbortSignal}} object
+ with <a>this</a>'s <a>relevant Realm</a>.
 </ol>
 
 <p>The <dfn attribute for=Request><code>method</code></dfn> getter steps are to return <a>this</a>'s
@@ -6335,17 +6356,12 @@ set; otherwise false.
 <ol>
  <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Let <var>clonedRequestObject</var> be a new {{Request}} object.
-
  <li><p>Let <var>clonedRequest</var> be the result of <a lt=clone for=request>cloning</a>
  <a>this</a>'s <a for=Request>request</a>.
 
- <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>request</a> to <var>clonedRequest</var>.
-
- <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>headers</a> to a new {{Headers}} object
- whose <a for=Headers>header list</a> is <var>clonedRequest</var>'s <a for=Headers>header list</a>
- and <a for=Headers>guard</a> is <a>this</a>'s <a for=Request>headers</a>'s
- <a for=Headers>guard</a>.
+ <li><p>Let <var>clonedRequestObject</var> be the result of <a for=Request>creating</a> a
+ {{Request}} object, given <var>clonedRequest</var>, <a>this</a>'s
+ <a for=Request>headers</a>'s <a for=Headers>guard</a>, and <a>this</a>'s <a>relevant Realm</a>.
 
  <li><p>Make <var>clonedRequestObject</var>'s <a for=Request>signal</a>
  <a for=AbortSignal>follow</a> <a>this</a>'s <a for=Request>signal</a>.
@@ -6399,6 +6415,28 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <p>A {{Response}} object's <a for=Body>body</a> is its
 <a for=Response>response</a>'s <a for=response>body</a>.
 
+<hr>
+
+<p>To <dfn export for=Response lt=create|creating>create</dfn> a {{Response}} object, given a
+<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
+<var>realm</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>responseObject</var> be a <a for=/>new</a> {{Response}} object with
+ <var>realm</var>.
+
+ <li><p>Set <var>responseObject</var>'s <a for=Response>response</a> to <var>response</var>.
+
+ <li><p>Set <var>responseObject</var>'s <a for=Response>headers</a> to a <a for=/>new</a>
+ {{Headers}} object with <var>realm</var>, whose <a for=Headers>headers list</a> is
+ <var>response</var>'s <a for=response>headers list</a> and <a for=Headers>guard</a> is
+ <var>guard</var>.
+
+ <li><p>Return <var>responseObject</var>.
+</ol>
+
+<hr>
+
 <p>The
 <dfn constructor for=Response id=dom-response lt="Response(body, init)"><code>new Response(<var>body</var>, <var>init</var>)</code></dfn>
 constructor steps are:
@@ -6412,9 +6450,10 @@ constructor steps are:
 
  <li><p>Set <a>this</a>'s <a for=Response>response</a> to a new <a for=/>response</a>.
 
- <li><p>Set <a>this</a>'s <a for=Response>headers</a> to a new {{Headers}} object, whose
- <a for=Headers>header list</a> is <var>r</var>'s <a for=Response>response</a>'s
- <a for=response>header list</a>, and <a for=Headers>guard</a> is "<code>response</code>".
+ <li><p>Set <a>this</a>'s <a for=Response>headers</a> to a <a for=/>new</a> {{Headers}} object with
+ <a>this</a>'s <a>relevant Realm</a>, whose <a for=Headers>header list</a> is <a>this</a>'s
+ <a for=Response>response</a>'s <a for=response>header list</a> and <a for=Headers>guard</a> is
+ "<code>response</code>".
 
  <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>status</a> to
  <var>init</var>["{{ResponseInit/status}}"].
@@ -6450,17 +6489,9 @@ constructor steps are:
   </ol>
 </ol>
 
-<p>The static <dfn method for=Response><code>error()</code></dfn> method steps are:
-
-<ol>
- <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
- <a>network error</a>.
-
- <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
- <a for=Headers>guard</a> is "<code>immutable</code>".
-
- <li><p>Return <var>r</var>.
-</ol>
+<p>The static <dfn method for=Response><code>error()</code></dfn> method steps are to return the
+result of <a for=Response>creating</a> a {{Response}} object, given a new <a>network error</a>,
+"<code>immutable</code>", and <a>this</a>'s <a>relevant Realm</a>.
 
 <p>The static
 <dfn method for=Response><code>redirect(<var>url</var>, <var>status</var>)</code></dfn> method steps
@@ -6474,22 +6505,20 @@ are:
 
  <li><p>If <var>status</var> is not a <a>redirect status</a>, then <a>throw</a> a {{RangeError}}.
 
- <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
- <a for=/>response</a>.
+ <li><p>Let <var>responseObject</var> be the result of <a for=Response>creating</a> a {{Response}}
+ object, given a new <a for=/>response</a>, "<code>immutable</code>", and <a>this</a>'s
+ <a>relevant Realm</a>.
 
- <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
- <a for=Headers>guard</a> is "<code>immutable</code>".
-
- <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
- <a for=response>status</a> to <var>status</var>.
+ <li><p>Set <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>status</a> to
+ <var>status</var>.
 
  <li><p>Let <var>value</var> be <var>parsedURL</var>, <a lt="URL serializer">serialized</a> and
  <a>isomorphic encoded</a>.
 
- <li><p><a for="header list">Append</a> `<code>Location</code>`/<var>value</var> to <var>r</var>'s
- <a for=Response>response</a>'s <a for=response>header list</a>.
+ <li><p><a for="header list">Append</a> `<code>Location</code>`/<var>value</var> to
+ <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>header list</a>.
 
- <li><p>Return <var>r</var>.
+ <li><p>Return <var>responseObject</var>.
 </ol>
 
 <p>The <dfn attribute for=Response><code>type</code></dfn> getter steps are to return <a>this</a>'s
@@ -6528,20 +6557,12 @@ otherwise false.
 <ol>
  <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Let <var>clonedResponseObject</var> be a new {{Response}} object.
-
  <li><p>Let <var>clonedResponse</var> be the result of <a lt=clone for=response>cloning</a>
  <a>this</a>'s <a for=Response>response</a>.
 
- <li><p>Set <var>clonedResponseObject</var>'s <a for=Response>response</a> to
- <var>clonedResponse</var>.
-
- <li><p>Set <var>clonedResponseObject</var>'s <a for=Response>headers</a> to a new {{Headers}}
- object whose <a for=Headers>header list</a> is <var>clonedResponse</var>'s
- <a for=Headers>header list</a> and <a for=Headers>guard</a> is <a>this</a>'s
- <a for=Response>headers</a>'s <a for=Headers>guard</a>.
-
- <li><p>Return <var>clonedResponseObject</var>.
+ <li><p>Return the result of <a for=Response>creating</a> a {{Response}} object, given
+ <var>clonedResponse</var>, <a>this</a>'s <a for=Response>headers</a>'s <a for=Headers>guard</a>,
+ and <a>this</a>'s <a>relevant Realm</a>.
 </ol>
 
 
@@ -6580,9 +6601,9 @@ method steps are:
  <a for="environment settings object">global object</a> is a {{ServiceWorkerGlobalScope}} object,
  then set <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
- <li><p>Let <var>responseObject</var> be a new {{Response}} object and a new associated
- {{Headers}} object whose <a for=Headers>guard</a> is
- "<code>immutable</code>".
+ <li><p>Let <var>responseObject</var> be null.
+
+ <li><p>Let <var>relevantRealm</var> be <a>this</a>'s <a>relevant Realm</a>.
 
  <li>
   <p>Let <var>locallyAborted</var> be false.
@@ -6595,12 +6616,11 @@ method steps are:
   <a for=Request>signal</a>:
 
   <ol>
-    <li><p>Set <var>locallyAborted</var> to true.
+   <li><p>Set <var>locallyAborted</var> to true.
 
-    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and
-    <var>responseObject</var>.
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
 
-    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
+   <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
   </ol>
 
  <li>
@@ -6620,7 +6640,8 @@ method steps are:
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
 
-   <li><p>Associate <var>responseObject</var> with <var>response</var>.
+   <li><p>Set <var>responseObject</var> to the result of <a for=Response>creating</a> a {{Response}}
+   object, given <var>response</var>, "<code>immutable</code>", and <var>relevantRealm</var>.
 
    <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
