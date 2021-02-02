@@ -5251,22 +5251,6 @@ Implementations could choose the more efficient {{Headers}} object representatio
 <a for=/>header list</a>, as long as they also support an associated data structure for
 `<code>Set-Cookie</code>` headers.
 
-<div class=example id=example-headers-class>
- <p>A {{Headers}} object can be initialized with various JavaScript data structures:
-
- <pre><code class=lang-javascript>
-var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
-new Headers(meta)
-
-// The above is equivalent to
-var meta = [
-  [ "Content-Type", "text/xml" ],
-  [ "Breaking-Bad", "&lt;3" ]
-]
-new Headers(meta)
-</code></pre>
-</div>
-
 <p>A {{Headers}} object has an associated
 <dfn export for=Headers id=concept-headers-header-list>header list</dfn> (a
 <a for=/>header list</a>), which is initially empty. <span class=note>This
@@ -5278,6 +5262,51 @@ objects.</span>
 <dfn export for=Headers id=concept-headers-guard>guard</dfn>, which is a <dfn>headers guard</dfn>. A
 <a for=/>headers guard</a> is "<code>immutable</code>", "<code>request</code>",
 "<code>request-no-cors</code>", "<code>response</code>" or "<code>none</code>".
+
+<hr>
+
+<dl class=domintro>
+ <dt><code><var>headers</var> = new <a constructor lt="Headers()">Headers</a>([<var>init</var>])</code>
+ <dd>
+  <p>Creates a new {{Headers}} object. <var>init</var> can be used to fill its internal header list,
+  as per the example below.
+
+  <div class=example id=example-headers-class>
+   <pre><code class=lang-javascript>
+const meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" };
+new Headers(meta);
+
+// The above is equivalent to
+const meta2 = [
+  [ "Content-Type", "text/xml" ],
+  [ "Breaking-Bad", "&lt;3" ]
+];
+new Headers(meta2);
+</code></pre>
+  </div>
+
+ <dt><code><var>headers</var> . <a method for=Headers lt=append()>append</a>(<var>name</var>, <var>value</var>)</code>
+ <dd><p>Appends a header to <var>headers</var>.
+
+ <dt><code><var>headers</var> . <a method for=Headers lt=delete()>delete</a>(<var>name</var>)</code>
+ <dd><p>Removes a header from <var>headers</var>.
+
+ <dt><code><var>headers</var> . <a method for=Headers lt=get()>get</a>(<var>name</var>)</code>
+ <dd><p>Returns the values of all headers whose name is <var>name</var>, separated by a comma and a
+ space.
+
+ <dt><code><var>headers</var> . <a method for=Headers lt=has()>has</a>(<var>name</var>)</code>
+ <dd><p>Returns whether there is a header whose name is <var>name</var>.
+
+ <dt><code><var>headers</var> . <a method for=Headers lt=set()>set</a>(<var>name</var>, <var>value</var>)</code>
+ <dd><p>Replaces the value of the first header whose name is <var>name</var> with <var>value</var>
+ and removes any remaining headers whose name is <var>name</var>.
+
+ <dt><code>for([<var>name</var>, <var>value</var>] of <var>headers</var>)</code>
+ <dd><p><var>headers</var> can be iterated over.
+</dl>
+
+<hr>
 
 <p>To <dfn export for=Headers id=concept-headers-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a>
@@ -5595,6 +5624,33 @@ returns failure or a <a for=/>MIME type</a>.
 <a for=Body>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>disturbed</a> or
 <a for=ReadableStream>locked</a>.
 
+<hr>
+
+<dl class=domintro>
+ <dt><code><var>requestOrResponse</var> . <a attribute for=Body>body</a></code>
+ <dd><p>Returns <var>requestOrResponse</var>'s body as {{ReadableStream}}.
+
+ <dt><code><var>requestOrResponse</var> . <a attribute for=Body>bodyUsed</a></code>
+ <dd><p>Returns whether <var>requestOrResponse</var>'s body has been read from.
+
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>arrayBuffer</a>()</code>
+ <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{ArrayBuffer}}.
+
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>blob</a>()</code>
+ <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{Blob}}.
+
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>formData</a>()</code>
+ <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{FormData}}.
+
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>json</a>()</code>
+ <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body parsed as JSON.
+
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>text</a>()</code>
+ <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as string.
+</dl>
+
+<hr>
+
 <p>The <dfn attribute for=Body><code>body</code></dfn> getter steps are to return null if
 <a>this</a>'s <a for=Body>body</a> is null; otherwise <a>this</a>'s <a for=Body>body</a>'s
 <a for=body>stream</a>.
@@ -5809,6 +5865,8 @@ object), initially null.
 <a for=Request>request</a>'s
 <a for=request>body</a>.
 
+<hr>
+
 <dl class=domintro>
  <dt><code><var>request</var> = new <a constructor lt="Request()">Request</a>(<var>input</var> [,
  <var>init</var>])</code>
@@ -5930,6 +5988,9 @@ object), initially null.
  <dd>Returns the signal associated with <var>request</var>, which is an
  {{AbortSignal}} object indicating whether or not <var>request</var> has been aborted, and its abort
  event handler.
+
+ <dt><code><var>request</var> . <a method for=Request>clone</a>()</code>
+ <dd><p>Returns a clone of <var>request</var>.
 </dl>
 
 <hr>
@@ -6418,6 +6479,45 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 
 <p>A {{Response}} object's <a for=Body>body</a> is its
 <a for=Response>response</a>'s <a for=response>body</a>.
+
+<hr>
+
+<dl class=domintro>
+ <dt><code><var>response</var> = new <a constructor lt="Response(body, init)">Response</a>(<var>body</var> = null [, <var>init</var>])</code>
+ <dd><p>Creates a {{Response}} whose body is <var>body</var>, and status, status message, and
+ headers are provided by <var>init</var>.
+
+ <dt><code><var>response</var> = <a idl>Response</a> . <a method for=Response lt=error()>error</a>()</code>
+ <dd><p>Creates network error {{Response}}.
+
+ <dt><code><var>response</var> = <a idl>Response</a> . <a method for=Response lt=redirect()>redirect</a>(<var>url</var>, <var>status</var> = 302)</code>
+ <dd><p>Creates a redirect {{Response}} that redirects to <var>url</var> with status
+ <var>status</var>.
+
+ <dt><code><var>response</var> . <a attribute for=Response>type</a></code>
+ <dd><p>Returns <var>response</var>'s type, e.g., "<code>cors</code>".
+
+ <dt><code><var>response</var> . <a attribute for=Response>url</a></code>
+ <dd><p>Returns <var>response</var>'s URL, if it has one; otherwise the empty string.
+
+ <dt><code><var>response</var> . <a attribute for=Response>redirected</a></code>
+ <dd><p>Returns whether <var>response</var> was obtained through a redirect.
+
+ <dt><code><var>response</var> . <a attribute for=Response>status</a></code>
+ <dd><p>Returns <var>response</var>'s status.
+
+ <dt><code><var>response</var> . <a attribute for=Response>ok</a></code>
+ <dd><p>Returns whether <var>response</var>'s status is an <a for=/>ok status</a>.
+
+ <dt><code><var>response</var> . <a attribute for=Response>statusText</a></code>
+ <dd><p>Returns <var>response</var>'s status message.
+
+ <dt><code><var>response</var> . <a attribute for=Response>headers</a></code>
+ <dd><p>Returns <var>response</var>'s headers as {{Headers}}.
+
+ <dt><code><var>response</var> . <a method for=Response>clone</a>()</code>
+ <dd><p>Returns a clone of <var>response</var>.
+</dl>
 
 <hr>
 
