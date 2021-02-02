@@ -1882,16 +1882,6 @@ allowed on the resource fetched by looking at the flag of the response returned.
 the response of a redirect has to be set if it was set for previous responses in the redirect chain,
 this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
 
-<p>A <a for=/>response</a> can have an associated
-<dfn export for=response id=concept-response-location-url>location URL</dfn> (null, failure, or a
-<a for=/>URL</a>). Unless specified otherwise, <a for=/>response</a> has no
-<a for=response>location URL</a>.
-
-<p class="note no-backref">This concept is used for redirect handling in Fetch and in HTML's
-navigate algorithm. It ensures `<code>Location</code>` has
-<a lt="extracting header values">its value extracted</a> consistently and only once.
-[[!HTML]]
-
 <hr>
 
 <p>A <a for=/>response</a> whose
@@ -2007,6 +1997,36 @@ is a <a>filtered response</a> whose
 
 <p>A <dfn export id=concept-stale-response>stale response</dfn> is a <a for=/>response</a> that is
 not a <a>fresh response</a> or a <a>stale-while-revalidate response</a>.
+
+<hr>
+
+<p>The <dfn export for=response id=concept-response-location-url>location URL</dfn> algorithm of
+given a <a for=/>response</a> <var>response</var> is the following steps. They return null, failure,
+or a <a for=/>URL</a>.
+
+<ol>
+ <li><p>If <var>response</var>'s <a for=response>status</a> is not a <a>redirect status</a>, then
+ return null.
+
+ <li><p>Let <var>location</var> be the result of <a>extracting header list values</a> given
+ `<code>Location</code>` and <var>response</var>'s <a for=response>header list</a>.
+ <!-- https://github.com/whatwg/fetch/issues/814#issuecomment-431366126 -->
+
+ <li>
+  <p>If <var>location</var> is a <a for=header>value</a>, then set <var>location</var> to the result
+  of <a lt="url parser">parsing</a> <var>location</var> with <var>response</var>'s
+  <a for=response>URL</a>.
+
+  <p class=note>If <var>response</var> was constructed through the {{Response}} constructor,
+  <var>response</var>'s <a for=response>URL</a> will be null, meaning that <var>location</var> will
+  only parse successfully if it is an <a>absolute-URL-with-fragment string</a>.
+
+ <li><p>Return <var>location</var>.
+</ol>
+
+<p class=note>The <a for=response>location URL</a> algorithm is exclusively used for redirect
+handling in this standard and in <cite>HTML</cite>'s navigate algorithm which handles redirects
+manually. [[!HTML]]
 
 
 <h4 id=miscellaneous>Miscellaneous</h4>
@@ -3950,16 +3970,6 @@ optional <i>CORS-preflight flag</i>, run these steps:
 
     <p class=note>303 is excluded as certain communities ascribe special status to it.
 
-   <li><p>Let <var>location</var> be the result of <a>extracting header list values</a> given
-   `<code>Location</code>` and <var>actualResponse</var>'s <a for=response>header list</a>.
-
-   <li><p>If <var>location</var> is a <a for=header>value</a>, then set <var>location</var> to the
-   result of <a lt="URL parser">parsing</a> <var>location</var> with <var>actualResponse</var>'s
-   <a for=response>URL</a>.
-
-   <li><p>Set <var>actualResponse</var>'s
-   <a for=response>location URL</a> to <var>location</var>.
-
    <li>
     <p>Switch on <var>request</var>'s
     <a for=request>redirect mode</a>:
@@ -3998,18 +4008,14 @@ optional <i>CORS-preflight flag</i>, run these steps:
  <a>filtered response</a>, and <var>response</var>'s
  <a for="filtered response">internal response</a> otherwise.
 
- <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>
- is null, then return <var>response</var>.
+ <li><p>Let <var>locationURL</var> be <var>actualResponse</var>'s <a for=response>location URL</a>.
 
- <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>
- is failure, then return a <a>network error</a>.
- <!-- only Gecko does this; and even that is currently more complicated -->
+ <li><p>If <var>locationURL</var> is null, then return <var>response</var>.
 
- <li><p>If <var>actualResponse</var>'s
- <a for=response>location URL</a>'s
- <a for=url>scheme</a> is <em>not</em> an
- <a>HTTP(S) scheme</a>, then return a
- <a>network error</a>.
+ <li><p>If <var>locationURL</var> is failure, then return a <a>network error</a>.
+
+ <li><p>If <var>locationURL</var>'s <a for=url>scheme</a> is not an <a>HTTP(S) scheme</a>, then
+ return a <a>network error</a>.
 
  <li><p>If <var>request</var>'s <a for=request>redirect count</a> is
  twenty, return a <a>network error</a>.
@@ -4018,15 +4024,13 @@ optional <i>CORS-preflight flag</i>, run these steps:
  <a for=request>redirect count</a> by one.
 
  <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>cors</code>",
- <var>actualResponse</var>'s <a for=response>location URL</a>
- <a lt="include credential">includes credentials</a>, and <var>request</var>'s
- <a for=request>origin</a> is not <a>same origin</a> with <var>actualResponse</var>'s
- <a for=response>location URL</a>'s <a for=url>origin</a>, then return a <a>network error</a>.
+ <var>locationURL</var> <a>includes credentials</a>, and <var>request</var>'s
+ <a for=request>origin</a> is not <a>same origin</a> with <var>locationURL</var>'s
+ <a for=url>origin</a>, then return a <a>network error</a>.
 
  <li>
   <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and
-  <var>actualResponse</var>'s <a for=response>location URL</a>
-  <a lt="include credential">includes credentials</a>, then return a <a>network error</a>.
+  <var>locationURL</var> <a>includes credentials</a>, then return a <a>network error</a>.
 
   <p class=note>This catches a cross-origin resource redirecting to a same-origin URL.
 
@@ -4034,11 +4038,11 @@ optional <i>CORS-preflight flag</i>, run these steps:
  <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
  <a for=body>source</a> is null, then return a <a>network error</a>.
 
- <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>'s <a for=url>origin</a> is
- not <a>same origin</a> with <var>request</var>'s <a for=request>current URL</a>'s
- <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a>
- with <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, then set
- <var>request</var>'s <a for=request>tainted origin flag</a>.
+ <li><p>If <var>locationURL</var>'s <a for=url>origin</a> is not <a>same origin</a> with
+ <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and
+ <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a> with <var>request</var>'s
+ <a for=request>current URL</a>'s <a for=url>origin</a>, then set <var>request</var>'s
+ <a for=request>tainted origin flag</a>.
 
  <li>
   <p>If one of the following is true
@@ -4069,7 +4073,7 @@ optional <i>CORS-preflight flag</i>, run these steps:
   <p class="note no-backref"><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s
   nullity has already been checked.
 
- <li><p>Append <var>actualResponse</var>'s <a for=response>location URL</a> to <var>request</var>'s
+ <li><p><a for=list>Append</a> <var>locationURL</var> to <var>request</var>'s
  <a for=request>URL list</a>.
 
  <li><p>Invoke <a>set <var>request</var>'s referrer policy on redirect</a> on <var>request</var> and
