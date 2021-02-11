@@ -173,24 +173,21 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">process response end-of-body</dfn> (default null)
  <dd>Null or an algorithm.
 
- <dt><dfn for="fetch params">global</dfn> (default null)
- <dd>Null or a <a for=/>global object</a>.
-
- <dt><dfn for="fetch params">algorithm queue</dfn> (default null)
- <dd>Null or a <a for=/>parallel queue</a>.
+ <dt><dfn for="fetch params">task destination</dfn> (default null)
+ <dd>Null, a <a for=/>global object</a>, or a <a for=/>parallel queue</a>.
 </dl>
 
-<p>To <dfn>queue a fetch task</dfn>, given an algorithm <var>algorithm</var>, null or a
-<a for=/>global object</a> <var>global</var>, and null or a <a for=/>parallel queue</a>
-<var>parallelQueue</var>, run these steps:
+<p>To <dfn>queue a fetch task</dfn>, given an algorithm <var>algorithm</var>, a
+<a for=/>global object</a> or a <a for=/>parallel queue</a> <var>taskDestination</var>, run these
+steps:
 
 <ol>
- <li><p>If <var>parallelQueue</var> is non-null, then
+ <li><p>If <var>taskDestination</var> is a <a>parallel queue</a>, then
  <a lt="enqueue steps" for="parallel queue">enqueue</a> <var>algorithm</var> to
- <var>parallelQueue</var>.
+ <var>taskDestination</var>.
 
  <li><p>Otherwise, <a>queue a global task</a> on the <a>networking task source</a> with
- <var>global</var> and <var>algorithm</var>.
+ <var>taskDestination</var> and <var>algorithm</var>.
 </ol>
 
 <hr>
@@ -1671,9 +1668,8 @@ is to return the result of <a>serializing a request origin</a> with <var>request
    <a for="fetch params">process request end-of-body</a> given <var>fetchParams</var>'s
    <a for="fetch params">request</a>.
 
-   <li><p><a>Queue a fetch task</a> given <var>processRequestEndOfBody</var>,
-   <var>fetchParams</var>'s <a for="fetch params">global</a>, and <var>fetchParams</var>'s
-   <a for="fetch params">algorithm queue</a>.
+   <li><p><a>Queue a fetch task</a> given <var>processRequestEndOfBody</var> and
+   <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
 
  <li>
   <p>Otherwise, if <var>body</var> is non-null:
@@ -1724,8 +1720,8 @@ object <var>reader</var>:
         <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
         <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
         if <var>processRequestBody</var> is non-null then <a>queue a fetch task</a> given
-        <var>processRequestBody</var>, <var>fetchParams</var>'s <a for="fetch params">global</a>,
-        and <var>fetchParams</var>'s <a for="fetch params">algorithm queue</a>.
+        <var>processRequestBody</var> and <var>fetchParams</var>'s
+        <a for="fetch params">task destination</a>.
 
         <p class=note>This step blocks until <var>bs</var> is fully transmitted.
 
@@ -1734,9 +1730,8 @@ object <var>reader</var>:
        <var>reader</var>.
 
        <li><p>If the ongoing fetch is not <a for=fetch>terminated</a>, then
-       <a>queue a fetch task</a> given <var>continueAlgorithm</var>, <var>fetchParams</var>'s
-       <a for="fetch params">global</a>, and <var>fetchParams</var>'s
-       <a for="fetch params">algorithm queue</a>.
+       <a>queue a fetch task</a> given <var>continueAlgorithm</var> and <var>fetchParams</var>'s
+       <a for="fetch params">task destination</a>.
       </ol>
     </ol>
 
@@ -1754,9 +1749,8 @@ object <var>reader</var>:
        <a for="fetch params">process request end-of-body</a> given <var>fetchParams</var>'s
        <a for="fetch params">request</a>.
 
-       <li><p><a>Queue a fetch task</a> given <var>processRequestEndOfBody</var>,
-       <var>fetchParams</var>'s <a for="fetch params">global</a>, and <var>fetchParams</var>'s
-       <a for="fetch params">algorithm queue</a>.
+       <li><p><a>Queue a fetch task</a> given <var>processRequestEndOfBody</var> and
+       <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
       </ol>
     </ol>
 
@@ -3266,25 +3260,27 @@ the request.
 [[!HTTP-CACHING]]
 
 <ol>
- <li><p>Let <var>algorithmQueue</var> be null.
+ <li><p>Let <var>taskDestination</var> be null.
 
- <li><p>If <var>useParallelQueue</var> is true, then set <var>algorithmQueue</var> to the result of
+ <li><p>If <var>useParallelQueue</var> is true, then set <var>taskDestination</var> to the result of
  <a>starting a new parallel queue</a>.
 
- <li><p>Let <var>global</var> be null.
-
- <li><p>If <var>request</var>'s <a for=request>client</a> is non-null, then set <var>global</var> to
- <var>request</var>'s <a for=request>client</a>'s
+ <li><p>Otherwise, if <var>request</var>'s <a for=request>client</a> is non-null, set
+ <var>taskDestination</var> to <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">global object</a>.
+
+ <!-- It would be nice to assert that taskDestination is non-null here, but it's not clear if this
+      works for all callers. Fetch itself calls main fetch while taskDestination is null. Anyone
+      wanting to do a ping without request body might do so as well, but if you do have a request
+      body you definitely need this as otherwise transmit-request-body loop breaks down. -->
 
  <li><p>Let <var>fetchParams</var> be a new <a for=/>fetch params</a> whose
  <a for="fetch params">request</a> is <var>request</var>,
  <a for="fetch params">process request body</a> is <var>processRequestBody</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
  <a for="fetch params">process response</a> is <var>processResponse</var>,
- <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>,
- <a for="fetch params">global</a> is <var>global</var>, and
- <a for="fetch params">algorithm queue</a> is <var>algorithmQueue</var>.
+ <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>, and
+ <a for="fetch params">task destination</a> is <var>taskDestination</var>.
 
  <li>
   <p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then:
@@ -3657,9 +3653,8 @@ steps:
    <li><p>Let <var>processResponse</var> be this step: run <var>fetchParams</var>'s
    <a for="fetch params">process response</a> given <var>response</var>.
 
-   <li><p><a>Queue a fetch task</a> given <var>processResponse</var>, <var>fetchParams</var>'s
-   <a for="fetch params">global</a>, and <var>fetchParams</var>'s
-   <a for="fetch params">algorithm queue</a>.
+   <li><p><a>Queue a fetch task</a> given <var>processResponse</var> and <var>fetchParams</var>'s
+   <a for="fetch params">task destination</a>.
   </ol>
 
  <li><p><a lt=wait for=body>Wait</a> for <var>internalResponse</var>'s
@@ -3676,9 +3671,8 @@ steps:
    <a for="fetch params">process response end-of-body</a> given <var>response</var>.
   </ol>
 
- <li><p><a>Queue a fetch task</a> given <var>doneAlgorithm</var>, <var>fetchParams</var>'s
- <a for="fetch params">global</a>, and <var>fetchParams</var>'s
- <a for="fetch params">algorithm queue</a>.
+ <li><p><a>Queue a fetch task</a> given <var>doneAlgorithm</var> and <var>fetchParams</var>'s
+ <a for="fetch params">task destination</a>.
 </ol>
 
 
