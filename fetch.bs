@@ -182,7 +182,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 steps:
 
 <ol>
- <li><p>If <var>taskDestination</var> is a <a>parallel queue</a>, then
+ <li><p>If <var>taskDestination</var> is a <a for=/>parallel queue</a>, then
  <a lt="enqueue steps" for="parallel queue">enqueue</a> <var>algorithm</var> to
  <var>taskDestination</var>.
 
@@ -1003,24 +1003,11 @@ worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>
 <ul>
  <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (a {{ReadableStream}} object).
 
- <li><p>A <dfn export for=body id=concept-body-transmitted>transmitted bytes</dfn>
- (an integer), initially 0.
-
  <li><p>A <dfn export for=body id=concept-body-total-bytes>total bytes</dfn> (an
  integer), initially 0.
 
  <li><p>A <dfn export for=body id=concept-body-source>source</dfn>, initially null.
 </ul>
-
-<p>A <a for=/>body</a> <var>body</var> is said to be
-<dfn export for=body id=concept-body-done>done</dfn> if <var>body</var> is null or
-<var>body</var>'s <a for=body>stream</a> is
-<a for=ReadableStream>closed</a> or
-<a for=ReadableStream>errored</a>.
-
-<p>To <dfn export for=body id=concept-body-wait>wait</dfn> for a
-<a for=/>body</a> <var>body</var>, wait for <var>body</var> to be
-<a for=body>done</a>.
 
 <p>To <dfn export for=body id=concept-body-clone>clone</dfn> a
 <a for=/>body</a> <var>body</var>, run these steps:
@@ -1035,6 +1022,124 @@ worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>
  <a for=body>stream</a> is <var>out2</var> and other members are copied from
  <var>body</var>.
 </ol>
+
+<hr>
+
+<p>To <dfn export for=body>incrementally read</dfn> a <a for=/>body</a> <var>body</var>, given an
+algorithm <var>processBodyChunk</var>, an algorithm <var>processEndOfBody</var>, an algorithm
+<var>processBodyError</var>, and an optional null, <a for=/>parallel queue</a>, or
+<a for=/>global object</a> <var>taskDestination</var> (default null), run these steps.
+<var>processBodyChunk</var> must be an algorithm accepting a <a for=/>byte sequence</a>.
+<var>processEndOfBody</var> must be an algorithm accepting no arguments. <var>processBodyError</var>
+must be an algorithm accepting an exception.
+
+<ol>
+ <li><p>If <var>taskDestination</var> is null, then set <var>taskDestination</var> to the result of
+ <a>starting a new parallel queue</a>.
+
+ <li>
+  <p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
+  <var>body</var>'s <a for=body>stream</a>.
+
+  <p class=note>This operation ought not to throw an exception.
+
+ <li><p>Perform the <a>incrementally-read loop</a> given <var>reader</var>,
+ <var>taskDestination</var>, <var>processBodyChunk</var>, <var>processEndOfBody</var>, and
+ <var>processBodyError</var>.
+</ol>
+
+<p>To perform the <dfn>incrementally-read loop</dfn>, given a {{ReadableStreamDefaultReader}} object
+<var>reader</var>, <a for=/>parallel queue</a> or <a for=/>global object</a>
+<var>taskDestination</var>, algorithm <var>processBodyChunk</var>, algorithm
+<var>processEndOfBody</var>, and algorithm <var>processBodyError</var>:
+
+<ol>
+ <li>
+  <p>Let <var>readRequest</var> be the following <a>read request</a>:
+
+  <dl>
+   <dt><a for="read request">chunk steps</a>, given <var>chunk</var>
+   <dd>
+    <ol>
+     <li><p>Let <var>continueAlgorithm</var> be null.
+
+     <li><p>If <var>chunk</var> is not a {{Uint8Array}} object, then set
+     <var>continueAlgorithm</var> to this step: run <var>processBodyError</var> given a
+     {{TypeError}}.
+
+     <li>
+      <p>Otherwise:
+
+      <ol>
+       <li><p>Let <var>bytes</var> be a <a lt="get a copy of the buffer source">copy of</a>
+       <var>chunk</var>.
+
+       <li>
+        <p>Set <var>continueAlgorithm</var> to these steps:
+
+        <ol>
+         <li><p>Run <var>processBodyChunk</var> given <var>bytes</var>.
+
+         <li><p>Perform the <a>incrementally-read loop</a> given <var>reader</var>,
+         <var>taskDestination</var>, <var>processBodyChunk</var>, <var>processEndOfBody</var>, and
+         <var>processBodyError</var>.
+        </ol>
+      </ol>
+
+     <li><p><a>Queue a fetch task</a> given <var>continueAlgorithm</var> and
+     <var>taskDestination</var>.
+    </ol>
+
+   <dt><a for="read request">close steps</a>
+   <dd><ol><li><p><a>Queue a fetch task</a> given <var>processEndOfBody</var> and
+   <var>taskDestination</var>.</ol>
+
+   <dt><a for="read request">error steps</a>, given <var>e</var>
+   <dd><ol><li><p><a>Queue a fetch task</a> to run <var>processBodyError</var> given <var>e</var>,
+   with <var>taskDestination</var>.</ol>
+  </dl>
+
+ <li><p><a for=ReadableStreamDefaultReader>Read a chunk</a> from <var>reader</var> given
+ <var>readRequest</var>.
+</ol>
+
+<p>To <dfn export for=body>fully read</dfn> a <a for=/>body</a> <var>body</var>, given an algorithm
+<var>processBody</var>, an algorithm <var>processBodyError</var>, and an optional null,
+<a for=/>parallel queue</a>, or <a for=/>global object</a> <var>taskDestination</var> (default
+null), run these steps. <var>processBody</var> must be an algorithm accepting a
+<a for=/>byte sequence</a>. <var>processBodyError</var> must be an algorithm accepting no arguments.
+
+<ol>
+ <li><p>If <var>taskDestination</var> is null, then set <var>taskDestination</var> to the result of
+ <a>starting a new parallel queue</a>.
+
+ <li><p>Let <var>promise</var> be the result of <a>fully reading body as promise</a> given
+ <var>body</var>.
+
+ <li><p>Let <var>fulfilledSteps</var> given a <a>byte sequence</a> <var>bytes</var> be to
+ <a>queue a fetch task</a> to run <var>processBody</var> given <var>bytes</var>, with
+ <var>taskDestination</var>.
+
+ <li><p>Let <var>rejectedSteps</var> be to <a>queue a fetch task</a> to run
+ <var>processBodyError</var>, with <var>taskDestination</var>.
+
+ <li><p><a for=promise>React</a> to <var>promise</var> with <var>fulfilledSteps</var> and
+ <var>rejectedSteps</var>.
+</ol>
+
+<p>To <dfn export lt="fully reading body as promise">fully read body as promise</dfn>, given a
+<a for=/>body</a> <var>body</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
+ <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then return
+ <a>a promise rejected with</a> that exception.
+
+ <li><p>Return the result of <a for=ReadableStreamDefaultReader>reading all bytes</a> from
+ <var>reader</var>.
+</ol>
+
+<hr>
 
 <p>To <dfn export>handle content codings</dfn> given <var>codings</var> and <var>bytes</var>, run
 these steps:
@@ -1652,126 +1757,6 @@ is to return the result of <a>serializing a request origin</a> with <var>request
  <a for=request>body</a>.
 
  <li><p>Return <var>newRequest</var>.
-</ol>
-
-<hr>
-
-<p>To <dfn id=concept-request-transmit-body>transmit request body</dfn>, given a
-<a for=/>fetch params</a> <var>fetchParams</var>, run these steps:
-
-<ol>
- <li>Let <var>body</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>'s
- <a for=request>body</a>.
-
- <li>
-  <p>If <var>body</var> is null and <var>fetchParams</var>'s
-  <a for="fetch params">process request end-of-body</a> is non-null, then:
-
-  <ol>
-   <li><p>Let <var>processRequestEndOfBody</var> be this step: run <var>fetchParams</var>'s
-   <a for="fetch params">process request end-of-body</a> given <var>fetchParams</var>'s
-   <a for="fetch params">request</a>.
-
-   <li><p><a>Queue a fetch task</a> given <var>processRequestEndOfBody</var> and
-   <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
-
- <li>
-  <p>Otherwise, if <var>body</var> is non-null:
-
-  <ol>
-   <li>
-    <p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
-    <var>body</var>'s <a for=body>stream</a>.
-
-    <p class="note no-backref">This operation cannot throw an exception.
-
-   <li><p>Perform the <a>transmit-request-body loop</a> given <var>fetchParams</var>,
-   <var>body</var>, and <var>reader</var>.
-  </ol>
-</ol>
-
-<p>To perform the <dfn>transmit-request-body loop</dfn>, given a <a for=/>fetch params</a>
-<var>fetchParams</var>, <a for=/>body</a> <var>body</var>, and {{ReadableStreamDefaultReader}}
-object <var>reader</var>:
-
-<ol>
- <li>
-  <p>Let <var>readRequest</var> be the following <a>read request</a>:
-
-  <dl>
-   <dt><a for="read request">chunk steps</a>, given <var>chunk</var>
-   <dd>
-    <ol>
-     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
-
-     <li><p>If <var>chunk</var> is not a {{Uint8Array}} object,
-     <a lt=terminated for=fetch>terminate</a> the ongoing fetch and abort these steps.
-
-     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the {{Uint8Array}} object.
-
-     <li><p>Let <var>processRequestBody</var> be null.
-
-     <li><p>If <var>fetchParams</var>'s <a for="fetch params">process request body</a> is non-null,
-     then set <var>processRequestBody</var> to this step: run <var>fetchParams</var>'s
-     <a for="fetch params">process request body</a> given <var>fetchParams</var>'s
-     <a for="fetch params">request</a>.
-
-     <li>
-      <p><a>In parallel</a>:
-
-      <ol>
-       <li>
-        <p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
-        <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
-        if <var>processRequestBody</var> is non-null then <a>queue a fetch task</a> given
-        <var>processRequestBody</var> and <var>fetchParams</var>'s
-        <a for="fetch params">task destination</a>.
-
-        <p class=note>This step blocks until <var>bs</var> is fully transmitted.
-
-       <li><p>Let <var>continueAlgorithm</var> be this step: perform the
-       <a>transmit-request-body loop</a> given <var>fetchParams</var>, <var>body</var>, and
-       <var>reader</var>.
-
-       <li><p>If the ongoing fetch is not <a for=fetch>terminated</a>, then
-       <a>queue a fetch task</a> given <var>continueAlgorithm</var> and <var>fetchParams</var>'s
-       <a for="fetch params">task destination</a>.
-      </ol>
-    </ol>
-
-   <dt><a for="read request">close steps</a>
-   <dd>
-    <ol>
-     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
-
-     <li>
-      <p>If <var>fetchParams</var>'s <a for="fetch params">process request end-of-body</a> is
-      non-null, then:
-
-      <ol>
-       <li><p>Let <var>processRequestEndOfBody</var> be this step: run <var>fetchParams</var>'s
-       <a for="fetch params">process request end-of-body</a> given <var>fetchParams</var>'s
-       <a for="fetch params">request</a>.
-
-       <li><p><a>Queue a fetch task</a> given <var>processRequestEndOfBody</var> and
-       <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
-      </ol>
-    </ol>
-
-   <dt><a for="read request">error steps</a>, given <var>e</var>
-   <dd>
-    <ol>
-     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
-
-     <li><p>If <var>e</var> is an "<code><a exception>AbortError</a></code>" {{DOMException}}, then
-     <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
-
-     <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
-    </ol>
-  </dl>
-
- <li><p><a for=ReadableStreamDefaultReader>Read a chunk</a> from <var>reader</var> given
- <var>readRequest</var>.
 </ol>
 
 <hr>
@@ -3243,9 +3228,11 @@ an optional algorithm <dfn export for=fetch id=process-response><var>processResp
 optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseEndOfBody</var></dfn>,
 and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
-the steps below. If given, <var>processRequestBody</var> and <var>processRequestEndOfBody</var> must
-be an algorithm accepting a <a for=/>request</a>; <var>processResponse</var> and
-<var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a>.
+the steps below. If given, <var>processRequestBody</var> must be an algorithm accepting an integer.
+If given, <var>processRequestEndOfBody</var> must be an algorithm accepting no arguments.
+<var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>.
+<var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a> and null,
+failure, or a <a for=/>byte sequence</a>.
 
 <p>An ongoing <a for=/>fetch</a> can be
 <dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
@@ -3286,15 +3273,9 @@ the request.
  <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>, and
  <a for="fetch params">task destination</a> is <var>taskDestination</var>.
 
- <li>
-  <p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then:
-
-  <ol>
-   <li><p>Let <var>body</var> and <var ignore>ignoreType</var> be the result of
-   <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
-
-   <li><p>Set <var>request</var>'s <a for=request>body</a> to <var>body</var>.
-  </ol>
+ <li><p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then set
+ <var>request</var>'s <a for=request>body</a> to the first return value of
+ <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
 
  <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>client</code>", then set
  <var>request</var>'s <a for=request>window</a> to <var>request</var>'s <a for=request>client</a>,
@@ -3632,51 +3613,75 @@ steps:
   <p class=note>This standardizes the error handling for servers that violate HTTP.
 
  <li>
-  <p>If <var>response</var> is not a <a>network error</a> and <var>request</var>'s
-  <a for=request>integrity metadata</a> is not the empty string, then:
+  <p>If <var>request</var>'s <a for=request>integrity metadata</a> is not the empty string, then:
 
   <ol>
-   <li><p><a lt=wait for=body>Wait</a> for <var>response</var>'s
-   <a for=response>body</a>.
+   <li><p>Let <var>processBodyError</var> be this step: run <a>fetch finale</a> given
+   <var>fetchParams</var> and a <a>network error</a>.
 
-   <li><p>If <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> has not
-   <a for=ReadableStream>errored</a>, and <var>response</var> does not
-   <a href=https://w3c.github.io/webappsec-subresource-integrity/#does-response-match-metadatalist>match</a>
-   <var>request</var>'s <a for=request>integrity metadata</a>, set <var>response</var> and
-   <var>internalResponse</var> to a <a>network error</a>.
-   [[!SRI]]
+
+   <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>opaque</code>",
+   <var>response</var> is a <a>network error</a>, or <var>response</var>'s <a for=response>body</a>
+   is null, then run <var>processBodyError</var> and abort these steps.
+
+   <li>
+    <p>Let <var>processBody</var> given <var>bytes</var> be these steps:
+
+    <ol>
+     <li><p>If <var>bytes</var> do not
+     <a href=https://w3c.github.io/webappsec-subresource-integrity/#does-response-match-metadatalist>match</a>
+     <var>request</var>'s <a for=request>integrity metadata</a>, then run
+     <var>processBodyError</var> and abort these steps. [[!SRI]]
+
+     <li><p>Set <var>response</var>'s <a for=response>body</a> to the first return value of
+     <a for=BodyInit>safely extracting</a> <var>bytes</var>.
+
+     <li><p>Run <a>fetch finale</a> given <var>fetchParams</var> and <var>response</var>.
+    </ol>
+
+   <li><p><a for=body>Fully read</a> <var>response</var>'s <a for=response>body</a> given
+   <var>processBody</var> and <var>processBodyError</var>.
   </ol>
 
-  <p class=note>This operates on <var>response</var> as this algorithm is not supposed to observe
-  <var>internalResponse</var>. That would allow an attacker to use hashes as an oracle.
+ <li><p>Otherwise, run <a>fetch finale</a> given <var>fetchParams</var> and <var>response</var>.
+</ol>
+
+<hr>
+
+<p>The <dfn>fetch finale</dfn>, given a <a for=/>fetch params</a> <var>fetchParams</var> and a
+<a for=/>response</a> <var>response</var>, run these steps:
+
+<ol>
+ <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response</a> is non-null, then
+ <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+ <a for="fetch params">process response</a> given <var>response</var>, with <var>fetchParams</var>'s
+ <a for="fetch params">task destination</a>.
 
  <li>
-  <p>If <var>fetchParams</var>'s <a for="fetch params">process response</a> is non-null, then:
+  <p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is non-null,
+  then:
 
   <ol>
-   <li><p>Let <var>processResponse</var> be this step: run <var>fetchParams</var>'s
-   <a for="fetch params">process response</a> given <var>response</var>.
+   <li><p>Let <var>processBody</var> given <var>nullOrFailureOrBytes</var> be this step: run
+   <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> given
+   <var>response</var> and <var>nullOrFailureOrBytes</var>.
 
-   <li><p><a>Queue a fetch task</a> given <var>processResponse</var> and <var>fetchParams</var>'s
+   <li><p>Let <var>processBodyError</var> be to run <var>processBody</var> given failure.
+
+   <li><p>If <var>response</var>'s <a for=response>body</a> is null, then <a>queue a fetch task</a>
+   to <var>processBody</var> given null, with <var>fetchParams</var>'s
+   <a for="fetch params">task destination</a>.
+
+   <li><p>Otherwise, <a for=body>fully read</a> <var>response</var>'s <a for=response>body</a> given
+   <var>processBody</var>, <var>processBodyError</var>, and <var>fetchParams</var>'s
    <a for="fetch params">task destination</a>.
   </ol>
 
- <li><p><a lt=wait for=body>Wait</a> for <var>internalResponse</var>'s
- <a for=response>body</a>.
-
- <li>
-  <p>Let <var>doneAlgorithm</var> be these steps:
-
-  <ol>
-   <li><p>Set <var>request</var>'s <a>done flag</a>.
-
-   <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is
-   non-null, then run <var>fetchParams</var>'s
-   <a for="fetch params">process response end-of-body</a> given <var>response</var>.
-  </ol>
-
- <li><p><a>Queue a fetch task</a> given <var>doneAlgorithm</var> and <var>fetchParams</var>'s
- <a for="fetch params">task destination</a>.
+ <li><p>Wait for either <var>response</var>'s <a for=response>body</a> to be null, or
+ <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> to be
+ <a for=ReadableStream>closed</a> or <a for=ReadableStream>errored</a>, and then set
+ <var>request</var>'s <a>done flag</a>.
+ <!-- This is really bad and needs to be handled differently at some point. -->
 </ol>
 
 
@@ -4610,7 +4615,6 @@ these steps:
    <var>includeCredentials</var>.
   </dl>
 
-
  <li>
   <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
 
@@ -4660,7 +4664,62 @@ these steps:
      <li><p>Otherwise, return a <a>network error</a>.
     </ol>
 
-    <p><a>Transmit request body</a> given <var>fetchParams</var>.
+    <p>To transmit <var>request</var>'s <a for=request>body</a> <var>body</var>, run these steps:
+
+    <ol>
+     <li><p>If <var>body</var> is null and <var>fetchParams</var>'s
+     <a for="fetch params">process request end-of-body</a> is non-null, then
+     <a>queue a fetch task</a> given <var>fetchParams</var>'s
+     <a for="fetch params">process request end-of-body</a> and <var>fetchParams</var>'s
+     <a for="fetch params">task destination</a>.
+
+     <li>
+      <p>Otherwise, if <var>body</var> is non-null:
+
+      <ol>
+       <li>
+        <p>Let <var>processBodyChunk</var> given <var>bytes</var>, be these steps:
+
+        <ol>
+         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+         <li><p>Run this step <a>in parallel</a>: transmit <var>bytes</var>.
+
+         <li><p>If <var>fetchParams</var>'s <a for="fetch params">process request body</a> is
+         non-null, then run <var>fetchParams</var>'s <a for="fetch params">process request body</a>
+         given <var>bytes</var>'s <a for="byte sequence">length</a>.
+        </ol>
+
+       <li>
+        <p>Let <var>processEndOfBody</var> be these steps:
+
+        <ol>
+         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+         <li><p>If <var>fetchParams</var>'s <a for="fetch params">process request end-of-body</a> is
+         non-null, then run <var>fetchParams</var>'s
+         <a for="fetch params">process request end-of-body</a>.
+        </ol>
+
+       <li>
+        <p>Let <var>processBodyError</var> given <var>e</var>, be these steps:
+
+        <ol>
+         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+         <li><p>If <var>e</var> is an "<code><a exception>AbortError</a></code>" {{DOMException}},
+         then <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
+
+         <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+        </ol>
+
+       <li><p><a for=body>Incrementally read</a> <var>request</var>'s <a for=request>body</a> given
+       <var>processBodyChunk</var>, <var>processEndOfBody</var>, <var>processBodyError</var>, and
+       <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
+       <!-- This obtains a reader in parallel, but it's mostly fine since we already proxied the
+            input stream as part of the Request constructor. -->
+      </ol>
+    </ol>
     <!-- In implementations to date this always happens before a response is processed. -->
   </ol>
 
@@ -5724,20 +5783,8 @@ the associated steps:
  <li><p>Let <var>promise</var> be <a>a promise resolved with</a> an empty
  <a for=/>byte sequence</a>.
 
- <li>
-  <p>If <var>object</var>'s <a for=Body>body</a> is non-null, then:
-
-  <ol>
-   <li><p>Let <var>stream</var> be <var>object</var>'s <a for=Body>body</a>'s
-   <a for=body>stream</a>.
-
-   <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> from
-   <var>stream</var>. If that threw an exception, then return <a>a promise rejected with</a> that
-   exception.
-
-   <li><p>Set <var>promise</var> to the result of
-   <a for=ReadableStreamDefaultReader>reading all bytes</a> from <var>reader</var>.
-  </ol>
+ <li><p>If <var>object</var>'s <a for=Body>body</a> is non-null, then set <var>promise</var> to the
+ result of <a>fully reading body as promise</a> given <var>object</var>'s <a for=Body>body</a>.
 
  <li><p>Let <var>steps</var> be to return the result of <a>package data</a> with the first argument
  given, <var>type</var>, and <var>object</var>'s <a for=Body>MIME type</a>.
