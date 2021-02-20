@@ -1041,7 +1041,7 @@ must be an algorithm accepting an exception.
   <p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
   <var>body</var>'s <a for=body>stream</a>.
 
-  <p class=note>This operation ought not to throw an exception.
+  <p class=note>This operation will not throw an exception.
 
  <li><p>Perform the <a>incrementally-read loop</a> given <var>reader</var>,
  <var>taskDestination</var>, <var>processBodyChunk</var>, <var>processEndOfBody</var>, and
@@ -1071,8 +1071,12 @@ must be an algorithm accepting an exception.
       <p>Otherwise:
 
       <ol>
-       <li><p>Let <var>bytes</var> be a <a lt="get a copy of the buffer source">copy of</a>
-       <var>chunk</var>.
+       <li>
+        <p>Let <var>bytes</var> be a <a lt="get a copy of the buffer source">copy of</a>
+        <var>chunk</var>.
+
+        <p class=note>Implementations are strongly encouraged to use an implementation strategy that
+        avoids this copy where possible.
 
        <li>
         <p>Set <var>continueAlgorithm</var> to these steps:
@@ -3228,11 +3232,11 @@ an optional algorithm <dfn export for=fetch id=process-response><var>processResp
 optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseEndOfBody</var></dfn>,
 and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
-the steps below. If given, <var>processRequestBody</var> must be an algorithm accepting an integer.
-If given, <var>processRequestEndOfBody</var> must be an algorithm accepting no arguments.
-<var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>.
-<var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a> and null,
-failure, or a <a for=/>byte sequence</a>.
+the steps below. If given, <var>processRequestBody</var> must be an algorithm accepting an integer
+representing the number of bytes transmitted. If given, <var>processRequestEndOfBody</var> must be
+an algorithm accepting no arguments. If given, <var>processResponse</var> must be an algorithm
+accepting a <a for=/>response</a>. If given, <var>processResponseEndOfBody</var> must be an
+algorithm accepting a <a for=/>response</a> and null, failure, or a <a for=/>byte sequence</a>.
 
 <p>An ongoing <a for=/>fetch</a> can be
 <dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
@@ -3662,14 +3666,15 @@ steps:
   then:
 
   <ol>
-   <li><p>Let <var>processBody</var> given <var>nullOrFailureOrBytes</var> be this step: run
+   <li><p>Let <var>processBody</var> given <var>nullOrBytes</var> be this step: run
    <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> given
-   <var>response</var> and <var>nullOrFailureOrBytes</var>.
+   <var>response</var> and <var>nullOrBytes</var>.
 
-   <li><p>Let <var>processBodyError</var> be to run <var>processBody</var> given failure.
+   <li><p>Let <var>processBodyError</var> be this step: run <var>fetchParams</var>'s
+   <a for="fetch params">process response end-of-body</a> given <var>response</var> and failure.
 
    <li><p>If <var>response</var>'s <a for=response>body</a> is null, then <a>queue a fetch task</a>
-   to <var>processBody</var> given null, with <var>fetchParams</var>'s
+   to run <var>processBody</var> given null, with <var>fetchParams</var>'s
    <a for="fetch params">task destination</a>.
 
    <li><p>Otherwise, <a for=body>fully read</a> <var>response</var>'s <a for=response>body</a> given
@@ -4678,7 +4683,7 @@ these steps:
 
       <ol>
        <li>
-        <p>Let <var>processBodyChunk</var> given <var>bytes</var>, be these steps:
+        <p>Let <var>processBodyChunk</var> given <var>bytes</var> be these steps:
 
         <ol>
          <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
@@ -4702,7 +4707,7 @@ these steps:
         </ol>
 
        <li>
-        <p>Let <var>processBodyError</var> given <var>e</var>, be these steps:
+        <p>Let <var>processBodyError</var> given <var>e</var> be these steps:
 
         <ol>
          <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
