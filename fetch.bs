@@ -1001,8 +1001,7 @@ worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>
 <p>A <dfn export id=concept-body>body</dfn> consists of:
 
 <ul>
- <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (null or a {{ReadableStream}}
- object).
+ <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (a {{ReadableStream}} object).
 
  <li><p>A <dfn export for=body id=concept-body-transmitted>transmitted bytes</dfn>
  (an integer), initially 0.
@@ -4105,29 +4104,20 @@ steps. They return a <a for=/>response</a>.
     <p>Otherwise:
 
     <ol>
-     <li><p>Set <var>httpRequest</var> to a copy of <var>request</var> except for its
-     <a for=request>body</a>.
+     <li>
+      <p>Set <var>httpRequest</var> to a <a for=request>clone</a> of <var>request</var>.
 
-     <li><p>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
-
-     <li><p>Set <var>httpRequest</var>'s <a for=request>body</a> to <var>body</var>.
-
-     <li><p>If <var>body</var> is non-null, then set <var>request</var>'s <a for=request>body</a> to
-     a new <a for=/>body</a> whose <a for=body>stream</a> is null and whose <a for=body>source</a>
-     is <var>body</var>'s <a for=body>source</a>.
+      <p class=note>Implementations are encouraged to avoid teeing <var>request</var>'s
+      <a for=request>body</a>'s <a for=body>stream</a> when <var>request</var>'s
+      <a for=request>body</a>'s <a for=body>source</a> is null as only a single body is needed in
+      that case. E.g., when <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>
+      is null, redirects and authentication will end up failing the fetch.
 
      <li><p>Set <var>httpFetchParams</var> to a copy of <var>fetchParams</var>.
 
      <li><p>Set <var>httpFetchParams</var>'s <a for="fetch params">request</a> to
      <var>httpRequest</var>.
     </ol>
-
-    <p class="note no-backref"><var>request</var> is copied as <var>httpRequest</var> here as we
-    need to be able to add headers to <var>httpRequest</var> and read its <a for=request>body</a>
-    without affecting <var>request</var>. Namely, <var>request</var> can be reused with redirects,
-    authentication, and proxy authentication. We copy rather than clone in order to reduce memory
-    consumption. In case <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is
-    null, redirects and authentication will end up failing the fetch.
 
    <li>
     <p>Let <var>includeCredentials</var> be true if one of
