@@ -996,10 +996,11 @@ worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>
 <ul>
  <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (a {{ReadableStream}} object).
 
- <li><p>A <dfn export for=body id=concept-body-total-bytes>total bytes</dfn> (an
- integer), initially 0.
+ <li><p>A <dfn export for=body id=concept-body-source>source</dfn> (null, a
+ <a for=/>byte sequence</a>, a {{Blob}} object, or a {{FormData}} object), initially null.
 
- <li><p>A <dfn export for=body id=concept-body-source>source</dfn>, initially null.
+ <li><p>A <dfn export for=body id=concept-body-total-bytes>length</dfn> (null or an integer),
+ initially null.
 </ul>
 
 <p>To <dfn export for=body id=concept-body-clone>clone</dfn> a
@@ -1862,6 +1863,9 @@ message as HTTP/2 does not support them.
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-body>body</dfn> (null or a
 <a for=/>body</a>). Unless stated otherwise it is null.
+
+<p class=note>The <a for=body>source</a> and <a for=length>length</a> concepts of a network's
+<a for=/>response</a>'s <a for=response>body</a> are always null.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-cache-state>cache state</dfn> (the empty string or
@@ -4143,32 +4147,31 @@ steps. They return a <a for=/>response</a>.
 
     <p>is true; otherwise false.
 
-   <li><p>Let <var>contentLengthValue</var> be null.
+   <li><p>Let <var>contentLength</var> be <var>httpRequest</var>'s <a for=request>body</a>'s
+   <a for=body>length</a>, if <var>httpRequest</var>'s <a for=request>body</a> is non-null;
+   otherwise null.
 
-   <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is null and
-   <var>httpRequest</var>'s <a for=request>method</a> is
-   `<code>POST</code>` or `<code>PUT</code>`, then set <var>contentLengthValue</var> to
-   `<code>0</code>`.
+   <li><p>Let <var>contentLengthHeaderValue</var> be null.
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is null and <var>httpRequest</var>'s
+   <a for=request>method</a> is `<code>POST</code>` or `<code>PUT</code>`, then set
+   <var>contentLengthHeaderValue</var> to `<code>0</code>`.
    <!-- https://chromium.googlesource.com/chromium/src/+/master/net/http/http_network_transaction.cc#982 -->
 
-   <li><p>If <var>httpRequest</var>'s <a for=request>body</a> is non-null and <var>httpRequest</var>'s
-   <a for=request>body</a>'s <a for=body>source</a> is non-null, then set
-   <var>contentLengthValue</var> to <var>httpRequest</var>'s <a for=request>body</a>'s
-   <a for=body>total bytes</a>, <a lt="serialize an integer">serialized</a> and
+   <li><p>If <var>contentLength</var> is non-null, then set  <var>contentLengthHeaderValue</var> to
+   <var>contentLength</var>, <a lt="serialize an integer">serialized</a> and
    <a>isomorphic encoded</a>.
 
-   <li><p>If <var>contentLengthValue</var> is non-null,
-   <a for="header list">append</a>
-   `<code>Content-Length</code>`/<var>contentLengthValue</var> to
-   <var>httpRequest</var>'s
+   <li><p>If <var>contentLengthHeaderValue</var> is non-null, then <a for="header list">append</a>
+   `<code>Content-Length</code>`/<var>contentLengthHeaderValue</var> to <var>httpRequest</var>'s
    <a for=request>header list</a>.
 
    <li>
-    <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
+    <p>If <var>contentLength</var> is non-null and <var>httpRequest</var>'s
     <a for=request>keepalive</a> is true, then:
 
     <ol>
-     <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
+     <li><p>Let <var>inflightKeepaliveBytes</var> be 0.
 
      <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a for=request>client</a>'s
      <a>fetch group</a>.
@@ -4185,11 +4188,11 @@ steps. They return a <a for=/>response</a>.
        <a for="fetch record">request</a>.
 
        <li><p>Increment <var>inflightKeepaliveBytes</var> by <var>inflightRequest</var>'s
-       <a for=request>body</a>'s <a for=body>total bytes</a>.
+       <a for=request>body</a>'s <a for=body>length</a>.
       </ol>
 
-     <li><p>If the sum of <var>contentLengthValue</var> and <var>inflightKeepaliveBytes</var> is
-     greater than 64 kibibytes, then return a <a>network error</a>.
+     <li><p>If the sum of <var>contentLength</var> and <var>inflightKeepaliveBytes</var> is greater
+     than 64 kibibytes, then return a <a>network error</a>.
     </ol>
 
     <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
@@ -4767,11 +4770,6 @@ these steps:
    <li><p>Set <var>response</var>'s <a for=response>body</a> to a new
    <a for=/>body</a> whose <a for=body>stream</a> is
    <var>stream</var>.
-
-   <li><p>If <var>response</var> has a payload body length, then set <var>response</var>'s
-   <a for=response>body</a>'s
-   <a for=body>total bytes</a> to that payload body length.
-   <!-- XXX xref payload body -->
 
    <li><p>If <var>response</var> is not a <a>network error</a> and <var>request</var>'s
    <a for=request>cache mode</a> is not "<code>no-store</code>", then update <var>response</var> in
@@ -5526,7 +5524,8 @@ typedef (Blob or BufferSource or FormData or URLSearchParams or USVString) XMLHt
 typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 
 <p>To <dfn for=BodyInit export>safely extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=header>value</a> from <var>object</var>, run these steps:
+`<code>Content-Type</code>` <a for=header>value</a> from a <a for=/>byte sequence</a> or
+{{BodyInit}} object <var>object</var>, run these steps:
 
 <ol>
  <li>
@@ -5544,7 +5543,8 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 <a for=BodyInit>extract</a> operation that is guaranteed to not throw an exception.
 
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=header>value</a> from <var>object</var>, with an optional boolean
+`<code>Content-Type</code>` <a for=header>value</a> from a <a for=/>byte sequence</a> or
+{{BodyInit}} object <var>object</var>, with an optional boolean
 <dfn id=keepalive for=BodyInit/extract export><var>keepalive</var></dfn> (default false), run these
 steps:
 
@@ -5552,12 +5552,13 @@ steps:
  <li><p>Let <var>stream</var> be <var>object</var> if <var>object</var> is a {{ReadableStream}}
  object; otherwise the result of <a for=ReadableStream>creating</a> a {{ReadableStream}}.
 
- <li><p>Let <var>Content-Type</var> be null.
-
  <li><p>Let <var>action</var> be null.
 
- <li><p>Let <var>source</var> be null if <var>object</var> is a {{ReadableStream}} object; otherwise
- <var>object</var>.
+ <li><p>Let <var>source</var> be null.
+
+ <li><p>Let <var>length</var> be null.
+
+ <li><p>Let <var>Content-Type</var> be null.
 
  <li>
   <p>Switch on <var>object</var>:
@@ -5565,25 +5566,33 @@ steps:
   <dl class=switch>
    <dt>{{Blob}}
    <dd>
-    <p>Set <var>action</var> to an action that reads <var>object</var>.
+    <p>Set <var>action</var> to this step: read <var>object</var>.
+
+    <p>Set <var>source</var> to <var>object</var>.
+
+    <p>Set <var>length</var> to <var>object</var>'s {{Blob/size}}.
 
     <p>If <var>object</var>'s {{Blob/type}}
     attribute is not the empty byte sequence, set <var>Content-Type</var> to its value.
+    <!-- Blob reading is not defined and blobs don't have an internal data model to poke at -->
 
    <dt><a for=/>byte sequence</a>
-   <dd><p>Set <var>action</var> to an action that returns <var>object</var>.
+   <dd><p>Set <var>source</var> to <var>object</var>.
 
-   <dt><code>BufferSource</code>
-   <dd><p>Set <var>action</var> to an action that returns a
-   <a lt="get a copy of the buffer source">copy of the bytes</a> held by <var>object</var>.
+   <dt>{{BufferSource}}
+   <dd><p>Set <var>source</var> to a <a lt="get a copy of the buffer source">copy of the bytes</a>
+   held by <var>object</var>.
 
    <dt>{{FormData}}
    <dd>
-    <p>Set <var>action</var> to an action that runs the
-    <a><code>multipart/form-data</code> encoding algorithm</a>, with <var>object</var> as
-    <var ignore>form data set</var> and with <a>UTF-8</a> as the explicit character encoding.
-    <!-- need to provide explicit character encoding because otherwise the encoding of the
-         document is used -->
+    <p>Set <var>action</var> to this step: run the
+    <a><code>multipart/form-data</code> encoding algorithm</a>, with <var>object</var>'s
+    <a for=FormData>entry list</a> and <a>UTF-8</a>.
+
+    <p>Set <var>source</var> to <var>object</var>.
+
+    <p>Set <var>length</var> to <span class=XXX>unclear, see
+    <a href="https://github.com/whatwg/html/issues/6424">html/6424</a> for improving this</span>.
 
     <p>Set <var>Content-Type</var> to `<code>multipart/form-data; boundary=</code>`, followed by the
     <a><code>multipart/form-data</code> boundary string</a> generated by the
@@ -5591,18 +5600,16 @@ steps:
 
    <dt>{{URLSearchParams}}
    <dd>
-    <p>Set <var>action</var> to an action that runs the
-    <a lt="urlencoded serializer"><code>application/x-www-form-urlencoded</code>
-    serializer</a> with <var>object</var>'s
-    <a for=URLSearchParams>list</a>.
-    <!-- UTF-8 implied -->
+    <p>Set <var>source</var> to the result of running the
+    <a lt="urlencoded serializer"><code>application/x-www-form-urlencoded</code> serializer</a> with
+    <var>object</var>'s <a for=URLSearchParams>list</a>.
 
     <p>Set <var>Content-Type</var> to
     `<code>application/x-www-form-urlencoded;charset=UTF-8</code>`.
 
    <dt><a for=/>scalar value string</a>
    <dd>
-    <p>Set <var>action</var> to an action that runs <a>UTF-8 encode</a> on <var>object</var>.
+    <p>Set <var>source</var> to the <a>UTF-8 encoding</a> of <var>object</var>.
 
     <p>Set <var>Content-Type</var> to `<code>text/plain;charset=UTF-8</code>`.
 
@@ -5614,19 +5621,27 @@ steps:
     <a for=ReadableStream>locked</a>, then <a>throw</a> a {{TypeError}}.
   </dl>
 
+ <li><p>If <var>source</var> is a <a for=/>byte sequence</a>, then set <var>action</var> to a step
+ that returns <var>source</var> and <var>length</var> to <var>source</var>'s
+ <a for="byte sequence">length</a>.
+
  <li>
-  <p>If <var>action</var> is non-null, run <var>action</var> <a>in parallel</a>:
+  <p>If <var>action</var> is non-null, then run these steps in <a>in parallel</a>:
 
   <ol>
-   <li><p>Whenever one or more bytes are available and <var>stream</var> is not
-   <a for=ReadableStream>errored</a>, <a for=ReadableStream>enqueue</a> a {{Uint8Array}} wrapping an
-   {{ArrayBuffer}} containing the available bytes into <var>stream</var>.
+   <li>
+    <p>Run <var>action</var>.
 
-   <li><p>When running <var>action</var> is done, <a for=ReadableStream>close</a> <var>stream</var>.
+    <p>Whenever one or more bytes are available and <var>stream</var> is not
+    <a for=ReadableStream>errored</a>, <a for=ReadableStream>enqueue</a> a {{Uint8Array}} wrapping
+    an {{ArrayBuffer}} containing the available bytes into <var>stream</var>.
+
+    <p>When running <var>action</var> is done, <a for=ReadableStream>close</a> <var>stream</var>.
   </ol>
 
  <li><p>Let <var>body</var> be a <a for=/>body</a> whose <a for=body>stream</a> is
- <var>stream</var> and whose <a for=body>source</a> is <var>source</var>.
+ <var>stream</var>, <a for=body>source</a> is <var>source</var>, and <a for=body>length</a> is
+ <var>length</var>.
 
  <li><p>Return <var>body</var> and <var>Content-Type</var>.
 </ol>
