@@ -16,7 +16,7 @@ started, leave a comment on the issue or ask around [on IRC](https://whatwg.org/
 ## Pull requests
 
 In short, change `fetch.bs` and submit your patch, with a
-[good commit message](https://github.com/whatwg/meta/blob/master/COMMITTING.md). Consider
+[good commit message](https://github.com/whatwg/meta/blob/main/COMMITTING.md). Consider
 reading through the [WHATWG FAQ](https://whatwg.org/faq) if you are new here.
 
 Please add your name to the Acknowledgments section in your first pull request, even for trivial
@@ -26,7 +26,7 @@ fixes. The names are sorted lexicographically.
 
 For quick local iteration, run `make`. To verify your changes locally, run `make deploy`. See more
 in the
-[WHATWG Contributor Guidelines](https://github.com/whatwg/meta/blob/master/CONTRIBUTING.md#building).
+[WHATWG Contributor Guidelines](https://github.com/whatwg/meta/blob/main/CONTRIBUTING.md#building).
 
 ## Formatting
 
@@ -80,10 +80,43 @@ is.
 End tags must be omitted when possible and attribute values must not be quoted (if necessary, use
 double quotes).
 
+Place one newline between paragraphs (including list elements). Place three newlines before `<h2>`,
+and two newlines before other headings. This does not apply when a nested heading follows the parent
+heading.
+
+```html
+<ul>
+ <li><p>Do not place a newline above.
+
+ <li><p>Place a newline above.
+</ul>
+
+<p>Place a newline above.
+
+
+<h3>Place two newlines above.</h3>
+
+<h4>Placing one newline is OK here.</h4>
+
+
+<h4>Place two newlines above.</h4>
+```
+
+Use camel case for variable names and sentence case use spaced names for definitions, algorithms,
+etc.
+
+```html
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=concept-request-redirect-mode>redirect mode</dfn>,...
+```
+```html
+<p>Let <var>redirectMode</var> be <var>request</var>'s <a for=request>redirect mode</a>.
+```
+
 ## Merge policy
 
 If you can commit to this repository, see the
-[maintainer guidelines](https://github.com/whatwg/meta/blob/master/MAINTAINERS.md).
+[maintainer guidelines](https://github.com/whatwg/meta/blob/main/MAINTAINERS.md).
 
 ## Tests
 

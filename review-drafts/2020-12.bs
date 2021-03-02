@@ -1,5 +1,6 @@
 <pre class=metadata>
 Group: WHATWG
+Date: 2020-12-21
 H1: Fetch
 Shortname: fetch
 Text Macro: TWITTER fetchstandard
@@ -105,7 +106,6 @@ everything that involves, including:
  <li>Redirects
  <li>Cross-origin semantics
  <li>CSP [[!CSP]]
- <li>Fetch Metadata [[!FETCH-METADATA]]
  <li>Service workers [[!SW]]
  <li>Mixed Content [[!MIX]]
  <li>`<code>Referer</code>` [[!REFERRER]]
@@ -161,37 +161,35 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 
 <hr>
 
-<p>A <dfn>fetch params</dfn> is a <a for=/>struct</a> used as a bookkeeping detail by the
-<a for=/>fetch</a> algorithm. It has the following <a for=struct>items</a>:
+<p><a>Tasks</a> that are
+<a lt="queue a task">queued</a> by this standard are annotated as one
+of:
 
-<dl>
- <dt><dfn for="fetch params">request</dfn>
- <dd>A <a for=/>request</a>.
+<ul class=brief>
+ <li><dfn export>process request body</dfn>
+ <li id=process-request-end-of-file><dfn export>process request end-of-body</dfn>
+ <li><dfn export>process response</dfn>
+ <li id=process-response-end-of-file><dfn export>process response end-of-body</dfn>
+ <li><dfn export>process response done</dfn>
+</ul>
 
- <dt><dfn for="fetch params">process request body</dfn> (default null)
- <dt><dfn for="fetch params">process request end-of-body</dfn> (default null)
- <dt><dfn for="fetch params">process response</dfn> (default null)
- <dt><dfn for="fetch params">process response end-of-body</dfn> (default null)
- <dd>Null or an algorithm.
-
- <dt><dfn for="fetch params">task destination</dfn> (default null)
- <dd>Null, a <a for=/>global object</a>, or a <a for=/>parallel queue</a>.
-</dl>
-
-<p>To <dfn>queue a fetch task</dfn>, given an algorithm <var>algorithm</var>, a
-<a for=/>global object</a> or a <a for=/>parallel queue</a> <var>taskDestination</var>, run these
-steps:
+<p>To <dfn>queue a fetch task</dfn> on <a for=/>request</a>
+<var>request</var> to <var>run an operation</var>, run these steps:
 
 <ol>
- <li><p>If <var>taskDestination</var> is a <a for=/>parallel queue</a>, then
- <a lt="enqueue steps" for="parallel queue">enqueue</a> <var>algorithm</var> to
- <var>taskDestination</var>.
+ <li><p>If <var>request</var>'s <a for=request>client</a> is
+ null, terminate these steps.
 
- <li><p>Otherwise, <a>queue a global task</a> on the <a>networking task source</a> with
- <var>taskDestination</var> and <var>algorithm</var>.
+ <li><p><a>Queue a task</a> to
+ <var>run an operation</var> on <var>request</var>'s
+ <a for=request>client</a>'s
+ <a>responsible event loop</a> using the
+ <a>networking task source</a>.
 </ol>
 
-<hr>
+<p>To <dfn>queue a fetch-request-done task</dfn>, given a <var>request</var>,
+<a>queue a fetch task</a> on <var>request</var> to <a>process request end-of-body</a>
+for <var>request</var>.
 
 <p>To <dfn>serialize an integer</dfn>, represent it as a string of the shortest possible decimal
 number.
@@ -213,11 +211,21 @@ number.
 <p>An <dfn export id=http-scheme>HTTP(S) scheme</dfn> is a <a for=url>scheme</a> that is
 "<code>http</code>" or "<code>https</code>".
 
-<p>A <dfn export>fetch scheme</dfn> is a <a for=url>scheme</a> that is "<code>about</code>",
-"<code>blob</code>", "<code>data</code>", "<code>file</code>", or an <a>HTTP(S) scheme</a>.
+<p>A <dfn export>network scheme</dfn> is a <a for=url>scheme</a> that is "<code>ftp</code>" or an
+<a>HTTP(S) scheme</a>.
 
-<p class="note no-backref"><a>HTTP(S) scheme</a> and <a>fetch scheme</a> are also used by
-<cite>HTML</cite>. [[HTML]]
+<p>A <dfn export>fetch scheme</dfn> is a <a for=url>scheme</a> that is "<code>about</code>",
+"<code>blob</code>", "<code>data</code>", "<code>file</code>", or a <a>network scheme</a>.
+
+<p class="note no-backref"><a>HTTP(S) scheme</a>, <a>network scheme</a>, and <a>fetch scheme</a> are
+also used by <cite>HTML</cite>. [[HTML]]
+
+<hr>
+
+<p id=fetch-url>A <dfn>response URL</dfn> is a <a for=/>URL</a> for which implementations need not
+store the <a for=url>fragment</a> as it is never exposed. When
+<a lt="url serializer">serialized</a>, the <i>exclude fragment flag</i> is set, meaning
+implementations can store the <a for=url>fragment</a> nonetheless.
 
 
 <h3 id=http>HTTP</h3>
@@ -978,14 +986,11 @@ user-agent-defined <a for=header>value</a> for the
 
 <h4 id=statuses>Statuses</h4>
 
-<p>A <dfn export id=concept-status>status</dfn> is an integer in the range 0 to 999, inclusive.
-
-<p class=XXX>Various edge cases in mapping HTTP/1's <code>status-code</code> to this concept are
-worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>.
+<p>A <dfn export id=concept-status>status</dfn> is a code.
 
 <p>A <dfn export>null body status</dfn> is a <a for=/>status</a> that is 101, 204, 205, or 304.
 
-<p>An <dfn export>ok status</dfn> is a <a for=/>status</a> in the range 200 to 299, inclusive.
+<p>An <dfn export>ok status</dfn> is any <a for=/>status</a> in the range 200 to 299, inclusive.
 
 <p>A <dfn export>redirect status</dfn> is a <a for=/>status</a> that is 301, 302, 303, 307, or 308.
 
@@ -995,13 +1000,27 @@ worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>
 <p>A <dfn export id=concept-body>body</dfn> consists of:
 
 <ul>
- <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (a {{ReadableStream}} object).
+ <li><p>A <dfn export for=body id=concept-body-stream>stream</dfn> (null or a {{ReadableStream}}
+ object).
+
+ <li><p>A <dfn export for=body id=concept-body-transmitted>transmitted bytes</dfn>
+ (an integer), initially 0.
 
  <li><p>A <dfn export for=body id=concept-body-total-bytes>total bytes</dfn> (an
  integer), initially 0.
 
  <li><p>A <dfn export for=body id=concept-body-source>source</dfn>, initially null.
 </ul>
+
+<p>A <a for=/>body</a> <var>body</var> is said to be
+<dfn export for=body id=concept-body-done>done</dfn> if <var>body</var> is null or
+<var>body</var>'s <a for=body>stream</a> is
+<a for=ReadableStream>closed</a> or
+<a for=ReadableStream>errored</a>.
+
+<p>To <dfn export for=body id=concept-body-wait>wait</dfn> for a
+<a for=/>body</a> <var>body</var>, wait for <var>body</var> to be
+<a for=body>done</a>.
 
 <p>To <dfn export for=body id=concept-body-clone>clone</dfn> a
 <a for=/>body</a> <var>body</var>, run these steps:
@@ -1016,128 +1035,6 @@ worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>
  <a for=body>stream</a> is <var>out2</var> and other members are copied from
  <var>body</var>.
 </ol>
-
-<hr>
-
-<p>To <dfn export for=body>incrementally read</dfn> a <a for=/>body</a> <var>body</var>, given an
-algorithm <var>processBodyChunk</var>, an algorithm <var>processEndOfBody</var>, an algorithm
-<var>processBodyError</var>, and an optional null, <a for=/>parallel queue</a>, or
-<a for=/>global object</a> <var>taskDestination</var> (default null), run these steps.
-<var>processBodyChunk</var> must be an algorithm accepting a <a for=/>byte sequence</a>.
-<var>processEndOfBody</var> must be an algorithm accepting no arguments. <var>processBodyError</var>
-must be an algorithm accepting an exception.
-
-<ol>
- <li><p>If <var>taskDestination</var> is null, then set <var>taskDestination</var> to the result of
- <a>starting a new parallel queue</a>.
-
- <li>
-  <p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
-  <var>body</var>'s <a for=body>stream</a>.
-
-  <p class=note>This operation will not throw an exception.
-
- <li><p>Perform the <a>incrementally-read loop</a> given <var>reader</var>,
- <var>taskDestination</var>, <var>processBodyChunk</var>, <var>processEndOfBody</var>, and
- <var>processBodyError</var>.
-</ol>
-
-<p>To perform the <dfn>incrementally-read loop</dfn>, given a {{ReadableStreamDefaultReader}} object
-<var>reader</var>, <a for=/>parallel queue</a> or <a for=/>global object</a>
-<var>taskDestination</var>, algorithm <var>processBodyChunk</var>, algorithm
-<var>processEndOfBody</var>, and algorithm <var>processBodyError</var>:
-
-<ol>
- <li>
-  <p>Let <var>readRequest</var> be the following <a>read request</a>:
-
-  <dl>
-   <dt><a for="read request">chunk steps</a>, given <var>chunk</var>
-   <dd>
-    <ol>
-     <li><p>Let <var>continueAlgorithm</var> be null.
-
-     <li><p>If <var>chunk</var> is not a {{Uint8Array}} object, then set
-     <var>continueAlgorithm</var> to this step: run <var>processBodyError</var> given a
-     {{TypeError}}.
-
-     <li>
-      <p>Otherwise:
-
-      <ol>
-       <li>
-        <p>Let <var>bytes</var> be a <a lt="get a copy of the buffer source">copy of</a>
-        <var>chunk</var>.
-
-        <p class=note>Implementations are strongly encouraged to use an implementation strategy that
-        avoids this copy where possible.
-
-       <li>
-        <p>Set <var>continueAlgorithm</var> to these steps:
-
-        <ol>
-         <li><p>Run <var>processBodyChunk</var> given <var>bytes</var>.
-
-         <li><p>Perform the <a>incrementally-read loop</a> given <var>reader</var>,
-         <var>taskDestination</var>, <var>processBodyChunk</var>, <var>processEndOfBody</var>, and
-         <var>processBodyError</var>.
-        </ol>
-      </ol>
-
-     <li><p><a>Queue a fetch task</a> given <var>continueAlgorithm</var> and
-     <var>taskDestination</var>.
-    </ol>
-
-   <dt><a for="read request">close steps</a>
-   <dd><ol><li><p><a>Queue a fetch task</a> given <var>processEndOfBody</var> and
-   <var>taskDestination</var>.</ol>
-
-   <dt><a for="read request">error steps</a>, given <var>e</var>
-   <dd><ol><li><p><a>Queue a fetch task</a> to run <var>processBodyError</var> given <var>e</var>,
-   with <var>taskDestination</var>.</ol>
-  </dl>
-
- <li><p><a for=ReadableStreamDefaultReader>Read a chunk</a> from <var>reader</var> given
- <var>readRequest</var>.
-</ol>
-
-<p>To <dfn export for=body>fully read</dfn> a <a for=/>body</a> <var>body</var>, given an algorithm
-<var>processBody</var>, an algorithm <var>processBodyError</var>, and an optional null,
-<a for=/>parallel queue</a>, or <a for=/>global object</a> <var>taskDestination</var> (default
-null), run these steps. <var>processBody</var> must be an algorithm accepting a
-<a for=/>byte sequence</a>. <var>processBodyError</var> must be an algorithm accepting no arguments.
-
-<ol>
- <li><p>If <var>taskDestination</var> is null, then set <var>taskDestination</var> to the result of
- <a>starting a new parallel queue</a>.
-
- <li><p>Let <var>promise</var> be the result of <a>fully reading body as promise</a> given
- <var>body</var>.
-
- <li><p>Let <var>fulfilledSteps</var> given a <a>byte sequence</a> <var>bytes</var> be to
- <a>queue a fetch task</a> to run <var>processBody</var> given <var>bytes</var>, with
- <var>taskDestination</var>.
-
- <li><p>Let <var>rejectedSteps</var> be to <a>queue a fetch task</a> to run
- <var>processBodyError</var>, with <var>taskDestination</var>.
-
- <li><p><a for=promise>React</a> to <var>promise</var> with <var>fulfilledSteps</var> and
- <var>rejectedSteps</var>.
-</ol>
-
-<p>To <dfn export lt="fully reading body as promise">fully read body as promise</dfn>, given a
-<a for=/>body</a> <var>body</var>, run these steps:
-
-<ol>
- <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
- <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then return
- <a>a promise rejected with</a> that exception.
-
- <li><p>Return the result of <a for=ReadableStreamDefaultReader>reading all bytes</a> from
- <var>reader</var>.
-</ol>
-
-<hr>
 
 <p>To <dfn export>handle content codings</dfn> given <var>codings</var> and <var>bytes</var>, run
 these steps:
@@ -1237,9 +1134,8 @@ requests, but not service worker requests. It references an
 explicitly set <a for=/>request</a>'s
 <a for=request>window</a>.
 
-<p id=keep-alive-flag>A <a for=/>request</a> has an associated boolean
-<dfn for=request export id=request-keepalive-flag>keepalive</dfn>. Unless stated otherwise it is
-false.
+<p id=keep-alive-flag>A <a for=/>request</a> has an associated
+<dfn for=request export>keepalive flag</dfn>. Unless stated otherwise it is unset.
 
 <p class="note no-backref">This can be used to allow the request to outlive the
 <a>environment settings object</a>, e.g.,
@@ -1305,7 +1201,7 @@ the empty string,
      * CSP: https://w3c.github.io/webappsec-csp/#effective-directive-for-a-request
      * Mixed Content: https://w3c.github.io/webappsec-mixed-content/#should-block-fetch
      * Preload: https://w3c.github.io/preload/#processing
-     * SRI
+     * SRI: https://w3c.github.io/webappsec-subresource-integrity/#apply-algorithm-to-request
      * HTML -->
 
 <p>A <a for=/>request</a>'s <a for=request>destination</a> is
@@ -1443,8 +1339,8 @@ not always relevant and might require different behavior.
  submission algorithm.
 
  <p>CSP will also need to check <a for=/>request</a>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a>'s
- <a for=Window>browsing context</a>'s <a>ancestor browsing contexts</a> for various CSP
+ <a for="environment settings object">responsible document</a>'s
+ <a for=Document>browsing context</a>'s <a>ancestor browsing contexts</a> for various CSP
  directives.
 </div>
 
@@ -1480,6 +1376,10 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
 <a>environment settings object</a>.
 
 <p>A <a for=/>request</a> has an associated
+<dfn id=synchronous-flag export for=request>synchronous flag</dfn>. Unless stated otherwise it is
+unset.
+
+<p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-mode>mode</dfn>, which is
 "<code>same-origin</code>", "<code>cors</code>", "<code>no-cors</code>",
 "<code>navigate</code>", or "<code>websocket</code>". Unless stated otherwise, it is
@@ -1492,10 +1392,8 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
   <a>network error</a> if the request is not made to a same-origin URL.
 
   <dt>"<code>cors</code>"
-  <dd>For requests whose <a for=request>response tainting</a> gets set to "<code>cors</code>", makes
-  the request a <a>CORS request</a> — in which case, fetch will return a <a>network error</a> if the
-  requested resource does not understand the <a>CORS protocol</a>, or if the requested resource is
-  one that intentionally does not participate in the <a>CORS protocol</a>.
+  <dd>Makes the request a <a>CORS request</a>. Fetch will return a <a>network error</a> if the
+  requested resource does not understand the <a>CORS protocol</a>.
 
   <dt>"<code>no-cors</code>"
   <dd>Restricts requests to using <a>CORS-safelisted methods</a> and
@@ -1526,21 +1424,18 @@ one or more event listeners are registered on an {{XMLHttpRequestUpload}} object
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-credentials-mode>credentials mode</dfn>,
 which is "<code>omit</code>", "<code>same-origin</code>", or
-"<code>include</code>". Unless stated otherwise, it is "<code>same-origin</code>".
+"<code>include</code>". Unless stated otherwise, it is "<code>omit</code>".
 
 <div class="note no-backref">
  <dl>
   <dt>"<code>omit</code>"
-  <dd>Excludes credentials from this request, and causes any credentials sent back in the response
-  to be ignored.
+  <dd>Excludes credentials from this request.
 
   <dt>"<code>same-origin</code>"
-  <dd>Include credentials with requests made to same-origin URLs, and use any credentials sent back
-  in responses from same-origin URLs.
+  <dd>Include credentials with requests made to same-origin URLs.
 
   <dt>"<code>include</code>"
-  <dd>Always includes credentials with this request, and always use any credentials sent back in the
-  response.
+  <dd>Always includes credentials with this request.
  </dl>
 
  <p><a for=/>Request</a>'s <a for=request>credentials mode</a> controls the flow of
@@ -1662,10 +1557,6 @@ Unless stated otherwise, it is unset.
 
 <p class="note no-backref">This flag is for exclusive use by HTML's navigate algorithm. [[!HTML]]
 
-<p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-user-activation-flag>user-activation flag</dfn>. Unless
-stated otherwise, it is unset.
-
 <hr>
 
 <p>A <a for=/>request</a> has an associated
@@ -1763,6 +1654,87 @@ is to return the result of <a>serializing a request origin</a> with <var>request
 
 <hr>
 
+<p>To <dfn export for=request id=concept-request-transmit-body>transmit body</dfn> for a
+<a for=/>request</a> <var>request</var>, run these steps:
+
+<ol>
+ <li>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
+
+ <li><p>If <var>body</var> is null, then <a>queue a fetch task</a> on <var>request</var> to
+ <a>process request end-of-body</a> for <var>request</var> and abort these steps.
+
+ <li>
+  <p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
+  <var>body</var>'s <a for=body>stream</a>.
+
+  <p class="note no-backref">This operation cannot throw an exception.
+
+ <li><p>Perform the <a>transmit-body loop</a> given <var>request</var>, <var>body</var>, and
+ <var>reader</var>.
+</ol>
+
+<p>To perform the <dfn>transmit-body loop</dfn> given <var>request</var>, <var>body</var>, and
+<var>reader</var>:
+
+<ol>
+ <li>
+  <p>Let <var>readRequest</var> be the following <a>read request</a>:
+
+  <dl>
+   <dt><a for="read request">chunk steps</a>, given <var>chunk</var>
+   <dd>
+    <ol>
+     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+     <li><p>If <var>chunk</var> is not a {{Uint8Array}} object,
+     <a lt=terminated for=fetch>terminate</a> the ongoing fetch and abort these steps.
+
+     <li><p>Let <var>bs</var> be the <a>byte sequence</a> represented by the {{Uint8Array}} object.
+
+     <li>
+      <p><a>In parallel</a>:
+
+      <ol>
+       <li><p>Transmit <var>bs</var>. Whenever one or more bytes are transmitted, increase
+       <var>body</var>'s <a for=body>transmitted bytes</a> by the number of transmitted bytes and
+       <a>queue a fetch task</a> on <var>request</var> to <a>process request body</a>
+       for <var>request</var>.
+
+       <p class="note no-backref">This step blocks until <var>bs</var> is fully transmitted.
+
+      <li><p>If the ongoing fetch is not <a for=fetch>terminated</a>, then <a>queue a fetch task</a>
+      on <var>request</var> to perform the <a>transmit-body loop</a> given <var>request</var>,
+      <var>body</var>, and <var>reader</var>.
+     </ol>
+    </ol>
+
+   <dt><a for="read request">close steps</a>
+   <dd>
+    <ol>
+     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+     <li><p><a>Queue a fetch task</a> on <var>request</var> to <a>process request end-of-body</a>
+     for <var>request</var>.
+    </ol>
+
+   <dt><a for="read request">error steps</a>, given <var>e</var>
+   <dd>
+    <ol>
+     <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+     <li><p>If <var>e</var> is an "<code><a exception>AbortError</a></code>" {{DOMException}}, then
+     <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
+
+     <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+    </ol>
+  </dl>
+
+ <li><p><a for=ReadableStreamDefaultReader>Read a chunk</a> from <var>reader</var> given
+ <var>readRequest</var>.
+</ol>
+
+<hr>
+
 <p>To <dfn export for=request id=concept-request-add-range-header>add a range header</dfn> to a
 <a for=/>request</a> <var>request</var>, with an integer <var>first</var>, and an optional integer
 <var>last</var>, run these steps:
@@ -1809,8 +1781,8 @@ source of security bugs. Please seek security review for features that deal with
 
  <li><p><a>Set the password</a> given <var>url</var> and the empty string.
 
- <li><p>Return the <a lt="URL serializer">serialization</a> of <var>url</var> with
- <a for="URL serializer"><i>exclude fragment</i></a> set to true.
+ <li><p>Return the <a lt="url serializer">serialization</a> of <var>url</var> with the
+ <i>exclude fragment flag</i> set.
 </ol>
 
 
@@ -1838,15 +1810,15 @@ end-user.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url>URL</dfn>. It is a pointer to the last
-<a for=/>URL</a> in <a for=/>response</a>'s <a for=response>URL list</a> and null if
-<a for=/>response</a>'s <a for=response>URL list</a> <a for=list>is empty</a>.
+<a>response URL</a> in <a for=/>response</a>'s <a for=response>URL list</a> and null if
+<a for=/>response</a>'s <a for=response>URL list</a> is the empty list.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url-list>URL list</dfn> (a <a for=/>list</a> of zero or
-more <a for=/>URLs</a>). Unless stated otherwise, it is the empty list.
+more <a>response URLs</a>). Unless stated otherwise, it is the empty list.
 
-<p class="note no-backref">Except for the last <a for=/>URL</a>, if any, a <a for=/>response</a>'s
-<a for=response>URL list</a> is not exposed to script as that would violate
+<p class="note no-backref">Except for the last <a>response URL</a>, if any, a
+<a for=/>response</a>'s <a for=response>URL list</a> cannot be exposed to script. That would violate
 <a>atomic HTTP redirect handling</a>.
 
 <p>A <a for=/>response</a> has an associated
@@ -1908,6 +1880,16 @@ allowed on the resource fetched by looking at the flag of the response returned.
 the response of a redirect has to be set if it was set for previous responses in the redirect chain,
 this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
 
+<p>A <a for=/>response</a> can have an associated
+<dfn export for=response id=concept-response-location-url>location URL</dfn> (null, failure, or a
+<a for=/>URL</a>). Unless specified otherwise, <a for=/>response</a> has no
+<a for=response>location URL</a>.
+
+<p class="note no-backref">This concept is used for redirect handling in Fetch and in HTML's
+navigate algorithm. It ensures `<code>Location</code>` has
+<a lt="extracting header values">its value extracted</a> consistently and only once.
+[[!HTML]]
+
 <hr>
 
 <p>A <a for=/>response</a> whose
@@ -1931,12 +1913,12 @@ known as an <dfn export id=concept-aborted-network-error>aborted network error</
 <a>network error</a>. This
 <a for=/>response</a> is referred to as the
 <a>filtered response</a>'s associated
-<dfn export id=concept-internal-response for="filtered response">internal response</dfn>.
+<dfn export id=concept-internal-response for=internal>internal response</dfn>.
 
 <p class="note no-backref">The <a for=/>fetch</a> algorithm returns such a view to ensure APIs do
 not accidentally leak information. If the information needs to be exposed for legacy reasons, e.g.,
-to feed image data to a decoder, the associated <a for="filtered response">internal response</a> can
-be used, which is only "accessible" to internal specification algorithms and is never a
+to feed image data to a decoder, the associated <a for=internal>internal response</a> can be used,
+which is only "accessible" to internal specification algorithms and is never a
 <a>filtered response</a> itself.
 
 <p>A <dfn export id=concept-filtered-response-basic>basic filtered response</dfn> is a
@@ -1944,7 +1926,7 @@ be used, which is only "accessible" to internal specification algorithms and is 
 <a for=response>type</a> is "<code>basic</code>" and
 <a for=response>header list</a> excludes any
 <a for=/>headers</a> in
-<a for="filtered response">internal response</a>'s
+<a for=internal>internal response</a>'s
 <a for=response>header list</a> whose
 <a for=header>name</a> is a
 <a>forbidden response-header name</a>.
@@ -1954,11 +1936,11 @@ be used, which is only "accessible" to internal specification algorithms and is 
 <a for=response>type</a> is "<code>cors</code>" and
 <a for=response>header list</a> excludes any
 <a for=/>headers</a> in
-<a for="filtered response">internal response</a>'s
+<a for=internal>internal response</a>'s
 <a for=response>header list</a> whose
 <a for=header>name</a> is <em>not</em> a
 <a>CORS-safelisted response-header name</a>, given
-<a for="filtered response">internal response</a>'s
+<a for=internal>internal response</a>'s
 <a for=response>CORS-exposed header-name list</a>.
 
 <p>An <dfn export id=concept-filtered-response-opaque>opaque filtered response</dfn> is a
@@ -1984,23 +1966,24 @@ is a <a>filtered response</a> whose
  <a lt="opaque-redirect filtered response">opaque-redirect filtered responses</a> is harmless since
  no redirects are followed.
 
- <p>In other words, an <a>opaque filtered response</a> and an
- <a>opaque-redirect filtered response</a> are nearly indistinguishable from a <a>network error</a>.
- When introducing new APIs, do not use the <a for="filtered response">internal response</a> for
- internal specification algorithms as that will leak information.
+ <p>In other words, an <a>opaque filtered response</a>
+ and an
+ <a>opaque-redirect filtered response</a> are
+ nearly indistinguishable from a <a>network error</a>. When
+ introducing new APIs, do not use the <a for=internal>internal response</a>
+ for internal specification algorithms as that will leak information.
 
- <p>This also means that JavaScript APIs, such as
- <a attribute for=Response lt=ok><code>response.ok</code></a>, will return rather useless results.
+ <p>This also means that JavaScript APIs, such as <a attribute for=Response lt=ok><code>response.ok</code></a>,
+ will return rather useless results.
 </div>
 
 <p>To <dfn export for=response id=concept-response-clone>clone</dfn> a
 <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
- <li><p>If <var>response</var> is a <a>filtered response</a>, then return a new identical
- <a>filtered response</a> whose <a for="filtered response">internal response</a> is a
- <a for=response>clone</a> of <var>response</var>'s
- <a for="filtered response">internal response</a>.
+ <li><p>If <var>response</var> is a <a>filtered response</a>, then return a new identical filtered
+ response whose <a lt="internal response" for=internal>internal response</a> is a
+ <a for=response>clone</a> of <var>response</var>'s <a for=internal>internal response</a>.
 
  <li><p>Let <var>newResponse</var> be a copy of <var>response</var>, except for its
  <a for=response>body</a>.
@@ -2023,44 +2006,6 @@ is a <a>filtered response</a> whose
 
 <p>A <dfn export id=concept-stale-response>stale response</dfn> is a <a for=/>response</a> that is
 not a <a>fresh response</a> or a <a>stale-while-revalidate response</a>.
-
-<hr>
-
-<p>The <dfn export for=response id=concept-response-location-url>location URL</dfn> of a
-<a for=/>response</a> <var>response</var>, given null or an <a for=/>ASCII string</a>
-<var>requestFragment</var>, is the value returned by the following steps. They return null, failure,
-or a <a for=/>URL</a>.
-
-<ol>
- <li><p>If <var>response</var>'s <a for=response>status</a> is not a <a>redirect status</a>, then
- return null.
-
- <li><p>Let <var>location</var> be the result of <a>extracting header list values</a> given
- `<code>Location</code>` and <var>response</var>'s <a for=response>header list</a>.
- <!-- https://github.com/whatwg/fetch/issues/814#issuecomment-431366126 -->
-
- <li>
-  <p>If <var>location</var> is a <a for=header>value</a>, then set <var>location</var> to the result
-  of <a lt="url parser">parsing</a> <var>location</var> with <var>response</var>'s
-  <a for=response>URL</a>.
-
-  <p class=note>If <var>response</var> was constructed through the {{Response}} constructor,
-  <var>response</var>'s <a for=response>URL</a> will be null, meaning that <var>location</var> will
-  only parse successfully if it is an <a>absolute-URL-with-fragment string</a>.
-
- <li>
-  <p>If <var>location</var> is a <a for=/>URL</a> whose <a for=url>fragment</a> is null, then set
-  <var>location</var>'s <a for=url>fragment</a> to <var>requestFragment</var>.
-
-  <p class=note>This ensures that synthetic (indeed, all) responses follow the processing model for
-  redirects defined by HTTP. [[HTTP-SEMANTICS]]
-
- <li><p>Return <var>location</var>.
-</ol>
-
-<p class=note>The <a for=response>location URL</a> algorithm is exclusively used for redirect
-handling in this standard and in <cite>HTML</cite>'s navigate algorithm which handles redirects
-manually. [[!HTML]]
 
 
 <h4 id=miscellaneous>Miscellaneous</h4>
@@ -2111,10 +2056,13 @@ functionality.
 <hr>
 
 <p>When a <a for=fetch>fetch group</a> is
-<dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>, for each associated
-<a for="fetch group">fetch record</a> whose <a for="fetch record">request</a>'s <a>done flag</a> is
-unset or <a for=request>keepalive</a> is false, <a lt=terminated for=fetch>terminate</a> the
-<a for="fetch group">fetch record</a>'s <a for="fetch record">fetch</a>.
+<dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>,
+for each associated <a for="fetch group">fetch record</a> whose
+<a for="fetch record">request</a>'s <a>done flag</a> or
+<a>keepalive flag</a> is unset,
+<a lt=terminated for=fetch>terminate</a> the
+<a for="fetch group">fetch record</a>'s
+<a for="fetch record">fetch</a>.
 
 
 <h3 id=connections>Connections</h3>
@@ -2251,10 +2199,20 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
 run these steps:
 
 <ol>
- <li><p>Let <var>url</var> be <var>request</var>'s <a for=request>current URL</a>.
+ <li><p>Let <var>url</var> be <var>request</var>'s
+ <a for=request>current URL</a>.
 
- <li><p>If <var>url</var>'s <a for=url>scheme</a> is an <a>HTTP(S) scheme</a> and <var>url</var>'s
- <a for=url>port</a> is a <a>bad port</a>, then return <b>blocked</b>.
+ <li><p>Let <var>scheme</var> be <var>url</var>'s
+ <a for=url>scheme</a>.
+
+ <li><p>Let <var>port</var> be <var>url</var>'s
+ <a for=url>port</a>.
+
+ <li><p>If <var>scheme</var> is "<code>ftp</code>" and <var>port</var> is 20 or 21, then
+ return <b>allowed</b>.
+
+ <li><p>Otherwise, if <var>scheme</var> is a <a>network scheme</a> and
+ <var>port</var> is a <a>bad port</a>, then return <b>blocked</b>.
 
  <li><p>Return <b>allowed</b>.
 </ol>
@@ -2518,10 +2476,13 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
   <a for=request>credentials mode</a> is
   "<code>include</code>".
 
-  <p class=note>For a <a>CORS-preflight request</a>, <a for=/>request</a>'s
-  <a for=request>credentials mode</a> is always "<code>same-origin</code>", i.e., it excludes
-  credentials, but for any subsequent <a>CORS requests</a> it might not be. Support therefore needs
-  to be indicated as part of the HTTP response to the <a>CORS-preflight request</a> as well.
+  <p class=note>For a <a>CORS-preflight request</a>,
+  <a for=/>request</a>'s
+  <a for=request>credentials mode</a> is always
+  "<code>omit</code>", but for any subsequent
+  <a>CORS requests</a> it might not be. Support therefore needs
+  to be indicated as part of the HTTP response to the <a>CORS-preflight request</a>
+  as well.
 </dl>
 
 <p>An HTTP response to a <a>CORS-preflight request</a> can include the following
@@ -2661,7 +2622,7 @@ request to <code>https://rabbit.invalid/</code>:
   <td>`<code>https://rabbit.invalid/`</code>
   <td>Omitted
   <td>❌
-  <td>A <a lt="serialization of an origin">serialized</a> origin has no trailing slash.
+  <td>A serialized origin has no trailing slash.
  <tr>
   <td>"<code>omit</code>"
   <td>`<code>https://rabbit.invalid`</code>
@@ -3099,9 +3060,10 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
 
 <p class="note no-backref">Only HTML's navigate algorithm uses this check with
 <var>forNavigation</var> set to true, and it's always for nested navigations. Otherwise,
-<var>response</var> is either the <a for="filtered response">internal response</a> of an
+<var>response</var> is either the <a for=internal>internal response</a> of an
 <a>opaque filtered response</a> or a <a for=/>response</a> which will be the
-<a for="filtered response">internal response</a> of an <a>opaque filtered response</a>. [[HTML]]
+<a for=internal>internal response</a> of an
+<a>opaque filtered response</a>. [[HTML]]
 
 <p>To perform a <dfn>cross-origin resource policy internal check</dfn>, given an
 <a for=url>origin</a> <var>origin</var>, an <a for=/>embedder policy value</a>
@@ -3224,27 +3186,27 @@ run these steps:
 
 <h2 id=fetching>Fetching</h2>
 
-<p class=note>The algorithm below defines <a lt=fetch for=/>fetching</a>. In broad strokes, it takes
-a <a for=/>request</a> and one or more algorithms to run at various points during the operation. A
-<a for=/>response</a> is passed to the last two algorithms listed below. The first two algorithms
-can be used to capture uploads.
+<div class="note no-backref">
+ <p>The algorithm below defines <a lt=fetch for=/>fetching</a>. In broad
+ strokes, it takes a <a for=/>request</a> and outputs a
+ <a for=/>response</a>.
 
-<p>To <dfn export id=concept-fetch>fetch</dfn>, given a <a for=/>request</a> <var>request</var>, an
-optional algorithm
-<dfn export for=fetch id=process-request-body><var>processRequestBody</var></dfn>, an optional
-algorithm
-<dfn export for=fetch id=process-request-end-of-body oldids=process-request-end-of-file><var>processRequestEndOfBody</var></dfn>,
-an optional algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an
-optional algorithm
-<dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseEndOfBody</var></dfn>,
-and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
-the steps below. If given, <var>processRequestBody</var> must be an algorithm accepting an integer
-representing the number of bytes transmitted. If given, <var>processRequestEndOfBody</var> must be
-an algorithm accepting no arguments. If given, <var>processResponse</var> must be an algorithm
-accepting a <a for=/>response</a>. If given, <var>processResponseEndOfBody</var> must be an
-algorithm accepting a <a for=/>response</a> and null, failure, or a <a for=/>byte sequence</a>.
+ <p>That is, it either returns a <a for=/>response</a> if
+ <a for=/>request</a>'s <a>synchronous flag</a> is set, or it
+ <a lt="queue a fetch task">queues tasks</a> annotated <a>process response</a>,
+ <a>process response end-of-body</a>, and <a>process response done</a> for the
+ <a for=/>response</a>.
 
-<p>An ongoing <a for=/>fetch</a> can be
+ <p>To capture uploads, if <a for=/>request</a>'s
+ <a>synchronous flag</a> is unset,
+ <a>tasks</a> annotated
+ <a>process request body</a> and <a>process request end-of-body</a> for the
+ <a for=/>request</a> can be
+ <a lt="queue a fetch task">queued</a>.
+</div>
+
+<p>To perform a <dfn export id=concept-fetch>fetch</dfn> using <var>request</var>, run
+the steps below. An ongoing <a for=/>fetch</a> can be
 <dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
 which is unset unless otherwise specified.
 
@@ -3261,164 +3223,206 @@ the request.
 [[!HTTP-CACHING]]
 
 <ol>
- <li><p>Let <var>taskDestination</var> be null.
-
- <li><p>If <var>useParallelQueue</var> is true, then set <var>taskDestination</var> to the result of
- <a>starting a new parallel queue</a>.
-
- <li><p>Otherwise, if <var>request</var>'s <a for=request>client</a> is non-null, set
- <var>taskDestination</var> to <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a>.
-
- <!-- It would be nice to assert that taskDestination is non-null here, but it's not clear if this
-      works for all callers. Fetch itself calls main fetch while taskDestination is null. Anyone
-      wanting to do a ping without request body might do so as well, but if you do have a request
-      body you definitely need this as otherwise transmit-request-body loop breaks down. -->
-
- <li><p>Let <var>fetchParams</var> be a new <a for=/>fetch params</a> whose
- <a for="fetch params">request</a> is <var>request</var>,
- <a for="fetch params">process request body</a> is <var>processRequestBody</var>,
- <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
- <a for="fetch params">process response</a> is <var>processResponse</var>,
- <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>, and
- <a for="fetch params">task destination</a> is <var>taskDestination</var>.
-
- <li><p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then set
- <var>request</var>'s <a for=request>body</a> to the first return value of
- <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
-
- <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>client</code>", then set
- <var>request</var>'s <a for=request>window</a> to <var>request</var>'s <a for=request>client</a>,
- if <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a> is a {{Window}} object; otherwise
- "<code>no-window</code>".
-
- <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>", then set
- <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">origin</a>.
-
  <li>
-  <p>If <var>request</var>'s <a for=request>header list</a>
-  <a for="header list">does not contain</a> `<code>Accept</code>`, then:
+  <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
 
   <ol>
-   <li><p>Let <var>value</var> be `<code>*/*</code>`.
+   <li>
+    <p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then:
+
+    <ol>
+     <li><p>Let <var>body</var> and <var ignore>ignoreType</var> be the result of
+     <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
+
+     <li><p>Set <var>request</var>'s <a for=request>body</a> to <var>body</var>.
+    </ol>
+
+   <li><p>If <var>request</var>'s <a for=request>window</a> is
+   "<code>client</code>", set <var>request</var>'s
+   <a for=request>window</a> to <var>request</var>'s
+   <a for=request>client</a>, if <var>request</var>'s
+   <a for=request>client</a>'s
+   <a for="environment settings object">global object</a> is a
+   {{Window}} object, and to "<code>no-window</code>"
+   otherwise.
+
+   <li><p>If <var>request</var>'s <a for=request>origin</a> is
+   "<code>client</code>", set <var>request</var>'s
+   <a for=request>origin</a> to  <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">origin</a>.
 
    <li>
-    <p>A user agent should set <var>value</var> to the first matching statement, if any, switching
-    on <var>request</var>'s <a for=request>destination</a>:
-    <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
+    <p>If <var>request</var>'s <a for=request>header list</a>
+    <a for="header list">does not contain</a> `<code>Accept</code>`, then:
 
-    <dl class=switch>
-     <dt>"<code>document</code>"
-     <dt>"<code>frame</code>"
-     <dt>"<code>iframe</code>"
-     <dd>`<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`
+    <ol>
+     <li><p>Let <var>value</var> be `<code>*/*</code>`.
 
-     <dt>"<code>image</code>"
-     <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
+     <li>
+      <p>A user agent should set <var>value</var> to the first matching statement, if any, switching
+      on <var>request</var>'s <a for=request>destination</a>:
+      <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
 
-     <dt>"<code>style</code>"
-     <dd>`<code>text/css,*/*;q=0.1</code>`
-    </dl>
+      <dl class=switch>
+       <dt>"<code>document</code>"
+       <dt>"<code>frame</code>"
+       <dt>"<code>iframe</code>"
+       <dd>`<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`
 
-   <li><p><a for="header list">Append</a> `<code>Accept</code>`/<var>value</var> to
-   <var>request</var>'s <a for=request>header list</a>.
+       <dt>"<code>image</code>"
+       <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
+
+       <dt>"<code>style</code>"
+       <dd>`<code>text/css,*/*;q=0.1</code>`
+      </dl>
+
+     <li><p><a for="header list">Append</a>
+     `<code>Accept</code>`/<var>value</var> to <var>request</var>'s
+     <a for=request>header list</a>.
+    </ol>
+
+   <li><p>If <var>request</var>'s <a for=request>header list</a>
+   <a for="header list">does not contain</a> `<code>Accept-Language</code>`, user agents should
+   <a for="header list">append</a>
+   `<code>Accept-Language</code>`/an appropriate <a for=header>value</a>
+   to <var>request</var>'s <a for=request>header list</a>.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
+    <a for=request>initiator</a> and <a for=request>destination</a> appropriately in setting
+    <var>request</var>'s <a for=request>priority</a> to a user-agent-defined object.
+
+    <p class=note>The user-agent-defined object could encompass stream weight and dependency
+    for HTTP/2, and equivalent information used to prioritize dispatch and processing of
+    HTTP/1 fetches.
+
+   <li>
+    <p>If <var>request</var> is a <a>subresource request</a>, then:
+
+    <ol>
+     <li><p>Let <var>record</var> be a new
+     <a for="fetch group">fetch record</a> consisting of
+     <var>request</var> and this instance of the
+     <a for=/>fetch</a> algorithm.
+
+     <li><p>Append <var>record</var> to <var>request</var>'s
+     <a for=request>client</a>'s
+     <a for=fetch>fetch group</a> list of
+     <a for="fetch group">fetch records</a>.
+    </ol>
   </ol>
 
- <li><p>If <var>request</var>'s <a for=request>header list</a>
- <a for="header list">does not contain</a> `<code>Accept-Language</code>`, then user agents should
- <a for="header list">append</a> `<code>Accept-Language</code>`/an appropriate
- <a for=header>value</a> to <var>request</var>'s <a for=request>header list</a>.
-
  <li>
-  <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
-  <a for=request>initiator</a> and <a for=request>destination</a> appropriately in setting
-  <var>request</var>'s <a for=request>priority</a> to a user-agent-defined object.
-
-  <p class=note>The user-agent-defined object could encompass stream weight and dependency for
-  HTTP/2, and equivalent information used to prioritize dispatch and processing of HTTP/1 fetches.
-
- <li>
-  <p>If <var>request</var> is a <a>subresource request</a>, then:
+  <p><a>If aborted</a>, then:
 
   <ol>
-   <li><p>Let <var>record</var> be a new <a for="fetch group">fetch record</a> consisting of
-   <var>request</var> and this instance of the <a for=/>fetch</a> algorithm.
+   <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
-   <li><p>Append <var>record</var> to <var>request</var>'s <a for=request>client</a>'s
-   <a for=fetch>fetch group</a> list of <a for="fetch group">fetch records</a>.
+   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+   <li><p>Return a <a>network error</a>.
   </ol>
 
- <li><p>Run <a>main fetch</a> given <var>fetchParams</var>.
+ <li><p>Return the result of performing a <a for=main>main fetch</a>
+ using <var>request</var>.
 </ol>
 
 
 <h3 id=main-fetch>Main fetch</h3>
 
-<p>To <dfn id=concept-main-fetch>main fetch</dfn>, given a <a for=/>fetch params</a>
-<var>fetchParams</var> and an optional boolean <var>recursive</var> (default false), run these
-steps:
+<p>To perform a <dfn id=concept-main-fetch for=main>main fetch</dfn> using <var>request</var>,
+optionally with a <i>recursive flag</i>, run these steps:
+
+<p class=note>When <a for=main>main fetch</a> is invoked recursively
+<i>recursive flag</i> is set.
 
 <ol>
- <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
-
  <li><p>Let <var>response</var> be null.
 
- <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and <var>request</var>'s
- <a for=request>current URL</a> is not <a lt="is local">local</a>, then set <var>response</var> to a
- <a>network error</a>.
-
- <li><p>Run <a>report Content Security Policy violations for <var>request</var></a>.
-
- <li><p><a href=https://w3c.github.io/webappsec-upgrade-insecure-requests/#upgrade-request>Upgrade <var>request</var> to a potentially secure URL, if appropriate</a>.
- [[!UPGRADE]]
-
- <li><p><a abstract-op lt="set the Fetch metadata headers for a request">Set the Fetch metadata headers for <var>request</var></a>.
- [[!FETCH-METADATA]]
-
- <li><p>If <a lt="block bad port">should <var>request</var> be blocked due to a bad port</a>,
- <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
- or
- <a lt="should request be blocked by Content Security Policy?">should <var>request</var> be blocked by Content Security Policy</a>
- returns <b>blocked</b>, then set <var>response</var> to a <a>network error</a>. [[!MIX]]
-
- <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string and
- <var>request</var>'s <a for=request>client</a> is non-null, then set <var>request</var>'s
- <a for=request>referrer policy</a> to <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">referrer policy</a>. [[!REFERRER]]
-
- <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string, then set
- <var>request</var>'s <a for=request>referrer policy</a> to the
- <a for=/>default referrer policy</a>.
-
  <li>
-  <p>If <var>request</var>'s <a for=request>referrer</a> is not "<code>no-referrer</code>", then set
-  <var>request</var>'s <a for=request>referrer</a> to the result of invoking
-  <a>determine <var>request</var>'s referrer</a>. [[!REFERRER]]
+  <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
 
-  <p class=note>As stated in <cite>Referrer Policy</cite>, user agents can provide the end user with
-  options to override <var>request</var>'s <a for=request>referrer</a> to "<code>no-referrer</code>"
-  or have it expose less sensitive information.
+  <ol>
+   <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and <var>request</var>'s
+   <a for=request>current URL</a> is not <a lt="is local">local</a>, then set <var>response</var> to
+   a <a>network error</a>.
 
- <li>
-  <p>Set <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> to
-  "<code>https</code>" if all of the following conditions are true:
+   <li><p>Run <a>report Content Security Policy violations for <var>request</var></a>.
 
-  <ul class=brief>
-   <li><var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
-   "<code>http</code>"
-   <li><var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> is a
-   <a for=/>domain</a>
-   <li>Matching <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> per
-   <a href=https://tools.ietf.org/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
-   results in either a superdomain match with an asserted <code>includeSubDomains</code> directive
-   or a congruent match (with or without an asserted <code>includeSubDomains</code> directive).
-   [[!HSTS]]
-  </ul>
-  <!-- Per Mike West HSTS happens "probably after" Referrer -->
+   <li><p><a href=https://w3c.github.io/webappsec-upgrade-insecure-requests/#upgrade-request>Upgrade <var>request</var> to a potentially secure URL, if appropriate</a>.
+   [[!UPGRADE]]
 
- <li><p>If <var>recursive</var> is false, then run the remaining steps <a>in parallel</a>.
+   <li><p>If
+   <a lt="block bad port">should <var>request</var> be blocked due to a bad port</a>,
+   <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
+   or
+   <a lt="should request be blocked by Content Security Policy?">should <var>request</var> be blocked by Content Security Policy</a>
+   returns <b>blocked</b>, then set <var>response</var> to a <a>network error</a>.
+   [[!MIX]]
+
+   <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string and
+   <var>request</var>'s <a for=request>client</a> is non-null, then set <var>request</var>'s
+   <a for=request>referrer policy</a> to <var>request</var>'s <a for=request>client</a>'s
+   <a for="environment settings object">referrer policy</a>.
+   [[!REFERRER]]
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>referrer policy</a>
+    is the empty string, then set <var>request</var>'s
+    <a for=request>referrer policy</a> to the <a for=/>default referrer policy</a>.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>referrer</a>
+    is not "<code>no-referrer</code>", set <var>request</var>'s
+    <a for=request>referrer</a> to the result of invoking
+    <a>determine <var>request</var>'s referrer</a>.
+    [[!REFERRER]]
+
+    <p class="note no-backref">As stated in <cite>Referrer Policy</cite>, user agents can
+    provide the end user with options to override <var>request</var>'s
+    <a for=request>referrer</a> to "<code>no-referrer</code>" or
+    have it expose less sensitive information.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
+    "<code>ftp</code>", <var>request</var>'s <a for=request>client</a>'s
+    <a for=environment>creation URL</a>'s <a for=url>scheme</a> is not "<code>ftp</code>", and
+    <var>request</var>'s <a for=request>reserved client</a> is either null or an
+    <a for=/>environment</a> whose <a for=environment>target browsing context</a> is a
+    <a>nested browsing context</a>, then set <var>response</var> to a <a>network error</a>.
+
+   <li>
+    <p>Set <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> to
+    "<code>https</code>" if all of the following conditions are true:
+
+    <ul class=brief>
+     <li><var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
+     "<code>http</code>"
+     <li><var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> is a
+     <a for=/>domain</a>
+     <li>Matching <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> per
+     <a href=https://tools.ietf.org/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
+     results in either a superdomain match with an asserted <code>includeSubDomains</code> directive
+     or a congruent match (with or without an asserted <code>includeSubDomains</code> directive).
+     [[!HSTS]]
+    </ul>
+   <!-- Per Mike West HSTS happens "probably after" Referrer -->
+  </ol>
+
+  <li>
+   <p><a>If aborted</a>, then:
+
+   <ol>
+    <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+    <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+    <li><p>Return a <a>network error</a>.
+   </ol>
+
+ <li><p>If <var>request</var>'s <a>synchronous flag</a> is unset and
+ <i>recursive flag</i> is unset, run the remaining steps
+ <a>in parallel</a>.
 
  <li>
   <p>If <var>response</var> is null, then set <var>response</var> to the result of running the steps
@@ -3438,7 +3442,8 @@ steps:
      <li><p>Set <var>request</var>'s
      <a for=request>response tainting</a> to "<code>basic</code>".
 
-     <li><p>Return the result of running <a>scheme fetch</a> given <var>fetchParams</var>.
+     <li><p>Return the result of performing a <a>scheme fetch</a>
+     using <var>request</var>.
     </ol>
 
     <p class="note no-backref">HTML assigns any documents and workers created from <a for=/>URLs</a>
@@ -3463,8 +3468,8 @@ steps:
      <a for=request>response tainting</a> to
      "<code>opaque</code>".
 
-     <li><p>Let <var>noCorsResponse</var> be the result of running <a>scheme fetch</a> given
-     <var>fetchParams</var>.
+     <li><p>Let <var>noCorsResponse</var> be the result of performing a <a>scheme fetch</a> using
+     <var>request</var>.
      <!-- file URLs end up here as they are not same-origin typically. -->
 
      <li><p>If <var>noCorsResponse</var> is a <a>filtered response</a> or the <a>CORB check</a> with
@@ -3496,8 +3501,8 @@ steps:
      <a for=request>response tainting</a> to
      "<code>cors</code>".
 
-     <li><p>Let <var>corsWithPreflightResponse</var> be the result of running <a>HTTP fetch</a>
-     given <var>fetchParams</var> and true.
+     <li><p>Let <var>corsWithPreflightResponse</var> be the result of performing an
+     <a>HTTP fetch</a> using <var>request</var> with the <i>CORS-preflight flag</i> set.
 
      <li><p>If <var>corsWithPreflightResponse</var> is a <a>network error</a>, then
      <a>clear cache entries</a> using <var>request</var>.
@@ -3512,11 +3517,11 @@ steps:
      <a for=request>response tainting</a> to
      "<code>cors</code>".
 
-     <li><p>Return the result of running <a>HTTP fetch</a> given <var>fetchParams</var>.
+     <li><p>Return the result of performing an <a>HTTP fetch</a> using <var>request</var>.
     </ol>
   </dl>
 
- <li><p>If <var>recursive</var> is true, then return <var>response</var>.
+ <li><p>If the <i>recursive flag</i> is set, return <var>response</var>.
 
  <li>
   <p>If <var>response</var> is not a <a>network error</a> and <var>response</var> is not a
@@ -3546,9 +3551,10 @@ steps:
     </ol>
 
    <li>
-    <p>Set <var>response</var> to the following <a>filtered response</a> with <var>response</var> as
-    its <a for="filtered response">internal response</a>, depending on <var>request</var>'s
-    <a for=request>response tainting</a>:
+    <p>Set <var>response</var> to the following
+    <a>filtered response</a> with <var>response</var> as its
+    <a for=internal>internal response</a>, depending on
+    <var>request</var>'s <a for=request>response tainting</a>:
 
     <dl class="switch compact">
      <dt>"<code>basic</code>"
@@ -3561,8 +3567,8 @@ steps:
   </ol>
 
  <li><p>Let <var>internalResponse</var> be <var>response</var>, if <var>response</var> is a
- <a>network error</a>, and <var>response</var>'s <a for="filtered response">internal response</a>
- otherwise.
+ <a>network error</a>, and <var>response</var>'s
+ <a for=internal>internal response</a> otherwise.
 
  <li>
   <p>If <var>internalResponse</var>'s <a for=response>URL list</a> <a for=list>is empty</a>, then
@@ -3626,90 +3632,73 @@ steps:
   <p class=note>This standardizes the error handling for servers that violate HTTP.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>integrity metadata</a> is not the empty string, then:
+  <p>If <var>response</var> is not a <a>network error</a> and <var>request</var>'s
+  <a for=request>integrity metadata</a> is not the empty string, then:
 
   <ol>
-   <li><p>Let <var>processBodyError</var> be this step: run <a>fetch finale</a> given
-   <var>fetchParams</var> and a <a>network error</a>.
+   <li><p><a lt=wait for=body>Wait</a> for <var>response</var>'s
+   <a for=response>body</a>.
 
-
-   <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>opaque</code>",
-   <var>response</var> is a <a>network error</a>, or <var>response</var>'s <a for=response>body</a>
-   is null, then run <var>processBodyError</var> and abort these steps.
-
-   <li>
-    <p>Let <var>processBody</var> given <var>bytes</var> be these steps:
-
-    <ol>
-     <li><p>If <var>bytes</var> do not <a lt="Do bytes match metadataList?">match</a>
-     <var>request</var>'s <a for=request>integrity metadata</a>, then run
-     <var>processBodyError</var> and abort these steps. [[!SRI]]
-
-     <li><p>Set <var>response</var>'s <a for=response>body</a> to the first return value of
-     <a for=BodyInit>safely extracting</a> <var>bytes</var>.
-
-     <li><p>Run <a>fetch finale</a> given <var>fetchParams</var> and <var>response</var>.
-    </ol>
-
-   <li><p><a for=body>Fully read</a> <var>response</var>'s <a for=response>body</a> given
-   <var>processBody</var> and <var>processBodyError</var>.
+   <li><p>If <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> has not
+   <a for=ReadableStream>errored</a>, and <var>response</var> does not
+   <a href=https://w3c.github.io/webappsec-subresource-integrity/#does-response-match-metadatalist>match</a>
+   <var>request</var>'s <a for=request>integrity metadata</a>, set <var>response</var> and
+   <var>internalResponse</var> to a <a>network error</a>.
+   [[!SRI]]
   </ol>
 
- <li><p>Otherwise, run <a>fetch finale</a> given <var>fetchParams</var> and <var>response</var>.
-</ol>
-
-<hr>
-
-<p>The <dfn>fetch finale</dfn>, given a <a for=/>fetch params</a> <var>fetchParams</var> and a
-<a for=/>response</a> <var>response</var>, run these steps:
-
-<ol>
- <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response</a> is non-null, then
- <a>queue a fetch task</a> to run <var>fetchParams</var>'s
- <a for="fetch params">process response</a> given <var>response</var>, with <var>fetchParams</var>'s
- <a for="fetch params">task destination</a>.
+  <p class=note>This operates on <var>response</var> as this algorithm is not supposed to observe
+  <var>internalResponse</var>. That would allow an attacker to use hashes as an oracle.
 
  <li>
-  <p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is non-null,
-  then:
+  <p>If <var>request</var>'s <a>synchronous flag</a> is set,
+  <a for=body>wait</a> for <var>internalResponse</var>'s
+  <a for=response>body</a>, and then return <var>response</var>.
+
+  <p class="note no-backref">This terminates <a for=/>fetch</a>.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is an
+  <a>HTTP(S) scheme</a>, then:
 
   <ol>
-   <li><p>Let <var>processBody</var> given <var>nullOrBytes</var> be this step: run
-   <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> given
-   <var>response</var> and <var>nullOrBytes</var>.
+   <li><p>If <var>request</var>'s <a for=request>body</a> is
+   <a for=body>done</a>, <a>queue a fetch-request-done task</a> for
+   <var>request</var>.
 
-   <li><p>Let <var>processBodyError</var> be this step: run <var>fetchParams</var>'s
-   <a for="fetch params">process response end-of-body</a> given <var>response</var> and failure.
-
-   <li><p>If <var>response</var>'s <a for=response>body</a> is null, then <a>queue a fetch task</a>
-   to run <var>processBody</var> given null, with <var>fetchParams</var>'s
-   <a for="fetch params">task destination</a>.
-
-   <li><p>Otherwise, <a for=body>fully read</a> <var>response</var>'s <a for=response>body</a> given
-   <var>processBody</var>, <var>processBodyError</var>, and <var>fetchParams</var>'s
-   <a for="fetch params">task destination</a>.
+   <li><p>Otherwise, <a>in parallel</a>,
+   <a for=body>wait</a> for <var>request</var>'s
+   <a for=request>body</a>, and then
+   <a>queue a fetch-request-done task</a> for <var>request</var>.
   </ol>
 
- <li><p>Wait for either <var>response</var>'s <a for=response>body</a> to be null, or
- <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> to be
- <a for=ReadableStream>closed</a> or <a for=ReadableStream>errored</a>, and then set
- <var>request</var>'s <a>done flag</a>.
- <!-- This is really bad and needs to be handled differently at some point. -->
+ <li><p><a>Queue a fetch task</a> on <var>request</var> to
+ <a>process response</a> for <var>response</var>.
+
+ <li><p><a lt=wait for=body>Wait</a> for <var>internalResponse</var>'s
+ <a for=response>body</a>.
+
+ <li><p><a>Queue a fetch task</a> on <var>request</var> to
+ <a>process response end-of-body</a> for <var>response</var>.
+
+ <li><p>Set <var>request</var>'s <a>done flag</a>.
+
+ <li><p><a>Queue a fetch task</a> on <var>request</var> to <a>process response done</a>
+ for <var>response</var>.
 </ol>
 
 
 <h3 id=scheme-fetch oldids=basic-fetch>Scheme fetch</h3>
 
-<p>To <dfn id=concept-scheme-fetch oldids=concept-basic-fetch>scheme fetch</dfn>, given a
-<a for=/>fetch params</a> <var>fetchParams</var>: let <var>request</var> be <var>fetchParams</var>'s
-<a for="fetch params">request</a>, switch on <var>request</var>'s <a for=request>current URL</a>'s
+<p>To perform a <dfn id=concept-scheme-fetch oldids=concept-basic-fetch>scheme fetch</dfn> using
+<var>request</var>, switch on <var>request</var>'s <a for=request>current URL</a>'s
 <a for=url>scheme</a>, and run the associated steps:
 
 <dl class=switch>
  <dt>"<code>about</code>"
  <dd>
-  <p>If <var>request</var>'s <a for=request>current URL</a>'s <a>cannot-be-a-base-URL</a> is true
-  and <a for=url>path</a> contains a single string "<code>blank</code>", then return a new
+  <p>If <var>request</var>'s <a for=request>current URL</a>'s <a>cannot-be-a-base-URL flag</a> is
+  set and <a for=url>path</a> contains a single string "<code>blank</code>", then return a new
   <a for=/>response</a> whose <a for=response>status message</a> is `<code>OK</code>`,
   <a for=response>header list</a> consist of a single <a for=/>header</a> whose
   <a for=header>name</a> is `<code>Content-Type</code>` and <a for=header>value</a> is
@@ -3797,9 +3786,32 @@ steps:
 
   <p>When in doubt, return a <a>network error</a>.
 
+ <dt>"<code>ftp</code>"
+ <dd>
+  <p>For now, unfortunate as it is, <code>ftp</code> <a for=/>URLs</a> are mostly left as an
+  exercise for the reader.
+
+  <ol>
+   <li><p>Let <var>body</var> be the result of the user agent obtaining content from
+   <var>request</var>'s <a for=request>current URL</a> from the network via FTP. [[!RFC959]]
+
+   <li><p>Let </var>mime</var> be `<code>application/octet-stream</code>`.
+
+   <li><p>If <var>body</var> is the result of the user agent generating a directory listing page for
+   the result of FTP's LIST command, then set |mime| to `<code>text/ftp-dir</code>`.
+
+   <li><p>Return a <a for=/>response</a> whose <a for="response">status message</a> is
+   `<code>OK</code>`, <a for=response>header list</a> consists of a single <a for=/>header</a>
+   whose <a for=header>name</a> is `<code>Content-Type</code>` and whose <a for=header>value</a> is
+   <var>mime</var>, and <a for=response>body</a> is <var>body</var>.
+  </ol>
+
+  <p>When in doubt, return a <a>network error</a>.
+
  <dt><a>HTTP(S) scheme</a>
  <dd>
-  <p>Return the result of running <a>HTTP fetch</a> given <var>fetchParams</var>.
+  <p>Return the result of performing an <a>HTTP fetch</a>
+  using <var>request</var>.
 
  <dt>Otherwise
  <dd><p>Return a <a>network error</a>.
@@ -3808,14 +3820,13 @@ steps:
 
 <h3 id=http-fetch>HTTP fetch</h3>
 
-<p>To <dfn export id=concept-http-fetch>HTTP fetch</dfn>, given a <a for=/>fetch params</a>
-<var>fetchParams</var> and an optional boolean <var>makeCORSPreflight</var> (default false), run
-these steps:
-<!-- This is exported for service workers, but that specification only mentions it in passing. -->
+<p>To perform an <dfn id=concept-http-fetch export>HTTP fetch</dfn> using <var>request</var> with an
+optional <i>CORS-preflight flag</i>, run these steps:
+
+<p class="note no-backref">The <i>CORS-preflight flag</i> bookkeeping detail indicates a
+<a>CORS-preflight request</a> is needed.
 
 <ol>
- <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
-
  <li><p>Let <var>response</var> be null.
 
  <li><p>Let <var>actualResponse</var> be null.
@@ -3824,22 +3835,18 @@ these steps:
   <p>If <var>request</var>'s <a>service-workers mode</a> is "<code>all</code>", then:
 
   <ol>
-   <li><p>Let <var>requestForServiceWorker</var> be a <a for=request>clone</a> of
-   <var>request</var>.
-
    <li><p>Set <var>response</var> to the result of invoking <a for=/>handle fetch</a> for
-   <var>requestForServiceWorker</var>. [[!HTML]] [[!SW]]
+   <var>request</var>. [[!HTML]] [[!SW]]
 
    <li>
     <p>If <var>response</var> is not null, then:
 
     <ol>
-     <li>If <var>request</var>'s <a for=request>body</a> is non-null, then
-     <a for=ReadableStream>cancel</a> <var>request</var>'s <a for=request>body</a> with undefined.
+     <li><p><a for=request>Transmit body</a> for <var>request</var>.
 
      <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
      <a>filtered response</a>, and to <var>response</var>'s
-     <a for="filtered response">internal response</a> otherwise.
+     <a for=internal>internal response</a> otherwise.
 
      <li>
       <p>If one of the following is true
@@ -3869,7 +3876,7 @@ these steps:
 
   <ol>
    <li>
-    <p>If <var>makeCORSPreflight</var> is true and one of these conditions is true:
+    <p>If the <i>CORS-preflight flag</i> is set and one of these conditions is true:
 
     <ul class=brief>
      <li><p>There is no <a>method cache entry match</a> for <var>request</var>'s
@@ -3885,8 +3892,8 @@ these steps:
     <p>Then:
 
     <ol>
-     <li><p>Let <var>preflightResponse</var> be the result of running <a>CORS-preflight fetch</a>
-     given <var>request</var>.
+     <li><p>Let <var>preflightResponse</var> be the result of performing a
+     <a>CORS-preflight fetch</a> using <var>request</var>.
 
      <li><p>If <var>preflightResponse</var> is a <a>network error</a>, then return
      <var>preflightResponse</var>.
@@ -3907,8 +3914,8 @@ these steps:
     <p class="note no-backref">Redirects coming from the network (as opposed to from a service
     worker) are not to be exposed to a service worker.
 
-   <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of running
-   <a>HTTP-network-or-cache fetch</a> given <var>fetchParams</var>.
+   <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of performing an
+   <a>HTTP-network-or-cache fetch</a> using <var>request</var>.
 
    <li>
     <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and a
@@ -3947,6 +3954,16 @@ these steps:
 
     <p class=note>303 is excluded as certain communities ascribe special status to it.
 
+   <li><p>Let <var>location</var> be the result of <a>extracting header list values</a> given
+   `<code>Location</code>` and <var>actualResponse</var>'s <a for=response>header list</a>.
+
+   <li><p>If <var>location</var> is a <a for=header>value</a>, then set <var>location</var> to the
+   result of <a lt="url parser">parsing</a> <var>location</var> with <var>actualResponse</var>'s
+   <a for=response>URL</a>.
+
+   <li><p>Set <var>actualResponse</var>'s
+   <a for=response>location URL</a> to <var>location</var>.
+
    <li>
     <p>Switch on <var>request</var>'s
     <a for=request>redirect mode</a>:
@@ -3956,12 +3973,14 @@ these steps:
      <dd><p>Set <var>response</var> to a <a>network error</a>.
 
      <dt>"<code>manual</code>"
-     <dd><p>Set <var>response</var> to an <a>opaque-redirect filtered response</a> whose
-     <a for="filtered response">internal response</a> is <var>actualResponse</var>.
+     <dd><p>Set <var>response</var> to an
+     <a>opaque-redirect filtered response</a>
+     whose <a for=internal>internal response</a> is
+     <var>actualResponse</var>.
 
      <dt>"<code>follow</code>"
-     <dd><p>Set <var>response</var> to the result of running <a>HTTP-redirect fetch</a> given
-     <var>fetchParams</var> and <var>response</var>.
+     <dd><p>Set <var>response</var> to the result of performing <a>HTTP-redirect fetch</a> using
+     <var>request</var> and <var>response</var>.
     </dl>
     <!-- not resetting actualResponse since it's no longer used anyway -->
   </ol>
@@ -3974,26 +3993,29 @@ these steps:
 
 <h3 id=http-redirect-fetch>HTTP-redirect fetch</h3>
 
-<p>To <dfn export id=concept-http-redirect-fetch>HTTP-redirect fetch</dfn>, given a
-<a for=/>fetch params</a> <var>fetchParams</var> and a <a for=/>response</a> <var>response</var>,
-run these steps:
+<p class="note no-backref">This algorithm is used by HTML's navigate algorithm in addition to
+<a>HTTP fetch</a> above. [[!HTML]]
+
+<p>To perform an <dfn export id=concept-http-redirect-fetch>HTTP-redirect fetch</dfn> using
+<var>request</var> and <var>response</var>, run these steps:
 
 <ol>
- <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
-
  <li><p>Let <var>actualResponse</var> be <var>response</var>, if <var>response</var> is not a
  <a>filtered response</a>, and <var>response</var>'s
- <a for="filtered response">internal response</a> otherwise.
+ <a for=internal>internal response</a> otherwise.
 
- <li><p>Let <var>locationURL</var> be <var>actualResponse</var>'s <a for=response>location URL</a>
- given <var>request</var>'s <a for=request>current URL</a>'s <a for=url>fragment</a>.
+ <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>
+ is null, then return <var>response</var>.
 
- <li><p>If <var>locationURL</var> is null, then return <var>response</var>.
+ <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>
+ is failure, then return a <a>network error</a>.
+ <!-- only Gecko does this; and even that is currently more complicated -->
 
- <li><p>If <var>locationURL</var> is failure, then return a <a>network error</a>.
-
- <li><p>If <var>locationURL</var>'s <a for=url>scheme</a> is not an <a>HTTP(S) scheme</a>, then
- return a <a>network error</a>.
+ <li><p>If <var>actualResponse</var>'s
+ <a for=response>location URL</a>'s
+ <a for=url>scheme</a> is <em>not</em> an
+ <a>HTTP(S) scheme</a>, then return a
+ <a>network error</a>.
 
  <li><p>If <var>request</var>'s <a for=request>redirect count</a> is
  twenty, return a <a>network error</a>.
@@ -4002,13 +4024,15 @@ run these steps:
  <a for=request>redirect count</a> by one.
 
  <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>cors</code>",
- <var>locationURL</var> <a>includes credentials</a>, and <var>request</var>'s
- <a for=request>origin</a> is not <a>same origin</a> with <var>locationURL</var>'s
- <a for=url>origin</a>, then return a <a>network error</a>.
+ <var>actualResponse</var>'s <a for=response>location URL</a>
+ <a lt="include credential">includes credentials</a>, and <var>request</var>'s
+ <a for=request>origin</a> is not <a>same origin</a> with <var>actualResponse</var>'s
+ <a for=response>location URL</a>'s <a for=url>origin</a>, then return a <a>network error</a>.
 
  <li>
   <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and
-  <var>locationURL</var> <a>includes credentials</a>, then return a <a>network error</a>.
+  <var>actualResponse</var>'s <a for=response>location URL</a>
+  <a lt="include credential">includes credentials</a>, then return a <a>network error</a>.
 
   <p class=note>This catches a cross-origin resource redirecting to a same-origin URL.
 
@@ -4016,11 +4040,11 @@ run these steps:
  <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
  <a for=body>source</a> is null, then return a <a>network error</a>.
 
- <li><p>If <var>locationURL</var>'s <a for=url>origin</a> is not <a>same origin</a> with
- <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and
- <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a> with <var>request</var>'s
- <a for=request>current URL</a>'s <a for=url>origin</a>, then set <var>request</var>'s
- <a for=request>tainted origin flag</a>.
+ <li><p>If <var>actualResponse</var>'s <a for=response>location URL</a>'s <a for=url>origin</a> is
+ not <a>same origin</a> with <var>request</var>'s <a for=request>current URL</a>'s
+ <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a>
+ with <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, then set
+ <var>request</var>'s <a for=request>tainted origin flag</a>.
 
  <li>
   <p>If one of the following is true
@@ -4051,55 +4075,37 @@ run these steps:
   <p class="note no-backref"><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s
   nullity has already been checked.
 
- <li><p><a for=list>Append</a> <var>locationURL</var> to <var>request</var>'s
+ <li><p>Append <var>actualResponse</var>'s <a for=response>location URL</a> to <var>request</var>'s
  <a for=request>URL list</a>.
 
  <li><p>Invoke <a>set <var>request</var>'s referrer policy on redirect</a> on <var>request</var> and
  <var>actualResponse</var>. [[!REFERRER]]
 
  <li>
-  <p>Return the result of running <a>main fetch</a> given <var>fetchParams</var> and true.
+  <p>Return the result of performing a <a for=main>main fetch</a> using <var>request</var> with
+  <i>recursive flag</i> set if <var>request</var>'s <a for=request>redirect mode</a> is not
+  "<code>manual</code>".
 
-  <p class=note>This has to invoke <a>main fetch</a> to get <var>request</var>'s
-  <a for=request>response tainting</a> correct.
-</ol>
+  <p class=note>It can only be "<code>manual</code>" here when this algorithm is invoked directly
+  from HTML's navigate algorithm.
 
-
-<h3 id=navigate-redirect-fetch>Navigate-redirect fetch</h3>
-
-<p class=note>This algorithm is used by <cite>HTML</cite>'s navigate algorithm. It is expected to be
-invoked while <a>in parallel</a>. [[!HTML]]
-
-<p>To <dfn export id=concept-navigate-redirect-fetch>navigate-redirect fetch</dfn>, given a
-<a for=/>request</a> <var>request</var> and <a for=/>response</a> <var>response</var>, run these
-steps. They return a <a for=/>response</a>.
-
-<ol>
- <li><p>Assert: <var>request</var>'s <a for=request>redirect mode</a> is "<code>manual</code>".
-
- <li><p>Let <var>fetchParams</var> be a new <a for=/>fetch params</a> whose
- <a for="fetch params">request</a> is <var>request</var>.
-
- <li><p>Return the result of running <a>HTTP-redirect fetch</a> given <var>fetchParams</var> and
- <var>response</var>.
+  <p class="note no-backref">This has to invoke <a for=main>main fetch</a> to
+  get <a for=request>response tainting</a> correct.
 </ol>
 
 
 <h3 id=http-network-or-cache-fetch>HTTP-network-or-cache fetch</h3>
 
-<p>To <dfn id=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</dfn>, given a
-<a for=/>fetch params</a> <var>fetchParams</var> and an optional boolean
-<var>isAuthenticationFetch</var> (default false), run these steps:
+<p>To perform an
+<dfn id=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</dfn> using
+<var>request</var> with an optional <i>authentication-fetch flag</i>, run these steps:
 
-<p class=note>Some implementations might support caching of partial content, as per
-<cite>HTTP Range Requests</cite>. However, this is not widely supported by browser caches.
-[[HTTP-RANGE]]
+<p class=note>The <i>authentication-fetch flag</i> is a bookkeeping detail.
+
+<p class=note>Some implementations might support caching of partial content, as per <cite>HTTP
+Range Requests</cite>. [[HTTP-RANGE]] However, this is not widely supported by browser caches.
 
 <ol>
- <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
-
- <li><p>Let <var>httpFetchParams</var> be null.
-
  <li><p>Let <var>httpRequest</var> be null.
 
  <li><p>Let <var>response</var> be null.
@@ -4116,30 +4122,33 @@ steps. They return a <a for=/>response</a>.
   <ol>
    <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
    <var>request</var>'s <a for=request>redirect mode</a> is "<code>error</code>", then set
-   <var>httpFetchParams</var> to <var>fetchParams</var> and <var>httpRequest</var> to
-   <var>request</var>.
+   <var>httpRequest</var> to <var>request</var>.
 
    <li>
     <p>Otherwise:
 
     <ol>
-     <li>
-      <p>Set <var>httpRequest</var> to a <a for=request>clone</a> of <var>request</var>.
+     <li><p>Set <var>httpRequest</var> to a copy of <var>request</var> except for its
+     <a for=request>body</a>.
 
-      <p class=note>Implementations are encouraged to avoid teeing <var>request</var>'s
-      <a for=request>body</a>'s <a for=body>stream</a> when <var>request</var>'s
-      <a for=request>body</a>'s <a for=body>source</a> is null as only a single body is needed in
-      that case. E.g., when <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>
-      is null, redirects and authentication will end up failing the fetch.
+     <li><p>Let <var>body</var> be <var>request</var>'s <a for=request>body</a>.
 
-     <li><p>Set <var>httpFetchParams</var> to a copy of <var>fetchParams</var>.
+     <li><p>Set <var>httpRequest</var>'s <a for=request>body</a> to <var>body</var>.
 
-     <li><p>Set <var>httpFetchParams</var>'s <a for="fetch params">request</a> to
-     <var>httpRequest</var>.
+     <li><p>If <var>body</var> is non-null, then set <var>request</var>'s <a for=request>body</a> to
+     a new <a for=/>body</a> whose <a for=body>stream</a> is null and whose <a for=body>source</a>
+     is <var>body</var>'s <a for=body>source</a>.
     </ol>
 
+    <p class="note no-backref"><var>request</var> is copied as <var>httpRequest</var> here as we
+    need to be able to add headers to <var>httpRequest</var> and read its <a for=request>body</a>
+    without affecting <var>request</var>. Namely, <var>request</var> can be reused with redirects,
+    authentication, and proxy authentication. We copy rather than clone in order to reduce memory
+    consumption. In case <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is
+    null, redirects and authentication will end up failing the fetch.
+
    <li>
-    <p>Let <var>includeCredentials</var> be true if one of
+    <p>Let <i>credentials flag</i> be set if one of
 
     <ul class=brief>
      <li><var>request</var>'s <a for=request>credentials mode</a> is
@@ -4149,7 +4158,7 @@ steps. They return a <a for=/>response</a>.
      <a for=request>response tainting</a> is "<code>basic</code>"
     </ul>
 
-    <p>is true; otherwise false.
+    <p>is true, and unset otherwise.
 
    <li><p>Let <var>contentLengthValue</var> be null.
 
@@ -4173,7 +4182,7 @@ steps. They return a <a for=/>response</a>.
 
    <li>
     <p>If <var>contentLengthValue</var> is non-null and <var>httpRequest</var>'s
-    <a for=request>keepalive</a> is true, then:
+    <a for=request>keepalive flag</a> is set, then:
 
     <ol>
      <li><p>Let <var>inflightKeepaliveBytes</var> be zero.
@@ -4182,8 +4191,8 @@ steps. They return a <a for=/>response</a>.
      <a>fetch group</a>.
 
      <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
-     <var>group</var> whose <a for="fetch record">request</a>'s <a for=request>keepalive</a> is true
-     and <a>done flag</a> is unset.
+     <var>group</var> whose <a for="fetch record">request</a> has its
+     <a for=request>keepalive flag</a> set and <a>done flag</a> unset.
 
      <li>
       <p><a for=set>For each</a> <var>fetchRecord</var> in <var>inflightRecords</var>:
@@ -4206,7 +4215,7 @@ steps. They return a <a for=/>response</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>referrer</a> is a <a for=/>URL</a>, then
    <a for="header list">append</a> `<code>Referer</code>`/<var>httpRequest</var>'s
-   <a for=request>referrer</a>, <a lt="URL serializer">serialized</a> and <a>isomorphic encoded</a>,
+   <a for=request>referrer</a>, <a lt="url serializer">serialized</a> and <a>isomorphic encoded</a>,
    to <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p><a>Append a request `<code>Origin</code>` header</a> for <var>httpRequest</var>.
@@ -4289,7 +4298,7 @@ steps. They return a <a for=/>response</a>.
     <a>HTTP header layer division</a> for more details.
 
    <li>
-    <p>If <var>includeCredentials</var> is true, then:
+    <p>If <i>credentials flag</i> is set, then:
 
     <ol>
      <li>
@@ -4322,7 +4331,7 @@ steps. They return a <a for=/>response</a>.
        <!-- need to define the cache concept -->
 
        <li><p>Otherwise, if <var>httpRequest</var>'s <a for=request>current URL</a> does
-       <a>include credentials</a> and <var>isAuthenticationFetch</var> is true, set
+       <a>include credentials</a> and <i>authentication-fetch flag</i> is set, set
        <var>authorizationValue</var> to <var>httpRequest</var>'s <a for=request>current URL</a>,
        <span class=XXX>converted to an `<code>Authorization</code>` value</span>.
 
@@ -4387,8 +4396,8 @@ steps. They return a <a for=/>response</a>.
          "<code>none</code>".
 
          <li>
-          <p><a>In parallel</a>, run <a>main fetch</a> given a new <a for=/>fetch params</a> whose
-          <a for="fetch params">request</a> is <var>revalidateRequest</var>.
+          <p><a>In parallel</a>, perform <a for=main>main fetch</a> using
+          <var>revalidateRequest</var>.
 
           <p class=note>This fetch is only meant to update the state of <var>httpCache</var>
           and the response will be unused until another cache access. The stale response will be used
@@ -4450,8 +4459,8 @@ steps. They return a <a for=/>response</a>.
    <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
    "<code>only-if-cached</code>", then return a <a>network error</a>.
 
-   <li><p>Let <var>forwardResponse</var> be the result of running <a>HTTP-network fetch</a> given
-   <var>httpFetchParams</var> and <var>includeCredentials</var>.
+   <li><p>Let <var>forwardResponse</var> be the result of making an <a>HTTP-network fetch</a> using
+   <var>httpRequest</var> with <i>credentials flag</i> if set.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is
    <a href=https://tools.ietf.org/html/rfc7231#safe.methods>unsafe</a> and
@@ -4501,8 +4510,8 @@ steps. They return a <a for=/>response</a>.
 
  <li>
   <p>If <var>response</var>'s <a for=response>status</a> is 401, <var>httpRequest</var>'s
-  <a for=request>response tainting</a> is not "<code>cors</code>", <var>includeCredentials</var> is
-  true, and <var>request</var>'s <a for=request>window</a> is an <a>environment settings object</a>,
+  <a for=request>response tainting</a> is not "<code>cors</code>", the <i>credentials flag</i> is
+  set, and <var>request</var>'s <a for=request>window</a> is an <a>environment settings object</a>,
   then:
 
   <ol>
@@ -4523,7 +4532,7 @@ steps. They return a <a for=/>response</a>.
 
    <li>
     <p>If <var>request</var>'s <a for=request>use-URL-credentials flag</a> is unset or
-    <var>isAuthenticationFetch</var> is true, then:
+    <i>authentication-fetch flag</i> is set, then:
 
     <ol>
      <li>
@@ -4548,8 +4557,9 @@ steps. They return a <a for=/>response</a>.
      <var>password</var>.
     </ol>
 
-   <li><p>Set <var>response</var> to the result of running <a>HTTP-network-or-cache fetch</a> given
-   <var>fetchParams</var> and true.
+   <li><p>Set <var>response</var> to the result of performing an
+   <a>HTTP-network-or-cache fetch</a> using
+   <var>request</var> with <i>authentication-fetch flag</i> set.
   </ol>
 
  <li>
@@ -4580,12 +4590,12 @@ steps. They return a <a for=/>response</a>.
 
     <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
 
-   <li><p>Set <var>response</var> to the result of running <a>HTTP-network-or-cache fetch</a> given
-   <var>fetchParams</var>.
+   <li><p>Set <var>response</var> to the result of performing an <a>HTTP-network-or-cache fetch</a>
+   using <var>request</var>.
   </ol>
 
- <li><p>If <var>isAuthenticationFetch</var> is true, then create an <a>authentication entry</a> for
- <var>request</var> and the given realm.
+ <li><p>If <i>authentication-fetch flag</i> is set, then create an <a>authentication entry</a>
+ for <var>request</var> and the given realm.
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
  <var>response</var>'s <a for=response>body</a>'s
@@ -4595,12 +4605,11 @@ steps. They return a <a for=/>response</a>.
 
 <h3 id=http-network-fetch>HTTP-network fetch</h3>
 
-<p>To <dfn id=concept-http-network-fetch>HTTP-network fetch</dfn>, given a <a for=/>fetch params</a>
-<var>fetchParams</var> and an optional boolean <var>includeCredentials</var> (default false), run
-these steps:
+<p>To perform an <dfn id=concept-http-network-fetch>HTTP-network fetch</dfn> using
+<var>request</var> with an optional <i>credentials flag</i>, run these steps:
 
 <ol>
- <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
+ <li><p>Let <var>credentials</var> be true if <i>credentials flag</i> is set, and false otherwise.
 
  <li><p>Let <var>response</var> be null.
 
@@ -4626,8 +4635,9 @@ these steps:
    <dd><p>Let <var>connection</var> be the result of
    <a lt="obtain a connection">obtaining a connection</a>, given <var>networkPartitionKey</var>,
    <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, and
-   <var>includeCredentials</var>.
+   <var>credentials</var>.
   </dl>
+
 
  <li>
   <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
@@ -4678,63 +4688,7 @@ these steps:
      <li><p>Otherwise, return a <a>network error</a>.
     </ol>
 
-    <p>To transmit <var>request</var>'s <a for=request>body</a> <var>body</var>, run these steps:
-
-    <ol>
-     <li><p>If <var>body</var> is null and <var>fetchParams</var>'s
-     <a for="fetch params">process request end-of-body</a> is non-null, then
-     <a>queue a fetch task</a> given <var>fetchParams</var>'s
-     <a for="fetch params">process request end-of-body</a> and <var>fetchParams</var>'s
-     <a for="fetch params">task destination</a>.
-
-     <li>
-      <p>Otherwise, if <var>body</var> is non-null:
-
-      <ol>
-       <li>
-        <p>Let <var>processBodyChunk</var> given <var>bytes</var> be these steps:
-
-        <ol>
-         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
-
-         <li><p>Run this step <a>in parallel</a>: transmit <var>bytes</var>.
-
-         <li><p>If <var>fetchParams</var>'s <a for="fetch params">process request body</a> is
-         non-null, then run <var>fetchParams</var>'s <a for="fetch params">process request body</a>
-         given <var>bytes</var>'s <a for="byte sequence">length</a>.
-        </ol>
-
-       <li>
-        <p>Let <var>processEndOfBody</var> be these steps:
-
-        <ol>
-         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
-
-         <li><p>If <var>fetchParams</var>'s <a for="fetch params">process request end-of-body</a> is
-         non-null, then run <var>fetchParams</var>'s
-         <a for="fetch params">process request end-of-body</a>.
-        </ol>
-
-       <li>
-        <p>Let <var>processBodyError</var> given <var>e</var> be these steps:
-
-        <ol>
-         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
-
-         <li><p>If <var>e</var> is an "<code><a exception>AbortError</a></code>" {{DOMException}},
-         then <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
-
-         <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
-        </ol>
-
-       <li><p><a for=body>Incrementally read</a> <var>request</var>'s <a for=request>body</a> given
-       <var>processBodyChunk</var>, <var>processEndOfBody</var>, <var>processBodyError</var>, and
-       <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
-       <!-- This obtains a reader in parallel, but it's mostly fine since we already proxied the
-            input stream as part of the Request constructor. -->
-      </ol>
-    </ol>
-    <!-- In implementations to date this always happens before a response is processed. -->
+    <p><a for=request>Transmit body</a> for <var>request</var>.
   </ol>
 
  <li>
@@ -4786,15 +4740,13 @@ these steps:
    <var>httpCache</var> for <var>request</var>.
 
    <li>
-    <p>If <var>includeCredentials</var> is true and the user agent is not configured to block
-    cookies for <var>request</var> (see
-    <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of [[!COOKIES]]), then run
-    the "set-cookie-string" parsing algorithm (see
-    <a href=https://tools.ietf.org/html/rfc6265#section-5.2>section 5.2</a> of [[!COOKIES]]) on the
-    <a for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
-    <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s
-    <a for=response>header list</a>, if any, and <var>request</var>'s
-    <a for=request>current URL</a>.
+    <p>If <i>credentials flag</i> is set and the user agent is not configured to block cookies for
+    <var>request</var> (see <a href=https://tools.ietf.org/html/rfc6265#section-7>section 7</a> of
+    [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see <a
+    href=https://tools.ietf.org/html/rfc6265#section-5.2>section 5.2</a> of [[!COOKIES]]) on the <a
+    for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
+    <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s <a
+    for=response>header list</a>, if any, and <var>request</var>'s <a for=request>current URL</a>.
 
     <p class=note>This is a fingerprinting vector.
   </ol>
@@ -4829,6 +4781,9 @@ these steps:
         <ol>
          <li><p>Let <var>bytes</var> be the transmitted bytes.
 
+         <li><p>Increase <var>response</var>'s <a for=response>body</a>'s <a for=body>transmitted
+         bytes</a> with <var>bytes</var>' length.
+
          <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
          `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
 
@@ -4848,8 +4803,9 @@ these steps:
          <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
          <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
 
-         <li><p>If <var>stream</var> doesn't <a for=ReadableStream>need more data</a> ask the user
-         agent to <a for=fetch>suspend</a> the ongoing fetch.
+         <li><p>If <var>stream</var> doesn't <a for=ReadableStream>need more data</a> and
+         <var>request</var>'s <a>synchronous flag</a> is unset, ask the user agent to
+         <a for=fetch>suspend</a> the ongoing fetch.
         </ol>
 
        <li><p>Otherwise, if the bytes transmission for <var>response</var>'s message body is done
@@ -4907,8 +4863,8 @@ the <a>CORS protocol</a> is understood. The so-called <a>CORS-preflight request<
 successful it populates the <a>CORS-preflight cache</a> to minimize the
 number of these <a lt="CORS-preflight fetch">fetches</a>.
 
-<p>To <dfn id=cors-preflight-fetch-0>CORS-preflight fetch</dfn>, given a <a for=/>request</a>
-<var>request</var>, run these steps:
+<p>To perform a <dfn id=cors-preflight-fetch-0>CORS-preflight fetch</dfn> using <var>request</var>,
+run these steps:
 
 <ol>
  <li>
@@ -4954,8 +4910,8 @@ number of these <a lt="CORS-preflight fetch">fetches</a>.
   <p class=note>This intentionally does not use <a for="header list">combine</a>, as 0x20 following
   0x2C is not the way this was implemented, for better or worse.
 
- <li><p>Let <var>response</var> be the result of running <a>HTTP-network-or-cache fetch</a> given
- a new <a for=/>fetch params</a> whose <a for="fetch params">request</a> is <var>preflight</var>.
+ <li><p>Let <var>response</var> be the result of performing an <a>HTTP-network-or-cache fetch</a>
+ using <var>preflight</var>.
 
  <li>
   <p>If a <a>CORS check</a> for <var>request</var> and <var>response</var> returns success and
@@ -5297,6 +5253,22 @@ Implementations could choose the more efficient {{Headers}} object representatio
 <a for=/>header list</a>, as long as they also support an associated data structure for
 `<code>Set-Cookie</code>` headers.
 
+<div class=example id=example-headers-class>
+ <p>A {{Headers}} object can be initialized with various JavaScript data structures:
+
+ <pre><code class=lang-javascript>
+var meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" }
+new Headers(meta)
+
+// The above is equivalent to
+var meta = [
+  [ "Content-Type", "text/xml" ],
+  [ "Breaking-Bad", "&lt;3" ]
+]
+new Headers(meta)
+</code></pre>
+</div>
+
 <p>A {{Headers}} object has an associated
 <dfn export for=Headers id=concept-headers-header-list>header list</dfn> (a
 <a for=/>header list</a>), which is initially empty. <span class=note>This
@@ -5305,54 +5277,12 @@ of a <a for=/>request</a> as demonstrated by {{Request}}
 objects.</span>
 
 <p>A {{Headers}} object also has an associated
-<dfn export for=Headers id=concept-headers-guard>guard</dfn>, which is a <dfn>headers guard</dfn>. A
-<a for=/>headers guard</a> is "<code>immutable</code>", "<code>request</code>",
-"<code>request-no-cors</code>", "<code>response</code>" or "<code>none</code>".
-
-<hr>
-
-<dl class=domintro>
- <dt><code><var>headers</var> = new <a constructor lt="Headers()">Headers</a>([<var>init</var>])</code>
- <dd>
-  <p>Creates a new {{Headers}} object. <var>init</var> can be used to fill its internal header list,
-  as per the example below.
-
-  <div class=example id=example-headers-class>
-   <pre><code class=lang-javascript>
-const meta = { "Content-Type": "text/xml", "Breaking-Bad": "&lt;3" };
-new Headers(meta);
-
-// The above is equivalent to
-const meta2 = [
-  [ "Content-Type", "text/xml" ],
-  [ "Breaking-Bad", "&lt;3" ]
-];
-new Headers(meta2);
-</code></pre>
-  </div>
-
- <dt><code><var>headers</var> . <a method for=Headers lt=append()>append</a>(<var>name</var>, <var>value</var>)</code>
- <dd><p>Appends a header to <var>headers</var>.
-
- <dt><code><var>headers</var> . <a method for=Headers lt=delete()>delete</a>(<var>name</var>)</code>
- <dd><p>Removes a header from <var>headers</var>.
-
- <dt><code><var>headers</var> . <a method for=Headers lt=get()>get</a>(<var>name</var>)</code>
- <dd><p>Returns as a string the values of all headers whose name is <var>name</var>, separated by a
- comma and a space.
-
- <dt><code><var>headers</var> . <a method for=Headers lt=has()>has</a>(<var>name</var>)</code>
- <dd><p>Returns whether there is a header whose name is <var>name</var>.
-
- <dt><code><var>headers</var> . <a method for=Headers lt=set()>set</a>(<var>name</var>, <var>value</var>)</code>
- <dd><p>Replaces the value of the first header whose name is <var>name</var> with <var>value</var>
- and removes any remaining headers whose name is <var>name</var>.
-
- <dt><code>for(const [<var>name</var>, <var>value</var>] of <var>headers</var>)</code>
- <dd><p><var>headers</var> can be iterated over.
-</dl>
-
-<hr>
+<dfn export for=Headers id=concept-headers-guard>guard</dfn>, which is
+"<code>immutable</code>",
+"<code>request</code>",
+"<code>request-no-cors</code>",
+"<code>response</code>" or
+"<code>none</code>".
 
 <p>To <dfn export for=Headers id=concept-headers-append>append</dfn> a
 <a for=header>name</a>/<a for=header>value</a>
@@ -5552,9 +5482,9 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 <a for=BodyInit>extract</a> operation that is guaranteed to not throw an exception.
 
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=header>value</a> from <var>object</var>, with an optional boolean
-<dfn id=keepalive for=BodyInit/extract export><var>keepalive</var></dfn> (default false), run these
-steps:
+`<code>Content-Type</code>` <a for=header>value</a> from
+<var>object</var>, with an optional boolean <dfn><var>keepalive</var></dfn> (default false), run
+these steps:
 
 <ol>
  <li><p>Let <var>stream</var> be <var>object</var> if <var>object</var> is a {{ReadableStream}}
@@ -5658,52 +5588,25 @@ HTML, will likely not be exposed here. Rather, an HTML parser API might accept a
 due course.
 <!-- https://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>Objects including the {{Body}} interface mixin need to define an associated
-<dfn id=concept-body-mime-type for=Body>MIME type</dfn> algorithm which takes no arguments and
-returns failure or a <a for=/>MIME type</a>.
+<p>Objects implementing the {{Body}} mixin gain an associated
+<dfn id=concept-body-body for=Body>body</dfn> (null or a <a for=/>body</a>) and
+a <dfn id=concept-body-mime-type for=Body>MIME type</dfn> (failure or a <a for=/>MIME type</a>).
 
-<p>Objects including the {{Body}} interface mixin have an associated
-<dfn id=concept-body-body for=Body>body</dfn> (null or a <a for=/>body</a>).
+<p>An object implementing the {{Body}} mixin is said to be
+<dfn export id=concept-body-disturbed for=Body>disturbed</dfn> if its <a for=Body>body</a> is
+non-null and its <a for=Body>body</a>'s <a for=body>stream</a> is
+<a for=ReadableStream>disturbed</a>.
 
-<p>An object including the {{Body}} interface mixin is said to be
-<dfn export for=Body>unusable</dfn> if its <a for=Body>body</a> is non-null and its
-<a for=Body>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>disturbed</a> or
-<a for=ReadableStream>locked</a>.
-
-<hr>
-
-<dl class=domintro>
- <dt><code><var>requestOrResponse</var> . <a attribute for=Body>body</a></code>
- <dd><p>Returns <var>requestOrResponse</var>'s body as {{ReadableStream}}.
-
- <dt><code><var>requestOrResponse</var> . <a attribute for=Body>bodyUsed</a></code>
- <dd><p>Returns whether <var>requestOrResponse</var>'s body has been read from.
-
- <dt><code><var>requestOrResponse</var> . <a method for=Body>arrayBuffer</a>()</code>
- <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{ArrayBuffer}}.
-
- <dt><code><var>requestOrResponse</var> . <a method for=Body>blob</a>()</code>
- <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{Blob}}.
-
- <dt><code><var>requestOrResponse</var> . <a method for=Body>formData</a>()</code>
- <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{FormData}}.
-
- <dt><code><var>requestOrResponse</var> . <a method for=Body>json</a>()</code>
- <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body parsed as JSON.
-
- <dt><code><var>requestOrResponse</var> . <a method for=Body>text</a>()</code>
- <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as string.
-</dl>
-
-<hr>
+<p>An object implementing the {{Body}} mixin is said to be
+<dfn export id=concept-body-locked for=Body>locked</dfn> if its <a for=Body>body</a> is non-null and
+its <a for=Body>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>locked</a>.
 
 <p>The <dfn attribute for=Body><code>body</code></dfn> getter steps are to return null if
 <a>this</a>'s <a for=Body>body</a> is null; otherwise <a>this</a>'s <a for=Body>body</a>'s
 <a for=body>stream</a>.
 
 <p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> getter steps are to return true if
-<a>this</a>'s <a for=Body>body</a> is non-null and <a>this</a>'s <a for=Body>body</a>'s
-<a for=body>stream</a> is <a for=ReadableStream>disturbed</a>; otherwise false.
+<a>this</a> is <a for=Body>disturbed</a>; otherwise false.
 
 <p>The <dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
 <var>bytes</var>, <var>type</var>, and a <var>mimeType</var>, switches on <var>type</var>, and runs
@@ -5712,9 +5615,9 @@ the associated steps:
 <dl class=switch>
  <dt><i>ArrayBuffer</i>
  <dd>
-  <p>Return a new {{ArrayBuffer}} whose contents are <var>bytes</var>.
+  <p>Return a new <code>ArrayBuffer</code> whose contents are <var>bytes</var>.
 
-  <p class=note>Allocating an {{ArrayBuffer}} can throw a {{RangeError}}.
+  <p class="note">Allocating an <code>ArrayBuffer</code> can throw a {{RangeError}}.
 
  <dt><i>Blob</i>
  <dd><p>Return a {{Blob}} whose contents are <var>bytes</var> and {{Blob/type}} attribute is
@@ -5788,14 +5691,26 @@ the associated steps:
 <var>object</var> and <var>type</var>, runs these steps:
 
 <ol>
- <li><p>If <var>object</var> is <a for=Body>unusable</a>, then return <a>a promise rejected with</a>
- a {{TypeError}}.
+ <li><p>If <var>object</var> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then return
+ <a>a promise rejected with</a> a {{TypeError}}.
 
  <li><p>Let <var>promise</var> be <a>a promise resolved with</a> an empty
  <a for=/>byte sequence</a>.
 
- <li><p>If <var>object</var>'s <a for=Body>body</a> is non-null, then set <var>promise</var> to the
- result of <a>fully reading body as promise</a> given <var>object</var>'s <a for=Body>body</a>.
+ <li>
+  <p>If <var>object</var>'s <a for=Body>body</a> is non-null, then:
+
+  <ol>
+   <li><p>Let <var>stream</var> be <var>object</var>'s <a for=Body>body</a>'s
+   <a for=body>stream</a>.
+
+   <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> from
+   <var>stream</var>. If that threw an exception, then return <a>a promise rejected with</a> that
+   exception.
+
+   <li><p>Set <var>promise</var> to the result of
+   <a for=ReadableStreamDefaultReader>reading all bytes</a> from <var>reader</var>.
+  </ol>
 
  <li><p>Let <var>steps</var> be to return the result of <a>package data</a> with the first argument
  given, <var>type</var>, and <var>object</var>'s <a for=Body>MIME type</a>.
@@ -5888,18 +5803,12 @@ omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor obser
 <p>A {{Request}} object also has an associated <dfn for=Request export>headers</dfn> (null or a
 {{Headers}} object), initially null.
 
-<p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (null or an {{AbortSignal}}
-object), initially null.
-
-<p>A {{Request}} object's <a for=Body>MIME type</a> is to return the result of
-<a for="header list">extracting a MIME type</a> from its <a for=Request>request</a>'s
-<a for=request>header list</a>.
+<p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (an {{AbortSignal}} object),
+initially a new {{AbortSignal}} object.
 
 <p>A {{Request}} object's <a for=Body>body</a> is its
 <a for=Request>request</a>'s
 <a for=request>body</a>.
-
-<hr>
 
 <dl class=domintro>
  <dt><code><var>request</var> = new <a constructor lt="Request()">Request</a>(<var>input</var> [,
@@ -5931,15 +5840,11 @@ object), initially null.
 
    <dt>{{RequestInit/mode}}
    <dd>A string to indicate whether the request will use CORS, or will be restricted to same-origin
-   URLs. Sets <var>request</var>'s {{Request/mode}}. If <var>input</var> is a string, it defaults to
-   "<code>cors</code>".
+   URLs. Sets <var>request</var>'s {{Request/mode}}.
 
    <dt>{{RequestInit/credentials}}
    <dd>A string indicating whether credentials will be sent with the request always, never, or only
-   when sent to a same-origin URL — as well as whether any credentials sent back in the response
-   will be used always, never, or only when received from a same-origin URL. Sets
-   <var>request</var>'s {{Request/credentials}}. If <var>input</var> is a string, it defaults to
-   "<code>same-origin</code>".
+   when sent to a same-origin URL. Sets <var>request</var>'s {{Request/credentials}}.
 
    <dt>{{RequestInit/cache}}
    <dd>A string indicating how the request will interact with the browser's cache to set
@@ -6026,31 +5931,7 @@ object), initially null.
  <dd>Returns the signal associated with <var>request</var>, which is an
  {{AbortSignal}} object indicating whether or not <var>request</var> has been aborted, and its abort
  event handler.
-
- <dt><code><var>request</var> . <a method for=Request>clone</a>()</code>
- <dd><p>Returns a clone of <var>request</var>.
 </dl>
-
-<hr>
-
-<p>To <dfn export for=Request lt=create|creating>create</dfn> a {{Request}} object, given a
-<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
-<var>realm</var>, run these steps:
-
-<ol>
- <li><p>Let <var>requestObject</var> be a <a for=/>new</a> {{Request}} object with <var>realm</var>.
-
- <li><p>Set <var>requestObject</var>'s <a for=Request>request</a> to <var>request</var>.
-
- <li><p>Set <var>requestObject</var>'s <a for=Request>headers</a> to a <a for=/>new</a> {{Headers}}
- object with <var>realm</var>, whose <a for=Headers>headers list</a> is <var>request</var>'s
- <a for=request>headers list</a> and <a for=Headers>guard</a> is <var>guard</var>.
-
- <li><p>Set <var>requestObject</var>'s <a for=Request>signal</a> to a <a for=/>new</a>
- {{AbortSignal}} object with <var>realm</var>.
-
- <li><p>Return <var>request</var>.
-</ol>
 
 <hr>
 
@@ -6062,6 +5943,8 @@ constructor steps are:
  <li><p>Let <var>request</var> be null.
 
  <li><p>Let <var>fallbackMode</var> be null.
+
+ <li><p>Let <var>fallbackCredentials</var> be null.
 
  <li><p>Let <var>baseURL</var> be <a>this</a>'s <a>relevant settings object</a>'s
  <a for="environment settings object">API base URL</a>.
@@ -6081,10 +5964,12 @@ constructor steps are:
    <li><p>If <var>parsedURL</var> <a lt="include credential">includes credentials</a>, then
    <a>throw</a> a {{TypeError}}.
 
-   <li><p>Set <var>request</var> to a new <a for=/>request</a> whose <a for=request>URL</a> is
-   <var>parsedURL</var>.
+   <li><p>Set <var>request</var> to a new <a for=/>request</a> whose
+   <a for=request>url</a> is <var>parsedURL</var>.
 
    <li><p>Set <var>fallbackMode</var> to "<code>cors</code>".
+
+   <li><p>Set <var>fallbackCredentials</var> to "<code>same-origin</code>".
   </ol>
 
  <li>
@@ -6165,8 +6050,8 @@ constructor steps are:
    <dt><a for=request>integrity metadata</a>
    <dd><var>request</var>'s <a for=request>integrity metadata</a>.
 
-   <dt><a for=request>keepalive</a>
-   <dd><var>request</var>'s <a for=request>keepalive</a>.
+   <dt><a>keepalive flag</a>
+   <dd><var>request</var>'s <a>keepalive flag</a>.
 
    <dt><a for=request>reload-navigation flag</a>
    <dd><var>request</var>'s <a for=request>reload-navigation flag</a>.
@@ -6213,7 +6098,7 @@ constructor steps are:
     <p>Otherwise:
 
     <ol>
-     <li><p>Let <var>parsedReferrer</var> be the result of <a lt="URL parser">parsing</a>
+     <li><p>Let <var>parsedReferrer</var> be the result of <a lt="url parser">parsing</a>
      <var>referrer</var> with <var>baseURL</var>.
 
      <li><p>If <var>parsedReferrer</var> is failure, then <a>throw</a> a {{TypeError}}.
@@ -6222,9 +6107,9 @@ constructor steps are:
       <p>If one of the following is true
 
       <ul class=brief>
-       <li><p><var>parsedReferrer</var>'s <a>cannot-be-a-base-URL</a> is true, <a for=url>scheme</a>
-       is "<code>about</code>", and <a for=url>path</a> contains a single string
-       "<code>client</code>"
+       <li><p><var>parsedReferrer</var>'s <a>cannot-be-a-base-URL flag</a> is set,
+       <a for=url>scheme</a> is "<code>about</code>", and <a for=url>path</a> contains a single
+       string "<code>client</code>"
 
        <li><p><var>parsedReferrer</var>'s <a for=url>origin</a> is not <a>same origin</a> with
        <var>origin</var>
@@ -6251,8 +6136,12 @@ constructor steps are:
  <li><p>If <var>mode</var> is non-null, set <var>request</var>'s
  <a for=request>mode</a> to <var>mode</var>.
 
- <li><p>If <var>init</var>["{{RequestInit/credentials}}"] <a for=map>exists</a>, then set
- <var>request</var>'s <a for=request>credentials mode</a> to it.
+ <li><p>Let <var>credentials</var> be <var>init</var>["{{RequestInit/credentials}}"] if it
+ <a for=map>exists</a>, and <var>fallbackCredentials</var> otherwise.
+
+ <li><p>If <var>credentials</var> is non-null, set <var>request</var>'s
+ <a for=request>credentials mode</a> to
+ <var>credentials</var>.
 
  <li><p>If <var>init</var>["{{RequestInit/cache}}"] <a for=map>exists</a>, then set
  <var>request</var>'s <a for=request>cache mode</a> to it.
@@ -6268,7 +6157,8 @@ constructor steps are:
  <var>request</var>'s <a for=request>integrity metadata</a> to it.
 
  <li><p>If <var>init</var>["{{RequestInit/keepalive}}"] <a for=map>exists</a>, then set
- <var>request</var>'s <a for=request>keepalive</a> to it.
+ <var>request</var>'s <a>keepalive flag</a> if <var>init</var>["{{RequestInit/keepalive}}"] is true,
+ and unset it otherwise.
 
  <li>
   <p>If <var>init</var>["{{RequestInit/method}}"] <a for=map>exists</a>, then:
@@ -6292,9 +6182,9 @@ constructor steps are:
  <li><p>If <var>signal</var> is not null, then make <a>this</a>'s <a for=Request>signal</a>
  <a for=AbortSignal>follow</a> <var>signal</var>.
 
- <li><p>Set <a>this</a>'s <a for=Request>headers</a> to a <a for=/>new</a> {{Headers}} object with
- <a>this</a>'s <a>relevant Realm</a>, whose <a for=Headers>header list</a> is <var>request</var>'s
- <a for=request>header list</a> and <a for=Headers>guard</a> is "<code>request</code>".
+ <li><p>Set <a>this</a>'s <a for=Request>headers</a> to a new {{Headers}} object, whose
+ <a for=Headers>header list</a> is <var>request</var>'s <a for=request>header list</a>, and
+ <a for=Headers>guard</a> is "<code>request</code>".
 
  <li>
   <p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is
@@ -6316,9 +6206,9 @@ constructor steps are:
  <li>
   <p>If <var>init</var> <a for=map>is not empty</a>, then:
 
-  <p class=note>The headers are sanitized as they might contain headers that are not allowed by this
-  mode. Otherwise, they were previously sanitized or are unmodified since they were set by a
-  privileged API.
+  <p class=note>The headers are sanitised as they might contain headers that are not allowed by this
+  mode. Otherwise, they were previously sanitised or are unmodified since creation by a privileged
+  API.
 
   <ol>
    <li><p>Let <var>headers</var> be a copy of <a>this</a>'s <a for=Request>headers</a> and its
@@ -6339,14 +6229,15 @@ constructor steps are:
   </ol>
  </li>
 
- <li><p>Let <var>inputBody</var> be <var>input</var>'s <a for=Request>request</a>'s
- <a for=request>body</a> if <var>input</var> is a {{Request}} object; otherwise null.
+ <li><p>Let <var>inputBody</var> be <var>input</var>'s
+ <a for=Request>request</a>'s <a for=request>body</a>
+ if <var>input</var> is a {{Request}} object, and null otherwise.
 
  <li><p>If either <var>init</var>["{{RequestInit/body}}"] <a for=map>exists</a> and is non-null or
  <var>inputBody</var> is non-null, and <var>request</var>'s <a for=request>method</a> is
  `<code>GET</code>` or `<code>HEAD</code>`, then <a>throw</a> a {{TypeError}}.
 
- <li><p>Let <var>initBody</var> be null.
+ <li><p>Let <var>body</var> be <var>inputBody</var>.
 
  <li>
   <p>If <var>init</var>["{{RequestInit/body}}"] <a for=map>exists</a> and is non-null, then:
@@ -6354,10 +6245,12 @@ constructor steps are:
   <ol>
    <li><p>Let <var>Content-Type</var> be null.
 
-   <li><p>Set <var>initBody</var> and <var>Content-Type</var> to the result of
-   <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"], with
-   <a for=BodyInit/extract><var>keepalive</var></a> set to <var>request</var>'s
-   <a for=request>keepalive</a>.
+   <li><p>If <var>init</var>["{{RequestInit/keepalive}}"] <a for=map>exists</a> and is true, then
+   set <var>body</var> and <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a>
+   <var>init</var>["{{RequestInit/body}}"], with <a><var>keepalive</var></a> set to true.
+
+   <li><p>Otherwise, set <var>body</var> and <var>Content-Type</var> to the result of
+   <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"].
 
    <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Request>headers</a>'s
    <a for=Headers>header list</a> <a for="header list">does not contain</a>
@@ -6365,12 +6258,8 @@ constructor steps are:
    `<code>Content-Type</code>`/<var>Content-Type</var> to <a>this</a>'s <a for=Request>headers</a>.
   </ol>
 
- <li><p>Let <var>inputOrInitBody</var> be <var>initBody</var> if it is non-null; otherwise
- <var>inputBody</var>.
-
  <li>
-  <p>If <var>inputOrInitBody</var> is non-null and <var>inputOrInitBody</var>'s
-  <a for=body>source</a> is null, then:
+  <p>If <var>body</var> is non-null and <var>body</var>'s <a for=body>source</a> is null, then:
 
   <ol>
    <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
@@ -6380,32 +6269,27 @@ constructor steps are:
    <a for=request>use-CORS-preflight flag</a>.
   </ol>
 
- <li><p>Let <var>finalBody</var> be <var>inputOrInitBody</var>.
+ <li><p>If <var>inputBody</var> is <var>body</var> and <var>input</var> is <a for=Body>disturbed</a>
+ or <a for=Body>locked</a>, then <a>throw</a> a {{TypeError}}.
 
- <li>
-  <p>If <var>initBody</var> is null and <var>inputBody</var> is non-null, then:
+ <!-- Any steps after this must not throw. -->
 
-  <ol>
-   <li><p>If <var>input</var> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
+ <li><p>If <var>inputBody</var> is <var>body</var> and <var>inputBody</var> is non-null, then set
+ <var>body</var> to the result of <a for=ReadableStream>creating a proxy</a> for
+ <var>inputBody</var>.
 
-   <!-- Any steps after this must not throw. -->
+ <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to <var>body</var>.
 
-   <li><p>Set <var>finalBody</var> to the result of <a for=ReadableStream>creating a proxy</a> for
-   <var>inputBody</var>.
-  </ol>
-
- <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to
- <var>finalBody</var>.
-
- <li><p>Set <a>this</a>'s <a for=Request>signal</a> to a <a for=/>new</a> {{AbortSignal}} object
- with <a>this</a>'s <a>relevant Realm</a>.
+ <li><p>Set <a>this</a>'s <a for=Body>MIME type</a> to the result of
+ <a for="header list">extracting a MIME type</a> from <a>this</a>'s <a for=Request>request</a>'s
+ <a for=request>header list</a>.
 </ol>
 
 <p>The <dfn attribute for=Request><code>method</code></dfn> getter steps are to return <a>this</a>'s
 <a for=Request>request</a>'s <a for=request>method</a>.
 
 <p>The <dfn attribute for=Request><code>url</code></dfn> getter steps are to return <a>this</a>'s
-<a for=Request>request</a>'s <a for=request>URL</a>, <a lt="URL serializer">serialized</a>.
+<a for=Request>request</a>'s <a for=request>URL</a>, <a lt="url serializer">serialized</a>.
 
 <p>The <dfn attribute for=Request><code>headers</code></dfn> getter steps are to return
 <a>this</a>'s <a for=Request>headers</a>.
@@ -6423,7 +6307,7 @@ constructor steps are:
  "<code>client</code>", then return "<code>about:client</code>".
 
  <li><p>Return <a>this</a>'s <a for=Request>request</a>'s <a for=request>referrer</a>,
- <a lt="URL serializer">serialized</a>.
+ <a lt="url serializer">serialized</a>.
 </ol>
 
 <p>The <dfn attribute for=Request><code>referrerPolicy</code></dfn> getter steps are to return
@@ -6444,8 +6328,8 @@ constructor steps are:
 <p>The <dfn attribute for=Request><code>integrity</code></dfn> getter steps are to return
 <a>this</a>'s <a for=Request>request</a>'s <a for=request>integrity metadata</a>.
 
-<p>The <dfn attribute for=Request><code>keepalive</code></dfn> getter steps are to return
-<a>this</a>'s <a for=Request>request</a>'s <a for=request>keepalive</a>.
+<p>The <dfn attribute for=Request><code>keepalive</code></dfn> getter steps are to return true if
+<a>this</a>'s <a for=Request>request</a>'s <a>keepalive flag</a> is set; otherwise false.
 
 <p>The <dfn attribute for=Request><code>isReloadNavigation</code></dfn> getter steps are to return
 true if <a>this</a>'s <a for=Request>request</a>'s <a for=request>reload-navigation flag</a> is set;
@@ -6463,14 +6347,28 @@ set; otherwise false.
 <p>The <dfn method for=Request><code>clone()</code></dfn> method steps are:
 
 <ol>
- <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
+ <li><p>If <a>this</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then <a>throw</a> a
+ {{TypeError}}.
+
+ <li><p>Let <var>clonedRequestObject</var> be a new {{Request}} object.
 
  <li><p>Let <var>clonedRequest</var> be the result of <a lt=clone for=request>cloning</a>
  <a>this</a>'s <a for=Request>request</a>.
 
- <li><p>Let <var>clonedRequestObject</var> be the result of <a for=Request>creating</a> a
- {{Request}} object, given <var>clonedRequest</var>, <a>this</a>'s
- <a for=Request>headers</a>'s <a for=Headers>guard</a>, and <a>this</a>'s <a>relevant Realm</a>.
+ <li><p>Set <var>clonedRequestObject</var>'s <a for=Request>request</a> to <var>clonedRequest</var>.
+
+ <li>
+  <p>Set <var>clonedRequestObject</var>'s <a for=Request>headers</a> to a new {{Headers}} object
+  with the following properties:
+
+  <dl>
+   <dt><a for=Headers>header list</a>
+   <dd><var>clonedRequest</var>'s <a for=Headers>header list</a>.
+
+   <dt><a for=Headers>guard</a>
+   <dd><a>This</a>'s <a for=Request>headers</a>'s <a for=Headers>guard</a>.
+  </dl>
+ </li>
 
  <li><p>Make <var>clonedRequestObject</var>'s <a for=Request>signal</a>
  <a for=AbortSignal>follow</a> <a>this</a>'s <a for=Request>signal</a>.
@@ -6517,73 +6415,8 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <p>A {{Response}} object also has an associated <dfn for=Response export>headers</dfn> (null or a
 {{Headers}} object), initially null.
 
-<p>A {{Response}} object's <a for=Body>MIME type</a> is to return the result of
-<a for="header list">extracting a MIME type</a> from its <a for=Response>response</a>'s
-<a for=response>header list</a>.
-
 <p>A {{Response}} object's <a for=Body>body</a> is its
 <a for=Response>response</a>'s <a for=response>body</a>.
-
-<hr>
-
-<dl class=domintro>
- <dt><code><var>response</var> = new <a constructor lt="Response(body, init)">Response</a>(<var>body</var> = null [, <var>init</var>])</code>
- <dd><p>Creates a {{Response}} whose body is <var>body</var>, and status, status message, and
- headers are provided by <var>init</var>.
-
- <dt><code><var>response</var> = <a idl>Response</a> . <a method for=Response lt=error()>error</a>()</code>
- <dd><p>Creates network error {{Response}}.
-
- <dt><code><var>response</var> = <a idl>Response</a> . <a method for=Response lt=redirect()>redirect</a>(<var>url</var>, <var>status</var> = 302)</code>
- <dd><p>Creates a redirect {{Response}} that redirects to <var>url</var> with status
- <var>status</var>.
-
- <dt><code><var>response</var> . <a attribute for=Response>type</a></code>
- <dd><p>Returns <var>response</var>'s type, e.g., "<code>cors</code>".
-
- <dt><code><var>response</var> . <a attribute for=Response>url</a></code>
- <dd><p>Returns <var>response</var>'s URL, if it has one; otherwise the empty string.
-
- <dt><code><var>response</var> . <a attribute for=Response>redirected</a></code>
- <dd><p>Returns whether <var>response</var> was obtained through a redirect.
-
- <dt><code><var>response</var> . <a attribute for=Response>status</a></code>
- <dd><p>Returns <var>response</var>'s status.
-
- <dt><code><var>response</var> . <a attribute for=Response>ok</a></code>
- <dd><p>Returns whether <var>response</var>'s status is an <a for=/>ok status</a>.
-
- <dt><code><var>response</var> . <a attribute for=Response>statusText</a></code>
- <dd><p>Returns <var>response</var>'s status message.
-
- <dt><code><var>response</var> . <a attribute for=Response>headers</a></code>
- <dd><p>Returns <var>response</var>'s headers as {{Headers}}.
-
- <dt><code><var>response</var> . <a method for=Response>clone</a>()</code>
- <dd><p>Returns a clone of <var>response</var>.
-</dl>
-
-<hr>
-
-<p>To <dfn export for=Response lt=create|creating>create</dfn> a {{Response}} object, given a
-<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
-<var>realm</var>, run these steps:
-
-<ol>
- <li><p>Let <var>responseObject</var> be a <a for=/>new</a> {{Response}} object with
- <var>realm</var>.
-
- <li><p>Set <var>responseObject</var>'s <a for=Response>response</a> to <var>response</var>.
-
- <li><p>Set <var>responseObject</var>'s <a for=Response>headers</a> to a <a for=/>new</a>
- {{Headers}} object with <var>realm</var>, whose <a for=Headers>headers list</a> is
- <var>response</var>'s <a for=response>headers list</a> and <a for=Headers>guard</a> is
- <var>guard</var>.
-
- <li><p>Return <var>responseObject</var>.
-</ol>
-
-<hr>
 
 <p>The
 <dfn constructor for=Response id=dom-response lt="Response(body, init)"><code>new Response(<var>body</var>, <var>init</var>)</code></dfn>
@@ -6598,10 +6431,9 @@ constructor steps are:
 
  <li><p>Set <a>this</a>'s <a for=Response>response</a> to a new <a for=/>response</a>.
 
- <li><p>Set <a>this</a>'s <a for=Response>headers</a> to a <a for=/>new</a> {{Headers}} object with
- <a>this</a>'s <a>relevant Realm</a>, whose <a for=Headers>header list</a> is <a>this</a>'s
- <a for=Response>response</a>'s <a for=response>header list</a> and <a for=Headers>guard</a> is
- "<code>response</code>".
+ <li><p>Set <a>this</a>'s <a for=Response>headers</a> to a new {{Headers}} object, whose
+ <a for=Headers>header list</a> is <var>r</var>'s <a for=Response>response</a>'s
+ <a for=response>header list</a>, and <a for=Headers>guard</a> is "<code>response</code>".
 
  <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>status</a> to
  <var>init</var>["{{ResponseInit/status}}"].
@@ -6635,38 +6467,54 @@ constructor steps are:
    `<code>Content-Type</code>`/<var>Content-Type</var> to <a>this</a>'s
    <a for=Response>response</a>'s <a for=response>header list</a>.
   </ol>
+
+ <li><p>Set <a>this</a>'s <a for=Body>MIME type</a> to the result of
+ <a for="header list">extracting a MIME type</a> from <a>this</a>'s <a for=Response>response</a>'s
+ <a for=response>header list</a>.
 </ol>
 
-<p>The static <dfn method for=Response><code>error()</code></dfn> method steps are to return the
-result of <a for=Response>creating</a> a {{Response}} object, given a new <a>network error</a>,
-"<code>immutable</code>", and <a>this</a>'s <a>relevant Realm</a>.
+<p>The static <dfn method for=Response><code>error()</code></dfn> method steps are:
+
+<ol>
+ <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
+ <a>network error</a>.
+
+ <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
+ <a for=Headers>guard</a> is "<code>immutable</code>".
+
+ <li><p>Return <var>r</var>.
+</ol>
 
 <p>The static
 <dfn method for=Response><code>redirect(<var>url</var>, <var>status</var>)</code></dfn> method steps
 are:
 
 <ol>
- <li><p>Let <var>parsedURL</var> be the result of <a lt="URL parser">parsing</a> <var>url</var> with
- <a>current settings object</a>'s <a for="environment settings object">API base URL</a>.
+ <li><p>Let <var>parsedURL</var> be the result of
+ <a lt="url parser">parsing</a> <var>url</var> with
+ <a>current settings object</a>'s
+ <a for="environment settings object">API base URL</a>.
 
  <li><p>If <var>parsedURL</var> is failure, then <a>throw</a> a {{TypeError}}.
 
  <li><p>If <var>status</var> is not a <a>redirect status</a>, then <a>throw</a> a {{RangeError}}.
 
- <li><p>Let <var>responseObject</var> be the result of <a for=Response>creating</a> a {{Response}}
- object, given a new <a for=/>response</a>, "<code>immutable</code>", and <a>this</a>'s
- <a>relevant Realm</a>.
+ <li><p>Let <var>r</var> be a new {{Response}} object, whose <a for=Response>response</a> is a new
+ <a for=/>response</a>.
 
- <li><p>Set <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>status</a> to
- <var>status</var>.
+ <li><p>Set <var>r</var>'s <a for=Response>headers</a> to a new {{Headers}} object whose
+ <a for=Headers>guard</a> is "<code>immutable</code>".
 
- <li><p>Let <var>value</var> be <var>parsedURL</var>, <a lt="URL serializer">serialized</a> and
+ <li><p>Set <var>r</var>'s <a for=Response>response</a>'s
+ <a for=response>status</a> to <var>status</var>.
+
+ <li><p>Let <var>value</var> be <var>parsedURL</var>, <a lt="url serializer">serialized</a> and
  <a>isomorphic encoded</a>.
 
- <li><p><a for="header list">Append</a> `<code>Location</code>`/<var>value</var> to
- <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>header list</a>.
+ <li><p><a for="header list">Append</a> `<code>Location</code>`/<var>value</var> to <var>r</var>'s
+ <a for=Response>response</a>'s <a for=response>header list</a>.
 
- <li><p>Return <var>responseObject</var>.
+ <li><p>Return <var>r</var>.
 </ol>
 
 <p>The <dfn attribute for=Response><code>type</code></dfn> getter steps are to return <a>this</a>'s
@@ -6675,8 +6523,7 @@ are:
 <p>The <dfn attribute for=Response><code>url</code></dfn> getter steps are to return
 the empty string if <a>this</a>'s <a for=Response>response</a>'s <a for=response>URL</a> is null;
 otherwise <a>this</a>'s <a for=Response>response</a>'s <a for=response>URL</a>,
-<a lt="URL serializer">serialized</a> with <a for="URL serializer"><i>exclude fragment</i></a> set
-to true.
+<a lt="url serializer">serialized</a> with the <i>exclude-fragment flag</i> set. [[!URL]]
 
 <p>The <dfn attribute for=Response><code>redirected</code></dfn> getter steps are to return true if
 <a>this</a>'s <a for=Response>response</a>'s <a for=response>URL list</a> has more than one item;
@@ -6704,14 +6551,25 @@ otherwise false.
 <p>The <dfn method for=Response><code>clone()</code></dfn> method steps are:
 
 <ol>
- <li><p>If <a>this</a> is <a for=Body>unusable</a>, then <a>throw</a> a {{TypeError}}.
+ <li><p>If <a>this</a> is <a for=Body>disturbed</a> or <a for=Body>locked</a>, then <a>throw</a> a
+ {{TypeError}}.
+
+ <li><p>Let <var>clonedResponseObject</var> be a new {{Response}} object.
 
  <li><p>Let <var>clonedResponse</var> be the result of <a lt=clone for=response>cloning</a>
  <a>this</a>'s <a for=Response>response</a>.
 
- <li><p>Return the result of <a for=Response>creating</a> a {{Response}} object, given
- <var>clonedResponse</var>, <a>this</a>'s <a for=Response>headers</a>'s <a for=Headers>guard</a>,
- and <a>this</a>'s <a>relevant Realm</a>.
+ <li><p>Set <var>clonedResponseObject</var>'s <a for=Response>response</a> to
+ <var>clonedResponse</var>.
+
+ <li><p>Set <var>clonedResponseObject</var>'s <a for=Request>headers</a> to a new {{Headers}} object
+ whose <a for=Headers>header list</a> is set to <var>clonedResponse</var>'s
+ <a for=Headers>header list</a>, and <a for=Headers>guard</a> is <a>this</a>'s
+ <a for=Response>headers</a>'s <a for=Headers>guard</a>.
+
+ <li><p>Return <var>clonedResponseObject</var>.
+
+ <li><p>Return <var>clonedResponse</var>.
 </ol>
 
 
@@ -6750,9 +6608,9 @@ method steps are:
  <a for="environment settings object">global object</a> is a {{ServiceWorkerGlobalScope}} object,
  then set <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
- <li><p>Let <var>responseObject</var> be null.
-
- <li><p>Let <var>relevantRealm</var> be <a>this</a>'s <a>relevant Realm</a>.
+ <li><p>Let <var>responseObject</var> be a new {{Response}} object and a new associated
+ {{Headers}} object whose <a for=Headers>guard</a> is
+ "<code>immutable</code>".
 
  <li>
   <p>Let <var>locallyAborted</var> be false.
@@ -6765,16 +6623,20 @@ method steps are:
   <a for=Request>signal</a>:
 
   <ol>
-   <li><p>Set <var>locallyAborted</var> to true.
+    <li><p>Set <var>locallyAborted</var> to true.
 
-   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
+    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and
+    <var>responseObject</var>.
 
-   <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
+    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
   </ol>
 
  <li>
-  <p><a for=/>Fetch</a> <var>request</var> with <a for=fetch><i>processResponse</i></a> given
-  <var>response</var> being these substeps:
+  <p>Run the following <a>in parallel</a>:
+
+  <p><a for=/>Fetch</a> <var>request</var>.
+
+  <p>To <a>process response</a> for <var>response</var>, run these substeps:
 
   <ol>
    <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
@@ -6786,8 +6648,7 @@ method steps are:
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
 
-   <li><p>Set <var>responseObject</var> to the result of <a for=Response>creating</a> a {{Response}}
-   object, given <var>response</var>, "<code>immutable</code>", and <var>relevantRealm</var>.
+   <li><p>Associate <var>responseObject</var> with <var>response</var>.
 
    <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
@@ -6943,6 +6804,7 @@ therefore not shareable, a WebSocket connection is very close to identical to an
  <a for=request>client</a> is <var>client</var>,
  <a>service-workers mode</a> is "<code>none</code>",
  <a for=request>referrer</a> is "<code>no-referrer</code>",
+ <a>synchronous flag</a> is set,
  <a for=request>mode</a> is "<code>websocket</code>",
  <a for=request>credentials mode</a> is
  "<code>include</code>",
@@ -6989,29 +6851,25 @@ therefore not shareable, a WebSocket connection is very close to identical to an
  `<code>Sec-WebSocket-Extensions</code>`/<var>permessageDeflate</var>
  to <var>request</var>'s <a for=request>header list</a>.
 
+ <li><p>Let <var>response</var> be the result of <a lt=fetch for=/>fetching</a>
+ <var>request</var>.
+
+ <li><p>If <var>response</var> is a <a>network error</a> or its <a for=response>status</a> is not
+ 101, <a>fail the WebSocket connection</a>.
+
  <li>
-  <p><a lt=fetch for=/>Fetch</a> <var>request</var> with <a for=fetch><i>useParallelQueue</i></a>
-  set to true, and <a for=fetch><i>processResponse</i></a> given <var>response</var> being these
-  steps:
+  <p>If <var>protocols</var> is not the empty list and <a>extracting header list values</a> given
+  `<code>Sec-WebSocket-Protocol</code>` and <var>response</var>'s <a for=request>header list</a>
+  results in null, failure, or the empty byte sequence, then <a>fail the WebSocket connection</a>.
 
-  <ol>
-   <li><p>If <var>response</var> is a <a>network error</a> or its <a for=response>status</a> is not
-   101, <a>fail the WebSocket connection</a>.
+  <p class=note>This is different from the check on this header defined by The WebSocket Protocol.
+  That only covers a subprotocol not requested by the client. This covers a subprotocol requested by
+  the client, but not acknowledged by the server.
 
-   <li>
-    <p>If <var>protocols</var> is not the empty list and <a>extracting header list values</a> given
-    `<code>Sec-WebSocket-Protocol</code>` and <var>response</var>'s <a for=request>header list</a>
-    results in null, failure, or the empty byte sequence, then <a>fail the WebSocket connection</a>.
-
-    <p class=note>This is different from the check on this header defined by The WebSocket Protocol.
-    That only covers a subprotocol not requested by the client. This covers a subprotocol requested
-    by the client, but not acknowledged by the server.
-
-   <li><p>Follow the requirements stated step 2 to step 6, inclusive, of the last set of steps in
-   <a href=http://tools.ietf.org/html/rfc6455#section-4.1>section 4.1</a> of The WebSocket Protocol
-   to validate <var>response</var>. This either results in <a>fail the WebSocket connection</a>
-   or <a>the WebSocket connection is established</a>.
-  </ol>
+ <li><p>Follow the requirements stated step 2 to step 6, inclusive, of the last set of steps in
+ <a href=http://tools.ietf.org/html/rfc6455#section-4.1>section 4.1</a> of The WebSocket Protocol
+ to validate <var>response</var>. This either results in <a>fail the WebSocket connection</a>
+ or <a>the WebSocket connection is established</a>.
 </ol>
 
 <p><dfn>Fail the WebSocket connection</dfn> and <dfn>the WebSocket connection is established</dfn>
@@ -7043,7 +6901,7 @@ that RFC's normative processing requirements to be compatible with deployed cont
  <li><p>Assert: <var>dataURL</var>'s <a for=url>scheme</a> is "<code>data</code>".
 
  <li><p>Let <var>input</var> be the result of running the <a>URL serializer</a> on
- <var>dataURL</var> with <a for="URL serializer"><i>exclude fragment</i></a> set to true.
+ <var>dataURL</var> with the <i>exclude fragment flag</i> set.
 
  <li><p>Remove the leading "<code>data:</code>" string from <var>input</var>.
 
@@ -7123,10 +6981,12 @@ Developers have almost no control over
 
 <h3 id=atomic-http-redirect-handling dfn class=no-num>Atomic HTTP redirect handling</h3>
 
-<p>Redirects (a <a for=/>response</a> whose <a for=response>status</a> or
-<a for="filtered response">internal response</a>'s (if any) <a for=response>status</a> is a
-<a>redirect status</a>) are not exposed to APIs. Exposing redirects might leak information not
-otherwise available through a cross-site scripting attack.
+<p>Redirects (a <a for=/>response</a> whose
+<a for=response>status</a> or
+<a for=internal>internal response</a>'s (if any)
+<a for=response>status</a> is a <a>redirect status</a>) are not exposed
+to APIs. Exposing redirects might leak information not otherwise available through a cross-site
+scripting attack.
 
 <p id=example-xss-redirect class=example>A fetch to <code>https://example.org/auth</code> that includes a
 <code>Cookie</code> marked <code>HttpOnly</code> could result in a redirect to
@@ -7270,7 +7130,6 @@ Jeena Lee,
 Jeff Carpenter,
 Jeff Hodges,
 Jeffrey Yasskin,
-Jensen Chappell,
 Jesse M. Heines,
 Jianjun Chen,
 Jinho Bang,
@@ -7312,7 +7171,6 @@ Martin Dürst,
 Martin Thomson,
 Matt Andrews,
 Matt Falkenhagen,
-Matt Menke,
 Matt Oshry,
 Matt Seddon,
 Matt Womer,
@@ -7357,7 +7215,6 @@ Stephan Paul,
 Steven Salat,
 Sunava Dutta,
 Surya Ismail,
-Tab Atkins-Bittner,
 Takashi Toyoshima,
 吉野剛史 (Takeshi Yoshino),
 Thomas Roessler,
@@ -7367,7 +7224,6 @@ Tiancheng "Timothy" Gu,
 Tobie Langel,
 Tom Schuster,
 Tomás Aparicio,
-triple-underscore<!-- GitHub -->,
 保呂毅 (Tsuyoshi Horo),
 Tyler Close,
 Ujjwal Sharma,
