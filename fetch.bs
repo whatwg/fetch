@@ -2145,15 +2145,15 @@ identified by a <b>key</b> (a <a>network partition key</a>), an <b>origin</b> (a
 <a for=/>origin</a>), and <b>credentials</b> (a boolean).
 
 <p>To <dfn export id=concept-connection-obtain>obtain a connection</dfn>, given a <var>key</var>,
-<var>origin</var>, <var>credentials</var>, an optional boolean
-<dfn export for="obtain a connection"><var>http3Only</var></dfn> (default: false), and an optional
-boolean <dfn export for="obtain a connection"><var>dedicated</var></dfn> (default: false), run these
-steps:
+<var>origin</var>, <var>credentials</var>, an optional boolean <var>forceNew</var> (default false),
+an optional boolean <dfn export for="obtain a connection"><var>http3Only</var></dfn> (default
+false), and an optional boolean <dfn export for="obtain a connection"><var>dedicated</var></dfn>
+(default false), run these steps:
 <!-- http3Only and dedicated have been added for WebTransport -->
 
 <ol>
  <li>
-  <p>If <var>dedicated</var> is false, then:
+  <p>If <var>forceNew</var> is false or <var>dedicated</var> is false, then:
 
   <ol>
    <li><p>Let <var>connections</var> be a set of <a>connections</a> in the user agent's
@@ -3221,7 +3221,7 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
 
    <dt>`<code>same-site</code>`
    <dd>
-    <p>If the following are true
+    <p>If all of the following are true
 
     <ul class=brief>
      <li><p><var>origin</var> is <a>schemelessly same site</a> with <var>response</var>'s
@@ -4159,8 +4159,9 @@ steps. They return a <a for=/>response</a>.
 <h3 id=http-network-or-cache-fetch>HTTP-network-or-cache fetch</h3>
 
 <p>To <dfn id=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</dfn>, given a
-<a for=/>fetch params</a> <var>fetchParams</var> and an optional boolean
-<var>isAuthenticationFetch</var> (default false), run these steps:
+<a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
+<var>isAuthenticationFetch</var> (default false), and an optional boolean
+<var>isNewConnectionFetch</var> (default false), run these steps:
 
 <p class=note>Some implementations might support caching of partial content, as per
 <cite>HTTP Range Requests</cite>. However, this is not widely supported by browser caches.
@@ -4525,7 +4526,7 @@ steps. They return a <a for=/>response</a>.
    "<code>only-if-cached</code>", then return a <a>network error</a>.
 
    <li><p>Let <var>forwardResponse</var> be the result of running <a>HTTP-network fetch</a> given
-   <var>httpFetchParams</var> and <var>includeCredentials</var>.
+   <var>httpFetchParams</var>, <var>includeCredentials</var>, and <var>isNewConnectionFetch</var>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is
    <a href=https://tools.ietf.org/html/rfc7231#safe.methods>unsafe</a> and
@@ -4658,6 +4659,37 @@ steps. They return a <a for=/>response</a>.
    <var>fetchParams</var>.
   </ol>
 
+ <li>
+  <p>If all of the following are true
+
+  <ul class=brief>
+   <li><p><var>response</var>'s <a for=response>status</a> is 421
+
+   <li><p><var>isNewConnectionFetch</var> is false
+
+   <li><p><var>request</var>'s <a for=request>body</a> is null, or <var>request</var>'s
+   <a for=request>body</a> is non-null and <var>request</var>'s <a for=request>body</a>'s
+   <a for=body>source</a> is non-null
+  </ul>
+
+  <p>then:
+
+  <ol>
+   <li>
+    <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
+
+    <ol>
+     <li><p>Let <var>aborted</var> be the termination's aborted flag.
+
+     <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
+
+     <li><p>Return a <a>network error</a>.
+    </ol>
+
+   <li><p>Set <var>response</var> to the result of running <a>HTTP-network-or-cache fetch</a> given
+   <var>fetchParams</var>, <var>isAuthenticationFetch</var>, and true.
+  </ol>
+
  <li><p>If <var>isAuthenticationFetch</var> is true, then create an <a>authentication entry</a> for
  <var>request</var> and the given realm.
 
@@ -4670,8 +4702,8 @@ steps. They return a <a for=/>response</a>.
 <h3 id=http-network-fetch>HTTP-network fetch</h3>
 
 <p>To <dfn id=concept-http-network-fetch>HTTP-network fetch</dfn>, given a <a for=/>fetch params</a>
-<var>fetchParams</var> and an optional boolean <var>includeCredentials</var> (default false), run
-these steps:
+<var>fetchParams</var>, an optional boolean <var>includeCredentials</var> (default false), and an
+optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
 <ol>
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
@@ -4699,8 +4731,8 @@ these steps:
    <dt>Otherwise
    <dd><p>Let <var>connection</var> be the result of
    <a lt="obtain a connection">obtaining a connection</a>, given <var>networkPartitionKey</var>,
-   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>, and
-   <var>includeCredentials</var>.
+   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>,
+   <var>includeCredentials</var>, and <var>forceNewConnection</var>.
   </dl>
 
  <li>
