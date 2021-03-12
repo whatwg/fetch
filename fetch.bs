@@ -17,9 +17,9 @@ url:https://tools.ietf.org/html/rfc7230#section-3.2;text:field-content;type:dfn;
 url:https://tools.ietf.org/html/rfc7230#section-3.2;text:field-value;type:dfn;spec:http
 url:https://tools.ietf.org/html/rfc7230#section-3.1.2;text:reason-phrase;type:dfn;spec:http
 url:https://tools.ietf.org/html/rfc7234#section-1.2.1;text:delta-seconds;type:dfn;spec:http-caching
-url:https://tools.ietf.org/html/draft-ietf-httpbis-header-structure#section-2;text:structured field value;type:dfn;spec:header-structure
-url:https://tools.ietf.org/html/draft-ietf-httpbis-header-structure#section-4.1;text:serializing structured fields;type:dfn;spec:header-structure
-url:https://tools.ietf.org/html/draft-ietf-httpbis-header-structure#section-4.2;text:parsing structured fields;type:dfn;spec:header-structure
+url:https://tools.ietf.org/html/rfc8941#section-2;text:structured field value;type:dfn;spec:rfc8941
+url:https://tools.ietf.org/html/rfc8941#section-4.1;text:serializing structured fields;type:dfn;spec:rfc8941
+url:https://tools.ietf.org/html/rfc8941#section-4.2;text:parsing structured fields;type:dfn;spec:rfc8941
 </pre>
 
 <pre class=biblio>
@@ -83,12 +83,6 @@ url:https://tools.ietf.org/html/draft-ietf-httpbis-header-structure#section-4.2;
     },
     "OCSP": {
         "aliasOf": "RFC2560"
-    },
-    "HEADER-STRUCTURE": {
-        "authors": ["Mark Nottingham", "Poul-Henning Kamp"],
-        "href": "https://tools.ietf.org/html/draft-ietf-httpbis-header-structure",
-        "publisher": "IETF",
-        "title": "Structured Field Values for HTTP"
     },
     "HTTP3": {
         "authors": ["M. Bishop, Ed."],
@@ -433,7 +427,7 @@ serialize in interesting and efficient ways. For the moment, Fetch only supports
 <a for=header>values</a> as <a for=/>byte sequences</a>, which means that these objects can be set
 in <a for=/>header lists</a> only via serialization, and they can be obtained from
 <a for=/>header lists</a> only by parsing. In the future the fact that they are objects might be
-preserved end-to-end. [[!HEADER-STRUCTURE]]
+preserved end-to-end. [[!RFC8941]]
 
 <hr>
 
@@ -1322,7 +1316,7 @@ the empty string,
 
 <!-- Dependencies:
      * CSP: https://w3c.github.io/webappsec-csp/#effective-directive-for-a-request
-     * Mixed Content: https://w3c.github.io/webappsec-mixed-content/#should-block-fetch
+     * Mixed Content
      * Preload: https://w3c.github.io/preload/#processing
      * SRI
      * HTML -->
@@ -3460,10 +3454,9 @@ steps:
  [[!UPGRADE]]
 
  <li><p>If <a lt="block bad port">should <var>request</var> be blocked due to a bad port</a>,
- <a href=https://w3c.github.io/webappsec-mixed-content/#should-block-fetch>should fetching <var>request</var> be blocked as mixed content</a>,
- or
+ <a lt="should fetching request be blocked as mixed content?">should fetching <var>request</var> be blocked as mixed content</a>, or
  <a lt="should request be blocked by Content Security Policy?">should <var>request</var> be blocked by Content Security Policy</a>
- returns <b>blocked</b>, then set <var>response</var> to a <a>network error</a>. [[!MIX]]
+ returns <b>blocked</b>, then set <var>response</var> to a <a>network error</a>.
 
  <li><p>If <var>request</var>'s <a for=request>referrer policy</a> is the empty string and
  <var>request</var>'s <a for=request>client</a> is non-null, then set <var>request</var>'s
@@ -3661,17 +3654,20 @@ steps:
  <li><p><a lt="Set response's CSP list">Set <var>internalResponse</var>'s CSP list</a>.
 
  <li>
-  <p>If <var>response</var> is not a <a>network error</a> and any
-  of the following algorithms returns <b>blocked</b>, then set <var>response</var> and
-  <var>internalResponse</var> to a <a>network error</a>:
+  <p>If <var>response</var> is not a <a>network error</a> and any of the following returns
+  <b>blocked</b>
 
   <ul class=brief>
-   <li><a href=https://w3c.github.io/webappsec-mixed-content/#should-block-response>should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>
-   [[!MIX]]
-   <li><a lt="Should response to request be blocked by Content Security Policy?">should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>
-   <li><a lt="should response to request be blocked due to mime type">should <var>internalResponse</var> to <var>request</var> be blocked due to its MIME type</a>
-   <li><a lt="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>
+   <li><p><a lt="should response to request be blocked as mixed content?">should <var>internalResponse</var> to <var>request</var> be blocked as mixed content</a>
+
+   <li><p><a lt="Should response to request be blocked by Content Security Policy?">should <var>internalResponse</var> to <var>request</var> be blocked by Content Security Policy</a>
+
+   <li><p><a lt="should response to request be blocked due to mime type">should <var>internalResponse</var> to <var>request</var> be blocked due to its MIME type</a>
+
+   <li><p><a lt="should response to request be blocked due to nosniff">should <var>internalResponse</var> to <var>request</var> be blocked due to nosniff</a>
   </ul>
+
+  <p>then set <var>response</var> and <var>internalResponse</var> to a <a>network error</a>.
 
  <li>
   <p>If <var>response</var>'s <a for=response>type</a> is "<code>opaque</code>",
