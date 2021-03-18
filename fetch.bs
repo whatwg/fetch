@@ -4156,6 +4156,30 @@ these steps:
    <li><p>Let <var>requestForServiceWorker</var> be a <a for=request>clone</a> of
    <var>request</var>.
 
+   <li>
+    <p> If <var>requestForServiceWorker</var>'s <a for=/>body</a> is non-null, then:
+
+    <ol>
+     <li> Let <var>transformAlgorithm</var> given <var>chunk</var> be these steps:
+      <ol>
+        <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+
+        <li><p>If <var>chunk</var> is not a {{Uint8Array}} object, then
+         <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+
+        <li>Otherwise, <a for=ReadableStream>enqueue</a> <var>chunk</var>. The user agent may split
+         the chunk and enqueues multiple times.
+      </ol>
+
+     <li> Let <var>transformStream</var> be result of <a for=TransformStream>creating</a> a
+      {{TransformStream}} with <var>transformAlgorithm</var>.
+
+     <li> Let <var>streamForServiceWorker</var> be result of pipeThrough
+      the stream with <var>transformStream</var>.
+
+     <li> Set <var>requestForServiceWorker</var>'s <a for=/>body</a>'s stream to <var>streamForServiceWorker</var>.
+    </ol>
+
    <li><p>Let <var>serviceWorkerStartTime</var> be the <a for=/>coarsened shared current time</a>
    given <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
 
