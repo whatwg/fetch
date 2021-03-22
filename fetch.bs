@@ -2324,41 +2324,45 @@ follows:
  value of <code>t1</code>, while the POST request reports a connectEnd value for
  <code>t2</code>.
 
-  <li><p>If a secure transport is used, <var>timingInfo</var>'s
-  <a for="connection timing info">secure connection start time</a> should be the result of calling
-  <a for=/>unsafe shared current time</a> immmediately before starting the handshake process to
-  secure <var>connection</var>. [[!TLS]]
+ <li><p>If a secure transport is used, <var>timingInfo</var>'s
+ <a for="connection timing info">secure connection start time</a> should be the result of calling
+ <a for=/>unsafe shared current time</a> immmediately before starting the handshake process to
+ secure <var>connection</var>. [[!TLS]]
 
-  <li><p><var>timingInfo</var>'s <a for="connection timing info">alpn negotiated protocol</a>
-  should be the <var>connection</var>'s ALPN Protocol ID as specified in [[RFC7301]], with the
-  following caveats:
-  <ul>
-   <li><p>When a proxy is configured, if a tunnel connection is established then this attribute
-   must return the ALPN Protocol ID of the tunneled protocol, otherwise it must return the ALPN
-   Protocol ID of the first hop to the proxy.
+ <li><p><var>timingInfo</var>'s <a for="connection timing info">alpn negotiated protocol</a>
+ should be the <var>connection</var>'s ALPN Protocol ID as specified in [[RFC7301]], with the
+ following caveats:
+ <ul>
+  <li><p>When a proxy is configured, if a tunnel connection is established then this attribute
+  must return the ALPN Protocol ID of the tunneled protocol, otherwise it must return the ALPN
+  Protocol ID of the first hop to the proxy.
 
-   <li><p>Octets in the ALPN protocol must not be percent-encoded if they are valid token
-   characters except "%", and when using percent-encoding, uppercase hex digits must be used.
+  <li><p>Octets in the ALPN protocol must not be percent-encoded if they are valid token
+  characters except "%", and when using percent-encoding, uppercase hex digits must be used.
 
-   <li><p>Formally registered ALPN protocol IDs are documented by <a href=
-   "https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">
-   IANA</a>.
+  <li><p>Formally registered ALPN protocol IDs are documented by <a href=
+  "https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">
+  IANA</a>.
 
-   <li><p>In case the user agent is using an experimental, non-registered protocol, the user
-   agent must use the ALPN negotiated value if any. If ALPN was not used for protocol
-   negotiations, the user agent MAY use another descriptive string.
+  <li><p>In case the user agent is using an experimental, non-registered protocol, the user
+  agent must use the ALPN negotiated value if any. If ALPN was not used for protocol
+  negotiations, the user agent MAY use another descriptive string.
 
-   <p class="note">The "h3" ALPN ID is defined for the final version
-   of the HTTP/3 protocol in the
-   <a href="https://tools.ietf.org/html/draft-ietf-quic-http-17#section-10.1">HTTP/3
-   Internet Draft</a>.
+  <p class="note">The "h3" ALPN ID is defined for the final version
+  of the HTTP/3 protocol in the
+  <a href="https://tools.ietf.org/html/draft-ietf-quic-http-17#section-10.1">HTTP/3
+  Internet Draft</a>.
 
-   <p class="note">Note that <a for="connection timing info">alpn negotiated protocol</a> is
-   intended to identify the network protocol in use for the fetch regardless of how it was
-   actually negotiated; that is, even if ALPN is not used to negotiate the network protocol,
-   this attribute still uses the ALPN Protocol IDs to indicate the protocol in use.
-  </ul>
+  <p class="note">Note that <a for="connection timing info">alpn negotiated protocol</a> is
+  intended to identify the network protocol in use for the fetch regardless of how it was
+  actually negotiated; that is, even if ALPN is not used to negotiate the network protocol,
+  this attribute still uses the ALPN Protocol IDs to indicate the protocol in use.
  </ul>
+
+ <p class="note">The <a for="connection">timingInfo</a> for the connection might be saved in the
+ <a>connection pool</a>, and later retrieved alongside the connection if the connection is reused.
+ The <a for=/>clamp connection timing to fetch timing</a> algorithm ensures that details of reused
+ connections are not exposed.
 </ol>
 
 <h3 id=network-partition-keys>Network partition keys</h3>
