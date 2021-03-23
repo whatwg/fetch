@@ -247,6 +247,20 @@ steps:
  set to <var>timingInfo</var>'s <a for="connection timing info">alpn negotiated protocol</a>.
 </ol>
 
+<p>To <dfn>update timing info from stored response</dfn>, given <a for=/>connection timing info</a>
+<var>timingInfo</var> and <a for=/>response</a> <var>response</var>, perform the following steps:
+<ol>
+ <li><p>Let <var>storedTimingInfo</var> be <var>response</var>'s <a for=response>timing info</a>.
+
+ <li><p>If <var>storedTimingInfo</var> is null, then return.
+
+ <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">encoded body size</a> to
+ <var>storedTimingInfo</var>'s <a for="fetch timing info">encoded body size</a>.
+
+ <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">decoded body size</a> to
+ <var>storedTimingInfo</var>'s <a for="fetch timing info">decoded body size</a>.
+</ol>
+
 <p>To <dfn>queue a fetch task</dfn>, given an algorithm <var>algorithm</var>, a
 <a for=/>global object</a> or a <a for=/>parallel queue</a> <var>taskDestination</var>, run these
 steps:
@@ -4120,11 +4134,8 @@ these steps:
      <li><p>Set <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
      <a for="fetch timing info">worker start time</a> to <var>workerStartTime</var>.
 
-     <p class=note>If the response is cached, the current <a for="fetch params">timing info</a>'s
-     <a for="fetch timing info">encoded body size</a>,
-     <a for="fetch timing info">decoded body size</a>,
-     <a for="fetch timing info">request start time</a>,
-     and <a for="fetch timing info">response start time</a> will remain zero.
+     <li><p><a for=/>Update timing info from stored response</a> for <var>fetchParams</var>'s
+     <a for="fetch params">timing info</a> anf <var>response</var>.
 
      <li>If <var>request</var>'s <a for=request>body</a> is non-null, then
      <a for=ReadableStream>cancel</a> <var>request</var>'s <a for=request>body</a> with undefined.
@@ -4792,6 +4803,8 @@ steps. They return a <a for=/>response</a>.
 
      <li><p>Set <var>response</var> to <var>storedResponse</var>.
 
+     <li><p><a for=/>Update timing info from stored response</a> for <var>fetchParams</var>'s
+     <a for="fetch params">timing info</a> anf <var>response</var>.
     </ol>
 
    <li>
@@ -4807,6 +4820,9 @@ steps. They return a <a for=/>response</a>.
 
       <p class=note>If <var>forwardResponse</var> is a <a>network error</a>, this effectively caches
       the network error, which is sometimes known as "negative caching".
+
+      <p class=note>The associated <a for=response>timing info</a> is stored in the cache
+      alongside the response.
     </ol>
   </ol>
 
