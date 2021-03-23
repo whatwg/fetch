@@ -4108,8 +4108,7 @@ these steps:
    <li><p>Let <var>requestForServiceWorker</var> be a <a for=request>clone</a> of
    <var>request</var>.
 
-   <li><p>Set <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
-   <a for="fetch timing info">worker start time</a> to the <a for=/>unsafe shared current time</a>.
+   <li><p>Let <var>workerStartTime</var> be the <a for=/>unsafe shared current time</a>.
 
    <li><p>Set <var>response</var> to the result of invoking <a for=/>handle fetch</a> for
    <var>requestForServiceWorker</var>. [[!HTML]] [[!SW]]
@@ -4119,13 +4118,13 @@ these steps:
 
     <ol>
      <li><p>Set <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
-     <a for="fetch timing info">response start time</a> to the
-     <a for=/>unsafe shared current time</a>.
+     <a for="fetch timing info">worker start time</a> to <var>workerStartTime</var>.
 
-     <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">encoded body size</a> and
-     <a for="fetch timing info">decoded body size</a> to the result of calling
-     <a for="header list">extract a length</a> from <var>response</var>'s
-     <a for=response>header list</a>.
+     <p class=note>If the response is cached, the current <a for="fetch params">timing info</a>'s
+     <a for="fetch timing info">encoded body size</a>,
+     <a for="fetch timing info">decoded body size</a>,
+     <a for="fetch timing info">request start time</a>,
+     and <a for="fetch timing info">response start time</a> will remain zero.
 
      <li>If <var>request</var>'s <a for=request>body</a> is non-null, then
      <a for=ReadableStream>cancel</a> <var>request</var>'s <a for=request>body</a> with undefined.
@@ -4156,9 +4155,6 @@ these steps:
       <p>then return a <a>network error</a>.
     </ol>
   </ol>
-
-  <p>Otheriwse, set <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
-  <a for="fetch timing info">worker start time</a> to zero.
 
  <li>
   <p>If <var>response</var> is null, then:
@@ -4672,9 +4668,6 @@ steps. They return a <a for=/>response</a>.
      <li>
       <p>Let <var>timingInfo</var> be <var>fetchParams</var>'s <a for="fetch params">timing info</a>.
 
-      <p>Set <var>timingInfo</var>'s <a for="fetch timing info">request start time</a> to the
-      <a for=/>unsafe shared current time</a>.
-
       <p>Set <var>storedResponse</var> to the result of selecting a response from the
       <var>httpCache</var>, possibly needing validation, as per the
       "<a href=https://tools.ietf.org/html/rfc7234#section-4>Constructing Responses from Caches</a>"
@@ -4688,14 +4681,6 @@ steps. They return a <a for=/>response</a>.
 
       <!-- cache hit -->
       <ol>
-       <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">response start time</a> to the
-       <a for=/>unsafe shared current time</a>.
-
-       <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">encoded body size</a> and
-       <a for="fetch timing info">decoded body size</a> to the result of calling
-       <a for="header list">extract a length</a> from <var>storedResponse</var>'s
-       <a for=response>header list</a>.
-
        <li>
         <p>If <a for=request>cache mode</a> is "<code>default</code>", <var>storedResponse</var>
         is a <a>stale-while-revalidate response</a>, and <var>httpRequest</var>'s
@@ -5023,7 +5008,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
      <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
      <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">response start time</a> to
-     the <a for=/>unsafe shared current time</a>immediately after the user agent's HTTP parser
+     the <a for=/>unsafe shared current time</a> immediately after the user agent's HTTP parser
      receives the first byte of the response (e.g. frame header bytes for HTTP/2, or response
      status line for HTTP/1.x).
 
