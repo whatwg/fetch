@@ -4542,16 +4542,21 @@ steps. They return a <a for=/>response</a>.
     <a for=response>status</a> is 304, then:
 
     <ol>
-     <li>
-      <p>Update <var>storedResponse</var>'s <a for=response>header list</a> using
-      <var>forwardResponse</var>'s <a for=response>header list</a>, as per the
-      "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
-      chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+      <li><p> Set <var>selectedStoredResponse</var> to null.
+      <li><p> Set <var>selectedStoredResponse</var> to the result of selecting a response from the cache as per the "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>" chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
+      <li><p> If <var>selectedStoredResponse</var> is not null, then:
+      <ol>
+        <li><p>Update <var>selectedStoredResponse</var>'s <a for=response>header list</a> using <var>forwardResponse</var>'s <a for=response>header list</a>, as per the "<a href=https://tools.ietf.org/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>" chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+        <li><p class="note">This updates the stored response in cache as well.
+        <li><p>Set <var>response</var> to <var>selectedStoredResponse</var>.
+      </ol>
 
-      <p class="note">This updates the stored response in cache as well.
-
-     <li><p>Set <var>response</var> to <var>storedResponse</var>.
-
+       <li><p>Otherwise:
+         <ol>
+           <li><p> <a for="header list">Delete</a> `<code>If-None-Match</code>` from <var>httpRequest</var>'s <a for=request>header list</a>.
+           <li><p> <a for="header list">Delete</a> `<code>If-Modified-Since</code>` from <var>httpRequest</var>'s <a for=request>header list</a>.
+           <li><p>Set <var>forwardResponse</var> to be the result of making an <a>HTTP-network fetch</a> using <var>httpRequest</var>.
+         </ol>
     </ol>
 
    <li>
