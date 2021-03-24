@@ -188,6 +188,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">task destination</dfn> (default null)
  <dd>Null, a <a for=/>global object</a>, or a <a for=/>parallel queue</a>.
 
+ <dt><dfn for="fetch params">cross-origin isolated capability</dfn> (default false)
+ <dd>A boolean.
+
  <dt><dfn for="fetch params">timing info</dfn>
  <dd>A <a for=/>fetch timing info</a>.
 
@@ -208,7 +211,7 @@ information required by the resource timing and navigation timing specs. It has 
  <dt><dfn export for="fetch timing info">response end time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">redirect start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">redirect end time</dfn> (default 0)
- <dd>A <a typedef for=/>DOMHighResTimeStamp</a>.
+ <dd>A {{DOMHighResTimeStamp}}.
 
  <dt><dfn export for="fetch timing info">encoded body size</dfn> (default 0)
  <dt><dfn export for="fetch timing info">decoded body size</dfn> (default 0)
@@ -228,32 +231,48 @@ information pertaining to the process of obtaining a connection. It has the foll
   <dt><dfn export for="connection timing info">connection start time</dfn> (default 0)
   <dt><dfn export for="connection timing info">connection end time</dfn> (default 0)
   <dt><dfn export for="connection timing info">secure connection start time</dfn> (default 0)
-  <dd>A <a typedef for=/>DOMHighResTimeStamp</a>
+  <dd>A {{DOMHighResTimeStamp}}.
 
   <dt><dfn export for="connection timing info">ALPN negotiated protocol</dfn> (default the empty
   <a for=/>byte sequence</a>)
   <dd>A <a for=/>byte sequence</a>.
 </dl>
 
-<p class=note>Note that timestamps in this spec are usually unsafe, and are meant to be coarsened
-and normalized to a <a for=/>global object</a> prior to being exposed.
-
-<p>To <dfn>clamp connection timing to fetch timing</dfn>, given a
-<a for=/>connection timing info</a> <var>timingInfo</var> and a
-<a typedef for=/>DOMHighResTimeStamp</a> <var>defaultStartTime</var>, run these steps:
+<p>To <dfn>clamp and coarsen connection timing info</dfn>, given a
+<a for=/>connection timing info</a> <var>timingInfo</var>, a {{DOMHighResTimeStamp}}
+<var>defaultStartTime</var>, and a boolean <var>crossOriginIsolatedCapability</var>, run these
+steps:
 
 <ol>
  <li><p>If <var>timingInfo</var>'s <a for="connection timing info">connection start time</a> is
- greater than <var>defaultStartTime</var>, then return <var>timingInfo</var>.
+ less than <var>defaultStartTime</var>, then return a new <a for=/>connection timing info</a> whose
+ <a for="connection timing info">domain lookup start time</a> is <var>defaultStartTime</var>,
+ <a for="connection timing info">domain lookup end time</a> is <var>defaultStartTime</var>,
+ <a for="connection timing info">connection start time</a> is <var>defaultStartTime</var>,
+ <a for="connection timing info">connection end time</a> is <var>defaultStartTime</var>,
+ <a for="connection timing info">secure connection start time</a> is <var>defaultStartTime</var>,
+ and <a for="connection timing info">ALPN negotiated protocol</a> is <var>timingInfo</var>'s
+ <a for="connection timing info">ALPN negotiated protocol</a>.
 
- <li><p>Return a new <a for=/>connection timing info</a>, with
- <a for="connection timing info">domain lookup start time</a> set to <var>defaultStartTime</var>,
- <a for="connection timing info">domain lookup end time</a> set to <var>defaultStartTime</var>,
- <a for="connection timing info">connection start time</a> set to <var>defaultStartTime</var>,
- <a for="connection timing info">connection end time</a> set to <var>defaultStartTime</var>,
- <a for="connection timing info">secure connection start time</a> set to
- <var>defaultStartTime</var>, and <a for="connection timing info">ALPN negotiated protocol</a>
- set to <var>timingInfo</var>'s <a for="connection timing info">ALPN negotiated protocol</a>.
+ <li><p>Return a new <a for=/>connection timing info</a> whose
+ <a for="connection timing info">domain lookup start time</a> is the result of <a>coarsen time</a>
+ given <var>timingInfo</var>'s <a for="connection timing info">domain lookup start time</a> and
+ <var>crossOriginIsolatedCapability</var>,
+ <a for="connection timing info">domain lookup end time</a> is the result of <a>coarsen time</a>
+ given <var>timingInfo</var>'s <a for="connection timing info">domain lookup end time</a> and
+ <var>crossOriginIsolatedCapability</var>, <a for="connection timing info">connection start time</a>
+ is the result of <a>coarsen time</a> given <var>timingInfo</var>'s
+ <a for="connection timing info">connection start time</a> and
+ <var>crossOriginIsolatedCapability</var>, <a for="connection timing info">connection end time</a>
+ is the result of <a>coarsen time</a> given <var>timingInfo</var>'s
+ <a for="connection timing info">connection end time</a> and
+ <var>crossOriginIsolatedCapability</var>,
+ <a for="connection timing info">secure connection start time</a> is the result of
+ <a>coarsen time</a> given <var>timingInfo</var>'s
+ <a for="connection timing info">connection end time</a> and
+ <var>crossOriginIsolatedCapability</var>, and
+ <a for="connection timing info">ALPN negotiated protocol</a> is <var>timingInfo</var>'s
+ <a for="connection timing info">ALPN negotiated protocol</a>.
 </ol>
 
 <p>To <dfn>update timing info from stored response</dfn>, given a
@@ -2230,6 +2249,8 @@ identified by a <b>key</b> (a <a>network partition key</a>), an <b>origin</b> (a
 <p>Each <a>connection</a> has an associated <a for=/>connection timing info</a>
 <dfn for=connection id=concept-connection-timing-info>timing info</dfn>.
 
+<hr>
+
 <p>To <dfn export id=concept-connection-obtain>obtain a connection</dfn>, given a <var>key</var>,
 <var>origin</var>, <var>credentials</var>, an optional boolean <var>forceNew</var> (default false),
 an optional boolean <dfn export for="obtain a connection"><var>http3Only</var></dfn> (default
@@ -2379,8 +2400,8 @@ clearly stipulates that <a>connections</a> are keyed on
   <a href="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">list of ALPN Protocol IDs</a>.
 </ol>
 
-<p class=note>The <a for=/>clamp connection timing to fetch timing</a> algorithm ensures that
-details of reused connections are not exposed.
+<p class=note>The <a for=/>clamp and coarsen connection timing info</a> algorithm ensures that
+details of reused connections are not exposed and time values are coarsened.
 
 
 <h3 id=network-partition-keys>Network partition keys</h3>
@@ -3513,12 +3534,22 @@ the request.
 <ol>
  <li><p>Let <var>taskDestination</var> be null.
 
+ <li><p>Let <var>crossOriginIsolatedCapability</var> be false.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>client</a> is non-null, then:
+
+  <ol>
+   <li><p>Set <var>taskDestination</var> to <var>request</var>'s <a for=request>client</a>'s
+   <a for="environment settings object">global object</a>.
+
+   <li><p>Set <var>crossOriginIsolatedCapability</var> to <var>request</var>'s
+   <a for=request>client</a>'s
+   <a for="environment settings object">cross-origin isolated capability</a>.
+  </ol>
+
  <li><p>If <var>useParallelQueue</var> is true, then set <var>taskDestination</var> to the result of
  <a>starting a new parallel queue</a>.
-
- <li><p>Otherwise, if <var>request</var>'s <a for=request>client</a> is non-null, set
- <var>taskDestination</var> to <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a>.
 
  <!-- It would be nice to assert that taskDestination is non-null here, but it's not clear if this
       works for all callers. Fetch itself calls main fetch while taskDestination is null. Anyone
@@ -3532,8 +3563,10 @@ the request.
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
  <a for="fetch params">process response</a> is <var>processResponse</var>,
  <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>,
- <a for="fetch params">process response done</a> is <var>processResponseDone</var>, and
- <a for="fetch params">task destination</a> is <var>taskDestination</var>.
+ <a for="fetch params">process response done</a> is <var>processResponseDone</var>,
+ <a for="fetch params">task destination</a> is <var>taskDestination</var>, and
+ <a for="fetch params">cross-origin isolated capability</a> is
+ <var>crossOriginIsolatedCapability</var>.
 
  <li><p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then set
  <var>request</var>'s <a for=request>body</a> to the first return value of
@@ -3618,7 +3651,8 @@ steps:
  <li><p>Let <var>response</var> be null.
 
  <li><p>Set <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
- <a for="fetch timing info">fetch start time</a> to the <a for=/>unsafe shared current time</a>.
+ <a for="fetch timing info">fetch start time</a> to the <a for=/>coarsened shared current time</a>
+ given <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
 
  <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and <var>request</var>'s
  <a for=request>current URL</a> is not <a lt="is local">local</a>, then set <var>response</var> to a
@@ -3951,7 +3985,8 @@ steps:
  <li><p>Let <var>timingInfo</var> be <var>response</var>'s <a for=response>timing info</a>.
 
  <li><p>If <var>timingInfo</var> is not null, then set <var>timingInfo</var>'s
- <a for="fetch timing info">response end time</a> to the <a for=/>unsafe shared current time</a>.
+ <a for="fetch timing info">response end time</a> to the <a for=/>coarsened shared current time</a>
+ given <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
 
  <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
  <a for=request>done flag</a>.
@@ -3989,7 +4024,9 @@ steps:
  to <var>startTime</var>.
 
  <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">response end time</a> to the
- <a href=/>unsafe shared current time</a>.
+ <a for=/>coarsened shared current time</a> given <var>global</var>'s
+ <a>relevant settings object</a>'s
+ <a for="environment settings object">cross-origin isolated capability</a>.
 
  <li><p>Set <var>response</var>'s <a for="response">timing info</a> to <var>timingInfo</var>.
 
@@ -4130,7 +4167,8 @@ these steps:
    <li><p>Let <var>requestForServiceWorker</var> be a <a for=request>clone</a> of
    <var>request</var>.
 
-   <li><p>Let <var>serviceWorkerStartTime</var> be the <a for=/>unsafe shared current time</a>.
+   <li><p>Let <var>serviceWorkerStartTime</var> be the <a for=/>coarsened shared current time</a>
+   given <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
 
    <li><p>Set <var>response</var> to the result of invoking <a for=/>handle fetch</a> for
    <var>requestForServiceWorker</var>. [[!HTML]] [[!SW]]
@@ -5005,9 +5043,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   </dl>
 
  <li>Set <var>timingInfo</var>'s <a for="fetch timing info">connection timing info</a> to the
- result of calling <a>clamp connection timing to fetch timing</a> with <var>connection</var>'s
- <a for=connection>timing info</a> and <var>timingInfo</var>'s
- <a for="fetch timing info">fetch start time</a>.
+ result of calling <a>clamp and coarsen connection timing info</a> with <var>connection</var>'s
+ <a for=connection>timing info</a>, <var>timingInfo</var>'s
+ <a for="fetch timing info">fetch start time</a>, and <var>fetchParams</var>'s
+ <a for="fetch params">cross-origin isolated capability</a>.
 
  <li>
   <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
@@ -5023,7 +5062,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
    <a for=request>header list</a>.
 
    <li>Set <var>timingInfo</var>'s <a for="fetch timing info">request start time</a> to the
-   <a for=/>unsafe shared current time</a>.
+   <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
+   <a for="fetch params">cross-origin isolated capability</a>.
 
    <li>
     <p>Set <var>response</var> to the result of making an HTTP request over <var>connection</var>
@@ -5032,10 +5072,11 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <ul>
      <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
-     <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">response start time</a> to
-     the <a for=/>unsafe shared current time</a> immediately after the user agent's HTTP parser
-     receives the first byte of the response (e.g., frame header bytes for HTTP/2, or response
-     status line for HTTP/1.x).
+     <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">response start time</a> to the
+     <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
+     <a for="fetch params">cross-origin isolated capability</a>, immediately after the user agent's
+     HTTP parser receives the first byte of the response (e.g., frame header bytes for HTTP/2 or
+     response status line for HTTP/1.x).
 
      <li><p>Wait until all the <a for=/>headers</a> are transmitted.
 
