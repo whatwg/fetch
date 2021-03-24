@@ -202,7 +202,7 @@ information required by the resource timing and navigation timing specs. It has 
 <dl>
  <dt><dfn export for="fetch timing info">start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">fetch start time</dfn> (default 0)
- <dt><dfn export for="fetch timing info">worker start time</dfn> (default 0)
+ <dt><dfn export for="fetch timing info">service worker start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">request start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">response start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">response end time</dfn> (default 0)
@@ -230,8 +230,9 @@ information pertaining to the process of obtaining a connection. It has the foll
   <dt><dfn export for="connection timing info">secure connection start time</dfn> (default 0)
   <dd>A <a typedef for=/>DOMHighResTimeStamp</a>
 
-  <dt><dfn export for="connection timing info">alpn negotiated protocol</dfn> (default empty string)
-  <dd>A string.
+  <dt><dfn export for="connection timing info">ALPN negotiated protocol</dfn> (default the empty
+  <a for=/>byte sequence</a>)
+  <dd>A <a for=/>byte sequence</a>.
 </dl>
 
 <p class=note>Note that timestamps in this spec are usually unsafe, and are meant to be coarsened
@@ -251,8 +252,8 @@ and normalized to a <a for=/>global object</a> prior to being exposed.
  <a for="connection timing info">connection start time</a> set to <var>defaultStartTime</var>,
  <a for="connection timing info">connection end time</a> set to <var>defaultStartTime</var>,
  <a for="connection timing info">secure connection start time</a> set to
- <var>defaultStartTime</var>, and <a for="connection timing info">alpn negotiated protocol</a>
- set to <var>timingInfo</var>'s <a for="connection timing info">alpn negotiated protocol</a>.
+ <var>defaultStartTime</var>, and <a for="connection timing info">ALPN negotiated protocol</a>
+ set to <var>timingInfo</var>'s <a for="connection timing info">ALPN negotiated protocol</a>.
 </ol>
 
 <p>To <dfn>update timing info from stored response</dfn>, given a
@@ -2354,42 +2355,33 @@ clearly stipulates that <a>connections</a> are keyed on
  secure <var>connection</var>. [[!TLS]]
 
  <li>
-  <p><var>timingInfo</var>'s <a for="connection timing info">alpn negotiated protocol</a> should be
+  <p><var>timingInfo</var>'s <a for="connection timing info">ALPN negotiated protocol</a> should be
   the <var>connection</var>'s ALPN Protocol ID, with the following caveats: [[RFC7301]]
-  <!-- TODO Since it's in octets, I guess we have to isomorphic decode it? -->
 
   <ul>
    <li><p>When a proxy is configured, if a tunnel connection is established then this must be the
    ALPN Protocol ID of the tunneled protocol, otherwise it must be the ALPN Protocol ID of the first
    hop to the proxy.
 
-   <li><p>Octets in the ALPN Protocol ID must not be percent-encoded if they are valid token
-   characters except "%", and when using percent-encoding, uppercase hex digits must be used.
-   <!-- TODO I don't think we have to state this as the network does this. -->
-
-   <li><p>Formally registered ALPN Protocol IDs are documented by
-   <a href="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">IANA</a>.
-   <!-- TODO I'm not sure we need to reference this? -->
-
    <li>
     <p>In case the user agent is using an experimental, non-registered protocol, the user agent must
     use the used ALPN Protocol ID, if any. If ALPN was not used for protocol negotiations, the user
     agent may use another descriptive string.
 
-    <p class=note>The "<code>h3</code>" ALPN Protocol ID is defined for the final version of the
-    HTTP/3 protocol in the
-    <a href="https://tools.ietf.org/html/draft-ietf-quic-http-17#section-10.1">HTTP/3 Internet Draft</a>.
-
     <p class=note><var>timingInfo</var>'s
-    <a for="connection timing info">alpn negotiated protocol</a> is intended to identify the network
+    <a for="connection timing info">ALPN negotiated protocol</a> is intended to identify the network
     protocol in use regardless of how it was actually negotiated; that is, even if ALPN is not used
     to negotiate the network protocol, this is the ALPN Protocol IDs that indicates the protocol in
     use.
   </ul>
 
-  <p class=note>The <a for=/>clamp connection timing to fetch timing</a> algorithm ensures that
-  details of reused connections are not exposed.
+  <p class=note>IANA maintains a
+  <a href="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">list of ALPN Protocol IDs</a>.
 </ol>
+
+<p class=note>The <a for=/>clamp connection timing to fetch timing</a> algorithm ensures that
+details of reused connections are not exposed.
+
 
 <h3 id=network-partition-keys>Network partition keys</h3>
 
@@ -4138,8 +4130,7 @@ these steps:
    <li><p>Let <var>requestForServiceWorker</var> be a <a for=request>clone</a> of
    <var>request</var>.
 
-   <li><p>Let <var>workerStartTime</var> be the <a for=/>unsafe shared current time</a>.
-   <!-- TODO: can we rename this to service worker start time? -->
+   <li><p>Let <var>serviceWorkerStartTime</var> be the <a for=/>unsafe shared current time</a>.
 
    <li><p>Set <var>response</var> to the result of invoking <a for=/>handle fetch</a> for
    <var>requestForServiceWorker</var>. [[!HTML]] [[!SW]]
@@ -4149,7 +4140,7 @@ these steps:
 
     <ol>
      <li><p>Set <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
-     <a for="fetch timing info">worker start time</a> to <var>workerStartTime</var>.
+     <a for="fetch timing info">service worker start time</a> to <var>serviceWorkerStartTime</var>.
 
      <li><p><a for=/>Update timing info from stored response</a> given <var>fetchParams</var>'s
      <a for="fetch params">timing info</a> and <var>response</var>.
