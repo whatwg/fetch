@@ -3512,7 +3512,7 @@ representing the number of bytes transmitted. If given, <var>processRequestEndOf
 an algorithm accepting no arguments. If given, <var>processResponse</var> must be an algorithm
 accepting a <a for=/>response</a>. If given, <var>processResponseEndOfBody</var> must be an
 algorithm accepting a <a for=/>response</a> and null, failure, or a <a for=/>byte sequence</a>. If
-given, <var>processResponseDone</var> must be an algorithm accepting no arguments.
+given, <var>processResponseDone</var> must be an algorithm accepting a <a for=/>response</a>.
 
 <p>An ongoing <a for=/>fetch</a> can be
 <dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
@@ -3982,13 +3982,21 @@ steps:
 <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
+ <li><p>Let <var>timingInfo</var> be <var>response</var>'s <a for=response>timing info</a>.
+
  <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
  <a for=request>done flag</a>.
 
+ <li><p>If <var>timingInfo</var> is null, then return.
+ 
+ <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">response end time</a> to
+ the <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
+ <a for="fetch params">cross-origin isolated capability</a>.
+
  <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response done</a> is not null,
- then <a>queue a fetch task</a> given <var>fetchParams</var>'s
- <a for="fetch params">process response done</a> and <var>fetchParams</var>'s
- <a for="fetch params">task destination</a>.
+ then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+ <a for="fetch params">process response done</a> given <var>response</var>,
+ with <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
 </ol>
 
 <p>To <dfn export>finalize and report timing</dfn> given a <a for=/>response</a>
@@ -7269,8 +7277,9 @@ method steps are:
    <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
   </ol>
 
- <li><p>Let <var>handleFetchDone</var> be to <a>finalize and report timing</a> with
- <var>response</var>, <var>globalObject</var>, and "<code>fetch</code>".
+ <li><p>Let <var>handleFetchDone</var> given <a for=/>response</a> <var>response</var> be to
+ <a>finalize and report timing</a> with <var>response</var>, <var>globalObject</var>, and
+ "<code>fetch</code>".
 
  <li>
   <p><a for=/>Fetch</a> <var>request</var> with <a for=fetch><i>processResponseDone</i></a> set to
