@@ -5061,12 +5061,26 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <ul>
      <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
-     <li><p> In resolving the HTTP request, there is an evitable situaion that the user agent must
-     resend the <var>request</var> body (e.g. socket time-out).
-     If <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
-      <a for=request>body</a>'s <a for=body>source</a> is null, there is an <a>implementation-defined</a>
-      cache limit not to cache the entire <a for=request>body</a>'s stream. If the cache runs out,
-      return a <a>network error</a>.
+     <li>
+      <p>If <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
+      <a for=request>body</a>'s <a for=body>source</a> is null, the user agent may have a buffer of
+      <a>implementation-defined</a> size and store the part of <var>request</var>'s
+      <a for=request>body</a> to the buffer. The buffer is used to resend <var>request</var>'s
+      <a for=request>body</a> to the network. If the user agent sent more than the buffer size and
+      is required to resend, return a <a>network error</a>.
+
+      <div class="note no-backref">
+       <p>The re-sending in resolving the HTTP request is needed when the
+       connection is timed out, for example.
+
+       <p>The buffer is not needed when request's <a for=request>body</a>'s
+       <a for=body>source</a> is non-null, because the <a for=request>body</a> can be re-created
+       from <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>.
+
+       <p>When <var>request</var>'s <a for=request>body</a>'s source is null, it means
+       <a for=request>body</a> is created from {{ReadableStream}}, which means
+       <a for=request>body</a> can not be re-created and that's because why the buffer is needed.
+      </div>
 
      <li><p>Set <var>timingInfo</var>'s
      <a for="fetch timing info">final network-response start time</a> to the
