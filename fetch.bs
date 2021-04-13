@@ -4026,7 +4026,7 @@ steps:
 
  <li><p>Set <var>response</var>'s <a for="response">timing info</a> to <var>timingInfo</var>.
 
- <li><p><span>Mark resource timing</span> for
+ <li><p><a>Mark resource timing</a> for
  <var>timingInfo</var>, <var>originalURL</var>, <var>initiatorType</var>, and <var>global</var>.
  <!-- TODO -->
 </ol>
@@ -4289,20 +4289,9 @@ these steps:
 
    <li>
     <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and a
-    <a>CORS check</a> for <var>request</var> and <var>response</var> returns failure, then:
-    <ul>
-     <li><p>Let <var>response</var> be a <a>network error</a>.
+    <a>CORS check</a> for <var>request</var> and <var>response</var> returns failure, then return a
+    <a>network error</a>.
 
-     <li><p>Set <var>response</var>'s <a for=response>timing info</a> to a new
-     <a for=/>fetch timing info</a> with its <a for="fetch timing info">start time</a> and its
-     <a for="fetch timing info">post-redirect start time</a> set to <var>fetchParams</var>'s
-     <a for="fetch params">timing info</a>'s <a for="fetch timing info">start time</a>, and
-     its <a for="fetch timing info">end time</a> set to the <a for=/>coarsened shared current
-     time</a> given <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated
-     capability</a>.
-
-     <li>Return <var>response</var>.
-    </ul>
     <p class="note no-backref">As the <a>CORS check</a> is not to be applied to
     <a for=/>responses</a> whose <a for=response>status</a> is 304 or 407, or <a for=/>responses</a>
     from a service worker for that matter, it is applied here.
@@ -4359,8 +4348,9 @@ these steps:
 
   <p class=note>Attaching the timing info to a response is what makes it exposed to the web as a
   Resource Timing entry later. This step is done here, as resource-timing entries are available only
-  for HTTP fetches, including ones that are handled by service-workers or HTTP cache, and not for
-  <code>data:</code> and <code>blob:</code> URL fetches.
+  for HTTP fetches, including ones that are handled by service-workers or HTTP cache, and not for,
+  e.g., <code>data:</code>, <code>blob:</code> URL fetches, and are only available after all the
+  relevant security checks have succeeded.
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
  <var>actualResponse</var>'s <a for=response>body</a>'s
