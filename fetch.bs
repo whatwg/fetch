@@ -5091,6 +5091,26 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <ul>
      <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
 
+     <li>
+      <p>If <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
+      <a for=request>body</a>'s <a for=body>source</a> is null, then the user agent may have a
+      buffer of up to 64 kibibytes and store a part of <var>request</var>'s <a for=request>body</a>
+      in that buffer. If the user agent reads from <var>request</var>'s <a for=request>body</a>
+      beyond that buffer's size and the user agent needs to resend <var>request</var>, then instead
+      return a <a>network error</a>.
+
+      <div class=note>
+       <p>The resending is needed when the connection is timed out, for example.
+
+       <p>The buffer is not needed when <var>request</var>'s <a for=request>body</a>'s
+       <a for=body>source</a> is non-null, because <var>request</var>'s <a for=request>body</a> can
+       be recreated from it.
+
+       <p>When <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is null, it
+       means <a for=request>body</a> is created from a {{ReadableStream}} object, which means
+       <a for=request>body</a> cannot be recreated and that is why the buffer is needed.
+      </div>
+
      <li><p>Set <var>timingInfo</var>'s
      <a for="fetch timing info">final network-response start time</a> to the
      <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
