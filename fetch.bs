@@ -1892,6 +1892,25 @@ source of security bugs. Please seek security review for features that deal with
  <a for="URL serializer"><i>exclude fragment</i></a> set to true.
 </ol>
 
+<p>To check <dfn export>Cross-Origin-Embedder-Policy allows credentials</dfn>, given a
+<a for=/>request</a> <var>request</var>, run theses steps:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>mode</a> is not <code>no-cors</code>", return
+ true.</p>
+
+ <li><p>If <var>request</var>'s <a for=request>client</a> is null, return true.</p>
+
+ <li><p>If <var>request</var>'s <a for=request>client</a>'s <a for="environment settings
+ object">embedder policy</a> is not
+ "<code><a for="embedder policy value">credentialless</a></code>", return true.</p>
+
+ <li><p>If <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a> with
+ <var>request</var>'s <a for=request>client</a>'s <a for="environment settings object">origin</a>,
+ return true.</p>
+
+ <li><p>Return false.</p>
+</ol>
 
 <h4 id=responses>Responses</h4>
 
@@ -1977,6 +1996,10 @@ initially unset.
 <p class=note>This is used to ensure to prevent a partial response from an earlier ranged request
 being provided to an API that didn't make a range request. See the flag's usage for a detailed
 description of the attack.
+
+<p>A <a for=/>response</a> has an associated <dfn for=response
+id=concept-response-request-include-credentials>request-include-credentials</dfn>, which is
+initially set.
 
 <p>A <a for=/>response</a> has an associated
 <dfn for=response id=concept-response-timing-allow-passed>timing allow passed flag</dfn>, which is
@@ -3507,9 +3530,22 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
  <li><p>If <var>policy</var> is neither `<code>same-origin</code>`, `<code>same-site</code>`, nor
  `<code>cross-origin</code>`, then set <var>policy</var> to null.
 
- <li><p>If <var>policy</var> is null and <var>embedderPolicyValue</var> is
- "<code><a for="embedder policy value">require-corp</a></code>", then set <var>policy</var> to
- `<code>same-origin</code>`.
+ <li><p>If <var>policy</var> is null, switch on <var>embedderPolicyValue</var>:
+  <dl class=switch>
+   <dt>`<a for="embedder policy value">unsafe-none</a>`
+   <dt>`<a for="embedder policy value">credentialless</a>`
+   <dd> Set <var>policy</var> to `<code>same-origin</code>` if one of the
+   following is true:
+   <ul>
+    <li><var>response</var>'s <a for="response">request-include-credentials</a> is true and
+        <var>response</var>'s <a for="response">type</a> is "<code>opaque</code>".
+    <li><var>forNavigation</var> is true.
+   </ul>
+
+   <dt>`<a for="embedder policy value">require-corp</a>`
+   <dd> Set <var>policy</var> to `<code>same-origin</code>`.
+  </dl>
+ </li>
 
  <li>
   <p>Switch on <var>policy</var>:
@@ -4668,6 +4704,10 @@ steps. They return a <a for=/>response</a>.
 
     <p>is true; otherwise false.
 
+   <li>
+    <p>If <a>Cross-Origin-Embedder-Policy allows credentials</a> with
+    <var>request</var> is false, set <var>includeCredentials</var> to false.</p>
+
    <li><p>Let <var>contentLength</var> be <var>httpRequest</var>'s <a for=request>body</a>'s
    <a for=body>length</a>, if <var>httpRequest</var>'s <a for=request>body</a> is non-null;
    otherwise null.
@@ -5027,6 +5067,9 @@ steps. They return a <a for=/>response</a>.
 
  <li><p>If <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
  `<code>Range</code>`, then set <var>response</var>'s <a for=response>range-requested flag</a>.
+
+ <li><p>Set <var>response</var>'s <a for=response>request-include-credentials</a> to
+ <var>includeCredentials</var>.
 
  <li>
   <p>If <var>response</var>'s <a for=response>status</a> is 401, <var>httpRequest</var>'s
@@ -7843,6 +7886,7 @@ Arkadiusz Michalski,
 Arne Johannessen,
 Artem Skoretskiy,
 Arthur Barstow,
+Arthur Sonzogni,
 Asanka Herath,
 Axel Rauschmayer,
 Ben Kelly,
