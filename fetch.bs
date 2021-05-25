@@ -1571,8 +1571,7 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
   <dd>This is a special mode used only when <a>navigating</a> between documents.
 
   <dt>"<code>websocket</code>"
-  <dd>This is a special mode used only when <a lt="establish a WebSocket connection">establishing
-  a WebSocket connection</a>.
+  <dd>This is a special mode used for the WebSocket API.
  </dl>
 
  <p>Even though the default <a for=/>request</a> <a for=request>mode</a> is "<code>no-cors</code>",
@@ -5074,21 +5073,14 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Let <var>networkPartitionKey</var> be the result of
  <a for=request>determining the network partition key</a> given <var>request</var>.
 
- <li>
-  <p>Switch on <var>request</var>'s <a for=request>mode</a>:
+ <li><p>Let <var>dedicatedConnection</var> be true if <var>request</var>'s <a for=request>mode</a>
+ is "<code>websocket</code>"; otherwise false.
 
-  <dl>
-   <dt>"<code>websocket</code>"
-   <dd><p>Let <var>connection</var> be the result of
-   <a lt="obtain a WebSocket connection">obtaining a WebSocket connection</a>, given
-   <var>request</var>'s <a for=request>current URL</a>.
-
-   <dt>Otherwise
-   <dd><p>Let <var>connection</var> be the result of
-   <a lt="obtain a connection">obtaining a connection</a>, given <var>networkPartitionKey</var>,
-   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>,
-   <var>includeCredentials</var>, and <var>forceNewConnection</var>.
-  </dl>
+ <li><p>Let <var>connection</var> be the result of
+ <a lt="obtain a connection">obtaining a connection</a>, given <var>networkPartitionKey</var>,
+ <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>,
+ <var>includeCredentials</var>, <var>forceNewConnection</var>, and with
+ <a for="obtain a connection"><i>dedicated</i></a> set to <var>dedicatedConnection</var>.
 
  <li>Set <var>timingInfo</var>'s <a for="fetch timing info">final connection timing info</a> to the
  result of calling <a>clamp and coarsen connection timing info</a> with <var>connection</var>'s
@@ -7423,32 +7415,6 @@ fetch("https://www.example.com/")
  handshake, then sets up a connection and transmits the handshake, and finally validates the
  response. Keep that in mind while reading these alterations.
 </div>
-
-
-<h3 id=websocket-connections>Connections</h3>
-
-<p>To <dfn id=concept-websocket-connection-obtain>obtain a WebSocket connection</dfn>, given a
-<var>url</var>, run these steps:
-
-<ol>
- <li><p>Let <var ignore>host</var> be <var>url</var>'s <a for=url>host</a>.
-
- <li><p>Let <var ignore>port</var> be <var>url</var>'s <a for=url>port</a>.
-
- <li><p>Let <var ignore>secure</var> be false, if <var>url</var>'s <a for=url>scheme</a> is
- "<code>http</code>", and true otherwise.
-
- <li><p>Follow the requirements stated in step 2 to 5, inclusive, of the first set of steps in
- <a href=http://tools.ietf.org/html/rfc6455#section-4.1>section 4.1</a> of The WebSocket Protocol
- to establish a <a lt="obtain a WebSocket connection">WebSocket connection</a>.
- [[!WSP]]
-
- <li><p>If that established a connection, return it, and return failure otherwise.
-</ol>
-
-<p class=note>Although structured a little differently, carrying different properties, and
-therefore not shareable, a WebSocket connection is very close to identical to an "ordinary"
-<a>connection</a>.
 
 
 <h3 id=websocket-opening-handshake>Opening handshake</h3>
