@@ -5337,16 +5337,12 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
  <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
- <li><p>Let <var>sizeAlgorithm</var> be an algorithm that accepts a <a>chunk</a> object and returns
- a non-negative, non-NaN, non-infinite number, chosen by the user agent.
-
  <li><p>Let <var>stream</var> be a <a>new</a> {{ReadableStream}}.
 
- <li><p><a for=ReadableStream>Set up</a> <var>stream</var> with
+ <li><p><a for=ReadableStream>Set up with byte reading support</a> <var>stream</var> with
  <a for="ReadableStream/set up"><var>pullAlgorithm</var></a> set to <var>pullAlgorithm</var>,
  <a for="ReadableStream/set up"><var>cancelAlgorithm</var></a> set to <var>cancelAlgorithm</var>,
- <a for="ReadableStream/set up"><var>highWaterMark</var></a> set to <var>highWaterMark</var>, and
- <a for="ReadableStream/set up"><var>sizeAlgorithm</var></a> set to <var>sizeAlgorithm</var>.
+ <a for="ReadableStream/set up"><var>highWaterMark</var></a> set to <var>highWaterMark</var>.
 
  <li>
   <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
@@ -5398,6 +5394,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <p>While true:
 
       <ol>
+       <li><p>User agents should use the <a for=ReadableStream>current requested number of bytes</a>
+       for <var>stream</var> to inform the transmission process about how many bytes are being
+       requested for this stream, if it is non-null.</p></li>
+
        <li>
         <p>If one or more bytes have been transmitted from <var>response</var>'s message body, then:
 
@@ -5423,8 +5423,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>If <var>bytes</var> is failure, then <a lt=terminated for=fetch>terminate</a> the
          ongoing fetch.
 
-         <li><p><a for=ReadableStream>Enqueue</a> a {{Uint8Array}} wrapping an {{ArrayBuffer}}
-         containing <var>bytes</var> into <var>stream</var>.
+         <li><p><a for=ReadableStream>Enqueue bytes</a> into <var>stream</var> given
+         <var>bytes</var>.
 
          <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
          <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
