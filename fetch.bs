@@ -7451,11 +7451,57 @@ fetch("https://www.example.com/")
  <li><p>Let <var ignore>secure</var> be false, if <var>url</var>'s <a for=url>scheme</a> is
  "<code>http</code>", and true otherwise.
 
- <li><p>Follow the requirements stated in step 2 to 5, inclusive, of the first set of steps in
- <a href=https://datatracker.ietf.org/doc/html/rfc6455#section-4.1>section 4.1</a> of The WebSocket
- Protocol to establish a <a lt="obtain a WebSocket connection">WebSocket connection</a>. [[!WSP]]
+ <li><p>If <var>host</var> is a domain and a proxy is not in use, then set <var>hosts</var> to the
+ results of resolving a domain with <var>key</var> and <var>host</var>.
 
- <li><p>If that established a connection, return it, and return failure otherwise.
+ <li><p>Otherwise, set <var>hosts</var> to « <var>host</var> ».
+
+<!-- TODO: Need to limit the total number of simultaneous pending connections for proxies. -->
+
+ <li><p>For each <var>host</var> in <var>hosts</var>,
+
+<!-- TODO: Happy eyeballs means we actually try IPv6 and IPv4 hosts in parallel. -->
+
+ <ol>
+  <li><p>If the user agent's connecting WebSocket connections[(<var>key</var>, <var>host</var>, <var>port</var>)] exists, then:
+
+  <ol>
+    <li><p>Let connectingWebSocketConnection be that connection.
+
+    <li><p>Wait for that connection to established or have failed. (Note: this removes it from the
+    map.)
+
+    <li><p>Wait an additional 10ms. (Note: this slows down denial-of-service attacks a bit without
+    significantly impacting legitimate use).
+    <!-- This is Chromium behaviour, not currently standardised -->.
+  </ol>
+
+  <li><p>Assert: the user agent's connecting WebSocket connections[(<var>key</var>, <var>host</var>,
+  <var>port</var>)] does not exist.
+
+  <li><p>Set the user agent's connecting WebSocket connections[(<var>key</var>, <var>host</var>,
+  <var>port</var>)] to the result of obtaining a connection with <a>network partition key</a>
+  <var>key</var>, <a for=connection>origin</a> <var>origin</var>, <var>credentials</var> set to
+  true, and <a>dedicated</a> set to true.
+
+<!-- TODO: Need to do the equivalent of section 4.1 step 3 for proxies.
+
+Note: Chromium and AFAIK other browsers don't obey this paragraph as they use "http" and "https"
+instead of "ws" and "wss" when executing proxy autoconfiguration scripts.
+
+       For the purpose of proxy autoconfiguration scripts, the URI to
+       pass the function MUST be constructed from /host/, /port/,
+       /resource name/, and the /secure/ flag using the definition of a
+       WebSocket URI as given in Section 3.
+
+-->
+
+  <li><p>If establishing connection failed with a TCP error, then remove (<var>key</var>,
+  <var>host</var>, <var>port</var>) from connecting WebSocket connections and <a>continue</a>.
+
+  <li><p>Otherwise, return the user agent's connecting WebSocket connections[(<var>key</var>,
+  <var>host</var>, <var>port</var>)].
+ </ol>
 </ol>
 
 <p class=note>Although structured a little differently, carrying different properties, and
@@ -7538,6 +7584,9 @@ therefore not shareable, a WebSocket connection is very close to identical to an
   steps:
 
   <ol>
+   <li><p>Remove (<var>key</var>, <var>host</var>, <var>port</var>) from connecting WebSocket
+   connections.
+
    <li><p>If <var>response</var> is a <a>network error</a> or its <a for=response>status</a> is not
    101, <a>fail the WebSocket connection</a>.
 
