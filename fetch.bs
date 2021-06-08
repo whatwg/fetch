@@ -7443,29 +7443,56 @@ fetch("https://www.example.com/")
 (<a for=/>network partition key</a>, <a for=/>host</a>, <a for=url>port</a>) to a
 <a for=/>set</a> of unique identifiers.
 
+<p>A user agent has an associated <dfn>total pending proxy WebSocket connections</dfn>, a
+<a for=/>map</a> of <a for=/>network partition key</a> to an integer, starting at 0.
+
 <p>To <dfn id=concept-websocket-connection-obtain>obtain a WebSocket connection</dfn>, given a
 <a>network partition key</a> <var>key</var>, <a for=/>origin</a> <var>origin</var>, and boolean
 <var>credentials</var>, run these steps:
 
 <ol>
- <li><p>Let <var>hosts</var> be the result of running resolve an origin given <var>key</var> and
- <var>origin</var>.
+ <li><p>Let <var>proxies</var> be the result of performing proxy resolution for <var>url</var> in an
+ <a>implementation-defined</a> manner. If a proxy preference order has not been explicitly
+ configured then socks proxies should be preferred to https proxies which should be preferred to
+ http proxies.
+
+ <!-- Since this depends on the url it probably needs to be hoisted out of this algorithm. -->
+
+ <p class=note>The scheme of the URL used in proxy autoconfiguration scripts has been converted from
+ "<code>ws</code>" or "<code>wss</code>" to "<code>http</code>" or "<code>https</code>". This
+ is an intentional violation of RFC6455 that is necessary for compatibility and security. [[!WSP]]
+
+ <li><p>Let <var>direct</var> be true if <var>proxies</var> contains "DIRECT", otherwise false.
+
+ <!-- If proxy.pac returns "PROXY example.com:3128; DIRECT" then we probably shouldn't look up the
+ host unless example.com:3128 fails, but it would make the algorithm even more complex. -->
+
+ <li><p>Let <var>hosts</var> be « <var>origin</var>'s host ».
+
+ <li><p>If <var>direct</var> is true, set <var>hosts</var> to the result of running resolve an
+ origin given <var>key</var> and <var>origin</var>.
  <!-- XXX xref depends on https://github.com/whatwg/fetch/pull/1245 -->
- <!-- TODO: Need to limit the total number of simultaneous pending connections for proxies. -->
 
  <li><p>Let <var>connection</var> be the result of running this step: run
  <a>inner obtain a WebSocket connection</a> given <var>key</var>, <var>origin</var>,
- <var>credentials</var>, and an <a>implementation-defined</a> <a for=/>host</a> from
+ <var>credentials</var>, <var>direct</var>, and an <a>implementation-defined</a> <a for=/>host</a> from
  <var>hosts</var> an <a>implementation-defined</a> number of times, <a>in parallel</a> from each
  other, and wait for at least 1 to return a value. In an <a>implementation-defined</a> manner,
  select a value to return from the returned values and return it.
 </ol>
 
 <p>To <dfn>inner obtain a WebSocket connection</dfn>, given a <a>network partition key</a>
-<var>key</var>, <a for=/>origin</a> <var>origin</var>, and boolean <var>credentials</var>, and
-<a for=/>host</a> <var>host</var>, run these steps:</p>
+<var>key</var>, <a for=/>origin</a> <var>origin</var>, boolean <var>credentials</var>,
+boolean <var>direct</var> and <a for=/>host</a> <var>host</var>, run these steps:</p>
 
 <ol>
+ <li><p>Let <var>totalMap</var> be the user agent's <a>total pending proxy WebSocket connections</a>.
+
+ <li><p>If <var>direct</var> is false, increment <var>totalMap</var>[<var>key</var>].
+
+ <li><p>If <var>totalMap</var>[<var>key</var>] exceeds an <a>implementation-defined</a> limit, wait
+ until <var>totalMap</var>[<var>key</var>] is less than equal to the limit.
+
  <li><p>Let <var>map</var> be the user agent's <a>connecting WebSocket connections</a>.
 
  <li><p>Let <var>mapKey</var> be
@@ -7481,11 +7508,13 @@ fetch("https://www.example.com/")
  <li><p>Wait until <var>map</var>[<var>mapKey</var>][0] is <var>identifier</var>.
 
  <li><p>Let <var>connection</var> be the result of <a>obtaining a connection</a> given
- <var>key</var>, <var>origin</var>, <var>credentials</var>, and XXX.
+ <var>key</var>, <var>origin</var>, <var>credentials</var>, and XXX. When an HTTP(S) proxy is in use
+ a tunnel must be established via the CONNECT method, even if the protocol is not secure.
  <!-- Need to grab an existing H/2 connection or force a H/1 connection. -->
 
  <li><p>If <var>connection</var> is failure, then <a for=map>remove</a>
- <var>map</var>[<var>mapKey</var>][0].
+ <var>map</var>[<var>mapKey</var>][0] and if <var>direct</var> is false decrement
+ <var>totalMap</var>[<var>key</var>].
 
  <li>
   <p>Otherwise, <a>in parallel</a>, run these steps:
@@ -7494,6 +7523,8 @@ fetch("https://www.example.com/")
    <li><p>Wait for either <a>fail the WebSocket connection</a> or
    <a>the WebSocket connection is established</a> to happen, or for this instance of
    <a>inner obtain a WebSocket connection</a> to be ignored.
+
+   <li>If <var>direct</var> is false, decrement <var>totalMap</var>[<var>key</var>].
 
    <li><p><a for=set>Remove</a> <var>identifier</var> from <var>map</var>[<var>mapKey</var>].
   </ol>
