@@ -2204,6 +2204,47 @@ unset or <a for=request>keepalive</a> is false, <a lt=terminated for=fetch>termi
 <a for="fetch group">fetch record</a>'s <a for="fetch record">fetch</a>.
 
 
+<h3 id=resolving-domains>Resolving domains</h3>
+
+<p tracking-vector>To <dfn>resolve a domain</dfn>, given a <a for=/>network partition key</a>
+<var>key</var> and a <a for=/>domain</a> <var>domain</var>, perform an <a>implementation-defined</a>
+operation to turn <var>domain</var> into a <a for=/>set</a> of one or more
+<a for=/>IP addresses</a>. If this operation succeeds, return the <a for=/>set</a> of
+<a for=/>IP addresses</a>. If it fails, return failure. The results of this operation may be cached.
+If they are cached, <var>key</var> should be used as part of the cache key.
+
+<div class=note>
+ <p>Typically this operation would involve DNS and as such caching can happen on DNS servers without
+ <var>key</var> being taken into account. Depending on the implementation it might also not be
+ possible to take <var>key</var> into account locally. [[RFC1035]]
+
+ <p>The order of the <a for=/>IP addresses</a> <a>resolve a domain</a> can return return can differ
+ between invocations.
+
+ <p>The particulars (apart from the cache key) are not tied down as they are not pertinent to the
+ system the Fetch Standard establishes. Other documents ought not to build on this primitive without
+ having a considered discussion with the Fetch Standard community first.
+</div>
+
+<p>To <dfn>resolve an origin</dfn>, given a <a for=/>network partition key</a> <var>key</var> and an
+<a for=/>origin</a> <var>origin</var>:
+<!-- Should we assert the scheme here to be an HTTP(S) scheme or a WebRTC scheme? -->
+
+<ol>
+ <li><p>If <var>origin</var>'s <a for=origin>host</a> is an <a for=/>IP address</a>, then return
+ « <var>origin</var>'s <a for=origin>host</a> ».
+
+ <li><p>If the user agent is configured to use a proxy that resolves domains on its own, then return
+ « <var>origin</var>'s <a for=origin>host</a> ».
+
+ <li><p>Return the result of running <a>resolve a domain</a> given <var>key</var> and
+ <var>origin</var>'s <a for=origin>host</a>.
+</ol>
+
+<p class=note>The same caveat applies. Do not build on this without having a considered discussion
+with the Fetch Standard community first.
+
+
 <h3 id=connections>Connections</h3>
 
 <p>A user agent has an associated <dfn export id=concept-connection-pool>connection pool</dfn>. A
@@ -2274,7 +2315,7 @@ steps:
 <hr>
 
 <p>To <dfn export id=concept-connection-obtain>obtain a connection</dfn>, given a
-<a>network partition key</a> <var>key</var>, <a for=/>origin</a>, <var>origin</var>, boolean
+<a>network partition key</a> <var>key</var>, <a for=/>origin</a> <var>origin</var>, boolean
 <var>credentials</var>, an optional boolean <var>forceNew</var> (default false), an optional boolean
 <dfn export for="obtain a connection"><var>http3Only</var></dfn> (default false), and an optional
 boolean <dfn export for="obtain a connection"><var>dedicated</var></dfn> (default false), run these
@@ -2298,40 +2339,33 @@ steps:
    <a>connection</a>.
   </ol>
 
- <li><p>Let <var>connection</var> be null.
+ <li><p>Let <var>timingInfo</var> be a new <a for=/>connection timing info</a>.
+
+ <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">domain lookup start time</a> to
+ the <a for=/>unsafe shared current time</a>.
+
+ <li><p>Let <var>hosts</var> be the result of running <a>resolve an origin</a> given <var>key</var>
+ and <var>origin</var>.
+
+ <li><p>If <var>hosts</var> is failure, then return failure.
+
+ <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">domain lookup end time</a> to
+ the <a for=/>unsafe shared current time</a>.
 
  <li>
-  <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+  <p>Let <var>connection</var> be the result of running this step: run <a>create a connection</a>
+  given <var>key</var>, <var>origin</var>, <var>credentials</var>, an <a>implementation-defined</a>
+  <a for=/>host</a> from <var>hosts</var>, <var>timingInfo</var>, and <var>http3Only</var> an
+  <a>implementation-defined</a> number of times, <a>in parallel</a> from each other, and wait for at
+  least 1 to return a value. In an <a>implementation-defined</a> manner, select a value to return
+  from the returned values and return it. Any other returned values that are <a>connections</a> may
+  be closed.
 
-  <ol>
-   <li>
-    <p>Set <var>connection</var> to a new <a for=/>connection</a> whose <a for=connection>key</a> is
-    <var>key</var>, <a for=connection>origin</a> is <var>origin</var>, and
-    <a for=connection>credentials</a> is <var>credentials</var>.
-    <a for=/>Record connection timing info</a> given <var>connection</var> and use
-    <var>connection</var> to establish an HTTP connection to <var>origin</var>.
-    [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]] [[!TLS]]
+  <p class=note>Essentially this allows an implementation to pick one or more
+  <a for=/>IP addresses</a> from the return value of <a>resolve a domain</a> (assuming no proxy) and
+  race them against each other, favor <a for=/>IPv6 addresses</a>, retry in case of a timeout, etc.
 
-    <p>If <var>http3Only</var> is true, then establish an HTTP/3 connection. [[!HTTP3]]
-
-    <p>When establishing an HTTP/3 connection, include SETTINGS_ENABLE_WEBTRANSPORT with a value of
-    1 and H3_DATAGRAM with a value of 1 in the initial SETTINGS frame. [[!WEBTRANSPORT-HTTP3]]
-    [[!HTTP3-DATAGRAM]]
-
-    <p>If <var>credentials</var> is false, then do <em>not</em> send a TLS client certificate.
-
-    <p>If establishing a connection does not succeed (e.g., a DNS, TCP, or TLS error), then return
-    failure.
-  </ol>
-
- <li>
-  <p><a>If aborted</a>, then:
-
-  <ol>
-   <li><p>If <var>connection</var> is not null, then close <var>connection</var>.
-
-   <li><p>Return failure.
-  </ol>
+ <li><p>If <var>connection</var> is failure, then return failure.
 
  <li><p>If <var>dedicated</var> is false, then <a for=set>append</a> <var>connection</var> to the
  user agent's <a>connection pool</a>.
@@ -2339,14 +2373,69 @@ steps:
  <li><p>Return <var>connection</var>.
 </ol>
 
-<p class="note no-backref">This is intentionally a little vague as the finer points are still
-evolving. Describing this helps explain the <code>&lt;link rel=preconnect></code> feature and
-clearly stipulates that <a>connections</a> are keyed on
-<b>credentials</b>. The latter clarifies that e.g., TLS session identifiers are not reused across
-<a>connections</a> whose <b>credentials</b> are false with
-<a>connections</a> whose <b>credentials</b> are true.
-<!-- See https://github.com/whatwg/fetch/issues/114#issuecomment-143500095 for when we make
-     WebSocket saner -->
+<p class=note>This is intentionally a little vague as there are a lot of nuances to connection
+management that are best left to the discretion of implementers. Describing this helps explain the
+<code>&lt;link rel=preconnect></code> feature and clearly stipulates that <a>connections</a> are
+keyed on <a for=/>credentials</a>. The latter clarifies that, e.g., TLS session identifiers are not
+reused across <a>connections</a> whose <a for=connection>credentials</a> are false with
+<a>connections</a> whose <a for=connection>credentials</a> are true.
+
+<hr>
+
+<p>To <dfn>create a connection</dfn>, given a <a for=/>network partition key</a> <var>key</var>,
+<a for=/>origin</a> <var>origin</var>, boolean <var>credentials</var>, <a for=/>host</a>
+<var>host</var>, <a for=/>connection timing info</a> <var>timingInfo</var>, and boolean
+<var>http3Only</var>, run these steps:
+
+<ol>
+ <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">connection start time</a> to the
+ <a for=/>unsafe shared current time</a>.
+
+ <li>
+  <p>Let <var>connection</var> be a new <a for=/>connection</a> whose <a for=connection>key</a> is
+  <var>key</var>, <a for=connection>origin</a> is <var>origin</var>,
+  <a for=connection>credentials</a> is <var>credentials</var>, and <a for=connection>timing info</a>
+  is <var>timingInfo</var>. <a for=/>Record connection timing info</a> given <var>connection</var>
+  and use <var>connection</var> to establish an HTTP connection to <var>host</var>, taking
+  <var>origin</var> into account. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]]
+  [[!HTTP-AUTH]] [[!TLS]]
+
+  <p>If <var>http3Only</var> is true, then establish an HTTP/3 connection. [[!HTTP3]]
+
+  <p>When establishing an HTTP/3 connection, include SETTINGS_ENABLE_WEBTRANSPORT with a value of 1
+  and H3_DATAGRAM with a value of 1 in the initial SETTINGS frame. [[!WEBTRANSPORT-HTTP3]]
+  [[!HTTP3-DATAGRAM]]
+
+  <p>If <var>credentials</var> is false, then do <em>not</em> send a TLS client certificate.
+
+  <p>If establishing a connection does not succeed (e.g., a TCP or TLS error), then return failure.
+
+ <li>
+  <p>Set <var>timingInfo</var>'s <a for="connection timing info">ALPN negotiated protocol</a> to
+  <var>connection</var>'s ALPN Protocol ID, with the following caveats: [[RFC7301]]
+
+  <ul>
+   <li><p>When a proxy is configured, if a tunnel connection is established then this must be the
+   ALPN Protocol ID of the tunneled protocol, otherwise it must be the ALPN Protocol ID of the first
+   hop to the proxy.
+
+   <li>
+    <p>In case the user agent is using an experimental, non-registered protocol, the user agent must
+    use the used ALPN Protocol ID, if any. If ALPN was not used for protocol negotiations, the user
+    agent may use another descriptive string.
+
+    <p class=note><var>timingInfo</var>'s
+    <a for="connection timing info">ALPN negotiated protocol</a> is intended to identify the network
+    protocol in use regardless of how it was actually negotiated; that is, even if ALPN is not used
+    to negotiate the network protocol, this is the ALPN Protocol IDs that indicates the protocol in
+    use.
+  </ul>
+
+  <p class=note>IANA maintains a
+  <a href="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">list of ALPN Protocol IDs</a>.
+
+ <li><p>Return <var>connection</var>.
+</ol>
 
 <hr>
 
@@ -2355,18 +2444,6 @@ clearly stipulates that <a>connections</a> are keyed on
 <a for=connection>timing info</a> and observe these requirements:
 
 <ul>
- <li><p><var>timingInfo</var>'s <a for="connection timing info">domain lookup start time</a>
- should be the <a for=/>unsafe shared current time</a> immediately before starting the domain
- lookup, or beginning retrieval of the information from cache.
-
- <li><p><var>timingInfo</var>'s <a for="connection timing info">domain lookup end time</a> should
- be the <a for=/>unsafe shared current time</a> immediately after finishing the domain lookup, or
- retrieving the information from cache.
-
- <li><p><var>timingInfo</var>'s <a for="connection timing info">connection start time</a> should
- be the <a for=/>unsafe shared current time</a> immediately before establishing the connection to
- the server or proxy.
-
  <li>
   <p><var>timingInfo</var>'s <a for="connection timing info">connection end time</a> should be the
   <a for=/>unsafe shared current time</a> immediately after establishing the connection to the
@@ -2401,30 +2478,6 @@ clearly stipulates that <a>connections</a> are keyed on
  <a for="connection timing info">secure connection start time</a> should be the result of calling
  <a for=/>unsafe shared current time</a> immmediately before starting the handshake process to
  secure <var>connection</var>. [[!TLS]]
-
- <li>
-  <p><var>timingInfo</var>'s <a for="connection timing info">ALPN negotiated protocol</a> should be
-  the <var>connection</var>'s ALPN Protocol ID, with the following caveats: [[RFC7301]]
-
-  <ul>
-   <li><p>When a proxy is configured, if a tunnel connection is established then this must be the
-   ALPN Protocol ID of the tunneled protocol, otherwise it must be the ALPN Protocol ID of the first
-   hop to the proxy.
-
-   <li>
-    <p>In case the user agent is using an experimental, non-registered protocol, the user agent must
-    use the used ALPN Protocol ID, if any. If ALPN was not used for protocol negotiations, the user
-    agent may use another descriptive string.
-
-    <p class=note><var>timingInfo</var>'s
-    <a for="connection timing info">ALPN negotiated protocol</a> is intended to identify the network
-    protocol in use regardless of how it was actually negotiated; that is, even if ALPN is not used
-    to negotiate the network protocol, this is the ALPN Protocol IDs that indicates the protocol in
-    use.
-  </ul>
-
-  <p class=note>IANA maintains a
-  <a href="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids">list of ALPN Protocol IDs</a>.
 </ul>
 
 <p class=note>The <a for=/>clamp and coarsen connection timing info</a> algorithm ensures that
