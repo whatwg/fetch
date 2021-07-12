@@ -5397,9 +5397,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <p>While true:
 
       <ol>
-       <li><p>User agents should use the <a for=ReadableStream>current requested number of bytes</a>
-       for <var>stream</var> to inform the transmission process about how many bytes are being
-       requested for this stream, if it is non-null.
+       <li><p>If <var>stream</var>'s <a for=ReadableStream>current BYOB request view</a> is
+       non-null, then user agents should use its <a for=BufferSource>byte length</a> to inform the
+       transmission process about how many bytes are being requested for this stream.
 
        <li>
         <p>If one or more bytes have been transmitted from <var>response</var>'s message body, then:
@@ -5426,8 +5426,20 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>If <var>bytes</var> is failure, then <a lt=terminated for=fetch>terminate</a> the
          ongoing fetch.
 
+         <li><p>Let <var>view</var> be null.
+
+         <li><p>If <var>stream</var>'s <a for=ReadableStream>current BYOB request view</a> is
+         non-null, and <var>bytes</var>'s <a for="byte sequence">length</a> is less than
+         <var>stream</var>'s <a for=ReadableStream>current BYOB request view</a>'s
+         <a for=BufferSource>byte length</a>, then set <var>view</var> to <var>stream</var>'s
+         <a for=ReadableStream>current BYOB request view</a>, and <a for=ArrayBufferView>write</a>
+         <var>bytes</var> into <var>view</var>.
+
+         <li><p>Otherwise, set <var>view</var> to the result of <a for=ArrayBufferView>creating</a>
+         a {{Uint8Array}} from <var>bytes</var>.
+
          <li><p><a for=ReadableStream>Enqueue bytes</a> into <var>stream</var> given
-         <var>bytes</var>.
+         <var>view</var>.
 
          <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
          <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
