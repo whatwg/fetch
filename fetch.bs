@@ -5334,16 +5334,15 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
  <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
- <li><p>Let <var>sizeAlgorithm</var> be an algorithm that accepts a <a>chunk</a> object and returns
- a non-negative, non-NaN, non-infinite number, chosen by the user agent.
-
  <li><p>Let <var>stream</var> be a <a>new</a> {{ReadableStream}}.
 
- <li><p><a for=ReadableStream>Set up</a> <var>stream</var> with
- <a for="ReadableStream/set up"><var>pullAlgorithm</var></a> set to <var>pullAlgorithm</var>,
- <a for="ReadableStream/set up"><var>cancelAlgorithm</var></a> set to <var>cancelAlgorithm</var>,
- <a for="ReadableStream/set up"><var>highWaterMark</var></a> set to <var>highWaterMark</var>, and
- <a for="ReadableStream/set up"><var>sizeAlgorithm</var></a> set to <var>sizeAlgorithm</var>.
+ <li><p><a for=ReadableStream>Set up with byte reading support</a> <var>stream</var> with
+ <a for="ReadableStream/set up with byte reading support"><var>pullAlgorithm</var></a> set to
+ <var>pullAlgorithm</var>,
+ <a for="ReadableStream/set up with byte reading support"><var>cancelAlgorithm</var></a> set to
+ <var>cancelAlgorithm</var>, and
+ <a for="ReadableStream/set up with byte reading support"><var>highWaterMark</var></a> set to
+ <var>highWaterMark</var>.
 
  <li>
   <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
@@ -5395,6 +5394,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <p>While true:
 
       <ol>
+       <li><p>If <var>stream</var>'s <a for=ReadableStream>current BYOB request view</a> is
+       non-null, then user agents should use its <a for=BufferSource>byte length</a> to inform the
+       transmission process about how many bytes are being requested for this stream.
+
        <li>
         <p>If one or more bytes have been transmitted from <var>response</var>'s message body, then:
 
@@ -5420,8 +5423,19 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>If <var>bytes</var> is failure, then <a lt=terminated for=fetch>terminate</a> the
          ongoing fetch.
 
-         <li><p><a for=ReadableStream>Enqueue</a> a {{Uint8Array}} wrapping an {{ArrayBuffer}}
-         containing <var>bytes</var> into <var>stream</var>.
+         <li><p>Let <var>view</var> be null.
+
+         <li><p>If <var>stream</var>'s <a for=ReadableStream>current BYOB request view</a> is
+         non-null, and <var>bytes</var>'s <a for="byte sequence">length</a> is less than
+         <var>stream</var>'s <a for=ReadableStream>current BYOB request view</a>'s
+         <a for=BufferSource>byte length</a>, then set <var>view</var> to <var>stream</var>'s
+         <a for=ReadableStream>current BYOB request view</a>, and <a for=ArrayBufferView>write</a>
+         <var>bytes</var> into <var>view</var>.
+
+         <li><p>Otherwise, set <var>view</var> to the result of <a for=ArrayBufferView>creating</a>
+         a {{Uint8Array}} from <var>bytes</var>.
+
+         <li><p><a for=ReadableStream>Enqueue</a> <var>view</var> into <var>stream</var>.
 
          <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
          <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
