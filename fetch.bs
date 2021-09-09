@@ -2244,9 +2244,6 @@ be used as part of the cache key.
  <li><p>If <var>origin</var>'s <a for=origin>host</a> is an <a for=/>IP address</a>, then return
  « <var>origin</var>'s <a for=origin>host</a> ».
 
- <li><p>If the user agent is configured to use a proxy that resolves domains on its own, then return
- « <var>origin</var>'s <a for=origin>host</a> ».
-
  <li><p>Return the result of running <a>resolve a domain</a> given <var>key</var> and
  <var>origin</var>'s <a for=origin>host</a>.
 </ol>
@@ -2324,23 +2321,25 @@ steps:
 
 <hr>
 
+<p>A <dfn>new connection setting</dfn> is "<code>no</code>", "<code>yes</code>", or
+"<code>yes-and-dedicated</code>".
+
 <p>To <dfn export id=concept-connection-obtain>obtain a connection</dfn>, given a
-<a>network partition key</a> <var>key</var>, <a for=/>origin</a> <var>origin</var>, boolean
-<var>credentials</var>, an optional boolean <var>forceNew</var> (default false), an optional boolean
-<dfn export for="obtain a connection"><var>http3Only</var></dfn> (default false), and an optional
-boolean <dfn export for="obtain a connection"><var>dedicated</var></dfn> (default false), run these
-steps:
-<!-- http3Only and dedicated have been added for WebTransport -->
+<a>network partition key</a> <var>key</var>, <a for=/>URL</a> <var>url</var>, boolean
+<var>credentials</var>, an optional <a>new connection setting</a> <var>new</var> (default
+"<code>no</code>"), and an optional boolean
+<dfn export for="obtain a connection"><var>http3Only</var></dfn> (default false), run these steps:
+<!-- new's "yes-and-dedicated" and http3Only have been added for WebTransport -->
 
 <ol>
  <li>
-  <p>If <var>forceNew</var> is false or <var>dedicated</var> is false, then:
+  <p>If <var>new</var> is "<code>no</code>", then:
 
   <ol>
    <li><p>Let <var>connections</var> be a set of <a>connections</a> in the user agent's
    <a>connection pool</a> whose <a for=connection>key</a> is <var>key</var>,
-   <a for=connection>origin</a> is <var>origin</var>, and <a for=connection>credentials</a> is
-   <var>credentials</var>.
+   <a for=connection>origin</a> is <var>url</var>'s <a for=url>origin</a>, and
+   <a for=connection>credentials</a> is <var>credentials</var>.
 
    <li><p>If <var>connections</var> is not empty and <var>http3Only</var> is false, then return
    one of <var>connections</var>.
@@ -2349,38 +2348,59 @@ steps:
    <a>connection</a>.
   </ol>
 
+ <li>
+  <p>Let <var>proxies</var> be the result of finding proxies for <var>url</var> in an
+  <a>implementation-defined</a> manner. If there are no proxies, let <var>proxies</var> be
+  « "<code>DIRECT</code>" ».
+
+  <p class=note>This is where non-standard technology such as
+  <a href="https://en.wikipedia.org/wiki/Web_Proxy_Auto-Discovery_Protocol">Web Proxy Auto-Discovery Protocol (WPAD)</a>
+  and <a href="https://en.wikipedia.org/wiki/Proxy_auto-config">proxy auto-config (PAC)</a> come
+  into play. The "<code>DIRECT</code>" value means to not use a proxy for this particular
+  <var>url</var>.
+
  <li><p>Let <var>timingInfo</var> be a new <a for=/>connection timing info</a>.
 
- <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">domain lookup start time</a> to
- the <a for=/>unsafe shared current time</a>.
-
- <li><p>Let <var>hosts</var> be the result of running <a>resolve an origin</a> given <var>key</var>
- and <var>origin</var>.
-
- <li><p>If <var>hosts</var> is failure, then return failure.
-
- <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">domain lookup end time</a> to
- the <a for=/>unsafe shared current time</a>.
-
  <li>
-  <p>Let <var>connection</var> be the result of running this step: run <a>create a connection</a>
-  given <var>key</var>, <var>origin</var>, <var>credentials</var>, an <a>implementation-defined</a>
-  <a for=/>host</a> from <var>hosts</var>, <var>timingInfo</var>, and <var>http3Only</var> an
-  <a>implementation-defined</a> number of times, <a>in parallel</a> from each other, and wait for at
-  least 1 to return a value. In an <a>implementation-defined</a> manner, select a value to return
-  from the returned values and return it. Any other returned values that are <a>connections</a> may
-  be closed.
+  <p><a for=list>For each</a> <var>proxy</var> of <var>proxies</var>:
 
-  <p class=note>Essentially this allows an implementation to pick one or more
-  <a for=/>IP addresses</a> from the return value of <a>resolve a domain</a> (assuming no proxy) and
-  race them against each other, favor <a for=/>IPv6 addresses</a>, retry in case of a timeout, etc.
+  <ol>
+   <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">domain lookup start time</a>
+   to the <a for=/>unsafe shared current time</a>.
 
- <li><p>If <var>connection</var> is failure, then return failure.
+   <li><p>Let <var>hosts</var> be « <var>origin</var>'s <a for=origin>host</a> ».
 
- <li><p>If <var>dedicated</var> is false, then <a for=set>append</a> <var>connection</var> to the
- user agent's <a>connection pool</a>.
+   <li><p>If <var>proxy</var> is "<code>DIRECT</code>", then set <var>hosts</var> to the result of
+   running <a>resolve an origin</a> given <var>key</var> and <var>url</var>'s <a for=url>origin</a>.
 
- <li><p>Return <var>connection</var>.
+   <li><p>If <var>hosts</var> is failure, then <a for=iteration>continue</a>.
+
+   <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">domain lookup end time</a> to
+   the <a for=/>unsafe shared current time</a>.
+
+   <li>
+    <p>Let <var>connection</var> be the result of running this step: run <a>create a connection</a>
+    given <var>key</var>, <var>url</var>'s <a for=url>origin</a>, <var>credentials</var>,
+    <var>proxy</var>, an <a>implementation-defined</a> <a for=/>host</a> from <var>hosts</var>,
+    <var>timingInfo</var>, and <var>http3Only</var> an <a>implementation-defined</a> number of
+    times, <a>in parallel</a> from each other, and wait for at least 1 to return a value. In an
+    <a>implementation-defined</a> manner, select a value to return from the returned values and
+    return it. Any other returned values that are <a>connections</a> may be closed.
+
+    <p class=note>Essentially this allows an implementation to pick one or more
+    <a for=/>IP addresses</a> from the return value of <a>resolve a domain</a> (assuming
+    <var>proxy</var> is "<code>DIRECT</code>") and race them against each other, favor
+    <a for=/>IPv6 addresses</a>, retry in case of a timeout, etc.
+
+   <li><p>If <var>connection</var> is failure, then <a for=iteration>continue</a>.
+
+   <li><p>If <var>new</var> is not "<code>yes-and-dedicated</code>", then <a for=set>append</a>
+   <var>connection</var> to the user agent's <a>connection pool</a>.
+
+   <li><p>Return <var>connection</var>.
+  </ol>
+
+ <li><p>Return failure.
 </ol>
 
 <p class=note>This is intentionally a little vague as there are a lot of nuances to connection
@@ -2393,9 +2413,9 @@ reused across <a>connections</a> whose <a for=connection>credentials</a> are fal
 <hr>
 
 <p>To <dfn>create a connection</dfn>, given a <a for=/>network partition key</a> <var>key</var>,
-<a for=/>origin</a> <var>origin</var>, boolean <var>credentials</var>, <a for=/>host</a>
-<var>host</var>, <a for=/>connection timing info</a> <var>timingInfo</var>, and boolean
-<var>http3Only</var>, run these steps:
+<a for=/>origin</a> <var>origin</var>, boolean <var>credentials</var>, string <var>proxy</var>,
+<a for=/>host</a> <var>host</var>, <a for=/>connection timing info</a> <var>timingInfo</var>, and
+boolean <var>http3Only</var>, run these steps:
 
 <ol>
  <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">connection start time</a> to the
@@ -2407,8 +2427,8 @@ reused across <a>connections</a> whose <a for=connection>credentials</a> are fal
   <a for=connection>credentials</a> is <var>credentials</var>, and <a for=connection>timing info</a>
   is <var>timingInfo</var>. <a for=/>Record connection timing info</a> given <var>connection</var>
   and use <var>connection</var> to establish an HTTP connection to <var>host</var>, taking
-  <var>origin</var> into account. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]]
-  [[!HTTP-AUTH]] [[!TLS]]
+  <var>proxy</var> and <var>origin</var> into account. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]]
+  [[!HTTP-CACHING]] [[!HTTP-AUTH]] [[!TLS]]
 
   <p>If <var>http3Only</var> is true, then establish an HTTP/3 connection. [[!HTTP3]]
 
@@ -5155,6 +5175,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Let <var>networkPartitionKey</var> be the result of
  <a for=request>determining the network partition key</a> given <var>request</var>.
 
+ <li><p>Let <var>newConnection</var> be "<code>yes</code>" if <var>forceNewConnection</var> is true;
+ otherwise "<code>no</code>".
+
  <li>
   <p>Switch on <var>request</var>'s <a for=request>mode</a>:
 
@@ -5167,8 +5190,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
    <dt>Otherwise
    <dd><p>Let <var>connection</var> be the result of
    <a lt="obtain a connection">obtaining a connection</a>, given <var>networkPartitionKey</var>,
-   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a>,
-   <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+   <var>request</var>'s <a for=request>current URL</a>, <var>includeCredentials</var>, and
+   <var>newConnection</var>.
   </dl>
 
  <li>
