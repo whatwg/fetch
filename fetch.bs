@@ -825,6 +825,9 @@ fetch("https://victim.example/naïve-endpoint", {
 </code></pre>
     </div>
 
+   <dt>`<code>Range</code>`
+   <dd><p>If <var>value</var> is not a <a>simple range header value</a>, then return false.
+
    <dt>Otherwise
    <dd><p>Return false.
   </dl>
@@ -1037,6 +1040,75 @@ run these steps:
 
  <li><p>Return <var>values</var>.
 </ol>
+
+<p>To determine if a <a>byte sequence</a> <var>value</var> is a
+<dfn>simple range header value</dfn>, perform the following steps. They return a <a>boolean</a>.
+
+<ol>
+ <li><p>If <var>value</var> does not <a for="byte sequence" lt="starts with">start with</a>
+ `<code>bytes </code>`, then return false.
+
+ <li><p>If the 6th <a>byte</a> of <var>value</var> is not in the range 0x30 (0) to 0x39 (9),
+ inclusive, then return false.
+
+ <li><p>Let <var>rangeStartBytes</var> be the 6th <a>byte</a> of <var>value</var>.
+
+ <li><p>Let <var>rangeEndBytes</var> be an empty <a>byte sequence</a>.
+
+ <li><p>Let <var>state</var> be "<code>rangeStart</code>".
+
+ <li><p>Let <var>i</var> be 7.
+
+ <li>
+  <p>While <var>i</var> is less than <var>value</var>'s <a for="byte sequence">length</a>:
+
+  <ol>
+   <li>
+    <p>Switch on <var>state</var>:
+
+    <dl class="switch">
+     <dt>"<code>rangeStart</code>"
+     <dd>
+      <ol>
+       <li><p>If the <var>i</var>th <a>byte</a> of <var>value</var> is 0x2D (-), then set
+       <var>state</var> to "<code>rangeEnd</code>".
+
+       <li>
+        <p>Otherwise:
+
+        <ol>
+         <li><p>If the <var>i</var>th <a>byte</a> of <var>value</var> is not in the range 0x30 (0)
+         to 0x39 (9), inclusive, then return false.
+
+         <li><p>Append the <var>i</var>th <a>byte</a> of <var>value</var> to
+         <var>rangeStartBytes</var>.
+        </ol>
+      </ol>
+
+     <dt>"<code>rangeEnd</code>"
+     <dd>
+      <ol>
+       <li><p>If the <var>i</var>th <a>byte</a> of <var>value</var> is not in the range 0x30 (0) to
+       0x39 (9), inclusive, then return false.
+
+       <li><p>Append the <var>i</var>th <a>byte</a> of <var>value</var> to <var>rangeEndBytes</var>.
+      </ol>
+    </dl>
+
+    <li><p>Increment <var>i</var>.
+  </ol>
+
+ <li>If <var>rangeEndBytes</var>'s <a for="byte sequence">length</a> is 0, then return true.
+
+ <li><p>If <var>rangeStartBytes</var>, parsed as an integer, is greater than
+ <var>rangeEndBytes</var>, parsed as an integer, then return false.
+
+ <li><p>Return true.
+</ol>
+
+<p class="note">A <a>simple range header value</a> is a subset of allowed range header values, but
+it's the most common form used by user agents when requesting media or resuming downloads. This
+format of range header value can be set using <a>add a range header</a>.
 
 <hr>
 
