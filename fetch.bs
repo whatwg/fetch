@@ -7828,6 +7828,62 @@ resource — for non-<a>CORS requests</a> as well as <a>CORS
 requests</a> — and do not use `<code>Vary</code>`.
 
 
+<h2 id=fetch-elsewhere class=no-num>Fetch elsewhere</h2>
+
+<p>In its essence <a for=/>fetching</a> is an exchange of a <a for=/>request</a> for a
+<a for=/>response</a>. In reality it is rather complex mechanism for standards to adopt and use
+correctly. This section aims to give some advice.
+
+<p class=warning>Always ask domain experts for review.
+
+<p class=XXX>This is a work in progress.
+
+
+<h3 id=fetch-elsewhere-fetch class=no-num>Invoking fetch</h3>
+
+<p>Aside from a <a for=/>request</a> the <a for=/>fetch</a> operation takes several optional
+arguments. For those arguments that take an algorithm: the algorithm will be called from a task (or
+in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is true).
+
+<dl>
+ <dt><a for=fetch><i>processRequestBody</i></a>
+ <dd><p>Takes an algorithm that will be passed the number of bytes that have been transmitted from
+ the <a for=/>request</a>'s <a for=request>body</a>. Most standards will not need this.
+
+ <dt><a for=fetch><i>processRequestEndOfBody</i></a>
+ <dd><p>Takes an algorithm that will be passed nothing. Indicates <a for=/>request</a>'s
+ <a for=request>body</a> has been transmitted. Most standards will not need this.
+
+ <dt><a for=fetch><i>processResponse</i></a>
+ <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates
+ <a for=/>response</a>'s <a for=response>header list</a> has been transmitted and initialized. This
+ is primarily useful for standards that want to operate on <a for=/>response</a>'s
+ <a for=response>body</a>'s <a for=body>stream</a> directly.
+
+ <dt><a for=fetch><i>processResponseEndOfBody</i></a>
+ <dd>
+  <p>Takes an algorithm that will be passed a <a for=/>response</p> and null, failure, or a
+  <a>byte sequence</a>. This is useful for standards that wish to operate on the entire
+  <a for=/>response</a>'s <a for=response>body</a>, of which the result of reading it is supplied as
+  second argument.
+
+  <p>It might be surprising that a <a for=/>network error</a> will have null as second argument.
+
+  <p class=warning>A standard that uses this argument cannot operate on <a for=/>response</a>'s
+  <a for=response>body</a> itself as providing this argument will cause it to be read and it can be
+  read only once.
+
+ <dt><a for=fetch><i>processResponseDone</i></a>
+ <dd><p>Takes an algorithm that will be passed a <a for=/>response</p>. Indicates the network is
+ done transmitting the response. This does not read <a for=/>response</a>'s
+ <a for=response>body</a>.
+
+ <dt><a for=fetch><i>useParallelQueue</i></a>
+ <dd><p>Takes a <a for=/>boolean</a>. Indicates where the algorithms passed as arguments will be
+ invoked. Hopefully most standards will not need this.
+</dl>
+
+
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
 
 <p>Thanks to
