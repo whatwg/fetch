@@ -203,6 +203,8 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dd>Null, a <a for=/>global object</a>, or a <a for=/>parallel queue</a>.
 
  <dt><dfn for="fetch params">cross-origin isolated capability</dfn> (default false)
+ <dt><dfn for="fetch params">ready for clients</dfn> (default false).
+ <dt><dfn for="fetch params">network read complete</dfn> (default false).
  <dd>A boolean.
 
  <dt><dfn for="fetch params">timing info</dfn>
@@ -4194,6 +4196,27 @@ steps:
 <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
+ <li>
+  <p>If <var>response</var> is a <a>network error</a>, then:
+
+  <ol>
+   <li>
+    <p>Set <var>response</var>'s <a for=response>URL list</a> to « <var>fetchParams</var>'s
+    <a for="fetch params">request</a>'s <a for=request>URL list</a> ≫.
+
+    <p class=note>This is needed as after <a for=list>cloning</a> <var>fetchParams</var>'s
+    <a for="fetch params">request</a>'s <a for=request>URL list</a> earlier, <var>response</var>
+    might have been set to a <a>network error</a>.</p>
+   </li>
+
+   <li><p>Set <var>response</var>'s <a for=response>timing info</a> to the result of
+   <a>creating an opaque timing info</a> for <var>fetchParams</var>'s
+   <a for="fetch params">timing info</a>.</p></li>
+
+   <li><p>Set <var>fetchParams</var>'s <a for="fetch params">network read complete</a> to true.
+  </ol>
+ </li>
+
  <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response</a> is non-null, then
  <a>queue a fetch task</a> to run <var>fetchParams</var>'s
  <a for="fetch params">process response</a> given <var>response</var>, with <var>fetchParams</var>'s
@@ -4219,19 +4242,43 @@ steps:
    <var>processBody</var>, <var>processBodyError</var>, and <var>fetchParams</var>'s
    <a for="fetch params">task destination</a>.
   </ol>
+ </li>
+
+ <li>
+  <p><a>Queue a fetch task</a> to run the following steps with <var>fetchParams</var>'s
+  <a for="fetch params">task destination</a>:</p>
+
+  <ol>
+   <li><p>Set <var>fetchParams</var>'s <a for="fetch params">ready for clients</a> to true.</p></li>
+
+   <li><p><a>Finalize response</a> given <var>fetchParams</var> and <var>response</var>.</p></li>
+  </ol>
+</ol>
+
+<p>To <dfn>fetch network finale</dfn> given a <a for=/>fetch params</a> <var>fetchParams</var>
+and a <a for=/>response</a> <var>response</var>, <a>queue a fetch task</a>
+with to run the following steps with <var>fetchParams</var>'s
+<a for="fetch params">task destination</a>:</p>
+
+<ol>
+ <li><p>Set <var>fetchParams</var>'s <a for="fetch params">network read complete</a>.</p></li>
+
+ <li><p><a>Finalize response</a> given <var>fetchParams</var> and <var>response</var>.</p></li>
 </ol>
 
 <p>To <dfn>finalize response</dfn> given a <a for=/>fetch params</a> <var>fetchParams</var> and a
 <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
+ <li><p>If<var>fetchParams</var>'s <a for="fetch params">ready for clients</a> is false or
+ <var>fetchParams</var>'s <a for="fetch params">network read complete</a> is false, return.</p></li>
+
  <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
  <a for=request>done flag</a>.
 
  <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response done</a> is not null,
- then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
- <a for="fetch params">process response done</a> given <var>response</var>,
- with <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
+ then run <var>fetchParams</var>'s <a for="fetch params">process response done</a> with
+ <var>response</var>.
 </ol>
 
 <p>To <dfn export>finalize and report timing</dfn> given a <a for=/>response</a>
@@ -5580,7 +5627,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
        <li><p>Otherwise, if the bytes transmission for <var>response</var>'s message body is done
        normally and <var>stream</var> is <a for=ReadableStream>readable</a>, then
-       <a for=ReadableStream>close</a> <var>stream</var>, <a for=/>finalize response</a> for
+       <a for=ReadableStream>close</a> <var>stream</var>, run <a for=/>fetch network finale</a> for
        <var>fetchParams</var> and <var>response</var>, and abort these in-parallel steps.
       </ol>
     </ol>
@@ -5589,7 +5636,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <p><a>If aborted</a>, then:
 
     <ol>
-     <li><a for=/>Finalize response</a> for <var>fetchParams</var> and <var>response</var>.
+     <li>Run <a for=/>fetch network finale</a> for <var>fetchParams</var> and <var>response</var>.
 
      <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
