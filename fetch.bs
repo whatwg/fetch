@@ -116,6 +116,12 @@ spec:websockets; type:attribute; text:bufferedAmount; for:WebSocket
         "href": "https://datatracker.ietf.org/doc/html/draft-ietf-masque-h3-datagram",
         "publisher": "IETF",
         "title": "Using QUIC Datagrams with HTTP/3"
+    },
+    "SVCB": {
+        "authors": ["Ben Schwartz", "Mike Bishop", "Erik Nygren"],
+        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-svcb-https",
+        "publisher": "IETF",
+        "title": "Service binding and parameter specification via the DNS (DNS SVCB and HTTPS RRs)"
     }
 }
 </pre>
@@ -2341,8 +2347,15 @@ be used as part of the cache key.
  <var>origin</var>'s <a for=origin>host</a>.
 </ol>
 
-<p class=note>The same caveat applies. Do not build on this without having a considered discussion
-with the Fetch Standard community first.
+<div class=note>
+ <p>The same caveat applies. Do not build on this without having a considered discussion
+ with the Fetch Standard community first.
+ 
+ <p>It is <a>implementation-defined</a> whether other DNS queries might be performed to get
+ connection information beyond just <a for=/>IP addresses</a>. For example, if <var>origin</var>'s
+ <a for=origin>scheme</a> is "http" or "https", the implementation might perform a DNS query for
+ HTTPS RRs. [[SVCB]]
+</div>
 
 
 <h3 id=connections>Connections</h3>
@@ -2465,8 +2478,6 @@ steps:
 
    <li><p>If <var>proxy</var> is "<code>DIRECT</code>", then set <var>hosts</var> to the result of
    running <a>resolve an origin</a> given <var>key</var> and <var>url</var>'s <a for=url>origin</a>.
-
-   <li><p>If <var>hosts</var> is failure, then <a for=iteration>continue</a>.
 
    <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">domain lookup end time</a> to
    the <a for=/>unsafe shared current time</a>.
@@ -3989,10 +4000,15 @@ steps:
    <li>Matching <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> per
    <a href=https://datatracker.ietf.org/doc/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
    results in either a superdomain match with an asserted <code>includeSubDomains</code> directive
-   or a congruent match (with or without an asserted <code>includeSubDomains</code> directive).
-   [[!HSTS]]
+   or a congruent match (with or without an asserted <code>includeSubDomains</code> directive) or
+   DNS resolution for the request finds a matching HTTPS RR per
+   <a href=https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-svcb-https#section-8.5>HTTP Strict Transport Security</a>.
+   [[!HSTS]][[!SVCB]]
   </ul>
   <!-- Per Mike West HSTS happens "probably after" Referrer -->
+
+  <p class=note>As all DNS operations are generally <a>implementation-defined</a>, how it is
+  determined that DNS resolution contains an HTTPS RR is also <a>implementation-defined</a>.
 
  <li><p>If <var>recursive</var> is false, then run the remaining steps <a>in parallel</a>.
 
@@ -8166,6 +8182,7 @@ Eero Häkkinen,
 Ehsan Akhgari,
 Emily Stark,
 Eric Lawrence,
+Eric Orth,
 François Marier,
 Frank Ellerman,
 Frederick Hirsch,
