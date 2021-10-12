@@ -2878,15 +2878,14 @@ element, a <a>CORS-preflight request</a> is performed, to ensure <a for=/>reques
 <h4 id=http-requests>HTTP requests</h4>
 
 <p>A <dfn export>CORS request</dfn> is an HTTP request that includes an
-`<a http-header><code>Origin</code></a>` header. It cannot be reliably identified as participating in
-the <a>CORS protocol</a> as the `<a http-header><code>Origin</code></a>` header is also included for
-all <a for=/>requests</a> whose <a for=request>method</a> is neither `<code>GET</code>` nor
+`<a http-header><code>Origin</code></a>` header. It cannot be reliably identified as participating
+in the <a>CORS protocol</a> as the `<a http-header><code>Origin</code></a>` header is also included
+for all <a for=/>requests</a> whose <a for=request>method</a> is neither `<code>GET</code>` nor
 `<code>HEAD</code>`.
 
-<p>A <dfn id=cors-preflight-request export>CORS-preflight request</dfn> is a <a>CORS request</a> that checks to see
-if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
-<a for=/>method</a> and includes these
-<a for=/>headers</a>:
+<p>A <dfn id=cors-preflight-request export>CORS-preflight request</dfn> is a <a>CORS request</a>
+that checks to see if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
+<a for=/>method</a> and includes these <a for=/>headers</a>:
 
 <dl>
  <dt>`<dfn export http-header id=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>`
@@ -2957,10 +2956,22 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
 
 <hr>
 
-<p>In case a server does not wish to participate in the <a>CORS protocol</a>, its HTTP response to
-the <a lt="CORS request">CORS</a> or <a>CORS-preflight request</a> must not include any of the above
-<a for=/>headers</a>. The server is encouraged to use the 403 <a for=/>status</a> in such HTTP
-responses.
+<p>Server developers have a lot of freedom in how they handle responses and these tactics can differ
+between the response to the <a>CORS-preflight request</a> and the <a>CORS request</a> that follows
+it:
+
+<ul>
+ <li><p>They can provide a static response. This can be helpful when working with caching
+ intermediaries. The client will perform validation of the response before exposing it, though side
+ channels such as timing might inadvertently leak information.
+
+ <li><p>They can provide a dynamic response, tuned to the exact request headers. This can be helpful
+ when the response body is to be tailored to a specific origin.
+
+ <li><p>They can decide not to partake in the <a>CORS protocol</a> by not including the relevant
+ response headers. In such cases using the 403 status is encouraged. Not including the normal
+ response body for the request URL can help mitigate side channel attacks.
+</ul>
 
 
 <h4 id=http-new-header-syntax>HTTP new-header syntax</h4>
