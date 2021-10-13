@@ -2956,21 +2956,34 @@ that checks to see if the <a>CORS protocol</a> is understood. It uses `<code>OPT
 
 <hr>
 
-<p>Server developers have a lot of freedom in how they handle responses and these tactics can differ
-between the response to the <a>CORS-preflight request</a> and the <a>CORS request</a> that follows
-it:
+<p>A successful HTTP response, i.e., one where the server developer intends to share it, to a
+<a>CORS request</a> can use any <a for=/>status</a>, as long as it includes the <a for=/>headers</a>
+stated above with <a for=header>values</a> matching up with the request.
+
+<p>A successful HTTP response to a <a>CORS-preflight request</a> is similar, except it is restricted
+to an <a for=/>ok status</p>, e.g., 200 or 204.
+
+<p>Any other kind of HTTP response is not successful and will either end up not being shared or fail
+the <a>CORS-preflight request</a>. Be aware that any work the server performs might nonetheless leak
+through side channels such as timing. If server developers wish to denote this explicitly the 403
+<a for=/>status</a> can be used, coupled with omitting the relevant <a for=/>headers</a>.
+
+<p class=note>If desired, “failure” could also be shared, but that would make it a successful HTTP
+response. That is why for a successful HTTP response to a <a>CORS request</a> that is not a
+<a>CORS-preflight requests</a> the <a for=/>status</a> can be anything, including 403.
+
+<p>Ultimately server developers have a lot of freedom in how they handle HTTP responses and these
+tactics can differ between the response to the <a>CORS-preflight request</a> and the
+<a>CORS request</a> that follows it:
 
 <ul>
  <li><p>They can provide a static response. This can be helpful when working with caching
- intermediaries. The client will perform validation of the response before exposing it, though side
- channels such as timing might inadvertently leak information.
+ intermediaries. A static response can both be successful and not successful depending on the
+ <a>CORS request</a>. This is okay.
 
- <li><p>They can provide a dynamic response, tuned to the exact request headers. This can be helpful
- when the response body is to be tailored to a specific origin.
-
- <li><p>They can decide not to partake in the <a>CORS protocol</a> by not including the relevant
- response headers. In such cases using the 403 status is encouraged. Not including the normal
- response body for the request URL can help mitigate side channel attacks.
+ <li><p>They can provide a dynamic response, tuned to <a>CORS request</a>. This can be helpful when
+ the response body is to be tailored to a specific origin or a response needs to have credentials
+ and be successful for a set of origins.
 </ul>
 
 
