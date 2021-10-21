@@ -210,9 +210,8 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">cross-origin isolated capability</dfn> (default false)
  <dd>A boolean.
 
- <dt><dfn for="fetch params">terminated flag</dfn>
- <dt><dfn for="fetch params">aborted flag</dfn>
- <dd>A flag, initially unset.
+ <dt><dfn for="fetch params">fetch state</dfn>
+ <dd>"<code>ongoing</code>", "<code>terminated</code>", or "<code>aborted</code>".
 
  <dt><dfn for="fetch params">timing info</dfn>
  <dd>A <a for=/>fetch timing info</a>.
@@ -264,6 +263,15 @@ given a <a for=/>fetch timing info</a> <var>timingInfo</var>, return a new
  <var>storedTimingInfo</var>'s <a for="fetch timing info">decoded body size</a>.
 </ol>
 
+<p>To <dfn for="fetch params">abort</dfn> a <a for=/>fetch params</a> <var>fetchParams</var>,
+set <var>fetchParams</var>'s <a for="fetch params">fetch state</a> to "<code>aborted</code>".
+
+<p>To <dfn for="fetch params">terminate</dfn> a <a for=/>fetch params</a> <var>fetchParams</var>,
+set <var>fetchParams</var>'s <a for="fetch params">fetch state</a> to "<code>terminated</code>".
+
+<p>A <a for=/>fetch params</a> <var>fetchParams</var> is <a for="fetch params">terminated</a> if
+its <a for="fetch params">fetch state</a> is "<code>aborted</code>" or "<code>terminated</code>".
+
 <p>A <dfn export>fetch controller</dfn> is an object used to enable clients of an ongoing fetch
 to perform certain actions in the context of that fetch instance.
 
@@ -271,11 +279,12 @@ to perform certain actions in the context of that fetch instance.
 <dfn for="fetch controller">ongoing fetch params</dfn>.</p>
 
 <p>To <dfn for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
-<var>controller</var> given a flag <var>aborted</var>, which is unset unless otherwise specified,
-set <var>controller</var>'s <a for="fetch controller">ongoing fetch params</a>
-<a for="fetch params">terminated flag</a>, and set <var>controller</var>'s
-<a for="fetch controller">ongoing fetch params</a> <a for="fetch params">aborted flag</a> if
-<var>aborted</var> is set.
+<var>controller</var>, <a for="fetch params">terminate</a> <var>controller</var>'s
+<a for="fetch controller">ongoing fetch params</a>.
+
+<p>To <dfn for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
+<var>controller</var>, <a for="fetch params">abort</a> <var>controller</var>'s
+<a for="fetch controller">ongoing fetch params</a>.
 
 <p>To <dfn>queue a fetch task</dfn>, given an algorithm <var>algorithm</var>, a
 <a for=/>global object</a> or a <a for=/>parallel queue</a> <var>taskDestination</var>, run these
@@ -2123,7 +2132,8 @@ known as an <dfn export id=concept-aborted-network-error>aborted network error</
 
 <p>To create the <dfn>appropriate network error</dfn> given <a for=/>fetch params</a>
 <var>fetchParams</var>, return an <a>aborted network error</a> if <var>fetchParams</var>'s
-<a for="fetch params">aborted flag</a> is set, otherwise return a <a>network error</a>.
+<a for="fetch params">fetch state</a> is "<code>aborted</code>"; otherwise return a
+<a>network error</a>.
 
 <hr>
 
@@ -2307,14 +2317,14 @@ functionality.
 
 <p>A <a for="fetch group">fetch record</a> has an associated
 <dfn export for="fetch record" id=concept-fetch-record-fetch>fetch</dfn> (a
-<a for=/>fetch</a> algorithm or null).
+<a for=/>fetch controller</a> or null).
 
 <hr>
 
 <p>When a <a for=fetch>fetch group</a> is
 <dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>, for each associated
 <a for="fetch group">fetch record</a> whose <a for="fetch record">request</a>'s <a>done flag</a> is
-unset or <a for=request>keepalive</a> is false, <a lt=terminated for=fetch>terminate</a> the
+unset or <a for=request>keepalive</a> is false, <a for="fetch controller">terminate</a>
 <a for="fetch group">fetch record</a>'s <a for="fetch record">fetch</a>.
 
 
@@ -3839,7 +3849,13 @@ the request.
  <p>If this instance of <a for=/>fetch</a> is
  <dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> given flag <var>aborted</var>,
  which is unset unless otherwise specified, <a for="fetch controller">terminate</a>
- <var>controller</var> with <var>aborted</var>.
+ <var>controller</var> if <var>aborted</var> is set, otherwise <a for="fetch controller">abort</a>
+ <var>controller</var>.
+
+ <p class="note">The above exported function is to be replaced by
+ <a for="fetch controller" lt=terminate>terminating</a> or
+ <a for="fetch controller" lt=abort>aborting</a> the <a for=/>fetch controller</a>
+ returned by this algorithm.
 
  <li><p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then set
  <var>request</var>'s <a for=request>body</a> to the first return value of
@@ -3915,7 +3931,7 @@ the request.
 
   <ol>
    <li><p>Let <var>record</var> be a new <a for="fetch group">fetch record</a> consisting of
-   <var>request</var> and this instance of the <a for=/>fetch</a> algorithm.
+   <var>request</var> and <var>controller</var>.
 
    <li><p>Append <var>record</var> to <var>request</var>'s <a for=request>client</a>'s
    <a for=fetch>fetch group</a> list of <a for="fetch group">fetch records</a>.
@@ -4381,7 +4397,8 @@ steps:
  <dd>
   <ol>
    <li>
-    <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+    <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+    <a for="fetch params">terminated</a>:
 
     <ol>
      <li><p>Let <var>blob</var> be <var>request</var>'s <a for=request>current URL</a>'s
@@ -4480,10 +4497,11 @@ these steps:
       <p>Let <var>transformAlgorithm</var> given <var>chunk</var> be these steps:
 
       <ol>
-       <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+       <li><p>If <var>fetchParams</var>'s <a for="fetch params">fetch state</a> is not
+       "<code>ongoing</code>", then abort these steps.
 
        <li><p>If <var>chunk</var> is not a {{Uint8Array}} object, then
-       <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+       <a for="fetch params">terminate</a> <var>fetchParams</var>.
 
        <li><p>Otherwise, <a for=ReadableStream>enqueue</a> <var>chunk</var>. The user agent may
        split the chunk into <a>implementation-defined</a> practical sizes and
@@ -4812,7 +4830,8 @@ steps. They return a <a for=/>response</a>.
  <li><p>Let the <var>revalidatingFlag</var> be unset.
 
  <li>
-  <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+  <a for="fetch params">terminated</a>:
 
   <ol>
    <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
@@ -5244,8 +5263,8 @@ steps. They return a <a for=/>response</a>.
     <var>isAuthenticationFetch</var> is true, then:
 
     <ol>
-     <li><p>If <var>fetchParams</var>'s <a for="fetch params">terminated flag</a> is set, then
-     return the <a for=/>appropriate network error</a> for <var>fetchParams</var>.</p></li>
+     <li><p>If <var>fetchParams</var> is <a for="fetch params">terminated</a>, then return the
+     <a for=/>appropriate network error</a> for <var>fetchParams</var>.</p></li>
 
      <li><p>Let <var>username</var> and <var>password</var> be the result of prompting the end user
      for a username and password, respectively, in <var>request</var>'s
@@ -5272,7 +5291,7 @@ steps. They return a <a for=/>response</a>.
    <li class=XXX><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers, missing,
    parsing issues.
 
-   <li><p>If <var>fetchParams</var>'s <a for="fetch params">terminated flag</a> is set, then
+   <li><p>If <var>fetchParams</var> is <a for="fetch params">terminated</a>, then
    return the <a for=/>appropriate network error</a> for <var>fetchParams</var>.</p></li>
 
    <li>
@@ -5302,7 +5321,7 @@ steps. They return a <a for=/>response</a>.
   <p>then:
 
   <ol>
-   <li><p>If <var>fetchParams</var>'s <a for="fetch params">terminated flag</a> is set, then
+   <li><p>If <var>fetchParams</var> is <a for="fetch params">terminated</a>, then
    return the <a for=/>appropriate network error</a> for <var>fetchParams</var>.</p></li>
 
    <li><p>Set <var>response</var> to the result of running <a>HTTP-network-or-cache fetch</a> given
@@ -5360,8 +5379,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   </dl>
 
  <li>
-  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var>'s
-  <a for="fetch params">terminated flag</a> is set:
+  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+  <a for="fetch params">terminated</a>:
 
   <ol>
    <li><p>If <var>connection</var> is failure, then return a <a>network error</a>.
@@ -5463,8 +5482,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <p>Let <var>processBodyChunk</var> given <var>bytes</var> be these steps:
 
         <ol>
-         <li><p>If <var>fetchParams</var>'s <a for="fetch params">terminated flag</a> is set, then
-         abort these steps.
+         <li><p>If <var>fetchParams</var> is <a for="fetch params">terminated</a>, then abort these
+         steps.
 
          <li><p>Run this step <a>in parallel</a>: transmit <var>bytes</var>.
 
@@ -5478,8 +5497,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <p>Let <var>processEndOfBody</var> be these steps:
 
         <ol>
-         <li><p>If <var>fetchParams</var>'s <a for="fetch params">terminated flag</a> is set, then
-         abort these steps.
+         <li><p>If <var>fetchParams</var> is <a for="fetch params">terminated</a>, then abort these
+         steps.
 
          <li><p>If <var>fetchParams</var>'s <a for="fetch params">process request end-of-body</a> is
          non-null, then run <var>fetchParams</var>'s
@@ -5490,13 +5509,13 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <p>Let <var>processBodyError</var> given <var>e</var> be these steps:
 
         <ol>
-         <li><p>If <var>fetchParams</var>'s <a for="fetch params">terminated flag</a> is set, then
-         abort these steps.
+         <li><p>If <var>fetchParams</var> is <a for="fetch params">terminated</a>, then abort these
+         steps.
 
          <li><p>If <var>e</var> is an "<code><a exception>AbortError</a></code>" {{DOMException}},
-         then <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
+         then <a for="fetch params">abort</a> <var>fetchParams</var>.
 
-         <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+         <li><p>Otherwise, <a for="fetch params">terminate</a> <var>fetchParams</var>.
         </ol>
 
        <li><p><a for=body>Incrementally read</a> <var>request</var>'s <a for=request>body</a> given
@@ -5513,21 +5532,15 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   <p><a>If aborted</a>, then:
 
   <ol>
-   <li><p>Let <var>aborted</var> be <var>fetchParams</var>'s
-   <a for="fetch params">aborted flag</a>.
-
    <li><p>If <var>connection</var> uses HTTP/2, then transmit an <code>RST_STREAM</code> frame.
 
-   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
-
-   <li><p>Return a <a>network error</a>.
+   <li><p>Return the <a for=/>appropriate network error</a> for <var>fetchParams</var>.
   </ol>
 
  <li><p>Let <var>pullAlgorithm</var> be an action that <a lt=resumed for=fetch>resumes</a> the
  ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
 
- <li><p>Let <var>cancelAlgorithm</var> be an action that <a lt=terminated for=fetch>terminates</a>
- the ongoing fetch with the aborted flag set.
+ <li><p>Let <var>cancelAlgorithm</var> be to <a for="fetch params">abort</a> <var>fetchParams</var>.
 
  <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
@@ -5543,8 +5556,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <a for="ReadableStream/set up"><var>sizeAlgorithm</var></a> set to <var>sizeAlgorithm</var>.
 
  <li>
-  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var>'s
-  <a for="fetch params">terminated flag</a> is set:
+  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+  <a for="fetch params">terminated</a>:
 
   <ol>
    <li><p>Set <var>response</var>'s <a for=response>body</a> to a new
@@ -5573,10 +5586,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   <p><a>If aborted</a>, then:
 
   <ol>
-   <li><p>Let <var>aborted</var> be <var>fetchParams</var>'s
-   <a for="fetch params">aborted flag</a>.
+   <li><p>Let <var>state</var> be <var>fetchParams</var>'s
+   <a for="fetch params">fetch state</a>.
 
-   <li><p>If <var>aborted</var> is set, then set <var>response</var>'s
+   <li><p>If <var>state</var> is "<code>aborted</code>", then set <var>response</var>'s
    <a for=response>aborted flag</a>.
 
    <li><p>Return <var>response</var>.
@@ -5587,8 +5600,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
   <ol>
    <li>
-    <p>Run these steps, but <a>abort when</a> <var>fetchParams</var>'s
-    <a for="fetch params">terminated flag</a> is set:
+    <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+    <a for="fetch params">terminated</a>:
 
     <ol>
      <li>
@@ -5617,14 +5630,14 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>Increase <var>timingInfo</var>'s <a for="fetch timing info">decoded body size</a> by
          <var>bytes</var>'s <a for="byte sequence">length</a>.
 
-         <li><p>If <var>bytes</var> is failure, then <a lt=terminated for=fetch>terminate</a> the
-         ongoing fetch.
+         <li><p>If <var>bytes</var> is failure, then <a for="fetch params">terminate</a>
+         <var>fetchParams</var>.
 
          <li><p><a for=ReadableStream>Enqueue</a> a {{Uint8Array}} wrapping an {{ArrayBuffer}}
          containing <var>bytes</var> into <var>stream</var>.
 
          <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
-         <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+         <a for="fetch params">terminate</a> <var>fetchParams</var>.
 
          <li><p>If <var>stream</var> doesn't <a for=ReadableStream>need more data</a> ask the user
          agent to <a for=fetch>suspend</a> the ongoing fetch.
@@ -5641,11 +5654,11 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
     <ol>
 
-     <li><p>Let <var>aborted</var> be <var>fetchParams</var>'s
-     <a for="fetch params">aborted flag</a>.
+     <li><p>Let <var>state</var> be <var>fetchParams</var>'s
+     <a for="fetch params">fetch state</a>.
 
      <li>
-      <p>If <var>aborted</var> is set, then:
+      <p>If <var>state</var> is "<code>aborted</code>", then:
 
       <ol>
        <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
@@ -7571,6 +7584,8 @@ method steps are:
   <p class=note>This lets us reject promises with predictable timing, when the request to abort
   comes from the same thread as the call to fetch.
 
+ <li><p>Let <var>controller</var> be null.
+
  <li>
   <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
   <a for=Request>signal</a>:
@@ -7580,7 +7595,8 @@ method steps are:
 
    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
 
-   <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
+   <li><p>If <var>controller</var> is not null, then <a for="fetch controller">abort</a>
+   <var>controller</var>.
   </ol>
 
  <li><p>Let <var>handleFetchDone</var> given <a for=/>response</a> <var>response</var> be to
@@ -7588,7 +7604,8 @@ method steps are:
  "<code>fetch</code>".
 
  <li>
-  <p><a for=/>Fetch</a> <var>request</var> with <a for=fetch><i>processResponseEndOfBody</i></a> set to
+  <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
+  <var>request</var>, with <a for=fetch><i>processResponseEndOfBody</i></a> set to
   <var>handleFetchDone</var>, and <a for=fetch><i>processResponse</i></a> given <var>response</var>
   being these substeps:
 
@@ -7638,7 +7655,7 @@ method steps are:
 
 <h3 id=garbage-collection>Garbage collection</h3>
 
-<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch if that termination
+<p>The user agent may <a for="fetch controller">terminate</a> an ongoing fetch if that termination
 is not observable through script.
 
 <p class="note no-backref">"Observable through script" means observable through
