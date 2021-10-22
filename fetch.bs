@@ -2879,15 +2879,14 @@ element, a <a>CORS-preflight request</a> is performed, to ensure <a for=/>reques
 <h4 id=http-requests>HTTP requests</h4>
 
 <p>A <dfn export>CORS request</dfn> is an HTTP request that includes an
-`<a http-header><code>Origin</code></a>` header. It cannot be reliably identified as participating in
-the <a>CORS protocol</a> as the `<a http-header><code>Origin</code></a>` header is also included for
-all <a for=/>requests</a> whose <a for=request>method</a> is neither `<code>GET</code>` nor
+`<a http-header><code>Origin</code></a>` header. It cannot be reliably identified as participating
+in the <a>CORS protocol</a> as the `<a http-header><code>Origin</code></a>` header is also included
+for all <a for=/>requests</a> whose <a for=request>method</a> is neither `<code>GET</code>` nor
 `<code>HEAD</code>`.
 
-<p>A <dfn id=cors-preflight-request export>CORS-preflight request</dfn> is a <a>CORS request</a> that checks to see
-if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
-<a for=/>method</a> and includes these
-<a for=/>headers</a>:
+<p>A <dfn id=cors-preflight-request export>CORS-preflight request</dfn> is a <a>CORS request</a>
+that checks to see if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
+<a for=/>method</a> and includes these <a for=/>headers</a>:
 
 <dl>
  <dt>`<dfn export http-header id=http-access-control-request-method><code>Access-Control-Request-Method</code></dfn>`
@@ -2958,10 +2957,35 @@ if the <a>CORS protocol</a> is understood. It uses `<code>OPTIONS</code>` as
 
 <hr>
 
-<p>In case a server does not wish to participate in the <a>CORS protocol</a>, its HTTP response to
-the <a lt="CORS request">CORS</a> or <a>CORS-preflight request</a> must not include any of the above
-<a for=/>headers</a>. The server is encouraged to use the 403 <a for=/>status</a> in such HTTP
-responses.
+<p>A successful HTTP response, i.e., one where the server developer intends to share it, to a
+<a>CORS request</a> can use any <a for=/>status</a>, as long as it includes the <a for=/>headers</a>
+stated above with <a for=header>values</a> matching up with the request.
+
+<p>A successful HTTP response to a <a>CORS-preflight request</a> is similar, except it is restricted
+to an <a for=/>ok status</a>, e.g., 200 or 204.
+
+<p>Any other kind of HTTP response is not successful and will either end up not being shared or fail
+the <a>CORS-preflight request</a>. Be aware that any work the server performs might nonetheless leak
+through side channels, such as timing. If server developers wish to denote this explicitly, the 403
+<a for=/>status</a> can be used, coupled with omitting the relevant <a for=/>headers</a>.
+
+<p class=note>If desired, “failure” could also be shared, but that would make it a successful HTTP
+response. That is why for a successful HTTP response to a <a>CORS request</a> that is not a
+<a>CORS-preflight requests</a> the <a for=/>status</a> can be anything, including 403.
+
+<p>Ultimately server developers have a lot of freedom in how they handle HTTP responses and these
+tactics can differ between the response to the <a>CORS-preflight request</a> and the
+<a>CORS request</a> that follows it:
+
+<ul>
+ <li><p>They can provide a static response. This can be helpful when working with caching
+ intermediaries. A static response can both be successful and not successful depending on the
+ <a>CORS request</a>. This is okay.
+
+ <li><p>They can provide a dynamic response, tuned to <a>CORS request</a>. This can be helpful when
+ the response body is to be tailored to a specific origin or a response needs to have credentials
+ and be successful for a set of origins.
+</ul>
 
 
 <h4 id=http-new-header-syntax>HTTP new-header syntax</h4>
@@ -8086,6 +8110,7 @@ Raphael Kubo da Costa,
 Robert Linder,
 Rondinelly,
 Rory Hewitt,
+Ross A. Baker,
 Ryan Sleevi,
 Samy Kamkar,
 Sébastien Cevey,
