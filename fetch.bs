@@ -210,7 +210,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">cross-origin isolated capability</dfn> (default false)
  <dd>A boolean.
 
- <dt><dfn for="fetch params">fetch state</dfn>
+ <dt><dfn for="fetch params">fetch state</dfn> (default "<code>ongoing</code>")
  <dd>"<code>ongoing</code>", "<code>terminated</code>", or "<code>aborted</code>".
 
  <dt><dfn for="fetch params">timing info</dfn>
@@ -272,19 +272,19 @@ set <var>fetchParams</var>'s <a for="fetch params">fetch state</a> to "<code>ter
 <p>A <a for=/>fetch params</a> <var>fetchParams</var> is <dfn for="fetch params">canceled</dfn> if
 its <a for="fetch params">fetch state</a> is "<code>aborted</code>" or "<code>terminated</code>".
 
-<p>A <dfn export>fetch controller</dfn> is an object used to enable clients of an ongoing fetch
-to perform certain actions in the context of that fetch instance.
+<p>A <dfn export>fetch controller</dfn> is a <a for=/>struct</a> used to enable clients of an
+ongoing fetch to perform certain actions in the context of that fetch instance.
 
 <p>A <a for=/>fetch controller</a> has an associated <a for=/>fetch params</a>
-<dfn for="fetch controller">ongoing fetch params</dfn>.</p>
+<dfn for="fetch controller">internal fetch params</dfn>.</p>
 
 <p>To <dfn export id="concept-fetch-terminate" for="fetch controller">terminate</dfn> a
 <a for=/>fetch controller</a> <var>controller</var>, <a for="fetch params">terminate</a>
-<var>controller</var>'s <a for="fetch controller">ongoing fetch params</a>.
+<var>controller</var>'s <a for="fetch controller">internal fetch params</a>.
 
 <p>To <dfn for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, <a for="fetch params">abort</a> <var>controller</var>'s
-<a for="fetch controller">ongoing fetch params</a>.
+<a for="fetch controller">internal fetch params</a>.
 
 <p>To <dfn>queue a fetch task</dfn>, given an algorithm <var>algorithm</var>, a
 <a for=/>global object</a> or a <a for=/>parallel queue</a> <var>taskDestination</var>, run these
@@ -2131,9 +2131,15 @@ known as an <dfn export id=concept-aborted-network-error>aborted network error</
 <a for=response>body</a> is always null.
 
 <p>To create the <dfn>appropriate network error</dfn> given <a for=/>fetch params</a>
-<var>fetchParams</var>, return an <a>aborted network error</a> if <var>fetchParams</var>'s
-<a for="fetch params">fetch state</a> is "<code>aborted</code>"; otherwise return a
-<a>network error</a>.
+<var>fetchParams</var>:
+
+<ol>
+ <li><p>Assert: <var>fetchParams</var> is  <a for="fetch params">canceled</a>.</li>
+
+ <li><p>Return an <a>aborted network error</a> if <var>fetchParams</var>'s
+ <a for="fetch params">fetch state</a> is "<code>aborted</code>"; otherwise return a
+ <a>network error</a>.
+</ol>
 
 <hr>
 
@@ -2316,16 +2322,18 @@ functionality.
 <a for=/>request</a>).
 
 <p>A <a for="fetch group">fetch record</a> has an associated
-<dfn export for="fetch record" id=concept-fetch-record-fetch>fetch</dfn> (a
+<dfn export for="fetch record" id=concept-fetch-record-fetch>controller</dfn> (a
 <a for=/>fetch controller</a> or null).
 
 <hr>
 
 <p>When a <a for=fetch>fetch group</a> is
 <dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>, for each associated
-<a for="fetch group">fetch record</a> whose <a for="fetch record">request</a>'s <a>done flag</a> is
-unset or <a for=request>keepalive</a> is false, <a for="fetch controller">terminate</a> the
-<a for="fetch group">fetch record</a>'s <a for="fetch record">fetch</a>.
+<a for="fetch group">fetch record</a> whose
+<a for="fetch group">fetch record</a>'s <a for="fetch record">controller</a> is not null, and whose
+<a for="fetch record">request</a>'s <a>done flag</a> is unset or <a for=request>keepalive</a> is
+false, <a for="fetch controller">terminate</a> the <a for="fetch group">fetch record</a>'s
+<a for="fetch record">controller</a>.
 
 
 <h3 id=resolving-domains>Resolving domains</h3>
@@ -3844,7 +3852,7 @@ the request.
  <var>crossOriginIsolatedCapability</var>.
 
  <li><p>Let <var>controller</var> be a new <a for=/>fetch controller</a> with its
- <a for="fetch controller">ongoing fetch params</a> set to <var>fetchParams</var>.</p></li>
+ <a for="fetch controller">internal fetch params</a> set to <var>fetchParams</var>.</p></li>
 
  <li><p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then set
  <var>request</var>'s <a for=request>body</a> to the first return value of
@@ -3919,8 +3927,9 @@ the request.
   <p>If <var>request</var> is a <a>subresource request</a>, then:
 
   <ol>
-   <li><p>Let <var>record</var> be a new <a for="fetch group">fetch record</a> consisting of
-   <var>request</var> and <var>controller</var>.
+   <li><p>Let <var>record</var> be a new <a for="fetch group">fetch record</a> whose
+   <a for="fetch record">request</a> is <var>request</var> and
+   <a for="fetch record">controller</a> is <var>controller</var>.
 
    <li><p>Append <var>record</var> to <var>request</var>'s <a for=request>client</a>'s
    <a for=fetch>fetch group</a> list of <a for="fetch group">fetch records</a>.
@@ -5529,7 +5538,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Let <var>pullAlgorithm</var> be an action that <a lt=resumed for=fetch>resumes</a> the
  ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
 
- <li><p>Let <var>cancelAlgorithm</var> be to <a for="fetch params">abort</a> <var>fetchParams</var>.
+ <li><p>Let <var>cancelAlgorithm</var> be an algorithm that
+ <a for="fetch params">abort</a>s <var>fetchParams</var>.
 
  <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
