@@ -732,12 +732,29 @@ a <a for=/>header list</a> <var>list</var>, run these steps:
   <p><a for=list>For each</a> <var>name</var> in <var>names</var>:
 
   <ol>
-   <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var>
-   from <var>list</var>.
+   <li><p>If <var>name</var> is "<code>set-cookie</code>", then:
+    
+    <ol>
+     <li><p>Let <var>values</var> be a list of all <a for=/>headers</a> in <var>list</var> whose
+      <a for=header>name</a> is a <a>byte-case-insensitive</a> match for <var>name</var>, in order.
 
-   <li><p>Assert: <var>value</var> is not null.
+     <li><p><a for=list>For each</a> <var>value</var> of <var>values</var>:
+ 
+      <ol>
+       <li><p><a for=list>Append</a> (<var>name</var>, <var>value</var>) to <var>headers</var>.
+      </ol>
+    </ol>
 
-   <li><p><a for=list>Append</a> (<var>name</var>, <var>value</var>) to <var>headers</var>.
+   <li><p>Otherwise:
+
+    <ol>
+      <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var>
+      from <var>list</var>.
+
+      <li><p>Assert: <var>value</var> is not null.
+
+      <li><p><a for=list>Append</a> (<var>name</var>, <var>value</var>) to <var>headers</var>.
+    </ol>
   </ol>
 
  <li><p>Return <var>headers</var>.
@@ -5966,12 +5983,17 @@ interface Headers {
 };
 </pre>
 
-<p class=note>Unlike a <a for=/>header list</a>, a {{Headers}} object cannot represent more than one
-`<code>Set-Cookie</code>` <a for=/>header</a>. In a way this is problematic as unlike all other
-headers `<code>Set-Cookie</code>` headers cannot be combined, but since `<code>Set-Cookie</code>`
-headers are not exposed to client-side JavaScript this is deemed an acceptable compromise.
-Implementations could choose the more efficient {{Headers}} object representation even for a
-<a for=/>header list</a>, as long as they also support an associated data structure for
+<p class=note>Unlike a <a for=/>header list</a>, a {{Headers}} object combines the values of
+multiple headers of the same name into a single header value. This is problematic for the
+`<code>Set-Cookie</code>` header, as unlike all other headers it can not be safely combined. For
+client-side JavaScript this is not very problematic, as the platform never exposes
+`<code>Set-Cookie</code>`. This can be problematic for server-side runtimes that do expose this
+header. Because of this there is some special handling for the `<code>Set-Cookie</code>` header in
+the implementation of the {{Headers}} interface: `<code>Set-Cookie</code>` headers are not
+concatenated when they are returned from the {{Headers}} iterator. This means that specifically for
+this header, multiple tuples of the same name can be returned. Implementations could choose the more
+efficient {{Headers}} object representation even for a <a for=/>header list</a>, as long as they
+also support an associated data structure for
 `<code>Set-Cookie</code>` headers.
 
 <p>A {{Headers}} object has an associated
