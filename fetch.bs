@@ -1823,6 +1823,9 @@ otherwise, it is unset.
 <a for=request>done flag</a>, and <a for=request>timing allow failed flag</a> are used as
 bookkeeping details by the <a for=/>fetch</a> algorithm.
 
+<p>A <a for=/>request</a> has an associated boolean <dfn for=request>allow preloads</dfn>.
+Unless stated otherwise it is true.
+
 <hr>
 
 <p>A <dfn export>subresource request</dfn> is a <a for=/>request</a>
@@ -3823,6 +3826,50 @@ the request.
  <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>", then set
  <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">origin</a>.
+
+ <li><p>Let <var>hasCustomHeaders</var> be false.
+
+ <li><p><a for=list>For each</a> <var>header</var> in <var>request</var>'s
+ <a for=request>header list</a>, if <var>header</var>'s <a for=header>name</a> is
+ not `<code>If-Modified-Since</code>`, `<code>If-None-Match</code>`, `<code>If-Unmodified-Since</code>`,
+ `<code>If-Match</code>`, `<code>User-Agent</code>`, or `<code>Cache-Control</code>`, set
+ <var>hasCustomHeaders</var> to true.
+
+ <li>
+  <p>If all of the following conditions are true:</p>
+
+  <ul class=brief>
+   <li><p><var>request</var>'s <a for=request>allow preloads</a> is true
+
+   <li><p><var>request</var>'s <a for=request>origin</a> is <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">origin</a>
+
+   <li><p><var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is an
+   <a>HTTP(S) scheme</a>
+
+   <li><p><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>",
+   "<code>cors</code>", or "<code>no-cors</code>"
+
+   <li><p><var>hasCustomHeaders</var> is false
+
+   <li><p><var>request</var>'s <a for=request>window</a> is not null
+
+   <li><p><var>request</var>'s <a for=request>method</a> is `<code>GET</code>`
+  </ul>
+
+  <p>then perform the following steps:
+
+  <ol>
+   <li><p>Let <var>preloadedResourceConsumed</var> be the result of invoking
+   <span>consume a preloaded resource</span> for <var>req</var>'s <a for=request>window</a>,
+   given <var>req</var>'s <a for=request>URL</a>, <var>req</var>'s <a for=request>destination</a>,
+   <var>req</var>'s <a for=request>mode</a>, <var>req</var>'s <a for=request>credentials mode</a>,
+   <var>req</var>'s <a for=request>integrity metadata</a>, and the next step <a>in parallel</a>: Run
+   <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>
+
+   <li><p>If <var>preloadedResourceConsumed</var> is true, then return.
+  </ol>
+ </li>
 
  <li>
   <p>If <var>request</var>'s <a for=request>policy container</a> is "<code>client</code>", then:
