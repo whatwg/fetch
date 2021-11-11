@@ -1790,10 +1790,6 @@ Unless stated otherwise, it is false.
 <hr>
 
 <p>A <a for=/>request</a> has an associated
-<dfn for=request id=concept-request-tainted-origin>tainted origin flag</dfn>. Unless stated
-otherwise, it is unset.
-
-<p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-url-list>URL list</dfn> (a <a for=/>list</a> of one or
 more <a for=/>URLs</a>). Unless stated otherwise, it is a list containing a copy of
 <a for=/>request</a>'s <a for=request>URL</a>.
@@ -1822,7 +1818,7 @@ Unless stated otherwise, it is unset.
 <dfn export for=request id=timing-allow-failed>timing allow failed flag</dfn>. Unless stated
 otherwise, it is unset.
 
-<p class="note no-backref">A <a for=/>request</a>'s <a for=request>tainted origin flag</a>,
+<p class="note no-backref">A <a for=/>request</a>'s
 <a for=request>URL list</a>, <a for=request>current URL</a>, <a for=request>redirect count</a>,
 <a for=request>response tainting</a>, <a for=request>done flag</a>, and
 <a for=request>timing allow failed flag</a> are used as bookkeeping details by the
@@ -1851,11 +1847,33 @@ or "<code>object</code>".
 
 <hr>
 
+<p>To determine if the <dfn>origin is tainted by redirects</dfn>, given a
+<a for=/>request</a> <var>request</var>, run these steps:
+
+<ol>
+  <li>Let <var>last url</var> be null.
+  <li><a for=list>For each</a> <var>url</var> in <var>request</var>'s
+  <a for=request>URL list</a>:
+  <ol>
+    <li>If <var>last url</var> is null:
+    <ol>
+      <li>Set <var>last url</var> to <var>url</var>.
+      <li><a>Continue</a>.
+    </ol>
+    <li>If <var>url</var>'s <a for=url>origin</a> is not <a>same origin</a> with
+    <var>last url</var>'s <a for=url>origin</a> and <var>request</var>'s
+    <a for=request>origin</a> is not <a>same origin</a> with <var>last
+    url</var>'s <a for=url>origin</a>, then return true.  <li>Set <var>last
+    url</var> to <var>url</var>.
+  </ol>
+  <li>Return false.
+</ol>
+
 <p><dfn>Serializing a request origin</dfn>, given a <a for=/>request</a> <var>request</var>, is to
 run these steps:
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>tainted origin flag</a> is set, then return
+ <li><p>If the result of running <a>origin is tainted by redirects</a> given <var>request</var> is true, then return
  "<code>null</code>".
 
  <li><p>Return <var>request</var>'s <a for=request>origin</a>,
@@ -1953,7 +1971,8 @@ source of security bugs. Please seek security review for features that deal with
 
  <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and
- <var>request</var>'s <a for=request>tainted origin flag</a> is not set, then return true.</p>
+ the result of running <a>origin is tainted by redirects</a> given <var>request</var> is false,
+ then return true.</p>
 
  <li><p>Return false.</p>
 </ol>
@@ -4623,12 +4642,6 @@ run these steps:
  <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
  <a for=body>source</a> is null, then return a <a>network error</a>.
 
- <li><p>If <var>locationURL</var>'s <a for=url>origin</a> is not <a>same origin</a> with
- <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and
- <var>request</var>'s <a for=request>origin</a> is not <a>same origin</a> with <var>request</var>'s
- <a for=request>current URL</a>'s <a for=url>origin</a>, then set <var>request</var>'s
- <a for=request>tainted origin flag</a>.
-
  <li>
   <p>If one of the following is true
 
@@ -5637,14 +5650,13 @@ number of these <a lt="CORS-preflight fetch">fetches</a>.
   <p>Let <var>preflight</var> be a new <a for=/>request</a> whose
   <a for=request>method</a> is `<code>OPTIONS</code>`,
   <a for=request>URL</a> is <var>request</var>'s <a for=request>current URL</a>,
+  <a for=request>URL list</a> is <var>request</var>'s <a for=request>URL list</a>,
   <a for=request>initiator</a> is <var>request</var>'s <a for=request>initiator</a>,
   <a for=request>destination</a> is <var>request</var>'s <a for=request>destination</a>,
   <a for=request>origin</a> is <var>request</var>'s <a for=request>origin</a>,
   <a for=request>referrer</a> is <var>request</var>'s <a for=request>referrer</a>,
   <a for=request>referrer policy</a> is <var>request</var>'s <a for=request>referrer policy</a>,
-  <a for=request>mode</a> is "<code>cors</code>",
-  <a for=request>tainted origin flag</a> is <var>request</var>'s
-  <a for=request>tainted origin flag</a>, and
+  <a for=request>mode</a> is "<code>cors</code>", and
   <a for=request>response tainting</a> is "<code>cors</code>".
 
   <p class="note no-backref">The <a for=request>service-workers mode</a> of <var>preflight</var>
