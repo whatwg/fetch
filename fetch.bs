@@ -1818,11 +1818,10 @@ Unless stated otherwise, it is unset.
 <dfn export for=request id=timing-allow-failed>timing allow failed flag</dfn>. Unless stated
 otherwise, it is unset.
 
-<p class="note no-backref">A <a for=/>request</a>'s
-<a for=request>URL list</a>, <a for=request>current URL</a>, <a for=request>redirect count</a>,
-<a for=request>response tainting</a>, <a for=request>done flag</a>, and
-<a for=request>timing allow failed flag</a> are used as bookkeeping details by the
-<a for=/>fetch</a> algorithm.
+<p class=note>A <a for=/>request</a>'s <a for=request>URL list</a>, <a for=request>current URL</a>,
+<a for=request>redirect count</a>, <a for=request>response tainting</a>,
+<a for=request>done flag</a>, and <a for=request>timing allow failed flag</a> are used as
+bookkeeping details by the <a for=/>fetch</a> algorithm.
 
 <hr>
 
@@ -1847,33 +1846,35 @@ or "<code>object</code>".
 
 <hr>
 
-<p>To determine if the <dfn>origin is tainted by redirects</dfn>, given a
-<a for=/>request</a> <var>request</var>, run these steps:
+<p>A <a for=/>request</a> <var>request</var> has a
+<dfn for=request id=concept-request-tainted-origin>redirect-tainted origin</dfn> if these steps
+return true:
 
 <ol>
-  <li>Let <var>last url</var> be null.
-  <li><a for=list>For each</a> <var>url</var> in <var>request</var>'s
-  <a for=request>URL list</a>:
+ <li><p>Let <var>lastURL</var> be null.
+
+ <li>
+  <p><a for=list>For each</a> <var>url</var> in <var>request</var>'s <a for=request>URL list</a>:
+
   <ol>
-    <li>If <var>last url</var> is null:
-    <ol>
-      <li>Set <var>last url</var> to <var>url</var>.
-      <li><a>Continue</a>.
-    </ol>
-    <li>If <var>url</var>'s <a for=url>origin</a> is not <a>same origin</a> with
-    <var>last url</var>'s <a for=url>origin</a> and <var>request</var>'s
-    <a for=request>origin</a> is not <a>same origin</a> with <var>last
-    url</var>'s <a for=url>origin</a>, then return true.  <li>Set <var>last
-    url</var> to <var>url</var>.
+   <li><p>If <var>lastURL</var> is null, then set <var>lastURL</var> to <var>url</var> and
+   <a for=/>continue</a>.
+
+   <li><p>If <var>url</var>'s <a for=url>origin</a> is not <a>same origin</a> with
+   <var>lastURL</var>'s <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is
+   not <a>same origin</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return true.
+
+   <li>Set <var>lastURL</var> to <var>url</var>.
   </ol>
-  <li>Return false.
+
+ <li>Return false.
 </ol>
 
 <p><dfn>Serializing a request origin</dfn>, given a <a for=/>request</a> <var>request</var>, is to
 run these steps:
 
 <ol>
- <li><p>If the result of running <a>origin is tainted by redirects</a> given <var>request</var> is true, then return
+ <li><p>If <var>request</var> has a <a for=request>redirect-tainted origin</a>, then return
  "<code>null</code>".
 
  <li><p>Return <var>request</var>'s <a for=request>origin</a>,
@@ -1970,9 +1971,8 @@ source of security bugs. Please seek security review for features that deal with
  "<a for="embedder policy value"><code>credentialless</code></a>", then return true.</p>
 
  <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
- <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and
- the result of running <a>origin is tainted by redirects</a> given <var>request</var> is false,
- then return true.</p>
+ <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and <var>request</var>
+ does not have a <a for=request>redirect-tainted origin</a>, then return true.</p>
 
  <li><p>Return false.</p>
 </ol>
@@ -5649,8 +5649,8 @@ number of these <a lt="CORS-preflight fetch">fetches</a>.
  <li>
   <p>Let <var>preflight</var> be a new <a for=/>request</a> whose
   <a for=request>method</a> is `<code>OPTIONS</code>`,
-  <a for=request>URL</a> is <var>request</var>'s <a for=request>current URL</a>,
-  <a for=request>URL list</a> is <var>request</var>'s <a for=request>URL list</a>,
+  <a for=request>URL list</a> is a <a for=list>clone</a> of <var>request</var>'s
+  <a for=request>URL list</a>,
   <a for=request>initiator</a> is <var>request</var>'s <a for=request>initiator</a>,
   <a for=request>destination</a> is <var>request</var>'s <a for=request>destination</a>,
   <a for=request>origin</a> is <var>request</var>'s <a for=request>origin</a>,
