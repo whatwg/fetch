@@ -4214,8 +4214,10 @@ steps:
  </li>
 
  <li>
-  <p>Otherwise, if <var>response</var>'s <a for=response>body</a> is not null and is
-  <a for=ReadableStream>readable</a>, then:</o>
+  <li><p>Let <var>hasReadableStream</var> be true if <var>response</var>'s <a for=response>body</a>
+  is not null and is <a for=ReadableStream>readable</a>; otherwise false.
+
+  <li><p>If <var>hasReadableStream</var> is true, then:
 
   <ol>
    <li><p>Let <var>transformStream</var> be a new a {{TransformStream}}.
@@ -4224,7 +4226,7 @@ steps:
    <a for=TransformStream lt=enqueue>enqueues</a> <var>chunk</var> in <var>transformStream</var>.
 
    <li><p><a for=TransformStream lt="setting up">Set up</a> <var>transformStream</var> with
-   <var>identityTransformAlgorithm</var> and <var>finalize</var>.
+   <var>identityTransformAlgorithm</var> and <var>processResponseDone</var>.
 
    <li><p>Set <var>response</var>'s <a for=response>body</a> to the result of
    <a for=ReadableStream lt="piping through">piping</a> <var>response</var>'s
@@ -4237,8 +4239,19 @@ steps:
  <a for="fetch params">process response</a> given <var>response</var>, with <var>fetchParams</var>'s
  <a for="fetch params">task destination</a>.
 
- <li><p>Let <var>finalize</var> be this step: <a>finalize response</a> given <var>fetchParams</var>
- and <var>response</var>.
+ <li>
+  <p>Let <var>processResponseDone</var> be the following steps:
+
+  <ol>
+   <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+   <a for=request>done flag</a>.
+
+   <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response done</a> is not null,
+   then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+   <a for="fetch params">process response done</a> given <var>response</var> with
+   <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
+  </ol>
+ </li>
 
  <li>
   <p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is non-null,
@@ -4250,7 +4263,7 @@ steps:
     steps:
 
     <ol>
-     <li><p>Run <var>finalize</var>.
+     <li><p>Run <var>processResponseDone</var>.
 
      <li><p>Run <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a>
      given <var>response</vaR> and <var>nullBytesOrFailure</var>.
@@ -4273,21 +4286,7 @@ steps:
   </ol>
  </li>
 
- <li><p>If <var>response</var>'s <a for=response>body</a> is null or
- not <a for=ReadableStream>readable</a>, then run <var>finalize</var>.</p></li>
-</ol>
-
-<p>To <dfn>finalize response</dfn> given a <a for=/>fetch params</a> <var>fetchParams</var> and a
-<a for=/>response</a> <var>response</var>, run these steps:
-
-<ol>
- <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
- <a for=request>done flag</a>.
-
- <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response done</a> is not null,
- then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
- <a for="fetch params">process response done</a> given <var>response</var> with
- <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
+  <li><p>If <var>hasReadableStream</var> is false, then run <var>processResponseDone</var>.</p></li>
 </ol>
 
 <p>To <dfn export>finalize and report timing</dfn> given a <a for=/>response</a>
@@ -5649,8 +5648,6 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <p><a>If aborted</a>, then:
 
     <ol>
-     <li><p><a>Finalize response</a> given <var>fetchParams</var> and <var>response</var>.</p></li>
-
      <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
      <li>
