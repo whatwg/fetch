@@ -4200,7 +4200,7 @@ steps:
   <ol>
    <li>
     <p>Set <var>response</var>'s <a for=response>URL list</a> to « <var>fetchParams</var>'s
-    <a for="fetch params">request</a>'s <a for=request>URL list</a> ≫.
+    <a for="fetch params">request</a>'s <a for=request>URL list</a>[0] ≫.
 
     <p class=note>This is needed as after <a for=list>cloning</a> <var>fetchParams</var>'s
     <a for="fetch params">request</a>'s <a for=request>URL list</a> earlier, <var>response</var>
@@ -4212,9 +4212,6 @@ steps:
    <a for="fetch params">timing info</a>.</p></li>
   </ol>
  </li>
-
- <li><p>Let <var>hasReadableStream</var> be true if <var>response</var>'s <a for=response>body</a>
- is not null and is <a for=ReadableStream>readable</a>; otherwise false.
 
  <li>
   <p>Let <var>processResponseDone</var> be the following steps:
@@ -4230,8 +4227,11 @@ steps:
   </ol>
  </li>
 
+ <li><p>If <var>response</var>'s <a for=response>body</a> is null, then run
+ <var>processResponseDone</var>.
+
  <li>
-  <p>If <var>hasReadableStream</var> is true, then:
+  <p>Otherwise:</p>
 
   <ol>
    <li><p>Let <var>transformStream</var> be a new a {{TransformStream}}.
@@ -4240,12 +4240,16 @@ steps:
    <a for=TransformStream lt=enqueue>enqueues</a> <var>chunk</var> in <var>transformStream</var>.
 
    <li><p><a for=TransformStream lt="setting up">Set up</a> <var>transformStream</var> with
-   <var>identityTransformAlgorithm</var> and <var>processResponseDone</var>.
+   [=TransformStream/set up/transformalgorithm=] set to <var>identityTransformAlgorithm</var> and
+   [=TransformStream/set up/flushalgorithm=] set to <var>processResponseDone</var>.
 
    <li><p>Set <var>response</var>'s <a for=response>body</a> to the result of
    <a for=ReadableStream lt="piping through">piping</a> <var>response</var>'s
    <a for=response>body</a> through <var>transformStream</var>.
   </ol>
+
+  <p class=note>This {{TransformStream}} is needed for the purpose of receiving a notification when
+  the stream reaches its end, and is otherwise an [=identity transform stream=].
  </li>
 
  <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response</a> is non-null, then
@@ -4258,23 +4262,12 @@ steps:
   then:
 
   <ol>
-   <li>
-    <p>Let <var>processEndOfBody</var> given <var>nullBytesOrFailure</var> be the following
-    steps:
-
-    <ol>
-     <li><p>Run <var>processResponseDone</var>.
-
-     <li><p>Run <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a>
-     given <var>response</vaR> and <var>nullBytesOrFailure</var>.
-    </ol>
-   </li>
-
    <li><p>Let <var>processBody</var> given <var>nullOrBytes</var> be this step: run
-   <var>processEndOfBody</var> with <var>nullOrBytes</var>.
+   <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> given
+   <var>response</var> and <var>nullOrBytes</var>.
 
-   <li><p>Let <var>processBodyError</var> be this step: run <var>processEndOfBody</var>given
-   failure.
+   <li><p>Let <var>processBodyError</var> be this step: run <var>fetchParams</var>'s
+   <a for="fetch params">process response end-of-body</a> given <var>response</var> and failure.
 
    <li><p>If <var>response</var>'s <a for=response>body</a> is null, then <a>queue a fetch task</a>
    to run <var>processBody</var> given null, with <var>fetchParams</var>'s
@@ -4285,8 +4278,6 @@ steps:
    <a for="fetch params">task destination</a>.
   </ol>
  </li>
-
-  <li><p>If <var>hasReadableStream</var> is false, then run <var>processResponseDone</var>.</p></li>
 </ol>
 
 <p>To <dfn export>finalize and report timing</dfn> given a <a for=/>response</a>
