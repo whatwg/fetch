@@ -169,7 +169,7 @@ exposes most of the networking functionality at a fairly low level of abstractio
 <p>This specification depends on the Infra Standard. [[!INFRA]]
 
 <p>This specification uses terminology from the ABNF, Encoding, HTML, HTTP, IDL, MIME Sniffing,
-Streams, and URL Standards.
+Streams, URL, and WebSockets Standards.
 [[!ABNF]]
 [[!ENCODING]]
 [[!HTML]]
@@ -178,6 +178,7 @@ Streams, and URL Standards.
 [[!MIMESNIFF]]
 [[!STREAMS]]
 [[!URL]]
+[[!WEBSOCKETS]]
 
 <p><dfn>ABNF</dfn> means ABNF as augmented by HTTP (in particular the addition of <code>#</code>)
 and RFC 7405. [[!RFC7405]]
@@ -8007,146 +8008,18 @@ fetch("https://www.example.com/")
 
 <h2 id=websocket-protocol>WebSocket protocol alterations</h2>
 
-<div class=note>
- <p>This section replaces part of the WebSocket protocol opening handshake client requirement to
- integrate it with algorithms defined in Fetch. This way CSP, cookies, HSTS, and other Fetch-related
- protocols are handled in a single location. Ideally the RFC would be updated with this language,
- but it is never that easy. The WebSocket API, defined in the HTML Standard, has been updated to use
- this language. [[!WSP]] [[!HTML]]
-
- <p>The way this works is by replacing The WebSocket Protocol's "establish a WebSocket connection"
- algorithm with a new one that integrates with Fetch. "Establish a WebSocket connection" consists of
- three algorithms: setting up a connection, creating and transmiting a handshake request, and
- validating the handshake response. That layering is different from Fetch, which first creates a
- handshake, then sets up a connection and transmits the handshake, and finally validates the
- response. Keep that in mind while reading these alterations.
-</div>
-
 
 <h3 id=websocket-connections>Connections</h3>
 
-<p>To <dfn id=concept-websocket-connection-obtain>obtain a WebSocket connection</dfn>, given a
-<var>url</var>, run these steps:
-
-<ol>
- <li><p>Let <var ignore>host</var> be <var>url</var>'s <a for=url>host</a>.
-
- <li><p>Let <var ignore>port</var> be <var>url</var>'s <a for=url>port</a>.
-
- <li><p>Let <var ignore>secure</var> be false, if <var>url</var>'s <a for=url>scheme</a> is
- "<code>http</code>", and true otherwise.
-
- <li><p>Follow the requirements stated in step 2 to 5, inclusive, of the first set of steps in
- <a href=https://datatracker.ietf.org/doc/html/rfc6455#section-4.1>section 4.1</a> of The WebSocket
- Protocol to establish a <a lt="obtain a WebSocket connection">WebSocket connection</a>. [[!WSP]]
-
- <li><p>If that established a connection, return it, and return failure otherwise.
-</ol>
-
-<p class=note>Although structured a little differently, carrying different properties, and
-therefore not shareable, a WebSocket connection is very close to identical to an "ordinary"
-<a>connection</a>.
+<p class="note no-backref">This section used to define <span>obtain a WebSocket connection</span>
+which is now defined in [[!WEBSOCKETS]].
 
 
 <h3 id=websocket-opening-handshake>Opening handshake</h3>
 
-<p>To <dfn id=concept-websocket-establish>establish a WebSocket connection</dfn>, given a
-<var>url</var>, <var>protocols</var>, and <var>client</var>, run these steps:
-
-<ol>
- <li>
-  <p>Let <var>requestURL</var> be a copy of <var>url</var>, with its
-  <a for=url>scheme</a> set to
-  "<code>http</code>", if <var>url</var>'s
-  <a for=url>scheme</a> is "<code>ws</code>", and
-  to "<code>https</code>" otherwise.
-
-  <p class="note no-backref">This change of scheme is essential to integrate well with
-  <a lt=fetch for=/>fetching</a>. E.g., HSTS would not work without it. There is no real
-  reason for WebSocket to have distinct schemes, it's a legacy artefact.
-  [[!HSTS]]
-
- <li><p>Let <var>request</var> be a new <a for=/>request</a>, whose
- <a for=request>URL</a> is <var>requestURL</var>,
- <a for=request>client</a> is <var>client</var>,
- <a>service-workers mode</a> is "<code>none</code>",
- <a for=request>referrer</a> is "<code>no-referrer</code>",
- <a for=request>mode</a> is "<code>websocket</code>",
- <a for=request>credentials mode</a> is
- "<code>include</code>",
- <a for=request>cache mode</a> is "<code>no-store</code>", and
- <a for=request>redirect mode</a> is "<code>error</code>".
-
- <li><p><a for="header list">Append</a> (`<code>Upgrade</code>`, `<code>websocket</code>`) to
- <var>request</var>'s <a for=request>header list</a>.
-
- <li><p><a for="header list">Append</a> (`<code>Connection</code>`, `<code>Upgrade</code>`) to
- <var>request</var>'s <a for=request>header list</a>.
-
- <li>
-  <p>Let <var>keyValue</var> be a nonce consisting of a randomly selected 16-byte value that has
-  been <a lt="forgiving-base64 encode">forgiving-base64-encoded</a> and <a>isomorphic encoded</a>.
-
-  <p id=example-random-value class=example>If the randomly selected value was the byte sequence 0x01 0x02 0x03 0x04 0x05
-  0x06 0x07 0x08 0x09 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f 0x10, <var>keyValue</var> would be
-  forgiving-base64-encoded to "<code>AQIDBAUGBwgJCgsMDQ4PEC==</code>" and isomorphic encoded
-  to `<code>AQIDBAUGBwgJCgsMDQ4PEC==</code>`.
-
- <li><p><a for="header list">Append</a> (`<code>Sec-WebSocket-Key</code>`, <var>keyValue</var>) to
- <var>request</var>'s <a for=request>header list</a>.
-
- <li><p><a for="header list">Append</a> (`<code>Sec-WebSocket-Version</code>`, `<code>13</code>`) to
- <var>request</var>'s <a for=request>header list</a>.
-
- <li><p>For each <var>protocol</var> in <var>protocols</var>, <a for="header list">combine</a>
- (`<code>Sec-WebSocket-Protocol</code>`, <var>protocol</var>) in <var>request</var>'s
- <a for=request>header list</a>.
-
- <li>
-  <p>Let <var>permessageDeflate</var> be a user-agent defined
-  "<code>permessage-deflate</code>" extension <a for=/>header value</a>. [[!WSP]]
-
-  <p id=example-permessage-deflate class=example>`<code>permessage-deflate; client_max_window_bits</code>`
-
- <li><p><a for="header list">Append</a> (`<code>Sec-WebSocket-Extensions</code>`,
- <var>permessageDeflate</var>) to <var>request</var>'s <a for=request>header list</a>.
-
- <li>
-  <p><a lt=fetch for=/>Fetch</a> <var>request</var> with <a for=fetch><i>useParallelQueue</i></a>
-  set to true, and <a for=fetch><i>processResponse</i></a> given <var>response</var> being these
-  steps:
-
-  <ol>
-   <li><p>If <var>response</var> is a <a>network error</a> or its <a for=response>status</a> is not
-   101, <a>fail the WebSocket connection</a>.
-
-   <li>
-    <p>If <var>protocols</var> is not the empty list and <a>extracting header list values</a> given
-    `<code>Sec-WebSocket-Protocol</code>` and <var>response</var>'s <a for=request>header list</a>
-    results in null, failure, or the empty byte sequence, then <a>fail the WebSocket connection</a>.
-
-    <p class=note>This is different from the check on this header defined by The WebSocket Protocol.
-    That only covers a subprotocol not requested by the client. This covers a subprotocol requested
-    by the client, but not acknowledged by the server.
-
-   <li><p>Follow the requirements stated step 2 to step 6, inclusive, of the last set of steps in
-   <a href=https://datatracker.ietf.org/doc/html/rfc6455#section-4.1>section 4.1</a> of The
-   WebSocket Protocol to validate <var>response</var>. This either results in
-   <a>fail the WebSocket connection</a> or <a>the WebSocket connection is established</a>.
-  </ol>
-</ol>
-
-<p><dfn>Fail the WebSocket connection</dfn> and <dfn>the WebSocket connection is established</dfn>
-are defined by The WebSocket Protocol. [[!WSP]]
-
-<p class=warning>The reason redirects are not followed and this handshake is generally restricted is
-because it could introduce serious security problems in a web browser context. For example, consider
-a host with a WebSocket server at one path and an open HTTP redirector at another. Suddenly, any
-script that can be given a particular WebSocket URL can be tricked into communicating to (and
-potentially sharing secrets with) any host on the internet, even if the script checks that the URL
-has the right hostname.
-<!-- https://www.ietf.org/mail-archive/web/hybi/current/msg06951.html -->
-
+<p class="note no-backref">This section used to define
+<span>establish a WebSocket connection</span>, <span>fail the WebSocket connection</span> and
+<span>the WebSocket connection is established</span> which are now defined in [[!WEBSOCKETS]].
 
 
 <h2 id=data-urls><code>data:</code> URLs</h2>
