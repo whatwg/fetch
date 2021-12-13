@@ -196,7 +196,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">process request end-of-body</dfn> (default null)
  <dt><dfn for="fetch params">process response</dfn> (default null)
  <dt><dfn for="fetch params">process response end-of-body</dfn> (default null)
- <dt><dfn for="fetch params">process response done</dfn> (default null)
+ <dt><dfn for="fetch params">process response consume body</dfn> (default null)
  <dd>Null or an algorithm.
 
  <dt><dfn for="fetch params">task destination</dfn> (default null)
@@ -3739,17 +3739,18 @@ optional algorithm
 <dfn export for=fetch id=process-request-body><var>processRequestBodyChunkLength</var></dfn>, an
 optional algorithm
 <dfn export for=fetch id=process-request-end-of-body oldids=process-request-end-of-file><var>processRequestEndOfBody</var></dfn>,
-an optional algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>,
-an optional algorithm
-<dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseEndOfBody</var></dfn>,
-an optional algorithm <dfn export for=fetch><var>processResponseDone</var></dfn>, and an optional
-boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run the steps
-below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting an integer
-representing the number of bytes transmitted. If given, <var>processRequestEndOfBody</var> must be
-an algorithm accepting no arguments. If given, <var>processResponse</var> must be an algorithm
-accepting a <a for=/>response</a>. If given, <var>processResponseEndOfBody</var> must be an
-algorithm accepting a <a for=/>response</a> and null, failure, or a <a for=/>byte sequence</a>. If
-given, <var>processResponseDone</var> must be an algorithm accepting a <a for=/>response</a>.
+an optional algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an
+optional algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional
+algorithm
+<dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
+and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
+the steps below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting
+an integer representing the number of bytes transmitted. If given,
+<var>processRequestEndOfBody</var> must be an algorithm accepting no arguments. If given,
+<var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
+<var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a>. If
+given, <var>processResponseConsumeBody</var> must be an algorithm accepting a <a for=/>response</a>
+and null, failure, or a <a for=/>byte sequence</a>.
 
 <p>An ongoing <a for=/>fetch</a> can be
 <dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
@@ -3804,8 +3805,8 @@ the request.
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
  <a for="fetch params">process response</a> is <var>processResponse</var>,
+ <a for="fetch params">process response consume body</a> is <var>processResponseConsumeBody</var>,
  <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>,
- <a for="fetch params">process response done</a> is <var>processResponseDone</var>,
  <a for="fetch params">task destination</a> is <var>taskDestination</var>, and
  <a for="fetch params">cross-origin isolated capability</a> is
  <var>crossOriginIsolatedCapability</var>.
@@ -4214,15 +4215,15 @@ steps:
  </li>
 
  <li>
-  <p>Let <var>processResponseDone</var> be the following steps:
+  <p>Let <var>processResponseEndOfBody</var> be the following steps:
 
   <ol>
    <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
    <a for=request>done flag</a>.
 
-   <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response done</a> is not null,
-   then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
-   <a for="fetch params">process response done</a> given <var>response</var> with
+   <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is not
+   null, then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+   <a for="fetch params">process response end-of-body</a> given <var>response</var> with
    <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
   </ol>
  </li>
@@ -4233,7 +4234,7 @@ steps:
  <a for="fetch params">task destination</a>.
 
  <li><p>If <var>response</var>'s <a for=response>body</a> is null, then run
- <var>processResponseDone</var>.
+ <var>processResponseEndOfBody</var>.
 
  <li>
   <p>Otherwise:</p>
@@ -4245,8 +4246,10 @@ steps:
    <a for=TransformStream lt=enqueue>enqueues</a> <var>chunk</var> in <var>transformStream</var>.
 
    <li><p><a for=TransformStream lt="setting up">Set up</a> <var>transformStream</var> with
-   <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to <var>identityTransformAlgorithm</var> and
-   <a for="TransformStream/set up"><i>flushAlgorithm</i></a> set to <var>processResponseDone</var>.
+   <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
+   <var>identityTransformAlgorithm</var> and
+   <a for="TransformStream/set up"><i>flushAlgorithm</i></a> set to
+   <var>processResponseEndOfBody</var>.
 
    <li><p>Set <var>response</var>'s <a for=response>body</a> to the result of
    <a for=ReadableStream lt="piping through">piping</a> <var>response</var>'s
@@ -4257,16 +4260,16 @@ steps:
   the stream reaches its end, and is otherwise an <a>identity transform stream</a>.
 
  <li>
-  <p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is non-null,
-  then:
+  <p>If <var>fetchParams</var>'s <a for="fetch params">process response consume body</a> is
+  non-null, then:
 
   <ol>
    <li><p>Let <var>processBody</var> given <var>nullOrBytes</var> be this step: run
-   <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> given
+   <var>fetchParams</var>'s <a for="fetch params">process response consume body</a> given
    <var>response</var> and <var>nullOrBytes</var>.
 
    <li><p>Let <var>processBodyError</var> be this step: run <var>fetchParams</var>'s
-   <a for="fetch params">process response end-of-body</a> given <var>response</var> and failure.
+   <a for="fetch params">process response consume body</a> given <var>response</var> and failure.
 
    <li><p>If <var>response</var>'s <a for=response>body</a> is null, then <a>queue a fetch task</a>
    to run <var>processBody</var> given null, with <var>fetchParams</var>'s
@@ -7583,7 +7586,7 @@ method steps are:
  "<code>fetch</code>".
 
  <li>
-  <p><a for=/>Fetch</a> <var>request</var> with <a for=fetch><i>processResponseDone</i></a> set to
+  <p><a for=/>Fetch</a> <var>request</var> with <a for=fetch><i>processResponseEndOfBody</i></a> set to
   <var>handleFetchDone</var>, and <a for=fetch><i>processResponse</i></a> given <var>response</var>
   being these substeps:
 
@@ -8033,6 +8036,11 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  <a for=response>body</a>'s <a for=body>stream</a> directly.
 
  <dt><a for=fetch><i>processResponseEndOfBody</i></a>
+ <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates the network is
+ done transmitting the response. This does not read <a for=/>response</a>'s
+ <a for=response>body</a>.
+
+ <dt><a for=fetch><i>processResponseConsumeBody</i></a>
  <dd>
   <p>Takes an algorithm that will be passed a <a for=/>response</a> and null, failure, or a
   <a>byte sequence</a>. This is useful for standards that wish to operate on the entire
@@ -8056,11 +8064,6 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
   <p class=warning>A standard that uses this argument cannot operate on <a for=/>response</a>'s
   <a for=response>body</a> itself as providing this argument will cause it to be read and it can be
   read only once.
-
- <dt><a for=fetch><i>processResponseDone</i></a>
- <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates the network is
- done transmitting the response. This does not read <a for=/>response</a>'s
- <a for=response>body</a>.
 
  <dt><a for=fetch><i>useParallelQueue</i></a>
  <dd><p>Takes a <a for=/>boolean</a> that defaults to false. Indicates where the algorithms passed
