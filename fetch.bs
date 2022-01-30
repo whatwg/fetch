@@ -7298,6 +7298,7 @@ interface Response {
 
   [NewObject] static Response error();
   [NewObject] static Response redirect(USVString url, optional unsigned short status = 302);
+  [NewObject] static Response json(any data, optional ResponseInit init = {});
 
   readonly attribute ResponseType type;
 
@@ -7348,6 +7349,10 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
  <dt><code><var>response</var> = <a idl>Response</a> . <a method for=Response lt=redirect()>redirect</a>(<var>url</var>, <var>status</var> = 302)</code>
  <dd><p>Creates a redirect {{Response}} that redirects to <var>url</var> with status
  <var>status</var>.
+
+ <dt><code><var>response</var> = <a idl>Response</a> . <a method for=Response lt=json()>json</a>(<var>data</var> [, <var>init</var>])</code>
+ <dd><p>Creates a {{Response}} whose body is the JSON-encoded <var>data</var>, and status, status
+ message, and headers are provided by <var>init</var>.
 
  <dt><code><var>response</var> . <a attribute for=Response>type</a></code>
  <dd><p>Returns <var>response</var>'s type, e.g., "<code>cors</code>".
@@ -7476,6 +7481,48 @@ are:
 
  <li><p><a for="header list">Append</a> (`<code>Location</code>`, <var>value</var>) to
  <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>header list</a>.
+
+ <li><p>Return <var>responseObject</var>.
+</ol>
+
+
+<p>The static
+<dfn method for=Response><code>json(<var>data</var>, <var>init</var>)</code></dfn> method steps
+are:
+
+<ol>
+ <li><p>If <var>init</var>["{{ResponseInit/status}}"] is not in the range 200 to 599, inclusive,
+ then <a>throw</a> a {{RangeError}}.
+
+ <li><p>If <var>init</var>["{{ResponseInit/status}}"] is a <a>null body status</a>, then
+ <a>throw</a> a {{TypeError}}.
+
+ <li><p>If <var>init</var>["{{ResponseInit/statusText}}"] does not match the
+ <a spec=http>reason-phrase</a> token production, then <a>throw</a> a {{TypeError}}.
+
+ <li><p>Let <var>responseObject</var> be the result of <a for=Response>creating</a> a {{Response}}
+ object, given a new <a for=/>response</a>, "<code>response</code>", and <a>this</a>'s
+ <a>relevant Realm</a>.
+
+ <li><p>Set <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>status</a> to
+ <var>init</var>["{{ResponseInit/status}}"].
+
+ <li><p>Set <var>responseObject</var>'s <a for=Response>response</a>'s
+ <a for=response>status message</a> to <var>init</var>["{{ResponseInit/statusText}}"].
+
+ <li><p>If <var>init</var>["{{ResponseInit/headers}}"] <a for=map>exists</a>, then
+ <a for=Headers>fill</a> <var>responseObject</var>'s <a for=Response>headers</a> with
+ <var>init</var>["{{ResponseInit/headers}}"].
+
+ <li><p>Set <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>body</a> to
+ the <a>UTF-8 encoding</a> of the result of running
+ <a>serialize a JavaScript value to a JSON string</a> on <var>data</var>.
+
+ <li><p>If <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>header list</a>
+ <a for="header list">does not contain</a> `<code>Content-Type</code>`, then
+ <a for="header list">append</a> (`<code>Content-Type</code>`,
+ `<code>application/json;charset=utf-8</code>`) to <var>responseObject</var>'s
+ <a for=Response>response</a>'s <a for=response>header list</a>.
 
  <li><p>Return <var>responseObject</var>.
 </ol>
