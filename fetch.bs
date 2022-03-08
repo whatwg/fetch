@@ -1256,6 +1256,13 @@ null), run these steps. <var>processBody</var> must be an algorithm accepting a
 
 <hr>
 
+<p>A <dfn export id=concept-body-with-type>body with type</dfn> is a
+<a for=/>tuple</a> that consists of a
+<dfn export for="body with type" id=concept-body-with-type-body>body</dfn> (a <a for=/>body</a>) and
+<dfn export for="body with type" id=concept-body-with-type>type</dfn> (a <a for=/>header value</a>).
+
+<hr>
+
 <p>To <dfn export>handle content codings</dfn> given <var>codings</var> and <var>bytes</var>, run
 these steps:
 
@@ -7399,8 +7406,8 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
  <li><p>Return <var>responseObject</var>.
 </ol>
 
-<p>To <dfn>initialize a response</dfn>, given a {{Response}} <var>response</var>, and
-{{ResponseInit}} <var>init</var>, run these steps:
+<p>To <dfn>initialize a response</dfn>, given a {{Response}} <var>response</var>, {{ResponseInit}}
+<var>init</var>, and an optional <a for/>body with type</a> <var>body</var>, run these steps:
 
 <ol>
  <li><p>If <var>init</var>["{{ResponseInit/status}}"] is not in the range 200 to 599, inclusive,
@@ -7418,6 +7425,26 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
  <li><p>If <var>init</var>["{{ResponseInit/headers}}"] <a for=map>exists</a>, then
  <a for=Headers>fill</a> <var>response</var>'s <a for=Response>headers</a> with
  <var>init</var>["{{ResponseInit/headers}}"].
+
+ <li>
+  <p>If <var>body</var> was given, then:
+
+  <ol>
+   <li>
+    <p>If <var>response</var>'s <a for=response>status</a> is a <a>null body status</a>, then
+    <a>throw</a> a {{TypeError}}.
+
+    <p class="note no-backref">101 is included in <a>null body status</a> due to its use elsewhere.
+    It does not affect this step.
+
+   <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>body</var>'s
+   <a for="body with type">body</a>.
+
+   <li><p>If <var>body</var>'s <a for="body with type">type</a> is non-null and
+   <var>response</var>'s <a for=response>header list</a> <a for="header list">does not contain</a>
+   `<code>Content-Type</code>`, then <a for="header list">append</a> (`<code>Content-Type</code>`,
+   <var>body</var>'s <a for="body with type">type</a>) to <var>response</var>'s
+   <a for=response>header list</a>.
 </ol>
 
 <hr>
@@ -7434,30 +7461,13 @@ constructor steps are:
  <a for=Response>response</a>'s <a for=response>header list</a> and <a for=Headers>guard</a> is
  "<code>response</code>".
 
- <li><p>Perform <a>initialize a response</a> given <a>this</a>, and <var>init</var>.
+ <li><p>Let <var>bodyWithType</var> be null.
 
- <li>
-  <p>If <var>body</var> is non-null, then:
+ <li><p>If <var>body</var> is non-null, then let <var>bodyWithType</var> be the result of
+ <a for=BodyInit>extracting</a> <var>body</var>.
 
-  <ol>
-   <li>
-    <p>If <a>this</a>'s <a for=Response>response</a>'s <a for=response>status</a> is a
-    <a>null body status</a>, then <a>throw</a> a {{TypeError}}.
-
-    <p class="note no-backref">101 is included in <a>null body status</a> due to its use elsewhere.
-    It does not affect this step.
-
-   <li><p>Let <var>Content-Type</var> be null.
-
-   <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>body</a> and
-   <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a> <var>body</var>.
-
-   <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Response>response</a>'s
-   <a for=response>header list</a> <a for="header list">does not contain</a>
-   `<code>Content-Type</code>`, then <a for="header list">append</a> (`<code>Content-Type</code>`,
-   <var>Content-Type</var>) to <a>this</a>'s <a for=Response>response</a>'s
-   <a for=response>header list</a>.
-  </ol>
+ <li><p>Perform <a>initialize a response</a> given <a>this</a>, <var>init</var>, and
+ <var>bodyWithType</var>.
 </ol>
 
 <p>The static <dfn method for=Response><code>error()</code></dfn> method steps are to return the
@@ -7498,25 +7508,17 @@ are:
 are:
 
 <ol>
+ <li><p>Let <var>bytes</var> the result of running <a>serialize a JavaScript value to JSON bytes</a>
+ on <var>data</var>.
+
+ <li><p>Let <var>body</var> be the result of <a for=BodyInit>extracting</a> <var>bytes</var>.
+
  <li><p>Let <var>responseObject</var> be the result of <a for=Response>creating</a> a {{Response}}
  object, given a new <a for=/>response</a>, "<code>response</code>", and <a>this</a>'s
  <a>relevant Realm</a>.
 
- <li><p>Perform <a>initialize a response</a> given <var>responseObject</var>, and <var>init</var>.
-
- <li><p>If <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>status</a> is
- a <a>null body status</a>, then <a>throw</a> a {{TypeError}}.
-
- <li><p>Set <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>body</a> to
- the result of running <a>serialize a JavaScript value to JSON bytes</a> on <var>data</var>.
-
- <li><p>If <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>header list</a>
- <a for="header list">does not contain</a> `<code>Content-Type</code>`, then
- <a for="header list">append</a> (`<code>Content-Type</code>`,
- `<code>application/json;charset=utf-8</code>`) to <var>responseObject</var>'s
- <a for=Response>response</a>'s <a for=response>header list</a>.
-
- <li><p>Return <var>responseObject</var>.
+ <li><p>Perform <a>initialize a response</a> given <var>responseObject</var>, <var>init</var>, and
+ (body, <code>"application/json;charset=utf-8"</code>).
 </ol>
 
 <p>The <dfn attribute for=Response><code>type</code></dfn> getter steps are to return <a>this</a>'s
