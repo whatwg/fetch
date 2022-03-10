@@ -3891,9 +3891,16 @@ the request.
    with <var>request</var>'s <a for=request>client</a>'s
    <a for="environment settings object">origin</a>.
 
-   <li><p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
-   step <a>in parallel</a> given a <a for=/>response</a> <var>response</var>: run
-   <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>.
+   <li>
+    <p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
+    step <a>in parallel</a> given a <a for=/>response</a> <var>response</var>: If
+    <a lt="Should response to request be blocked by Content Security Policy?"><var>response</var>
+    to <var>request</var> should not be blocked by Content Security Policy</a>, then return; Otherwise
+    run <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>.</p>
+
+    <p class=note>An additional CSP check is necessary here as it is possible that new CSP
+    directives were hadded after the preload was initiated, e.g. by a <code>meta</code> element.</p>
+   </li>
 
    <li><p>Let <var>foundPreloadedResource</var> be the result of invoking
    <a>consume a preloaded resource</a> for <var>req</var>'s <a for=request>window</a>,
