@@ -3893,13 +3893,22 @@ the request.
 
    <li>
     <p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
-    step <a>in parallel</a> given a <a for=/>response</a> <var>response</var>: If
-    <a lt="Should response to request be blocked by Content Security Policy?"><var>response</var>
-    to <var>request</var> should not be blocked by Content Security Policy</a>, then return; Otherwise
-    run <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>.</p>
+    steps <a>in parallel</a> given a <a for=/>response</a> <var>response</var>:
 
-    <p class=note>An additional CSP check is necessary here as it is possible that new CSP
-    directives were hadded after the preload was initiated, e.g. by a <code>meta</code> element.</p>
+    <ol>
+     <li>
+      <p>If
+      <a lt="Should response to request be blocked by Content Security Policy?"><var>response</var>
+      to <var>request</var> should be blocked by Content Security Policy</a>, then set
+      <var>response</var> to a <span>network error</span>.</p>
+
+      <p class=note>An additional CSP check is necessary here as it is possible that new CSP
+      directives were added after the preload was initiated, e.g. by appending a <code>meta</code>
+      element to the document.</p>
+     </li>
+
+     <li><p>Run <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>.</p></li>
+    </ol>
    </li>
 
    <li><p>Let <var>foundPreloadedResource</var> be the result of invoking
