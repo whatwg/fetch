@@ -215,6 +215,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 
  <dt><dfn for="fetch params">timing info</dfn>
  <dd>A <a for=/>fetch timing info</a>.
+
+ <dt><dfn export for="fetch params">preloaded response</dfn> (default "<code>pending</code>")
+ <dd>Null, "<code>pending</code>", or a <a for=/>response</a>.
 </dl>
 
 <p>A <dfn export>fetch controller</dfn> is a <a for=/>struct</a> used to enable callers of
@@ -3891,25 +3894,9 @@ the request.
    with <var>request</var>'s <a for=request>client</a>'s
    <a for="environment settings object">origin</a>.
 
-   <li>
-    <p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
-    steps <a>in parallel</a> given a <a for=/>response</a> <var>response</var>:
-
-    <ol>
-     <li>
-      <p>If
-      <a lt="Should response to request be blocked by Content Security Policy?"><var>response</var>
-      to <var>request</var> should be blocked by Content Security Policy</a>, then set
-      <var>response</var> to a <span>network error</span>.</p>
-
-      <p class=note>An additional CSP check is necessary here as it is possible that new CSP
-      directives were added after the preload was initiated, e.g. by appending a <code>meta</code>
-      element to the document.</p>
-     </li>
-
-     <li><p>Run <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>.</p></li>
-    </ol>
-   </li>
+   <li><p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
+   step given a <a for=/>response</a> <var>response</var>: set <var>fetchParams</var>'s
+   <span for="fetch params">preloaded response</span> to <var>response</var>.
 
    <li><p>Let <var>foundPreloadedResource</var> be the result of invoking
    <a>consume a preloaded resource</a> for <var>req</var>'s <a for=request>window</a>,
@@ -3918,7 +3905,8 @@ the request.
    <var>req</var>'s <a for=request>integrity metadata</a>, and
    <var>onPreloadedResponseAvailable</var>.
 
-   <li><p>If <var>foundPreloadedResource</var> is true, then return.
+   <li><p>If <var>foundPreloadedResource</var> is false, then set <var>fetchParams</var>'s
+   <a for="fetch params">preloaded response</a> to null.
   </ol>
  </li>
 
@@ -4004,7 +3992,12 @@ steps:
 <ol>
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
 
- <li><p>Let <var>response</var> be null.
+ <li><p>If <var>fetchParams</var>'s <a for="fetch params">preloaded response</a> is
+ "<code>pending</code>", then wait until <var>fetchParams</var>'s
+ <a for="fetch params">preloaded response</a> is null or a <a for=/>response</a>.
+
+ <li><p>Let <var>response</var> be <var>fetchParams</var>'s
+ <a for="fetch params">preloaded response</a>.
 
  <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and <var>request</var>'s
  <a for=request>current URL</a> is not <a lt="is local">local</a>, then set <var>response</var> to a
