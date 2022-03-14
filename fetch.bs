@@ -2305,36 +2305,6 @@ unset or <a for=request>keepalive</a> is false, <a lt=terminated for=fetch>termi
 
 <h3 id=resolving-domains>Resolving domains</h3>
 
-<p tracking-vector>To <dfn>resolve a domain</dfn>, given a <a for=/>network partition key</a>
-<var>key</var> and a <a for=/>domain</a> <var>domain</var>:
-
-<ol>
- <li><p>If <var>domain</var> is a <a for=/>host</a> whose <a for=host>public suffix</a> is
- "<code>localhost</code>", then return « <code>::1</code>, <code>127.0.0.1</code> ».
-
- <li><p>Perform an <a>implementation-defined</a> operation to turn <var>domain</var> into a
- <a for=/>set</a> of one or more <a for=/>IP addresses</a>. If this operation succeeds, return the
- <a for=/>set</a> of <a for=/>IP addresses</a>.
-
- <li><p>Return failure.
-</ol>
-
-<p>The results of <a>resolve a domain</a> may be cached. If they are cached, <var>key</var> should
-be used as part of the cache key.
-
-<div class=note>
- <p>Typically this operation would involve DNS and as such caching can happen on DNS servers without
- <var>key</var> being taken into account. Depending on the implementation it might also not be
- possible to take <var>key</var> into account locally. [[RFC1035]]
-
- <p>The order of the <a for=/>IP addresses</a> <a>resolve a domain</a> can return return can differ
- between invocations.
-
- <p>The particulars (apart from the cache key) are not tied down as they are not pertinent to the
- system the Fetch Standard establishes. Other documents ought not to build on this primitive without
- having a considered discussion with the Fetch Standard community first.
-</div>
-
 <p>To <dfn>resolve an origin</dfn>, given a <a for=/>network partition key</a> <var>key</var> and an
 <a for=/>origin</a> <var>origin</var>:
 <!-- Should we assert the scheme here to be an HTTP(S) scheme or a WebRTC scheme? -->
@@ -2343,18 +2313,39 @@ be used as part of the cache key.
  <li><p>If <var>origin</var>'s <a for=origin>host</a> is an <a for=/>IP address</a>, then return
  « <var>origin</var>'s <a for=origin>host</a> ».
 
- <li><p>Return the result of running <a>resolve a domain</a> given <var>key</var> and
- <var>origin</var>'s <a for=origin>host</a>.
+ <li><p>If <var>origin</var>'s <a for=origin>host</a>'s <a for=host>public suffix</a> is
+ "<code>localhost</code>", then return « <code>::1</code>, <code>127.0.0.1</code> ».
+
+ <li>
+  <p>Perform an <a>implementation-defined</a> operation to turn <var>origin</var> into a
+  <a for=/>set</a> of one or more <a for=/>IP addresses</a>.
+
+  <p>It is also <a>implementation-defined</a> whether other operations might be performed to get
+  connection information beyond just <a for=/>IP addresses</a>. For example, if <var>origin</var>'s
+  <a for=origin>scheme</a> is "http" or "https", the implementation might perform a DNS query for
+  HTTPS RRs. [[SVCB]]
+
+  <p>If this operation succeeds, return the <a for=/>set</a> of <a for=/>IP addresses</a> and any
+  additional <a>implementation-defined</a> information.
+ </li>
+
+ <li><p>Return failure.
 </ol>
 
-<div class=note>
- <p>The same caveat applies. Do not build on this without having a considered discussion
- with the Fetch Standard community first.
+<p>The results of <a>resolve an origin</a> may be cached. If they are cached, <var>key</var> should
+be used as part of the cache key.
 
- <p>It is <a>implementation-defined</a> whether other DNS queries might be performed to get
- connection information beyond just <a for=/>IP addresses</a>. For example, if <var>origin</var>'s
- <a for=origin>scheme</a> is "http" or "https", the implementation might perform a DNS query for
- HTTPS RRs. [[SVCB]]
+<div class=note>
+ <p>Typically this operation would involve DNS and as such caching can happen on DNS servers without
+ <var>key</var> being taken into account. Depending on the implementation it might also not be
+ possible to take <var>key</var> into account locally. [[RFC1035]]
+
+ <p>The order of the <a for=/>IP addresses</a> <a>resolve an origin</a> can return return can differ
+ between invocations.
+
+ <p>The particulars (apart from the cache key) are not tied down as they are not pertinent to the
+ system the Fetch Standard establishes. Other documents ought not to build on this primitive without
+ having a considered discussion with the Fetch Standard community first.
 </div>
 
 
@@ -2494,7 +2485,7 @@ steps:
     return it. Any other returned values that are <a>connections</a> may be closed.
 
     <p class=note>Essentially this allows an implementation to pick one or more
-    <a for=/>IP addresses</a> from the return value of <a>resolve a domain</a> (assuming
+    <a for=/>IP addresses</a> from the return value of <a>resolve an origin</a> (assuming
     <var>proxy</var> is "<code>DIRECT</code>") and race them against each other, favor
     <a for=/>IPv6 addresses</a>, retry in case of a timeout, etc.
 
