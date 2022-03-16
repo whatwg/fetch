@@ -223,8 +223,12 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 <a for=struct>items</a>:
 
 <dl>
- <dt><dfn for="fetch controller">state</dfn> (default "<code>ongoing</code>")
- <dd>"<code>ongoing</code>", "<code>terminated</code>", or "<code>aborted</code>"
+ <dt><dfn for="fetch controller">state</dfn> (default "<code>requesting</code>")
+ <dd>"<code>requesting</code>", "<code>responding</code>", "<code>concluded</code>",
+ "<code>terminated</code>", or "<code>aborted</code>"
+
+ <dt><dfn for="fetch controller">conclude steps</dfn> (default null)
+ <dd>Null or an algorithm responsible for finalizing the fetch and reporting timing information
 </dl>
 
 <p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
@@ -234,6 +238,24 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 <p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
 "<code>terminated</code>".
+
+<p>To <dfn export for="fetch controller">conclude</dfn> a <a for=/>fetch controller</a>
+<var>controller</var>, perform the following steps given a string
+<var>initiatorType</var>, an optional "<code>client</code>" or <a for=/>global object</a>
+<var>global</var> (default "<code>client</code>"), and an optional "<code>original</code>" or
+<a for=/>response</a> <var>finalResponse</var> (default "<code>original</code>"):</p>
+
+<ol>
+ <li><p>Assert: <a>this</a>'s <a for="fetch controller">state</a> is "<code>responding</code>".
+
+ <li><p>Assert: <a>this</a>'s <a for="fetch controller">conclude steps</a> is not null.
+
+ <li><p>Invoke <a>this</a>'s <a for="fetch controller">conclude steps</a> with
+ <var>initiatorType</var> and <var>global</var>.
+
+ <li><p>Set <var>controller</var>'s <a for="fetch controller">state</a> to
+ "<code>concluded</code>".
+</ol>
 
 <p>A <a for=/>fetch params</a> <var>fetchParams</var> is <dfn for="fetch params">aborted</dfn> if
 its <a for="fetch params">controller</a>'s <a for="fetch controller">state</a> is
@@ -4283,22 +4305,54 @@ steps:
 <var>fetchParams</var> and a <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
+ <li><p>Let <var>timingInfo</var> be <var>fetchParams</var>'s
+ <a for="fetch params">timing info</a>.</p></li>
+
+ <li><p>Set <var>response</var>'s <a for=response>timing info</a> to <var>timingInfo</var>.</p></li>
+
+ <li><p>Set <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
+  <a for="fetch controller">state</a> to "<code>responding</code>".
+
  <li>
-  <p>If <var>response</var> is a <a>network error</a>, then:
+  <p>Set <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
+  <a for="fetch controller">conclude steps</a> to the following steps given a string
+  <var>initiatorType</var>, a "<code>client</code>" or <a for=/>global object</a>
+  <var>global</var>, and an "<code>original</code>" or <a for=/>response</a>
+  <var>finalResponse</var>:
 
   <ol>
-   <li>
-    <p>Set <var>response</var>'s <a for=response>URL list</a> to « <var>fetchParams</var>'s
-    <a for="fetch params">request</a>'s <a for=request>URL list</a>[0] ».
+   <li><p>If <var>global</var> is "<code>client</code>", then set <var>global</var> to
+   <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>client</a>'s
+   <a for="environment settings object">global object</a>.
 
-    <p class=note>This is needed as after <a for=list>cloning</a> <var>fetchParams</var>'s
-    <a for="fetch params">request</a>'s <a for=request>URL list</a> earlier, <var>response</var>
-    might have been set to a <a>network error</a>.</p>
+   <li><p>If <var>finalResponse</var> is "<code>original</code>", then set <var>finalResponse</var>
+   to <var>response</var>.
+
+   <li><p>If <var>finalResponse</var> is an <a>aborted network error</a>, then return.
+
+   <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
+   <a>HTTP(S) scheme</a>, then return.
+
+   <li><p>Let <var>timingInfo</var> be <var>fetchParams</var>'s
+   <a for="fetch params">timing info</a>.
+
+   <li><p>Let <var>cacheState</var> be <var>response</var>'s <a for=response>cache state</a>.
+
+   <li>
+    <p>If <var>finalResponse</var>'s <a for=response>timing allow passed flag</a> is not set,
+    then set <var>timingInfo</var> to a the result of <a>creating an opaque timing info</a> for
+    <var>timingInfo</var> and set <var>cacheState</var> to the empty string.
+
+    <p class=note>This covers the case of <var>finalResponse</var> being a <a>network error</a>.
    </li>
 
-   <li><p>Set <var>response</var>'s <a for=response>timing info</a> to the result of
-   <a>creating an opaque timing info</a> for <var>fetchParams</var>'s
-   <a for="fetch params">timing info</a>.</p></li>
+   <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">end time</a> to the
+   <a for=/>coarsened shared current time</a> given <var>global</var>'s
+   <a>relevant settings object</a>'s
+   <a for="environment settings object">cross-origin isolated capability</a>.
+
+   <li><p><a for=/>Mark resource timing</a> for <var>timingInfo</var>, <var>request</var>'s
+   <a for=request>URL</a> <var>initiatorType</var>, <var>global</var>, and <var>cacheState</var>.
   </ol>
 
  <li>
@@ -7721,9 +7775,8 @@ method steps are:
    <var>controller</var>.
   </ol>
 
- <li><p>Let <var>handleFetchDone</var> given <a for=/>response</a> <var>response</var> be to
- <a>finalize and report timing</a> with <var>response</var>, <var>globalObject</var>, and
- "<code>fetch</code>".
+ <li><p>Let <var>handleFetchDone</var> be to
+ <a for="fetch controller">conclude</a> <var>controller</var> given "<code>fetch</code>".
 
  <li>
   <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
