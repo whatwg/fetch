@@ -215,6 +215,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 
  <dt><dfn for="fetch params">timing info</dfn>
  <dd>A <a for=/>fetch timing info</a>.
+
+ <dt><dfn export for="fetch params">preloaded response candidate</dfn> (default null)
+ <dd>Null, "<code>pending</code>", or a <a for=/>response</a>.
 </dl>
 
 <p>A <dfn export>fetch controller</dfn> is a <a for=/>struct</a> used to enable callers of
@@ -3892,17 +3895,19 @@ the request.
    <a for="environment settings object">origin</a>.
 
    <li><p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
-   step <a>in parallel</a> given a <a for=/>response</a> <var>response</var>: run
-   <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>.
+   step given a <a for=/>response</a> <var>response</var>: set <var>fetchParams</var>'s
+   <a for="fetch params">preloaded response candidate</a> to <var>response</var>.
 
    <li><p>Let <var>foundPreloadedResource</var> be the result of invoking
-   <a>consume a preloaded resource</a> for <var>req</var>'s <a for=request>window</a>,
-   given <var>req</var>'s <a for=request>URL</a>, <var>req</var>'s <a for=request>destination</a>,
-   <var>req</var>'s <a for=request>mode</a>, <var>req</var>'s <a for=request>credentials mode</a>,
-   <var>req</var>'s <a for=request>integrity metadata</a>, and
-   <var>onPreloadedResponseAvailable</var>.
+   <a>consume a preloaded resource</a> for <var>request</var>'s <a for=request>window</a>, given
+   <var>request</var>'s <a for=request>URL</a>, <var>request</var>'s <a for=request>destination</a>,
+   <var>request</var>'s <a for=request>mode</a>, <var>request</var>'s
+   <a for=request>credentials mode</a>, <var>request</var>'s <a for=request>integrity metadata</a>,
+   and <var>onPreloadedResponseAvailable</var>.
 
-   <li><p>If <var>foundPreloadedResource</var> is true, then return.
+   <li><p>If <var>foundPreloadedResource</var> is true and <var>fetchParams</var>'s
+   <a for="fetch params">preloaded response candidate</a> is null, then set <var>fetchParams</var>'s
+   <a for="fetch params">preloaded response candidate</a> to "<code>pending</code>".
   </ol>
  </li>
 
@@ -4040,6 +4045,18 @@ steps:
   corresponding to the first matching statement:
 
   <dl class=switch>
+   <dt><var>fetchParams</var>'s <a for="fetch params">preloaded response candidate</a> is not null
+   <dd>
+    <ol>
+     <li><p>Wait until <var>fetchParams</var>'s
+     <a for="fetch params">preloaded response candidate</a> is not "<code>pending</code>".
+
+     <li><p><a for=/>Assert</a>: <var>fetchParams</var>'s
+     <a for="fetch params">preloaded response candidate</a> is a <a for=/>response</a>.
+
+     <li><p>Return <var>fetchParams</var>'s <a for="fetch params">preloaded response candidate</a>.
+    </ol>
+
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> is
    <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, and <var>request</var>'s
    <a for=request>response tainting</a> is "<code>basic</code>"
@@ -4047,7 +4064,6 @@ steps:
    "<code>data</code>"
    <dt><var>request</var>'s <a for=request>mode</a> is
    "<code>navigate</code>" or "<code>websocket</code>"
-
    <dd>
     <ol>
      <li><p>Set <var>request</var>'s
@@ -4064,7 +4080,6 @@ steps:
 
    <dt><var>request</var>'s <a for=request>mode</a> is
    "<code>same-origin</code>"
-
    <dd><p>Return a <a>network error</a>.
 
    <dt><var>request</var>'s <a for=request>mode</a> is
@@ -4096,7 +4111,6 @@ steps:
 
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is not an
    <a>HTTP(S) scheme</a>
-
    <dd><p>Return a <a>network error</a>.
 
    <dt><var>request</var>'s <a>use-CORS-preflight flag</a> is set
