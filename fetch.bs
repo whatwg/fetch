@@ -208,11 +208,11 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">cross-origin isolated capability</dfn> (default false)
  <dd>A boolean.
 
- <dt><dfn for="fetch params">controller</dfn> (default a new <a for=/>fetch controller</a>)
- <dd>A <a for=/>fetch controller</a>.
-
  <dt><dfn for="fetch params">timing info</dfn>
  <dd>A <a for=/>fetch timing info</a>.
+
+ <dt><dfn for="fetch params">controller</dfn>
+ <dd>A <a for=/>fetch controller</a>.
 
  <dt><dfn export for="fetch params">preloaded response candidate</dfn> (default null)
  <dd>Null, "<code>pending</code>", or a <a for=/>response</a>.
@@ -227,6 +227,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dd>"<code>requesting</code>", "<code>responding</code>", "<code>concluded</code>",
  "<code>terminated</code>", or "<code>aborted</code>"
 
+ <dt><dfn for="fetch controller">timing info</dfn>
+ <dd>A <a for=/>fetch timing info</a>
+
  <dt><dfn for="fetch controller">conclude steps</dfn> (default null)
  <dd>Null or an algorithm responsible for finalizing the fetch and reporting timing information
 </dl>
@@ -240,10 +243,11 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 "<code>terminated</code>".
 
 <p>To <dfn export for="fetch controller" id="finalize-and-report-timing">conclude</dfn> a
-<a for=/>fetch controller</a> <var>controller</var>, perform the following steps given a string
-<var>initiatorType</var>, an optional "<code>client</code>" or <a for=/>global object</a>
-<var>global</var> (default "<code>client</code>"), and an optional "<code>original</code>" or
-<a for=/>response</a> <var>finalResponse</var> (default "<code>original</code>"):</p>
+<a for=/>fetch controller</a> <var>controller</var>, perform the following steps given an optional
+string <var>initiatorType</var> (default "<code>other</code>"), an optional "<code>client</code>" or
+<a for=/>global object</a> <var>global</var> (default "<code>client</code>"), and an optional
+"<code>original</code>" or <a for=/>response</a> <var>finalResponse</var> (default
+"<code>original</code>"):</p>
 
 <ol>
  <li><p>If <a>this</a>'s <a for="fetch controller">state</a> is "<code>aborted</code>", then return.
@@ -282,15 +286,21 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
  <dt><dfn export for="fetch timing info">end time</dfn> (default 0)
  <dd>A {{DOMHighResTimeStamp}}.
 
- <dt><dfn export for="fetch timing info">encoded body size</dfn> (default 0)
- <dt><dfn export for="fetch timing info">decoded body size</dfn> (default 0)
- <dd>A number.
-
  <dt><dfn export for="fetch timing info">final connection timing info</dfn> (default null)
  <dd>Null or a <a for=/>connection timing info</a>.
 
  <dt><dfn export for="fetch timing info">server-timing headers</dfn> (default « »)
  <dd>A <a for=/>list</a> of strings.
+</dl>
+
+<p>A <dfn export>fetch resource info</dfn> is a <a for=/>struct</a> used to maintain
+information needed by <cite>Resource Timing</cite> and <cite>Navigation Timing</cite>. It has the
+following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
+
+<dl>
+ <dt><dfn export for="fetch resource info">encoded body size</dfn> (default 0)
+ <dt><dfn export for="fetch resource info">decoded body size</dfn> (default 0)
+ <dd>A number.
 </dl>
 
 <p>To
@@ -299,22 +309,6 @@ given a <a for=/>fetch timing info</a> <var>timingInfo</var>, return a new
 <a for=/>fetch timing info</a> whose <a for="fetch timing info">start time</a> and
 <a for="fetch timing info">post-redirect start time</a> are <var>timingInfo</var>'s
 <a for="fetch timing info">start time</a>.
-
-<p>To <dfn>update timing info from stored response</dfn>, given a
-<a for=/>connection timing info</a> <var>timingInfo</var> and a <a for=/>response</a>
-<var>response</var>, perform the following steps:
-
-<ol>
- <li><p>Let <var>storedTimingInfo</var> be <var>response</var>'s <a for=response>timing info</a>.
-
- <li><p>If <var>storedTimingInfo</var> is null, then return.
-
- <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">encoded body size</a> to
- <var>storedTimingInfo</var>'s <a for="fetch timing info">encoded body size</a>.
-
- <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">decoded body size</a> to
- <var>storedTimingInfo</var>'s <a for="fetch timing info">decoded body size</a>.
-</ol>
 
 <p>To <dfn>queue a fetch task</dfn>, given an algorithm <var>algorithm</var>, a
 <a for=/>global object</a> or a <a for=/>parallel queue</a> <var>taskDestination</var>, run these
@@ -2111,6 +2105,11 @@ message as HTTP/2 does not support them.
 "<code>local</code>", or "<code>validated</code>"). Unlesss stated otherwise, it is the empty
 string.
 
+<p>A <a for=/>response</a> has an associated
+<dfn export for=response id=concept-response-resource-info>resource info</dfn>
+(a <a for=/>fetch resource info</a>). Unlesss stated otherwise, it is a new
+<a for=/>fetch resource info</a>.
+
 <p class=note>This is intended for usage by <cite>Service Workers</cite> and
 <cite>Resource Timing</cite>.  [[SW]] [[RESOURCE-TIMING]]
 <!-- If we ever expand the utility of this we need to carefully consider whether filtered responses
@@ -2145,10 +2144,6 @@ initially unset.
 allowed on the resource fetched by looking at the flag of the response returned. Because the flag on
 the response of a redirect has to be set if it was set for previous responses in the redirect chain,
 this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
-
-<p>A <a for=/>response</a> has an associated
-<dfn for=response id=concept-response-timing-info>timing info</dfn> (null or a
-<a for=/>fetch timing info</a>), which is initially null.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response>service worker timing info</dfn> (null or a
@@ -3859,9 +3854,13 @@ the request.
  <a for="fetch timing info">post-redirect start time</a> are the
  <a for=/>coarsened shared current time</a> given <var>crossOriginIsolatedCapability</var>.
 
+ <li><p>Let <var>controller</var> be a new <a for=/>fetch controller</a> whose
+ <a for="fetch controller">timing info</a> is <var>timingInfo</var>.
+
  <li><p>Let <var>fetchParams</var> be a new <a for=/>fetch params</a> whose
  <a for="fetch params">request</a> is <var>request</var>,
  <a for="fetch params">timing info</a> is <var>timingInfo</var>,
+ <a for="fetch params">controller</a> is <var>controller</var>,
  <a for="fetch params">process request body chunk length</a> is
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
@@ -4310,8 +4309,6 @@ steps:
  <li><p>Let <var>timingInfo</var> be <var>fetchParams</var>'s
  <a for="fetch params">timing info</a>.</p></li>
 
- <li><p>Set <var>response</var>'s <a for=response>timing info</a> to <var>timingInfo</var>.</p></li>
-
  <li><p>Set <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
   <a for="fetch controller">state</a> to "<code>responding</code>".
 
@@ -4340,10 +4337,13 @@ steps:
 
    <li><p>Let <var>cacheState</var> be <var>response</var>'s <a for=response>cache state</a>.
 
+   <li><p>Let <var>resourceInfo</var> be <var>response</var>'s <a for=response>resource info</a>.
+
    <li>
     <p>If <var>finalResponse</var>'s <a for=response>timing allow passed flag</a> is not set,
     then set <var>timingInfo</var> to a the result of <a>creating an opaque timing info</a> for
-    <var>timingInfo</var> and set <var>cacheState</var> to the empty string.
+    <var>timingInfo</var>, set <var>resourceInfo</var> to a new <a for=/>fetch resource info</a> and
+    set <var>cacheState</var> to the empty string.
 
     <p class=note>This covers the case of <var>finalResponse</var> being a <a>network error</a>.
    </li>
@@ -4354,7 +4354,8 @@ steps:
    <a for="environment settings object">cross-origin isolated capability</a>.
 
    <li><p><a for=/>Mark resource timing</a> for <var>timingInfo</var>, <var>request</var>'s
-   <a for=request>URL</a> <var>initiatorType</var>, <var>global</var>, and <var>cacheState</var>.
+   <a for=request>URL</a> <var>initiatorType</var>, <var>global</var>, <var>cacheState</var>,
+   and <var>resourceInfo</var>.
   </ol>
 
  <li>
@@ -4433,49 +4434,6 @@ steps:
    <a for="fetch params">task destination</a>.
   </ol>
 </ol>
-
-<p>To <dfn export>finalize and report timing</dfn> given a <a for=/>response</a>
-<var>response</var>, a <a for=/>global object</a> <var>global</var>, and a <a for=/>string</a>
-<var>initiatorType</var> (default "<code>other</code>"), run these steps:
-
-<ol>
- <li><p>If <var>response</var> is an <a>aborted network error</a>, then return.
-
- <li><p>If <var>response</var>'s <a for=response>URL list</a> is null or
- <a for=list lt="is empty">empty</a>, then return.
-
- <li><p>Let <var>originalURL</var> be <var>response</var>'s <a for=response>URL list</a>[0].
-
- <li><p>Let <var>timingInfo</var> be <var>response</var>'s <a for=response>timing info</a>.
-
- <li><p>Let <var>cacheState</var> be <var>response</var>'s <a for=response>cache state</a>.
-
- <li><p>If <var>originalURL</var>'s <a for=url>scheme</a> is not an <a>HTTP(S) scheme</a>, then
- return.
-
- <li><p>If <var>timingInfo</var> is null, then return.
-
- <li>
-  <p>If <var>response</var>'s <a for=response>timing allow passed flag</a> is not set, then:
-
-  <ol>
-   <li><p>Set <var>timingInfo</var> to a the result of <a>creating an opaque timing info</a> for
-   <var>timingInfo</var>.
-
-   <li><p>Set <var>cacheState</var> to the empty string.
-  </ol>
-
- <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">end time</a> to the
- <a for=/>coarsened shared current time</a> given <var>global</var>'s
- <a>relevant settings object</a>'s
- <a for="environment settings object">cross-origin isolated capability</a>.
-
- <li><p>Set <var>response</var>'s <a for="response">timing info</a> to <var>timingInfo</var>.
-
- <li><p><a for=/>Mark resource timing</a> for <var>timingInfo</var>, <var>originalURL</var>,
- <var>initiatorType</var>, <var>global</var>, and <var>cacheState</var>.
-</ol>
-
 
 <h3 id=scheme-fetch oldids=basic-fetch>Scheme fetch</h3>
 
@@ -4646,9 +4604,6 @@ these steps:
      <a for="fetch timing info">final service worker start time</a> to
      <var>serviceWorkerStartTime</var>.
 
-     <li><p><a for=/>Update timing info from stored response</a> given <var>fetchParams</var>'s
-     <a for="fetch params">timing info</a> and <var>response</var>.
-
      <li>If <var>request</var>'s <a for=request>body</a> is non-null, then
      <a for=ReadableStream>cancel</a> <var>request</var>'s <a for=request>body</a> with undefined.
 
@@ -4780,15 +4735,7 @@ these steps:
     </dl>
     <!-- not resetting actualResponse since it's no longer used anyway -->
   </ol>
-
- <li>
-  <p>Set <var>response</var>'s <a for=response>timing info</a> to <var>timingInfo</var>.
-
-  <p class=note>Attaching the timing info to a response is what makes it exposed to the web as a
-  Resource Timing entry later. This step is done here, as resource-timing entries are available only
-  for HTTP fetches, including ones that are handled by service-workers or HTTP cache, and not for,
-  e.g., <code>data:</code>, <code>blob:</code> URL fetches, and are only available after all the
-  relevant security checks have succeeded.
+ </li>
 
  <li><p>Return <var>response</var>. <span class="note no-backref">Typically
  <var>actualResponse</var>'s <a for=response>body</a>'s
@@ -5315,9 +5262,6 @@ steps. They return a <a for=/>response</a>.
      <li><p>Set <var>response</var> to <var>storedResponse</var>.
 
      <li><p>Set <var>response</var>'s <a for=response>cache state</a> to "<code>validated</code>".
-
-     <li><p><a for=/>Update timing info from stored response</a> given <var>fetchParams</var>'s
-     <a for="fetch params">timing info</a> and <var>response</var>.
     </ol>
 
    <li>
@@ -5333,9 +5277,6 @@ steps. They return a <a for=/>response</a>.
 
       <p class=note>If <var>forwardResponse</var> is a <a>network error</a>, this effectively caches
       the network error, which is sometimes known as "negative caching".
-
-      <p class=note>The associated <a for=response>timing info</a> is stored in the cache
-      alongside the response.
     </ol>
   </ol>
 
@@ -5748,8 +5689,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
          `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
 
-         <li><p>Increase <var>timingInfo</var>'s <a for="fetch timing info">encoded body size</a>
-         by <var>bytes</var>'s <a for="byte sequence">length</a>.
+         <li><p>Increase <var>response</var>'s <a for=response>resource info</a>'s
+         <a for="fetch resource info">encoded body size</a> by <var>bytes</var>'s
+         <a for="byte sequence">length</a>.
 
          <li>
           <p>Set <var>bytes</var> to the result of <a lt="handle content codings">handling content
@@ -5758,7 +5700,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
           <p class="note no-backref">This makes the `<code>Content-Length</code>` <a for=/>header</a>
           unreliable to the extent that it was reliable to begin with.
 
-         <li><p>Increase <var>timingInfo</var>'s <a for="fetch timing info">decoded body size</a> by
+         <li><p>Increase <var>response</var>'s <a for=response>resource info</a>'s
+         <a for="fetch resource info">decoded body size</a> by
          <var>bytes</var>'s <a for="byte sequence">length</a>.
 
          <li><p>If <var>bytes</var> is failure, then <a for="fetch controller">terminate</a>
