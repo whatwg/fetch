@@ -245,9 +245,10 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 <p>To <dfn export for="fetch controller" id="finalize-and-report-timing">conclude</dfn> a
 <a for=/>fetch controller</a> <var>controller</var>, perform the following steps given an optional
 string <var>initiatorType</var> (default "<code>other</code>"), an optional "<code>client</code>" or
-<a for=/>global object</a> <var>global</var> (default "<code>client</code>"), and an optional
+<a for=/>global object</a> <var>global</var> (default "<code>client</code>"), an optional
 "<code>original</code>" or <a for=/>response</a> <var>finalResponse</var> (default
-"<code>original</code>"):</p>
+"<code>original</code>"), and an optional "<code>now</code>" or {{DOMHighResTimeStamp}}
+<var>unsafeResponseEndTime</var>:</p>
 
 <ol>
  <li><p>If <a>this</a>'s <a for="fetch controller">state</a> is "<code>aborted</code>", then return.
@@ -256,8 +257,12 @@ string <var>initiatorType</var> (default "<code>other</code>"), an optional "<co
 
  <li><p>Assert: <a>this</a>'s <a for="fetch controller">conclude steps</a> is not null.
 
+ <li><p>If <var>unsafeResponseEndTime</var> is "<code>now</code>", then set
+ <var>unsafeResponseEndTime</var> to the <a>unsafe shared current time</a>.
+
  <li><p>Invoke <a>this</a>'s <a for="fetch controller">conclude steps</a> with
- <var>initiatorType</var> and <var>global</var>.
+ <var>initiatorType</var>, <var>global</var>, <var>finalResponse</var>, and
+ <var>unsafeResponseEndTime</var>.
 
  <li><p>Set <var>controller</var>'s <a for="fetch controller">state</a> to
  "<code>concluded</code>".
@@ -4316,8 +4321,8 @@ steps:
   <p>Set <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
   <a for="fetch controller">conclude steps</a> to the following steps given a string
   <var>initiatorType</var>, a "<code>client</code>" or <a for=/>global object</a>
-  <var>global</var>, and an "<code>original</code>" or <a for=/>response</a>
-  <var>finalResponse</var>:
+  <var>global</var>, an "<code>original</code>" or <a for=/>response</a>
+  <var>finalResponse</var>, and a {{DOMHighResTimeStamp}} <var>unsafeResponseEndTime</var>:
 
   <ol>
    <li><p>If <var>global</var> is "<code>client</code>", then set <var>global</var> to
@@ -4348,8 +4353,8 @@ steps:
     <p class=note>This covers the case of <var>finalResponse</var> being a <a>network error</a>.
    </li>
 
-   <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">end time</a> to the
-   <a for=/>coarsened shared current time</a> given <var>global</var>'s
+   <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">end time</a> to the result of
+   <a lt="coarsen time">coarsening</a> <var>unsafeResponseEndTime</var> given <var>global</var>'s
    <a>relevant settings object</a>'s
    <a for="environment settings object">cross-origin isolated capability</a>.
 
