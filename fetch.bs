@@ -3776,6 +3776,13 @@ the request.
 [[!HTTP-CACHING]]
 
 <ol>
+ <li>
+  <p><a for=/>Assert</a>: <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>" or
+  <var>processEarlyHintsResponse</var> is null.
+
+  <p class=note>Processing of early hints (<a for=/>responses</a> whose <a for=response>status</a>
+  is 103) is only vetted for navigations.
+
  <li><p>Let <var>taskDestination</var> be null.
 
  <li><p>Let <var>crossOriginIsolatedCapability</var> be false.
@@ -5485,20 +5492,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <ol>
          <li><p>If <var>status</var> is 101, <a for=iteration>break</a>.
 
-         <li>
-          <p>If <var>status</var> is 103 and <var>fetchParams</var>'s
-          <a for="fetch params">process early hints response</a> is non-null, then:
-
-          <ol>
-           <li>
-            <p><a for=/>Assert</a>: <var>request</var>'s <a for=request>mode</a> is
-            "<code>navigate</code>".
-
-            <p class=note>Processing of early hints is only vetted for navigations.
-
-           <li><p><a>Queue a fetch task</a> to run <var>fetchParams</var>'s
-           <a for="fetch params">process early hints response</a>, with <a for=/>response</a>.
-          </ol>
+         <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
+         <a for="fetch params">process early hints response</a> is non-null, then
+         <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+         <a for="fetch params">process early hints response</a>, with <a for=/>response</a>.
 
          <li><p><a for=iteration>Continue</a>.
         </ol>
@@ -8105,6 +8102,11 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  <dt><a for=fetch><i>processRequestEndOfBody</i></a>
  <dd><p>Takes an algorithm that will be passed nothing. Indicates <a for=/>request</a>'s
  <a for=request>body</a> has been transmitted. Most standards will not need this.
+
+ <dt><a for=fetch><i>processEarlyHintsResponse</i></a>
+ <dd><p>Takes an algorithm that will be passed a <a for=/>response</a> (whose
+ <a for=response>status</a> is 103). Can only be used for navigations as defined by
+ <cite>HTML</cite>. [[HTML]]
 
  <dt><a for=fetch><i>processResponse</i></a>
  <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates
