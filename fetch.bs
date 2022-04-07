@@ -199,6 +199,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params" id=fetch-params-process-request-body>process request body chunk length</dfn>
  (default null)
  <dt><dfn for="fetch params">process request end-of-body</dfn> (default null)
+ <dt><dfn for="fetch params">process early hints response</dfn> (default null)
  <dt><dfn for="fetch params">process response</dfn> (default null)
  <dt><dfn for="fetch params">process response end-of-body</dfn> (default null)
  <dt><dfn for="fetch params">process response consume body</dfn> (default null)
@@ -1130,7 +1131,7 @@ format of range header value can be set using <a>add a range header</a>.
 <p class=XXX>Various edge cases in mapping HTTP/1's <code>status-code</code> to this concept are
 worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>.
 
-<p>A <dfn export>null body status</dfn> is a <a for=/>status</a> that is 101, 204, 205, or 304.
+<p>A <dfn export>null body status</dfn> is a <a for=/>status</a> that is 101, 103, 204, 205, or 304.
 
 <p>An <dfn export>ok status</dfn> is a <a for=/>status</a> in the range 200 to 299, inclusive.
 
@@ -3787,15 +3788,16 @@ optional algorithm
 <dfn export for=fetch id=process-request-body><var>processRequestBodyChunkLength</var></dfn>, an
 optional algorithm
 <dfn export for=fetch id=process-request-end-of-body oldids=process-request-end-of-file><var>processRequestEndOfBody</var></dfn>,
-an optional algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an
-optional algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional
-algorithm
+an optional algorithm <dfn export for=fetch><var>processEarlyHintsResponse</var></dfn>, an optional
+algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an optional
+algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
 and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
 the steps below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting
 an integer representing the number of bytes transmitted. If given,
 <var>processRequestEndOfBody</var> must be an algorithm accepting no arguments. If given,
-<var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
+<var>processEarlyHintsResponse</var> must be an algorithm accepting a <a for=/>response</a>. If
+given, <var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
 <var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a>. If
 given, <var>processResponseConsumeBody</var> must be an algorithm accepting a <a for=/>response</a>
 and null, failure, or a <a for=/>byte sequence</a>.
@@ -3813,6 +3815,13 @@ the request.
 [[!HTTP-CACHING]]
 
 <ol>
+ <li>
+  <p><a for=/>Assert</a>: <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>" or
+  <var>processEarlyHintsResponse</var> is null.
+
+  <p class=note>Processing of early hints (<a for=/>responses</a> whose <a for=response>status</a>
+  is 103) is only vetted for navigations.
+
  <li><p>Let <var>taskDestination</var> be null.
 
  <li><p>Let <var>crossOriginIsolatedCapability</var> be false.
@@ -3848,6 +3857,7 @@ the request.
  <a for="fetch params">process request body chunk length</a> is
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
+ <a for="fetch params">process early hints response</a> is <var>processEarlyHintsResponse</var>,
  <a for="fetch params">process response</a> is <var>processResponse</var>,
  <a for="fetch params">process response consume body</a> is <var>processResponseConsumeBody</var>,
  <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>,
@@ -5482,22 +5492,41 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
        <a for=request>body</a> cannot be recreated and that is why the buffer is needed.
       </div>
 
-     <li><p>Set <var>timingInfo</var>'s
-     <a for="fetch timing info">final network-response start time</a> to the
-     <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
-     <a for="fetch params">cross-origin isolated capability</a>, immediately after the user agent's
-     HTTP parser receives the first byte of the response (e.g., frame header bytes for HTTP/2 or
-     response status line for HTTP/1.x).
-
-     <li><p>Wait until all the <a for=/>headers</a> are transmitted.
-
      <li>
-      <p>Any <a for=/>responses</a> whose <a for=response>status</a> is in the range 100 to 199,
-      inclusive, and is not 101, are to be ignored, except for the purposes of setting
-      <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a> above.
+      <p>While true:
 
-      <p class="note no-backref">These kind of <a for=/>responses</a> are eventually followed by a
-      "final" <a for=/>response</a>.
+      <ol>
+       <li><p>If <var>timingInfo</var>'s
+       <a for="fetch timing info">final network-response start time</a> is 0, then set
+       <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a> to
+       <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
+       <a for="fetch params">cross-origin isolated capability</a>, immediately after the user
+       agent's HTTP parser receives the first byte of the response (e.g., frame header bytes for
+       HTTP/2 or response status line for HTTP/1.x).
+
+       <li><p>Wait until all the HTTP response headers are transmitted.
+
+       <li><p>Let <var>status</var> be the HTTP response's status code.
+
+       <li>
+        <p>If <var>status</var> is in the range 100 to 199, inclusive:
+
+        <ol>
+         <li><p>If <var>status</var> is 101, <a for=iteration>break</a>.
+
+         <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
+         <a for="fetch params">process early hints response</a> is non-null, then
+         <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+         <a for="fetch params">process early hints response</a>, with <a for=/>response</a>.
+
+         <li><p><a for=iteration>Continue</a>.
+        </ol>
+
+        <p class=note>These kind of HTTP responses are eventually followed by a "final" HTTP
+        response.
+
+       <li><p><a for=iteration>Break</a>.
+      </ol>
     </ul>
 
     <p class=note>The exact layering between Fetch and HTTP still needs to be sorted through and
@@ -8100,6 +8129,11 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  <dt><a for=fetch><i>processRequestEndOfBody</i></a>
  <dd><p>Takes an algorithm that will be passed nothing. Indicates <a for=/>request</a>'s
  <a for=request>body</a> has been transmitted. Most standards will not need this.
+
+ <dt><a for=fetch><i>processEarlyHintsResponse</i></a>
+ <dd><p>Takes an algorithm that will be passed a <a for=/>response</a> (whose
+ <a for=response>status</a> is 103). Can only be used for navigations as defined by
+ <cite>HTML</cite>. [[HTML]]
 
  <dt><a for=fetch><i>processResponse</i></a>
  <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates
