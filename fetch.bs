@@ -223,8 +223,8 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 <a for=struct>items</a>:
 
 <dl>
- <dt><dfn for="fetch controller">state</dfn> (default "<code>requesting</code>")
- <dd>"<code>requesting</code>", "<code>responding</code>", "<code>concluded</code>",
+ <dt><dfn for="fetch controller">state</dfn> (default "<code>fetching</code>")
+ <dd>"<code>fetching</code>", "<code>transmitting</code>", "<code>concluded</code>",
  "<code>terminated</code>", or "<code>aborted</code>"
 
  <dt><dfn for="fetch controller">timing info</dfn>
@@ -248,12 +248,12 @@ string <var>initiatorType</var> (default "<code>other</code>"), an optional "<co
 <a for=/>global object</a> <var>global</var> (default "<code>client</code>"), an optional
 "<code>original</code>" or <a for=/>response</a> <var>finalResponse</var> (default
 "<code>original</code>"), and an optional "<code>now</code>" or {{DOMHighResTimeStamp}}
-<var>unsafeResponseEndTime</var>:</p>
+<var>unsafeResponseEndTime</var> (default "<code>now</code>"):</p>
 
 <ol>
  <li><p>If <a>this</a>'s <a for="fetch controller">state</a> is "<code>aborted</code>", then return.
 
- <li><p>Assert: <a>this</a>'s <a for="fetch controller">state</a> is "<code>responding</code>".
+ <li><p>Assert: <a>this</a>'s <a for="fetch controller">state</a> is "<code>transmitting</code>".
 
  <li><p>Assert: <a>this</a>'s <a for="fetch controller">conclude steps</a> is not null.
 
@@ -298,13 +298,15 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
  <dd>A <a for=/>list</a> of strings.
 </dl>
 
-<p>A <dfn export>fetch resource info</dfn> is a <a for=/>struct</a> used to maintain
+<p>A <dfn export>response body info</dfn> is a <a for=/>struct</a> used to maintain
 information needed by <cite>Resource Timing</cite> and <cite>Navigation Timing</cite>. It has the
 following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
 
 <dl>
- <dt><dfn export for="fetch resource info">encoded body size</dfn> (default 0)
- <dt><dfn export for="fetch resource info">decoded body size</dfn> (default 0)
+ <dt><dfn export for="response body info" id="fetch-timing-info-encoded-body-size">encoded body
+ size</dfn> (default 0)
+ <dt><dfn export for="response body info" id="fetch-timing-info-decoded-body-size">decoded body
+ size</dfn> (default 0)
  <dd>A number.
 </dl>
 
@@ -2107,18 +2109,18 @@ message as HTTP/2 does not support them.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-cache-state>cache state</dfn> (the empty string,
-"<code>local</code>", or "<code>validated</code>"). Unlesss stated otherwise, it is the empty
+"<code>local</code>", or "<code>validated</code>"). Unless stated otherwise, it is the empty
 string.
-
-<p>A <a for=/>response</a> has an associated
-<dfn export for=response id=concept-response-resource-info>resource info</dfn>
-(a <a for=/>fetch resource info</a>). Unlesss stated otherwise, it is a new
-<a for=/>fetch resource info</a>.
 
 <p class=note>This is intended for usage by <cite>Service Workers</cite> and
 <cite>Resource Timing</cite>.  [[SW]] [[RESOURCE-TIMING]]
 <!-- If we ever expand the utility of this we need to carefully consider whether filtered responses
      need to mask it, whether the cache API needs to store it, etc. -->
+
+<p>A <a for=/>response</a> has an associated
+<dfn export for=response id=concept-response-body-info>body info</dfn>
+(a <a for=/>response body info</a>). Unless stated otherwise, it is a new
+<a for=/>response body info</a>.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</dfn>
@@ -4312,10 +4314,10 @@ steps:
 
 <ol>
  <li><p>Let <var>timingInfo</var> be <var>fetchParams</var>'s
- <a for="fetch params">timing info</a>.</p></li>
+ <a for="fetch params">timing info</a>.
 
  <li><p>Set <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
-  <a for="fetch controller">state</a> to "<code>responding</code>".
+ <a for="fetch controller">state</a> to "<code>transmitting</code>".
 
  <li>
   <p>Set <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
@@ -4342,12 +4344,12 @@ steps:
 
    <li><p>Let <var>cacheState</var> be <var>response</var>'s <a for=response>cache state</a>.
 
-   <li><p>Let <var>resourceInfo</var> be <var>response</var>'s <a for=response>resource info</a>.
+   <li><p>Let <var>bodyInfo</var> be <var>response</var>'s <a for=response>body info</a>.
 
    <li>
     <p>If <var>finalResponse</var>'s <a for=response>timing allow passed flag</a> is not set,
     then set <var>timingInfo</var> to a the result of <a>creating an opaque timing info</a> for
-    <var>timingInfo</var>, set <var>resourceInfo</var> to a new <a for=/>fetch resource info</a> and
+    <var>timingInfo</var>, set <var>bodyInfo</var> to a new <a for=/>response body info</a> and
     set <var>cacheState</var> to the empty string.
 
     <p class=note>This covers the case of <var>finalResponse</var> being a <a>network error</a>.
@@ -4360,7 +4362,7 @@ steps:
 
    <li><p><a for=/>Mark resource timing</a> for <var>timingInfo</var>, <var>request</var>'s
    <a for=request>URL</a> <var>initiatorType</var>, <var>global</var>, <var>cacheState</var>,
-   and <var>resourceInfo</var>.
+   and <var>bodyInfo</var>.
   </ol>
 
  <li>
@@ -5694,8 +5696,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
          `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
 
-         <li><p>Increase <var>response</var>'s <a for=response>resource info</a>'s
-         <a for="fetch resource info">encoded body size</a> by <var>bytes</var>'s
+         <li><p>Increase <var>response</var>'s <a for=response>body info</a>'s
+         <a for="response body info">encoded body size</a> by <var>bytes</var>'s
          <a for="byte sequence">length</a>.
 
          <li>
@@ -5705,8 +5707,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
           <p class="note no-backref">This makes the `<code>Content-Length</code>` <a for=/>header</a>
           unreliable to the extent that it was reliable to begin with.
 
-         <li><p>Increase <var>response</var>'s <a for=response>resource info</a>'s
-         <a for="fetch resource info">decoded body size</a> by
+         <li><p>Increase <var>response</var>'s <a for=response>body info</a>'s
+         <a for="response body info">decoded body size</a> by
          <var>bytes</var>'s <a for="byte sequence">length</a>.
 
          <li><p>If <var>bytes</var> is failure, then <a for="fetch controller">terminate</a>
