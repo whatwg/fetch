@@ -6090,9 +6090,6 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is set, then return
  failure.
 
- <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>", then
- return success.
-
  <li><p>Let <var>values</var> be the result of
  <a for="header list">getting, decoding, and splitting</a> `<code>Timing-Allow-Origin</code>` from
  <var>response</var>'s <a for=response>header list</a>.
@@ -6101,6 +6098,20 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
  <li><p>If <var>values</var> <a for=list>contains</a> the result of
  <a>serializing a request origin</a> with <var>request</var>, then return success.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>" and
+  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> is not
+  <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, then return failure.
+
+  <p class=note>This is necessary for navigations of a nested browsing context. There,
+  <var>request</var>'s <a for=request>origin</a> would be the container document's
+  <a for=Document>origin</a> and the <a>TAO check</a> would return failure. Since navigation timing
+  never validates the results of the <a>TAO check</a>, the nested document would still have access
+  to the full timing information, but the container document would not.
+
+ <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>", then
+ return success.
 
  <li><p>Return failure.
 </ol>
