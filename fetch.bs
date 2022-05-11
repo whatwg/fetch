@@ -1297,6 +1297,14 @@ null), run these steps. <var>processBody</var> must be an algorithm accepting a
 
 <hr>
 
+<p>A <dfn export>body with type</dfn> is a <a for=/>tuple</a> that consists of a
+<dfn export for="body with type">body</dfn> (a <a for=/>body</a>) and a
+<dfn export for="body with type">type</dfn> (a <a for=/>header value</a>).
+
+<p class="note no-backref">Be aware that a <a for=/>body with type</a>'s <a for="body with type">type</a> can be null.
+
+<hr>
+
 <p>To <dfn export>handle content codings</dfn> given <var>codings</var> and <var>bytes</var>, run
 these steps:
 
@@ -3881,8 +3889,8 @@ the request.
  <var>crossOriginIsolatedCapability</var>.
 
  <li><p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then set
- <var>request</var>'s <a for=request>body</a> to the first return value of
- <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
+ <var>request</var>'s <a for=request>body</a> to the <a for="body with type">body</a> in the result
+ of <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
 
  <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>client</code>", then set
  <var>request</var>'s <a for=request>window</a> to <var>request</var>'s <a for=request>client</a>,
@@ -4308,8 +4316,9 @@ steps:
      <var>request</var>'s <a for=request>integrity metadata</a>, then run
      <var>processBodyError</var> and abort these steps. [[!SRI]]
 
-     <li><p>Set <var>response</var>'s <a for=response>body</a> to the first return value of
-     <a for=BodyInit>safely extracting</a> <var>bytes</var>.
+     <li><p>Set <var>response</var>'s <a for=response>body</a> to the
+     <a for="body with type">body</a> in the result of <a for=BodyInit>safely extracting</a>
+     <var>bytes</var>.
 
      <li><p>Run <a>fetch response handover</a> given <var>fetchParams</var> and <var>response</var>.
     </ol>
@@ -4850,8 +4859,9 @@ run these steps:
 
  <li>
   <p>If <var>request</var>'s <a for=request>body</a> is non-null, then set <var>request</var>'s
-  <a for=request>body</a> to the first return value of <a for=BodyInit>safely extracting</a>
-  <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>.
+  <a for=request>body</a> to the <a for="body with type">body</a> in the result of
+  <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>'s
+  <a for=body>source</a>.
 
   <p class="note no-backref"><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s
   nullity has already been checked.
@@ -5351,9 +5361,9 @@ steps. They return a <a for=/>response</a>.
      <li><p>If <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is null,
      then return a <a>network error</a>.
 
-     <li><p>Set <var>request</var>'s <a for=request>body</a> to the first return value of
-     <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>'s
-     <a for=body>source</a>.
+     <li><p>Set <var>request</var>'s <a for=request>body</a> to the <a for="body with type">body</a>
+     in the result of <a for=BodyInit>safely extracting</a> <var>request</var>'s
+     <a for=request>body</a>'s <a for=body>source</a>.
     </ol>
 
    <li>
@@ -6451,9 +6461,8 @@ typedef (Blob or BufferSource or FormData or URLSearchParams or USVString) XMLHt
 
 typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 
-<p>To <dfn for=BodyInit export>safely extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=/>header value</a> from a <a for=/>byte sequence</a> or
-{{BodyInit}} object <var>object</var>, run these steps:
+<p>To <dfn for=BodyInit export>safely extract</dfn> a <a for=/>body with type</a> from a
+<a for=/>byte sequence</a> or {{BodyInit}} object <var>object</var>, run these steps:
 
 <ol>
  <li>
@@ -6470,9 +6479,9 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 <p class="note no-backref">The <a for=BodyInit>safely extract</a> operation is a subset of the
 <a for=BodyInit>extract</a> operation that is guaranteed to not throw an exception.
 
-<p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=/>header value</a> from a <a for=/>byte sequence</a> or
-{{BodyInit}} object <var>object</var>, with an optional boolean
+<p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a
+<a for=/>body with type</a> from a <a for=/>byte sequence</a> or {{BodyInit}} object
+<var>object</var>, with an optional boolean
 <dfn id=keepalive for=BodyInit/extract export><var>keepalive</var></dfn> (default false), run these
 steps:
 
@@ -6487,7 +6496,7 @@ steps:
 
  <li><p>Let <var>length</var> be null.
 
- <li><p>Let <var>Content-Type</var> be null.
+ <li><p>Let <var>type</var> be null.
 
  <li>
   <p>Switch on <var>object</var>:
@@ -6502,7 +6511,7 @@ steps:
     <p>Set <var>length</var> to <var>object</var>'s {{Blob/size}}.
 
     <p>If <var>object</var>'s {{Blob/type}}
-    attribute is not the empty byte sequence, set <var>Content-Type</var> to its value.
+    attribute is not the empty byte sequence, set <var>type</var> to its value.
     <!-- Blob reading is not defined and blobs don't have an internal data model to poke at -->
 
    <dt><a for=/>byte sequence</a>
@@ -6523,7 +6532,7 @@ steps:
     <p>Set <var>length</var> to <span class=XXX>unclear, see
     <a href="https://github.com/whatwg/html/issues/6424">html/6424</a> for improving this</span>.
 
-    <p>Set <var>Content-Type</var> to `<code>multipart/form-data; boundary=</code>`, followed by the
+    <p>Set <var>type</var> to `<code>multipart/form-data; boundary=</code>`, followed by the
     <a><code>multipart/form-data</code> boundary string</a> generated by the
     <a><code>multipart/form-data</code> encoding algorithm</a>.
 
@@ -6533,14 +6542,14 @@ steps:
     <a lt="urlencoded serializer"><code>application/x-www-form-urlencoded</code> serializer</a> with
     <var>object</var>'s <a for=URLSearchParams>list</a>.
 
-    <p>Set <var>Content-Type</var> to
+    <p>Set <var>type</var> to
     `<code>application/x-www-form-urlencoded;charset=UTF-8</code>`.
 
    <dt><a for=/>scalar value string</a>
    <dd>
     <p>Set <var>source</var> to the <a>UTF-8 encoding</a> of <var>object</var>.
 
-    <p>Set <var>Content-Type</var> to `<code>text/plain;charset=UTF-8</code>`.
+    <p>Set <var>type</var> to `<code>text/plain;charset=UTF-8</code>`.
 
    <dt>{{ReadableStream}}
    <dd>
@@ -6572,7 +6581,7 @@ steps:
  <var>stream</var>, <a for=body>source</a> is <var>source</var>, and <a for=body>length</a> is
  <var>length</var>.
 
- <li><p>Return <var>body</var> and <var>Content-Type</var>.
+ <li><p>Return (<var>body</var>, <var>type</var>).
 </ol>
 
 
@@ -7303,17 +7312,18 @@ constructor steps are:
   <p>If <var>init</var>["{{RequestInit/body}}"] <a for=map>exists</a> and is non-null, then:
 
   <ol>
-   <li><p>Let <var>Content-Type</var> be null.
+   <li><p>Let <var>bodyWithType</var> be the result of <a for=BodyInit>extracting</a>
+   <var>init</var>["{{RequestInit/body}}"], with <a for=BodyInit/extract><var>keepalive</var></a>
+   set to <var>request</var>'s <a for=request>keepalive</a>.
 
-   <li><p>Set <var>initBody</var> and <var>Content-Type</var> to the result of
-   <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"], with
-   <a for=BodyInit/extract><var>keepalive</var></a> set to <var>request</var>'s
-   <a for=request>keepalive</a>.
+   <li><p>Set <var>initBody</var> to <var>bodyWithType</var>'s <a for="body with type">body</a>.
 
-   <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Request>headers</a>'s
+   <li><p>Let <var>type</var> be <var>bodyWithType</var>'s <a for="body with type">type</a>.
+
+   <li><p>If <var>type</var> is non-null and <a>this</a>'s <a for=Request>headers</a>'s
    <a for=Headers>header list</a> <a for="header list">does not contain</a>
    `<code>Content-Type</code>`, then <a for=Headers>append</a> (`<code>Content-Type</code>`,
-   <var>Content-Type</var>) to <a>this</a>'s <a for=Request>headers</a>.
+   <var>type</var>) to <a>this</a>'s <a for=Request>headers</a>.
   </ol>
 
  <li><p>Let <var>inputOrInitBody</var> be <var>initBody</var> if it is non-null; otherwise
@@ -7572,15 +7582,18 @@ constructor steps are:
     <p class="note no-backref">101 is included in <a>null body status</a> due to its use elsewhere.
     It does not affect this step.
 
-   <li><p>Let <var>Content-Type</var> be null.
+   <li><p>Let <var>bodyWithType</var> be the the result of <a for=BodyInit>extracting</a>
+   <var>body</var>.
+   
+   <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>body</a> to
+   <var>bodyWithType</var>'s <a for="body with type">body</a>.
 
-   <li><p>Set <a>this</a>'s <a for=Response>response</a>'s <a for=response>body</a> and
-   <var>Content-Type</var> to the result of <a for=BodyInit>extracting</a> <var>body</var>.
+   <li><p>Let <var>type</var> be <var>bodyWithType</var>'s <a for="body with type">type</a>.
 
-   <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Response>response</a>'s
+   <li><p>If <var>type</var> is non-null and <a>this</a>'s <a for=Response>response</a>'s
    <a for=response>header list</a> <a for="header list">does not contain</a>
    `<code>Content-Type</code>`, then <a for="header list">append</a> (`<code>Content-Type</code>`,
-   <var>Content-Type</var>) to <a>this</a>'s <a for=Response>response</a>'s
+   <var>type</var>) to <a>this</a>'s <a for=Response>response</a>'s
    <a for=response>header list</a>.
   </ol>
 </ol>
