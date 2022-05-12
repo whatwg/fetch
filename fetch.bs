@@ -116,6 +116,12 @@ spec:websockets; type:attribute; text:bufferedAmount; for:WebSocket
         "href": "https://datatracker.ietf.org/doc/html/draft-ietf-masque-h3-datagram",
         "publisher": "IETF",
         "title": "Using QUIC Datagrams with HTTP/3"
+    },
+    "SVCB": {
+        "authors": ["Ben Schwartz", "Mike Bishop", "Erik Nygren"],
+        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-svcb-https",
+        "publisher": "IETF",
+        "title": "Service binding and parameter specification via the DNS (DNS SVCB and HTTPS RRs)"
     }
 }
 </pre>
@@ -199,6 +205,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params" id=fetch-params-process-request-body>process request body chunk length</dfn>
  (default null)
  <dt><dfn for="fetch params">process request end-of-body</dfn> (default null)
+ <dt><dfn for="fetch params">process early hints response</dfn> (default null)
  <dt><dfn for="fetch params">process response</dfn> (default null)
  <dt><dfn for="fetch params">process response end-of-body</dfn> (default null)
  <dt><dfn for="fetch params">process response consume body</dfn> (default null)
@@ -210,9 +217,40 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">cross-origin isolated capability</dfn> (default false)
  <dd>A boolean.
 
+ <dt><dfn for="fetch params">controller</dfn> (default a new <a for=/>fetch controller</a>)
+ <dd>A <a for=/>fetch controller</a>.
+
  <dt><dfn for="fetch params">timing info</dfn>
  <dd>A <a for=/>fetch timing info</a>.
+
+ <dt><dfn export for="fetch params">preloaded response candidate</dfn> (default null)
+ <dd>Null, "<code>pending</code>", or a <a for=/>response</a>.
 </dl>
+
+<p>A <dfn export>fetch controller</dfn> is a <a for=/>struct</a> used to enable callers of
+<a for=/>fetch</a> to perform certain operations on it after it has started. It has the following
+<a for=struct>items</a>:
+
+<dl>
+ <dt><dfn for="fetch controller">state</dfn> (default "<code>ongoing</code>")
+ <dd>"<code>ongoing</code>", "<code>terminated</code>", or "<code>aborted</code>"
+</dl>
+
+<p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
+<var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
+"<code>aborted</code>".
+
+<p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
+<var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
+"<code>terminated</code>".
+
+<p>A <a for=/>fetch params</a> <var>fetchParams</var> is <dfn for="fetch params">aborted</dfn> if
+its <a for="fetch params">controller</a>'s <a for="fetch controller">state</a> is
+"<code>aborted</code>".
+
+<p>A <a for=/>fetch params</a> <var>fetchParams</var> is <dfn for="fetch params">canceled</dfn> if
+its <a for="fetch params">controller</a>'s <a for="fetch controller">state</a> is
+"<code>aborted</code>" or "<code>terminated</code>".
 
 <p>A <dfn export>fetch timing info</dfn> is a <a for=/>struct</a> used to maintain timing
 information needed by <cite>Resource Timing</cite> and <cite>Navigation Timing</cite>. It has the
@@ -235,6 +273,9 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
 
  <dt><dfn export for="fetch timing info">final connection timing info</dfn> (default null)
  <dd>Null or a <a for=/>connection timing info</a>.
+
+ <dt><dfn export for="fetch timing info">server-timing headers</dfn> (default « »)
+ <dd>A <a for=/>list</a> of strings.
 </dl>
 
 <p>To
@@ -1099,7 +1140,7 @@ format of range header value can be set using <a>add a range header</a>.
 <p class=XXX>Various edge cases in mapping HTTP/1's <code>status-code</code> to this concept are
 worked on in <a href=https://github.com/whatwg/fetch/issues/1156>issue #1156</a>.
 
-<p>A <dfn export>null body status</dfn> is a <a for=/>status</a> that is 101, 204, 205, or 304.
+<p>A <dfn export>null body status</dfn> is a <a for=/>status</a> that is 101, 103, 204, 205, or 304.
 
 <p>An <dfn export>ok status</dfn> is a <a for=/>status</a> in the range 200 to 299, inclusive.
 
@@ -1257,8 +1298,8 @@ null), run these steps. <var>processBody</var> must be an algorithm accepting a
 <hr>
 
 <p>A <dfn export>body with type</dfn> is a <a for=/>tuple</a> that consists of a
-<dfn export for="body with type">body</dfn> (a <a for=/>body</a>) and
-<dfn export for="body with type">type</dfn> (a <a for=/>header value</a>).
+<dfn export for="body with type">body</dfn> (a <a for=/>body</a>) and a
+<dfn export for="body with type">type</dfn> (a <a for=/>header value</a> or null).
 
 <hr>
 
@@ -2110,6 +2151,16 @@ known as an <dfn export id=concept-aborted-network-error>aborted network error</
 <a for=response>header list</a> is always empty, and
 <a for=response>body</a> is always null.
 
+<p>To create the <dfn>appropriate network error</dfn> given <a for=/>fetch params</a>
+<var>fetchParams</var>:
+
+<ol>
+ <li><p>Assert: <var>fetchParams</var> is <a for="fetch params">canceled</a>.
+
+ <li><p>Return an <a>aborted network error</a> if <var>fetchParams</var> is
+ <a for="fetch params">aborted</a>; otherwise return a <a>network error</a>.
+</ol>
+
 <hr>
 
 <p>A <dfn export id=concept-filtered-response>filtered response</dfn> is a limited view on a
@@ -2291,35 +2342,52 @@ functionality.
 <a for=/>request</a>).
 
 <p>A <a for="fetch group">fetch record</a> has an associated
-<dfn export for="fetch record" id=concept-fetch-record-fetch>fetch</dfn> (a
-<a for=/>fetch</a> algorithm or null).
+<dfn export for="fetch record" id=concept-fetch-record-fetch>controller</dfn> (a
+<a for=/>fetch controller</a> or null).
 
 <hr>
 
 <p>When a <a for=fetch>fetch group</a> is
 <dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>, for each associated
-<a for="fetch group">fetch record</a> whose <a for="fetch record">request</a>'s <a>done flag</a> is
-unset or <a for=request>keepalive</a> is false, <a lt=terminated for=fetch>terminate</a> the
-<a for="fetch group">fetch record</a>'s <a for="fetch record">fetch</a>.
+<a for="fetch group">fetch record</a> whose <a for="fetch group">fetch record</a>'s
+<a for="fetch record">controller</a> is not null, and whose <a for="fetch record">request</a>'s
+<a>done flag</a> is unset or <a for=request>keepalive</a> is false,
+<a for="fetch controller">terminate</a> the <a for="fetch group">fetch record</a>'s
+<a for="fetch record">controller</a>.
 
 
 <h3 id=resolving-domains>Resolving domains</h3>
 
-<p tracking-vector>To <dfn>resolve a domain</dfn>, given a <a for=/>network partition key</a>
-<var>key</var> and a <a for=/>domain</a> <var>domain</var>:
+<p tracking-vector>To
+<dfn export id=resolve-an-origin oldids=resolve-a-domain>resolve an origin</dfn>, given a
+<a for=/>network partition key</a> <var>key</var> and an <a for=/>origin</a> <var>origin</var>:
+<!-- Should we assert the scheme here to be an HTTP(S) scheme or a WebRTC scheme? -->
 
 <ol>
- <li><p>If <var>domain</var> is a <a for=/>host</a> whose <a for=host>public suffix</a> is
- "<code>localhost</code>", then return « <code>::1</code>, <code>127.0.0.1</code> ».
+ <li><p>If <var>origin</var>'s <a for=origin>host</a> is an <a for=/>IP address</a>, then return
+ « <var>origin</var>'s <a for=origin>host</a> ».
 
- <li><p>Perform an <a>implementation-defined</a> operation to turn <var>domain</var> into a
- <a for=/>set</a> of one or more <a for=/>IP addresses</a>. If this operation succeeds, return the
- <a for=/>set</a> of <a for=/>IP addresses</a>.
+ <li><p>If <var>origin</var>'s <a for=origin>host</a>'s <a for=host>public suffix</a> is
+ "<code>localhost</code>" or "<code>localhost.</code>", then return « <code>::1</code>,
+ <code>127.0.0.1</code> ».
+
+ <li>
+  <p>Perform an <a>implementation-defined</a> operation to turn <var>origin</var> into a
+  <a for=/>set</a> of one or more <a for=/>IP addresses</a>.
+
+  <p>It is also <a>implementation-defined</a> whether other operations might be performed to get
+  connection information beyond just <a for=/>IP addresses</a>. For example, if <var>origin</var>'s
+  <a for=origin>scheme</a> is an <a>HTTP(S) scheme</a>, the implementation might perform a DNS query
+  for HTTPS RRs. [[SVCB]]
+
+  <p>If this operation succeeds, return the <a for=/>set</a> of <a for=/>IP addresses</a> and any
+  additional <a>implementation-defined</a> information.
+ </li>
 
  <li><p>Return failure.
 </ol>
 
-<p>The results of <a>resolve a domain</a> may be cached. If they are cached, <var>key</var> should
+<p>The results of <a>resolve an origin</a> may be cached. If they are cached, <var>key</var> should
 be used as part of the cache key.
 
 <div class=note>
@@ -2327,28 +2395,13 @@ be used as part of the cache key.
  <var>key</var> being taken into account. Depending on the implementation it might also not be
  possible to take <var>key</var> into account locally. [[RFC1035]]
 
- <p>The order of the <a for=/>IP addresses</a> <a>resolve a domain</a> can return return can differ
- between invocations.
+ <p>The order of the <a for=/>IP addresses</a> that the <a>resolve an origin</a> algorithm can return
+ can differ between invocations.
 
  <p>The particulars (apart from the cache key) are not tied down as they are not pertinent to the
  system the Fetch Standard establishes. Other documents ought not to build on this primitive without
  having a considered discussion with the Fetch Standard community first.
 </div>
-
-<p>To <dfn>resolve an origin</dfn>, given a <a for=/>network partition key</a> <var>key</var> and an
-<a for=/>origin</a> <var>origin</var>:
-<!-- Should we assert the scheme here to be an HTTP(S) scheme or a WebRTC scheme? -->
-
-<ol>
- <li><p>If <var>origin</var>'s <a for=origin>host</a> is an <a for=/>IP address</a>, then return
- « <var>origin</var>'s <a for=origin>host</a> ».
-
- <li><p>Return the result of running <a>resolve a domain</a> given <var>key</var> and
- <var>origin</var>'s <a for=origin>host</a>.
-</ol>
-
-<p class=note>The same caveat applies. Do not build on this without having a considered discussion
-with the Fetch Standard community first.
 
 
 <h3 id=connections>Connections</h3>
@@ -2487,7 +2540,7 @@ steps:
     return it. Any other returned values that are <a>connections</a> may be closed.
 
     <p class=note>Essentially this allows an implementation to pick one or more
-    <a for=/>IP addresses</a> from the return value of <a>resolve a domain</a> (assuming
+    <a for=/>IP addresses</a> from the return value of <a>resolve an origin</a> (assuming
     <var>proxy</var> is "<code>DIRECT</code>") and race them against each other, favor
     <a for=/>IPv6 addresses</a>, retry in case of a timeout, etc.
 
@@ -2607,6 +2660,12 @@ boolean <var>http3Only</var>, run these steps:
  <a for="connection timing info">secure connection start time</a> should be the result of calling
  <a for=/>unsafe shared current time</a> immmediately before starting the handshake process to
  secure <var>connection</var>. [[!TLS]]
+
+ <li><p>If <var>connection</var> is an HTTP/3 connection, <var>timingInfo</var>'s
+ <a for="connection timing info">connection start time</a> and <var>timingInfo</var>'s
+ <a for="connection timing info">secure connection start time</a> must be equal. (In HTTP/3
+ the secure transport handshake process is performed as part of the initial connection setup.)
+ [[!HTTP3]]
 </ul>
 
 <p class=note>The <a for=/>clamp and coarsen connection timing info</a> algorithm ensures that
@@ -2620,14 +2679,14 @@ an <a>implementation-defined</a> value.
 
 <p>To
 <dfn export lt="determine the network partition key|determining the network partition key">determine the network partition key</dfn>,
-given an <a for=/>environment settings object</a> <var>settings</var>, run these steps:
+given an <a for=/>environment</a> <var>environment</var>, run these steps:
 
 <ol>
- <li><p>Let <var>topLevelOrigin</var> be <var>settings</var>'s
+ <li><p>Let <var>topLevelOrigin</var> be <var>environment</var>'s
  <a for="environment">top-level origin</a>.
 
  <li><p>If <var>topLevelOrigin</var> is null, then set <var>topLevelOrigin</var> to
- <var>settings</var>'s <a for="environment">top-level creation URL</a>'s <a for=url>origin</a>.
+ <var>environment</var>'s <a for="environment">top-level creation URL</a>'s <a for=url>origin</a>.
 
  <li><p>Assert: <var>topLevelOrigin</var> is an <a for=/>origin</a>.
 
@@ -3750,22 +3809,19 @@ optional algorithm
 <dfn export for=fetch id=process-request-body><var>processRequestBodyChunkLength</var></dfn>, an
 optional algorithm
 <dfn export for=fetch id=process-request-end-of-body oldids=process-request-end-of-file><var>processRequestEndOfBody</var></dfn>,
-an optional algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an
-optional algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional
-algorithm
+an optional algorithm <dfn export for=fetch><var>processEarlyHintsResponse</var></dfn>, an optional
+algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an optional
+algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
 and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
 the steps below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting
 an integer representing the number of bytes transmitted. If given,
 <var>processRequestEndOfBody</var> must be an algorithm accepting no arguments. If given,
-<var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
+<var>processEarlyHintsResponse</var> must be an algorithm accepting a <a for=/>response</a>. If
+given, <var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
 <var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a>. If
 given, <var>processResponseConsumeBody</var> must be an algorithm accepting a <a for=/>response</a>
 and null, failure, or a <a for=/>byte sequence</a>.
-
-<p>An ongoing <a for=/>fetch</a> can be
-<dfn export for=fetch id=concept-fetch-terminate>terminated</dfn> with flag <var>aborted</var>,
-which is unset unless otherwise specified.
 
 <p>The user agent may be asked to
 <dfn export for=fetch id=concept-fetch-suspend>suspend</dfn> the ongoing fetch.
@@ -3780,6 +3836,13 @@ the request.
 [[!HTTP-CACHING]]
 
 <ol>
+ <li>
+  <p><a for=/>Assert</a>: <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>" or
+  <var>processEarlyHintsResponse</var> is null.
+
+  <p class=note>Processing of early hints (<a for=/>responses</a> whose <a for=response>status</a>
+  is 103) is only vetted for navigations.
+
  <li><p>Let <var>taskDestination</var> be null.
 
  <li><p>Let <var>crossOriginIsolatedCapability</var> be false.
@@ -3815,6 +3878,7 @@ the request.
  <a for="fetch params">process request body chunk length</a> is
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
+ <a for="fetch params">process early hints response</a> is <var>processEarlyHintsResponse</var>,
  <a for="fetch params">process response</a> is <var>processResponse</var>,
  <a for="fetch params">process response consume body</a> is <var>processResponseConsumeBody</var>,
  <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>,
@@ -3823,8 +3887,8 @@ the request.
  <var>crossOriginIsolatedCapability</var>.
 
  <li><p>If <var>request</var>'s <a for=request>body</a> is a <a for=/>byte sequence</a>, then set
- <var>request</var>'s <a for=request>body</a> to the first return value of
- <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
+ <var>request</var>'s <a for=request>body</a> to the <a for="body with type">body</a> of the result
+ of <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>.
 
  <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>client</code>", then set
  <var>request</var>'s <a for=request>window</a> to <var>request</var>'s <a for=request>client</a>,
@@ -3862,17 +3926,19 @@ the request.
    <a for="environment settings object">origin</a>.
 
    <li><p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
-   step <a>in parallel</a> given a <a for=/>response</a> <var>response</var>: run
-   <a>fetch finale</a> given <var>response</var> and <var>fetchParams</var>.
+   step given a <a for=/>response</a> <var>response</var>: set <var>fetchParams</var>'s
+   <a for="fetch params">preloaded response candidate</a> to <var>response</var>.
 
    <li><p>Let <var>foundPreloadedResource</var> be the result of invoking
-   <a>consume a preloaded resource</a> for <var>req</var>'s <a for=request>window</a>,
-   given <var>req</var>'s <a for=request>URL</a>, <var>req</var>'s <a for=request>destination</a>,
-   <var>req</var>'s <a for=request>mode</a>, <var>req</var>'s <a for=request>credentials mode</a>,
-   <var>req</var>'s <a for=request>integrity metadata</a>, and
-   <var>onPreloadedResponseAvailable</var>.
+   <a>consume a preloaded resource</a> for <var>request</var>'s <a for=request>window</a>, given
+   <var>request</var>'s <a for=request>URL</a>, <var>request</var>'s <a for=request>destination</a>,
+   <var>request</var>'s <a for=request>mode</a>, <var>request</var>'s
+   <a for=request>credentials mode</a>, <var>request</var>'s <a for=request>integrity metadata</a>,
+   and <var>onPreloadedResponseAvailable</var>.
 
-   <li><p>If <var>foundPreloadedResource</var> is true, then return.
+   <li><p>If <var>foundPreloadedResource</var> is true and <var>fetchParams</var>'s
+   <a for="fetch params">preloaded response candidate</a> is null, then set <var>fetchParams</var>'s
+   <a for="fetch params">preloaded response candidate</a> to "<code>pending</code>".
   </ol>
  </li>
 
@@ -3935,14 +4001,17 @@ the request.
   <p>If <var>request</var> is a <a>subresource request</a>, then:
 
   <ol>
-   <li><p>Let <var>record</var> be a new <a for="fetch group">fetch record</a> consisting of
-   <var>request</var> and this instance of the <a for=/>fetch</a> algorithm.
+   <li><p>Let <var>record</var> be a new <a for="fetch group">fetch record</a> whose
+   <a for="fetch record">request</a> is <var>request</var> and <a for="fetch record">controller</a>
+   is <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
    <li><p>Append <var>record</var> to <var>request</var>'s <a for=request>client</a>'s
    <a for=fetch>fetch group</a> list of <a for="fetch group">fetch records</a>.
   </ol>
 
  <li><p>Run <a>main fetch</a> given <var>fetchParams</var>.
+
+ <li><p>Return <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 </ol>
 
 
@@ -3995,10 +4064,20 @@ steps:
    <li>Matching <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> per
    <a href=https://datatracker.ietf.org/doc/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
    results in either a superdomain match with an asserted <code>includeSubDomains</code> directive
-   or a congruent match (with or without an asserted <code>includeSubDomains</code> directive).
-   [[!HSTS]]
+   or a congruent match (with or without an asserted <code>includeSubDomains</code> directive) [[!HSTS]]; or
+   DNS resolution for the request finds a matching HTTPS RR per
+   <a href=https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-svcb-https#section-9.5>section 9.5</a>
+   of [[!SVCB]].
+   [[!HSTS]][[!SVCB]]
   </ul>
   <!-- Per Mike West HSTS happens "probably after" Referrer -->
+
+  <p class=note>As all DNS operations are generally <a>implementation-defined</a>, how it is
+  determined that DNS resolution contains an HTTPS RR is also <a>implementation-defined</a>. As DNS
+  operations are not traditionally performed until attempting to <a>obtain a connection</a>, user
+  agents might need to perform DNS operations earlier, consult local DNS caches, or wait until later
+  in the fetch algorithm and potentially unwind logic on discovering the need to change
+  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a>.
 
  <li><p>If <var>recursive</var> is false, then run the remaining steps <a>in parallel</a>.
 
@@ -4007,6 +4086,18 @@ steps:
   corresponding to the first matching statement:
 
   <dl class=switch>
+   <dt><var>fetchParams</var>'s <a for="fetch params">preloaded response candidate</a> is not null
+   <dd>
+    <ol>
+     <li><p>Wait until <var>fetchParams</var>'s
+     <a for="fetch params">preloaded response candidate</a> is not "<code>pending</code>".
+
+     <li><p><a for=/>Assert</a>: <var>fetchParams</var>'s
+     <a for="fetch params">preloaded response candidate</a> is a <a for=/>response</a>.
+
+     <li><p>Return <var>fetchParams</var>'s <a for="fetch params">preloaded response candidate</a>.
+    </ol>
+
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> is
    <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, and <var>request</var>'s
    <a for=request>response tainting</a> is "<code>basic</code>"
@@ -4014,7 +4105,6 @@ steps:
    "<code>data</code>"
    <dt><var>request</var>'s <a for=request>mode</a> is
    "<code>navigate</code>" or "<code>websocket</code>"
-
    <dd>
     <ol>
      <li><p>Set <var>request</var>'s
@@ -4031,7 +4121,6 @@ steps:
 
    <dt><var>request</var>'s <a for=request>mode</a> is
    "<code>same-origin</code>"
-
    <dd><p>Return a <a>network error</a>.
 
    <dt><var>request</var>'s <a for=request>mode</a> is
@@ -4063,7 +4152,6 @@ steps:
 
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is not an
    <a>HTTP(S) scheme</a>
-
    <dd><p>Return a <a>network error</a>.
 
    <dt><var>request</var>'s <a>use-CORS-preflight flag</a> is set
@@ -4211,7 +4299,7 @@ steps:
   <p>If <var>request</var>'s <a for=request>integrity metadata</a> is not the empty string, then:
 
   <ol>
-   <li><p>Let <var>processBodyError</var> be this step: run <a>fetch finale</a> given
+   <li><p>Let <var>processBodyError</var> be this step: run <a>fetch response handover</a> given
    <var>fetchParams</var> and a <a>network error</a>.
 
    <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>opaque</code>" or
@@ -4226,23 +4314,25 @@ steps:
      <var>request</var>'s <a for=request>integrity metadata</a>, then run
      <var>processBodyError</var> and abort these steps. [[!SRI]]
 
-     <li><p>Set <var>response</var>'s <a for=response>body</a> to the first return value of
-     <a for=BodyInit>safely extracting</a> <var>bytes</var>.
+     <li><p>Set <var>response</var>'s <a for=response>body</a> to the
+     <a for="body with type">body</a> of the result of <a for=BodyInit>safely extracting</a>
+     <var>bytes</var>.
 
-     <li><p>Run <a>fetch finale</a> given <var>fetchParams</var> and <var>response</var>.
+     <li><p>Run <a>fetch response handover</a> given <var>fetchParams</var> and <var>response</var>.
     </ol>
 
    <li><p><a for=body>Fully read</a> <var>response</var>'s <a for=response>body</a> given
    <var>processBody</var> and <var>processBodyError</var>.
   </ol>
 
- <li><p>Otherwise, run <a>fetch finale</a> given <var>fetchParams</var> and <var>response</var>.
+ <li><p>Otherwise, run <a>fetch response handover</a> given <var>fetchParams</var> and
+ <var>response</var>.
 </ol>
 
 <hr>
 
-<p>The <dfn>fetch finale</dfn>, given a <a for=/>fetch params</a> <var>fetchParams</var> and a
-<a for=/>response</a> <var>response</var>, run these steps:
+<p>The <dfn id=fetch-finale>fetch response handover</dfn>, given a <a for=/>fetch params</a>
+<var>fetchParams</var> and a <a for=/>response</a> <var>response</var>, run these steps:
 
 <ol>
  <li>
@@ -4262,7 +4352,16 @@ steps:
    <a>creating an opaque timing info</a> for <var>fetchParams</var>'s
    <a for="fetch params">timing info</a>.</p></li>
   </ol>
- </li>
+
+ <li>
+  <p>Otherwise, if <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+  <a for=request>client</a> is a <a>secure context</a>, set <var>response</var>'s
+  <a for=response>timing info</a>'s <a for="fetch timing info">server-timing headers</a> to the
+  result of <a for="header list">getting, decoding, and splitting</a> `<code>Server-Timing</code>`
+  from <var>response</var>'s <a for=response>header list</a>.
+
+  <p>The user agent may decide to expose `<code>Server-Timing</code>` headers to non-secure contexts
+  requests as well.
 
  <li>
   <p>Let <var>processResponseEndOfBody</var> be the following steps:
@@ -4400,7 +4499,8 @@ steps:
  <dd>
   <ol>
    <li>
-    <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+    <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+    <a for="fetch params">canceled</a>:
 
     <ol>
      <li><p>Let <var>blob</var> be <var>request</var>'s <a for=request>current URL</a>'s
@@ -4431,16 +4531,8 @@ steps:
      <li><p>Return <var>response</var>.
     </ol>
 
-   <li>
-    <p><a>If aborted</a>, then:
-
-    <ol>
-     <li><p>Let <var>aborted</var> be the termination's aborted flag.
-
-     <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
-
-     <li><p>Return a <a>network error</a>.
-    </ol>
+   <li><p><a>If aborted</a>, then return the <a for=/>appropriate network error</a> for
+   <var>fetchParams</var>.
   </ol>
 
  <dt>"<code>data</code>"
@@ -4507,10 +4599,12 @@ these steps:
       <p>Let <var>transformAlgorithm</var> given <var>chunk</var> be these steps:
 
       <ol>
-       <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+       <li><p>If <var>fetchParams</var> is <a for="fetch params">canceled</a>, then abort these
+       steps.
 
        <li><p>If <var>chunk</var> is not a {{Uint8Array}} object, then
-       <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+       <a for="fetch controller">terminate</a> <var>fetchParams</var>'s
+       <a for="fetch params">controller</a>.
 
        <li><p>Otherwise, <a for=ReadableStream>enqueue</a> <var>chunk</var>. The user agent may
        split the chunk into <a>implementation-defined</a> practical sizes and
@@ -4534,7 +4628,9 @@ these steps:
    given <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
 
    <li><p>Set <var>response</var> to the result of invoking <a for=/>handle fetch</a> for
-   <var>requestForServiceWorker</var>. [[!HTML]] [[!SW]]
+   <var>requestForServiceWorker</var>, with <var>fetchParams</var>'s
+   <a for="fetch params">controller</a> and <var>fetchParams</var>'s
+   <a for="fetch params">cross-origin isolated capability</a>. [[!HTML]] [[!SW]]
 
    <li>
     <p>If <var>response</var> is not null, then:
@@ -4761,8 +4857,9 @@ run these steps:
 
  <li>
   <p>If <var>request</var>'s <a for=request>body</a> is non-null, then set <var>request</var>'s
-  <a for=request>body</a> to the first return value of <a for=BodyInit>safely extracting</a>
-  <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>.
+  <a for=request>body</a> to the <a for="body with type">body</a> of the result of
+  <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>'s
+  <a for=body>source</a>.
 
   <p class="note no-backref"><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s
   nullity has already been checked.
@@ -4839,7 +4936,8 @@ steps. They return a <a for=/>response</a>.
  <li><p>Let the <var>revalidatingFlag</var> be unset.
 
  <li>
-  <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+  <a for="fetch params">canceled</a>:
 
   <ol>
    <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
@@ -5173,16 +5271,9 @@ steps. They return a <a for=/>response</a>.
     </ol>
   </ol>
 
- <li>
-  <p><a>If aborted</a>, then:
+ <li><p><a>If aborted</a>, then return the <a for=/>appropriate network error</a> for
+ <var>fetchParams</var>.
 
-  <ol>
-   <li><p>Let <var>aborted</var> be the termination's aborted flag.
-
-   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
-
-   <li><p>Return a <a>network error</a>.
-  </ol>
 
  <!-- If response is still null, we require a forwarded request. -->
  <li>
@@ -5268,9 +5359,9 @@ steps. They return a <a for=/>response</a>.
      <li><p>If <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is null,
      then return a <a>network error</a>.
 
-     <li><p>Set <var>request</var>'s <a for=request>body</a> to the first return value of
-     <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>'s
-     <a for=body>source</a>.
+     <li><p>Set <var>request</var>'s <a for=request>body</a> to the <a for="body with type">body</a>
+     of the result of <a for=BodyInit>safely extracting</a> <var>request</var>'s
+     <a for=request>body</a>'s <a for=body>source</a>.
     </ol>
 
    <li>
@@ -5278,16 +5369,8 @@ steps. They return a <a for=/>response</a>.
     <var>isAuthenticationFetch</var> is true, then:
 
     <ol>
-     <li>
-      <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
-
-      <ol>
-       <li><p>Let <var>aborted</var> be the termination's aborted flag.
-
-       <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
-
-       <li><p>Return a <a>network error</a>.
-      </ol>
+     <li><p>If <var>fetchParams</var> is <a for="fetch params">canceled</a>, then return the
+     <a for=/>appropriate network error</a> for <var>fetchParams</var>.
 
      <li><p>Let <var>username</var> and <var>password</var> be the result of prompting the end user
      for a username and password, respectively, in <var>request</var>'s
@@ -5314,16 +5397,8 @@ steps. They return a <a for=/>response</a>.
    <li class=XXX><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers, missing,
    parsing issues.
 
-   <li>
-    <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
-
-    <ol>
-     <li><p>Let <var>aborted</var> be the termination's aborted flag.
-
-     <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
-
-     <li><p>Return a <a>network error</a>.
-    </ol>
+   <li><p>If <var>fetchParams</var> is <a for="fetch params">canceled</a>, then return the
+   <a for=/>appropriate network error</a> for <var>fetchParams</var>.
 
    <li>
     <p>Prompt the end user as appropriate in <var>request</var>'s
@@ -5352,16 +5427,8 @@ steps. They return a <a for=/>response</a>.
   <p>then:
 
   <ol>
-   <li>
-    <p>If the ongoing fetch is <a for=fetch>terminated</a>, then:
-
-    <ol>
-     <li><p>Let <var>aborted</var> be the termination's aborted flag.
-
-     <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
-
-     <li><p>Return a <a>network error</a>.
-    </ol>
+   <li><p>If <var>fetchParams</var> is <a for="fetch params">canceled</a>, then return the
+   <a for=/>appropriate network error</a> for <var>fetchParams</var>.
 
    <li><p>Set <var>response</var> to the result of running <a>HTTP-network-or-cache fetch</a> given
    <var>fetchParams</var>, <var>isAuthenticationFetch</var>, and true.
@@ -5418,7 +5485,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   </dl>
 
  <li>
-  <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+  <a for="fetch params">canceled</a>:
 
   <ol>
    <li><p>If <var>connection</var> is failure, then return a <a>network error</a>.
@@ -5466,22 +5534,41 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
        <a for=request>body</a> cannot be recreated and that is why the buffer is needed.
       </div>
 
-     <li><p>Set <var>timingInfo</var>'s
-     <a for="fetch timing info">final network-response start time</a> to the
-     <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
-     <a for="fetch params">cross-origin isolated capability</a>, immediately after the user agent's
-     HTTP parser receives the first byte of the response (e.g., frame header bytes for HTTP/2 or
-     response status line for HTTP/1.x).
-
-     <li><p>Wait until all the <a for=/>headers</a> are transmitted.
-
      <li>
-      <p>Any <a for=/>responses</a> whose <a for=response>status</a> is in the range 100 to 199,
-      inclusive, and is not 101, are to be ignored, except for the purposes of setting
-      <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a> above.
+      <p>While true:
 
-      <p class="note no-backref">These kind of <a for=/>responses</a> are eventually followed by a
-      "final" <a for=/>response</a>.
+      <ol>
+       <li><p>If <var>timingInfo</var>'s
+       <a for="fetch timing info">final network-response start time</a> is 0, then set
+       <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a> to
+       <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
+       <a for="fetch params">cross-origin isolated capability</a>, immediately after the user
+       agent's HTTP parser receives the first byte of the response (e.g., frame header bytes for
+       HTTP/2 or response status line for HTTP/1.x).
+
+       <li><p>Wait until all the HTTP response headers are transmitted.
+
+       <li><p>Let <var>status</var> be the HTTP response's status code.
+
+       <li>
+        <p>If <var>status</var> is in the range 100 to 199, inclusive:
+
+        <ol>
+         <li><p>If <var>status</var> is 101, <a for=iteration>break</a>.
+
+         <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
+         <a for="fetch params">process early hints response</a> is non-null, then
+         <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+         <a for="fetch params">process early hints response</a>, with <a for=/>response</a>.
+
+         <li><p><a for=iteration>Continue</a>.
+        </ol>
+
+        <p class=note>These kind of HTTP responses are eventually followed by a "final" HTTP
+        response.
+
+       <li><p><a for=iteration>Break</a>.
+      </ol>
     </ul>
 
     <p class=note>The exact layering between Fetch and HTTP still needs to be sorted through and
@@ -5520,7 +5607,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <p>Let <var>processBodyChunk</var> given <var>bytes</var> be these steps:
 
         <ol>
-         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+         <li><p>If <var>fetchParams</var> is <a for="fetch params">canceled</a>, then abort these
+         steps.
 
          <li><p>Run this step <a>in parallel</a>: transmit <var>bytes</var>.
 
@@ -5534,7 +5622,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <p>Let <var>processEndOfBody</var> be these steps:
 
         <ol>
-         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+         <li><p>If <var>fetchParams</var> is <a for="fetch params">canceled</a>, then abort these
+         steps.
 
          <li><p>If <var>fetchParams</var>'s <a for="fetch params">process request end-of-body</a> is
          non-null, then run <var>fetchParams</var>'s
@@ -5545,12 +5634,15 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <p>Let <var>processBodyError</var> given <var>e</var> be these steps:
 
         <ol>
-         <li><p>If the ongoing fetch is <a for=fetch>terminated</a>, then abort these steps.
+         <li><p>If <var>fetchParams</var> is <a for="fetch params">canceled</a>, then abort these
+         steps.
 
          <li><p>If <var>e</var> is an "<code><a exception>AbortError</a></code>" {{DOMException}},
-         then <a lt=terminated for=fetch>terminate</a> the ongoing fetch with the aborted flag set.
+         then <a for="fetch controller">abort</a> <var>fetchParams</var>'s
+         <a for="fetch params">controller</a>.
 
-         <li><p>Otherwise, <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+         <li><p>Otherwise, <a for="fetch controller">terminate</a> <var>fetchParams</var>'s
+         <a for="fetch params">controller</a>.
         </ol>
 
        <li><p><a for=body>Incrementally read</a> <var>request</var>'s <a for=request>body</a> given
@@ -5567,20 +5659,16 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   <p><a>If aborted</a>, then:
 
   <ol>
-   <li><p>Let <var>aborted</var> be the termination's aborted flag.
-
    <li><p>If <var>connection</var> uses HTTP/2, then transmit an <code>RST_STREAM</code> frame.
 
-   <li><p>If <var>aborted</var> is set, then return an <a>aborted network error</a>.
-
-   <li><p>Return a <a>network error</a>.
+   <li><p>Return the <a for=/>appropriate network error</a> for <var>fetchParams</var>.
   </ol>
 
- <li><p>Let <var>pullAlgorithm</var> be an action that <a lt=resumed for=fetch>resumes</a> the
+ <li><p>Let <var>pullAlgorithm</var> be an algorithm that <a lt=resumed for=fetch>resumes</a> the
  ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
 
- <li><p>Let <var>cancelAlgorithm</var> be an action that <a lt=terminated for=fetch>terminates</a>
- the ongoing fetch with the aborted flag set.
+ <li><p>Let <var>cancelAlgorithm</var> be an algorithm that <a for="fetch controller">aborts</a>
+ <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
  <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
@@ -5596,7 +5684,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <a for="ReadableStream/set up"><var>sizeAlgorithm</var></a> set to <var>sizeAlgorithm</var>.
 
  <li>
-  <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+  <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+  <a for="fetch params">canceled</a>:
 
   <ol>
    <li><p>Set <var>response</var>'s <a for=response>body</a> to a new
@@ -5625,10 +5714,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   <p><a>If aborted</a>, then:
 
   <ol>
-   <li><p>Let <var>aborted</var> be the termination's aborted flag.
-
-   <li><p>If <var>aborted</var> is set, then set <var>response</var>'s
-   <a for=response>aborted flag</a>.
+   <li><p>If <var>fetchParams</var> is <a for="fetch params">aborted</a>, then set
+   <var>response</var>'s <a for=response>aborted flag</a>.
 
    <li><p>Return <var>response</var>.
   </ol>
@@ -5638,7 +5725,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
   <ol>
    <li>
-    <p>Run these steps, but <a>abort when</a> the ongoing fetch is <a for=fetch>terminated</a>:
+    <p>Run these steps, but <a>abort when</a> <var>fetchParams</var> is
+    <a for="fetch params">canceled</a>:
 
     <ol>
      <li>
@@ -5667,14 +5755,15 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>Increase <var>timingInfo</var>'s <a for="fetch timing info">decoded body size</a> by
          <var>bytes</var>'s <a for="byte sequence">length</a>.
 
-         <li><p>If <var>bytes</var> is failure, then <a lt=terminated for=fetch>terminate</a> the
-         ongoing fetch.
+         <li><p>If <var>bytes</var> is failure, then <a for="fetch controller">terminate</a>
+         <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
          <li><p><a for=ReadableStream>Enqueue</a> a {{Uint8Array}} wrapping an {{ArrayBuffer}}
          containing <var>bytes</var> into <var>stream</var>.
 
          <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
-         <a lt=terminated for=fetch>terminate</a> the ongoing fetch.
+         <a for="fetch controller">terminate</a> <var>fetchParams</var>.'s
+         <a for="fetch params">controller</a>.
 
          <li><p>If <var>stream</var> doesn't <a for=ReadableStream>need more data</a> ask the user
          agent to <a for=fetch>suspend</a> the ongoing fetch.
@@ -5690,10 +5779,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <p><a>If aborted</a>, then:
 
     <ol>
-     <li><p>Let <var>aborted</var> be the termination's aborted flag.
 
      <li>
-      <p>If <var>aborted</var> is set, then:
+      <p>If <var>fetchParams</var> is <a for="fetch params">aborted</a>, then:
 
       <ol>
        <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
@@ -6011,9 +6099,6 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is set, then return
  failure.
 
- <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>", then
- return success.
-
  <li><p>Let <var>values</var> be the result of
  <a for="header list">getting, decoding, and splitting</a> `<code>Timing-Allow-Origin</code>` from
  <var>response</var>'s <a for=response>header list</a>.
@@ -6022,6 +6107,20 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
  <li><p>If <var>values</var> <a for=list>contains</a> the result of
  <a>serializing a request origin</a> with <var>request</var>, then return success.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>" and
+  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> is not
+  <a>same origin</a> with <var>request</var>'s <a for=request>origin</a>, then return failure.
+
+  <p class=note>This is necessary for navigations of a nested browsing context. There,
+  <var>request</var>'s <a for=request>origin</a> would be the container document's
+  <a for=Document>origin</a> and the <a>TAO check</a> would return failure. Since navigation timing
+  never validates the results of the <a>TAO check</a>, the nested document would still have access
+  to the full timing information, but the container document would not.
+
+ <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>basic</code>", then
+ return success.
 
  <li><p>Return failure.
 </ol>
@@ -6360,9 +6459,8 @@ typedef (Blob or BufferSource or FormData or URLSearchParams or USVString) XMLHt
 
 typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
 
-<p>To <dfn for=BodyInit export>safely extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=/>header value</a> from a <a for=/>byte sequence</a> or
-{{BodyInit}} object <var>object</var>, run these steps:
+<p>To <dfn for=BodyInit export>safely extract</dfn> a <a for=/>body with type</a> from a
+<a for=/>byte sequence</a> or {{BodyInit}} object <var>object</var>, run these steps:
 
 <ol>
  <li>
@@ -6373,15 +6471,15 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
    <a for=ReadableStream>locked</a>.
   </ol>
 
- <li><p>Return the results of <a for=BodyInit>extracting</a> <var>object</var>.
+ <li><p>Return the result of <a for=BodyInit>extracting</a> <var>object</var>.
 </ol>
 
 <p class="note no-backref">The <a for=BodyInit>safely extract</a> operation is a subset of the
 <a for=BodyInit>extract</a> operation that is guaranteed to not throw an exception.
 
-<p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a <a for=/>body</a> and a
-`<code>Content-Type</code>` <a for=/>header value</a> from a <a for=/>byte sequence</a> or
-{{BodyInit}} object <var>object</var>, with an optional boolean
+<p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a
+<a for=/>body with type</a> from a <a for=/>byte sequence</a> or {{BodyInit}} object
+<var>object</var>, with an optional boolean
 <dfn id=keepalive for=BodyInit/extract export><var>keepalive</var></dfn> (default false), run these
 steps:
 
@@ -6396,7 +6494,7 @@ steps:
 
  <li><p>Let <var>length</var> be null.
 
- <li><p>Let <var>Content-Type</var> be null.
+ <li><p>Let <var>type</var> be null.
 
  <li>
   <p>Switch on <var>object</var>:
@@ -6411,7 +6509,7 @@ steps:
     <p>Set <var>length</var> to <var>object</var>'s {{Blob/size}}.
 
     <p>If <var>object</var>'s {{Blob/type}}
-    attribute is not the empty byte sequence, set <var>Content-Type</var> to its value.
+    attribute is not the empty byte sequence, set <var>type</var> to its value.
     <!-- Blob reading is not defined and blobs don't have an internal data model to poke at -->
 
    <dt><a for=/>byte sequence</a>
@@ -6432,7 +6530,7 @@ steps:
     <p>Set <var>length</var> to <span class=XXX>unclear, see
     <a href="https://github.com/whatwg/html/issues/6424">html/6424</a> for improving this</span>.
 
-    <p>Set <var>Content-Type</var> to `<code>multipart/form-data; boundary=</code>`, followed by the
+    <p>Set <var>type</var> to `<code>multipart/form-data; boundary=</code>`, followed by the
     <a><code>multipart/form-data</code> boundary string</a> generated by the
     <a><code>multipart/form-data</code> encoding algorithm</a>.
 
@@ -6442,14 +6540,14 @@ steps:
     <a lt="urlencoded serializer"><code>application/x-www-form-urlencoded</code> serializer</a> with
     <var>object</var>'s <a for=URLSearchParams>list</a>.
 
-    <p>Set <var>Content-Type</var> to
+    <p>Set <var>type</var> to
     `<code>application/x-www-form-urlencoded;charset=UTF-8</code>`.
 
    <dt><a for=/>scalar value string</a>
    <dd>
     <p>Set <var>source</var> to the <a>UTF-8 encoding</a> of <var>object</var>.
 
-    <p>Set <var>Content-Type</var> to `<code>text/plain;charset=UTF-8</code>`.
+    <p>Set <var>type</var> to `<code>text/plain;charset=UTF-8</code>`.
 
    <dt>{{ReadableStream}}
    <dd>
@@ -6481,7 +6579,7 @@ steps:
  <var>stream</var>, <a for=body>source</a> is <var>source</var>, and <a for=body>length</a> is
  <var>length</var>.
 
- <li><p>Return <var>body</var> and <var>Content-Type</var>.
+ <li><p>Return (<var>body</var>, <var>type</var>).
 </ol>
 
 
@@ -7212,17 +7310,18 @@ constructor steps are:
   <p>If <var>init</var>["{{RequestInit/body}}"] <a for=map>exists</a> and is non-null, then:
 
   <ol>
-   <li><p>Let <var>Content-Type</var> be null.
+   <li><p>Let <var>bodyWithType</var> be the result of <a for=BodyInit>extracting</a>
+   <var>init</var>["{{RequestInit/body}}"], with <a for=BodyInit/extract><var>keepalive</var></a>
+   set to <var>request</var>'s <a for=request>keepalive</a>.
 
-   <li><p>Set <var>initBody</var> and <var>Content-Type</var> to the result of
-   <a for=BodyInit>extracting</a> <var>init</var>["{{RequestInit/body}}"], with
-   <a for=BodyInit/extract><var>keepalive</var></a> set to <var>request</var>'s
-   <a for=request>keepalive</a>.
+   <li><p>Set <var>initBody</var> to <var>bodyWithType</var>'s <a for="body with type">body</a>.
 
-   <li><p>If <var>Content-Type</var> is non-null and <a>this</a>'s <a for=Request>headers</a>'s
+   <li><p>Let <var>type</var> be <var>bodyWithType</var>'s <a for="body with type">type</a>.
+
+   <li><p>If <var>type</var> is non-null and <a>this</a>'s <a for=Request>headers</a>'s
    <a for=Headers>header list</a> <a for="header list">does not contain</a>
    `<code>Content-Type</code>`, then <a for=Headers>append</a> (`<code>Content-Type</code>`,
-   <var>Content-Type</var>) to <a>this</a>'s <a for=Request>headers</a>.
+   <var>type</var>) to <a>this</a>'s <a for=Request>headers</a>.
   </ol>
 
  <li><p>Let <var>inputOrInitBody</var> be <var>initBody</var> if it is non-null; otherwise
@@ -7656,6 +7755,8 @@ method steps are:
   <p class=note>This lets us reject promises with predictable timing, when the request to abort
   comes from the same thread as the call to fetch.
 
+ <li><p>Let <var>controller</var> be null.
+
  <li>
   <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
   <a for=Request>signal</a>:
@@ -7665,7 +7766,8 @@ method steps are:
 
    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
 
-   <li><p><a lt=terminated for=fetch>Terminate</a> the ongoing fetch with the aborted flag set.
+   <li><p>If <var>controller</var> is not null, then <a for="fetch controller">abort</a>
+   <var>controller</var>.
   </ol>
 
  <li><p>Let <var>handleFetchDone</var> given <a for=/>response</a> <var>response</var> be to
@@ -7673,7 +7775,8 @@ method steps are:
  "<code>fetch</code>".
 
  <li>
-  <p><a for=/>Fetch</a> <var>request</var> with <a for=fetch><i>processResponseEndOfBody</i></a> set to
+  <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
+  <var>request</var>, with <a for=fetch><i>processResponseEndOfBody</i></a> set to
   <var>handleFetchDone</var>, and <a for=fetch><i>processResponse</i></a> given <var>response</var>
   being these substeps:
 
@@ -7723,7 +7826,7 @@ method steps are:
 
 <h3 id=garbage-collection>Garbage collection</h3>
 
-<p>The user agent may <a lt=terminated for=fetch>terminate</a> an ongoing fetch if that termination
+<p>The user agent may <a for="fetch controller">terminate</a> an ongoing fetch if that termination
 is not observable through script.
 
 <p class="note no-backref">"Observable through script" means observable through
@@ -8089,6 +8192,7 @@ resource — for non-<a>CORS requests</a> as well as <a>CORS
 requests</a> — and do not use `<code>Vary</code>`.
 
 
+
 <h2 id=fetch-elsewhere class=no-num>Using fetch in other standards</h2>
 
 <p>In its essence <a for=/>fetching</a> is an exchange of a <a for=/>request</a> for a
@@ -8115,6 +8219,11 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  <dt><a for=fetch><i>processRequestEndOfBody</i></a>
  <dd><p>Takes an algorithm that will be passed nothing. Indicates <a for=/>request</a>'s
  <a for=request>body</a> has been transmitted. Most standards will not need this.
+
+ <dt><a for=fetch><i>processEarlyHintsResponse</i></a>
+ <dd><p>Takes an algorithm that will be passed a <a for=/>response</a> (whose
+ <a for=response>status</a> is 103). Can only be used for navigations as defined by
+ <cite>HTML</cite>. [[HTML]]
 
  <dt><a for=fetch><i>processResponse</i></a>
  <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates
@@ -8156,6 +8265,12 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  <dd><p>Takes a <a for=/>boolean</a> that defaults to false. Indicates where the algorithms passed
  as arguments will be invoked. Hopefully most standards will not need this.
 </dl>
+
+<p>When invoked, the <a for=/>fetch</a> operation returns a <a for=/>fetch controller</a>. The
+controller is used for performing actions on a fetch operation that has already started, such as
+<a for="fetch controller" lt=abort>aborting</a> the operation by the user or page logic, or
+<a for="fetch controller" lt=terminate>terminating</a> it due to a browser-internal circumstance.
+
 
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
@@ -8209,6 +8324,7 @@ Eero Häkkinen,
 Ehsan Akhgari,
 Emily Stark,
 Eric Lawrence,
+Eric Orth,
 François Marier,
 Frank Ellerman,
 Frederick Hirsch,
