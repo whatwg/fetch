@@ -205,8 +205,8 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">task destination</dfn> (default null)
  <dd>Null, a <a for=/>global object</a>, or a <a for=/>parallel queue</a>.
 
- <dt><dfn for="fetch params">initiator type</dfn> (default "<code>other</code>")
- <dd>A string.
+ <dt><dfn for="fetch params">initiator type</dfn> (default null)
+ <dd>Null or a string.
 
  <dt><dfn for="fetch params">timing global</dfn> (default null)
  <dd>Null or a <a for=/>global object</a>.
@@ -231,7 +231,31 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 <dl>
  <dt><dfn for="fetch controller">state</dfn> (default "<code>ongoing</code>")
  <dd>"<code>ongoing</code>", "<code>terminated</code>", or "<code>aborted</code>"
+
+ <dt><dfn for="fetch controller">full timing info</dfn> (default null)
+ <dd>Null or a <a for=/>fetch timing info</a>.
+
+ <dt><dfn for="fetch controller">report timing steps</dfn> (default null)
+ <dd>Null or an algorithm accepting a <a for=/>global object</a>.
 </dl>
+
+<p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</a> for a
+<a>fetch controller</a> <var>controller</var> given a <a for=/>global object</a> <var>global</var>:
+
+<ol>
+ <li><p>Assert: <a>this</a>'s <a for="fetch controller">report timing steps</a> is not null.
+
+ <li><p>Call <a>this</a>'s <a for="fetch controller">report timing steps</a> with <var>global</var>.
+</ol>
+
+<p>To <dfn export for="fetch controller">extract full timing info</a> given a
+<a>fetch controller</a> <var>controller</var>:
+
+<ol>
+ <li><p>Assert: <a>this</a>'s <a for="fetch controller">full timing info</a> is not null.
+
+ <li><p>Return <a>this</a>'s <a for="fetch controller">full timing info</a>.
+</ol>
 
 <p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
@@ -3776,9 +3800,9 @@ algorithm <dfn export for=fetch id=process-response><var>processResponse</var></
 algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
 an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), an
-optional string <dfn export for=fetch><var>initiatorType</var></dfn> (default "<code>other</code>"),
-and an optional "<code>client</code>", null, or a <a for=/>global object</a>
-<dfn export for=fetch><var>timingGlobal</var></dfn> (default null), run the steps
+optional null or string <dfn export for=fetch><var>initiatorType</var></dfn> (default null),
+and an optional "<code>client</code>" or a <a for=/>global object</a>
+<dfn export for=fetch><var>timingGlobal</var></dfn> (default "<code>client</code>"), run the steps
 below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm acceptin an integer
 representing the number of bytes transmitted. If given <var>processRequestEndOfBody</var> must be an
 algorithm accepting no arguments. If given, <var>processEarlyHintsResponse</var> must be an
@@ -3826,14 +3850,14 @@ the request.
  <li><p>If <var>useParallelQueue</var> is true, then set <var>taskDestination</var> to the result of
  <a>starting a new parallel queue</a>.
 
- <li><p>If <var>timingGlobal</var> is "<code>client</code>", then set <var>timingGlobal</var>
- to <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a>.
-
  <!-- It would be nice to assert that taskDestination is non-null here, but it's not clear if this
       works for all callers. Fetch itself calls main fetch while taskDestination is null. Anyone
       wanting to do a ping without request body might do so as well, but if you do have a request
       body you definitely need this as otherwise transmit-request-body loop breaks down. -->
+
+ <li><p>If <var>timingGlobal</var> is "<code>client</code>", then set <var>timingGlobal</var> to
+ <var>request</var>'s <a for=request>client</a>'s <a
+ for="environment settings object">global object</a>.
 
  <li><p>Let <var>timingInfo</var> be a new <a for=/>fetch timing info</a> whose
  <a for="fetch timing info">start time</a> and
@@ -4313,11 +4337,15 @@ steps:
    <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
    <a for=request>done flag</a>.
 
-   <li><p>Let <var>global</var> be <var>fetchParams</var>'s <a for="fetch params">timing global</a>.
-
    <li>
-    <p>If <var>global</var> is not null, then <a>queue a fetch task</a> given
-    <var>global</var> to run the following steps:
+    <p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+    <a for=request>destination</a> is "<code>document</code>", then set <var>fetchParams</var>'s
+    <a for="fetch params">controller</a>'s <a for="fetch controller">full timing info</a> to
+    <var>fetchParams</var>'s <a for="fetch params">timing info</a>.
+
+    <p>Set <var>fetchParams</var>'s <a for="fetch params">controller</a>'s <a
+    for="fetch controller">report timing steps</a> to the following steps given a <a
+    for=/>global object</a> <var>global</var>:
 
     <ol>
      <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>URL</a>'s
@@ -4340,10 +4368,22 @@ steps:
       <p class=note>This covers the case of <var>response</var> being a <a>network error</a>.
      </li>
 
-     <li><p><a for=/>Mark resource timing</a> for <var>timingInfo</var>, <var>request</var>'s
+     <li><p>If <var>fetchParams</var>'s <a for="fetch params">initiator type</a> is not null, then
+     <a for=/>mark resource timing</a> for <var>timingInfo</var>, <var>request</var>'s
      <a for=request>URL</a>, <var>fetchParams</var>'s <a for="fetch params">initiator type</a>,
      <var>global</var>, <var>cacheState</var>, and <var>bodyInfo</var>.
     </ol>
+
+   <li><p>Let <var>global</var> be <var>fetchParams</var>'s <a for="fetch params">timing global</a>.
+
+   <li>
+    <p>If <var>fetchParams</var>'s <a for="fetch params">initiator type</a> is not null and
+    <var>fetchParams</var>'s <a for="fetch params">timing global</a> is not null, then
+    <a>queue a fetch task</a> to run <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
+    <a for="fetch controller">report timing steps</a> given <var>fetchParams</var>'s
+    <a for="fetch params">timing global</a> and <var>fetchParams</var>'s
+    <a for="fetch params">initiator type</a>, with<var>fetchParams</var>'s
+    <a for="fetch params">timing global</a>.
    </li>
 
    <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is not
@@ -8183,8 +8223,8 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  as arguments will be invoked. Hopefully most standards will not need this.
 
  <dt><a for=fetch><i>initiatorType</i></a>
- <dd><p>Takes a string that defaults to "<code>other</code>", to indicate the
- {{PerformanceResourceTiming/initiatorType}} for <cite>Resource Timing</cite>. [[RESOURCE-TIMING]]
+ <dd><p>Takes null or a string, to indicate the {{PerformanceResourceTiming/initiatorType}} for
+ <cite>Resource Timing</cite>. If not given, the entry is not reported. [[RESOURCE-TIMING]]
 
  <dt><a for=fetch><i>timingGlobal</i></a>
  <dd><p>Takes "<code>client</code>", "<code>none</code>" or a <a for=/>global object</a> (default
