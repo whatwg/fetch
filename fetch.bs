@@ -4324,20 +4324,20 @@ steps:
   <p>Otherwise:</p>
 
   <ol>
-   <li><p>Let <var>transformStream</var> be a new a {{TransformStream}}.
+   <li><p>Let <var>transformStream</var> be a new {{TransformStream}}.
 
    <li><p>Let <var>identityTransformAlgorithm</var> be an algorithm which, given <var>chunk</var>,
    <a for=TransformStream lt=enqueue>enqueues</a> <var>chunk</var> in <var>transformStream</var>.
 
-   <li><p><a for=TransformStream lt="setting up">Set up</a> <var>transformStream</var> with
+   <li><p><a for=TransformStream>Set up</a> <var>transformStream</var> with
    <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
    <var>identityTransformAlgorithm</var> and
    <a for="TransformStream/set up"><i>flushAlgorithm</i></a> set to
    <var>processResponseEndOfBody</var>.
 
-   <li><p>Set <var>response</var>'s <a for=response>body</a> to the result of
-   <a for=ReadableStream lt="piping through">piping</a> <var>response</var>'s
-   <a for=response>body</a> through <var>transformStream</var>.
+   <li><p>Set <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> to the result
+   of <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a>
+   <a for=ReadableStream>piped through</a> <var>transformStream</var>.
   </ol>
 
   <p class=note>This {{TransformStream}} is needed for the purpose of receiving a notification when
@@ -4532,6 +4532,8 @@ these steps:
     <p>If <var>requestForServiceWorker</var>'s <a for=/>body</a> is non-null, then:
 
     <ol>
+     <li><p>Let <var>transformStream</var> be a new {{TransformStream}}.
+
      <li>
       <p>Let <var>transformAlgorithm</var> given <var>chunk</var> be these steps:
 
@@ -4543,22 +4545,20 @@ these steps:
        <a for="fetch controller">terminate</a> <var>fetchParams</var>'s
        <a for="fetch params">controller</a>.
 
-       <li><p>Otherwise, <a for=ReadableStream>enqueue</a> <var>chunk</var>. The user agent may
-       split the chunk into <a>implementation-defined</a> practical sizes and
-       <a for=ReadableStream>enqueue</a> each of them. The user agent also may concatenate the
-       chunks into an <a>implementation-defined</a> practical size and
-       <a for=ReadableStream>enqueue</a> it.
+       <li><p>Otherwise, <a for=ReadableStream>enqueue</a> <var>chunk</var> in
+       <var>transformStream</var>. The user agent may split the chunk into
+       <a>implementation-defined</a> practical sizes and <a for=ReadableStream>enqueue</a> each of
+       them. The user agent also may concatenate the chunks into an <a>implementation-defined</a>
+       practical size and <a for=ReadableStream>enqueue</a> it.
       </ol>
 
-     <li><p>Let <var>transformStream</var> be the result of <a for=TransformStream>setting up</a> a
-     {{TransformStream}} with <var>transformAlgorithm</var>.
-
-     <li><p>Let <var>transformedStream</var> be the result of <var>requestForServiceWorker</var>'s
-     <a for=/>body</a>'s <a for=body>stream</a> <a for=ReadableStream>piped through</a>
-     <var>transformStream</var>.
+     <li><p><a for=TransformStream>Set up</a> <var>transformStream</var> with
+     <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
+     <var>transformAlgorithm</var>.
 
      <li><p>Set <var>requestForServiceWorker</var>'s <a for=/>body</a>'s <a for=body>stream</a> to
-     <var>transformedStream</var>.
+     the result of <var>requestForServiceWorker</var>'s <a for=/>body</a>'s <a for=body>stream</a>
+     <a for=ReadableStream>piped through</a> <var>transformStream</var>.
     </ol>
 
    <li><p>Let <var>serviceWorkerStartTime</var> be the <a for=/>coarsened shared current time</a>
