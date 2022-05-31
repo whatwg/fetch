@@ -2864,33 +2864,32 @@ run these steps:
  <li><p>Return <b>allowed</b>.
 </ol>
 
-<h3 dfn export lt="prevent sensitive header size probing" id=prevent-sensitive-header-size-probing>
-Prevent sensitive header size probing</h3>
+<h3 dfn export lt="header size is over cors limit" id=header-size-is-over-cors-limit>
+Header size is over CORS limit</h3>
 
 Note: The goal of this algorithm is to prevent cross-origin requests from probing the size of sensitive <a for=/>header</a>s
 (`<a http-header><code>Authorization</code></a>` or `<a http-header><code>Cookie</code></a>`) by adding <a for=/>header</a>s
-to cross-site requests until the total size of all HTTP request <a for=/>header</a>s exceeds the server side limit. In order
-for this approach to succeed, servers should not set a HTTP request <a for=/>header</a>s size limit below 8KB.
+to cross-site requests until the total size of all HTTP request <a for=/>header</a>s exceeds the server side limit. If this
+algorithm returns true, the <a>CORS-preflight request</a> must be run. In order for this approach to succeed, servers should
+not set a HTTP request <a for=/>header</a>s size limit below 8KB.
 
 <p>Run these steps on the provided <var>request</var>:
 
 <ol>
  <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with <var>request</var>'s
- <a for=request>current URL</a>'s <a for=url>origin</a>, return.
+ <a for=request>current URL</a>'s <a for=url>origin</a>, return `false`.
 
  <li><p>Let <var>sensitiveHeaderList</var> be the result of running <a for="header list">filter include</a> on <var>request</var>'s
  <a for=response>header list</a> with an include list of `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>)`.
 
- <ol>
-  <li>TBD
- </ol>
+ <li><p>If the result of running <a for="header list">size</a> on <var>sensitiveHeaderList</var> is greater than 4KB, return `true`.
  
  <li><p>Let <var>nonSensitiveHeaderList</var> be the result of running <a for="header list">filter exclude</a> on <var>request</var>'s
  <a for=response>header list</a> with an exclude list of `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>)`.
 
- <ol>
-  <li>TBD
- </ol>
+ <li><p>If the result of running <a for="header list">size</a> on <var>nonSensitiveHeaderList</var> is greater than 4KB, return `true`.
+
+ <li><p>Return `false`.
 </ol>
 
 
