@@ -2864,72 +2864,33 @@ run these steps:
  <li><p>Return <b>allowed</b>.
 </ol>
 
-<h3 dfn export lt="prevent sensitive header size probing" id=prevent-sensitive-header-size-probing> Prevent sensitive header
-size probing</h3>
+<h3 dfn export lt="prevent sensitive header size probing" id=prevent-sensitive-header-size-probing>
+Prevent sensitive header size probing</h3>
 
 Note: The goal of this algorithm is to prevent cross-origin requests from probing the size of sensitive <a for=/>header</a>s
 (`<a http-header><code>Authorization</code></a>` or `<a http-header><code>Cookie</code></a>`) by adding <a for=/>header</a>s
 to cross-site requests until the total size of all HTTP request <a for=/>header</a>s exceeds the server side limit. In order
 for this approach to succeed, servers should not set a HTTP request <a for=/>header</a>s size limit below 8KB.
 
-<p>Run these steps:
+<p>Run these steps on the provided <var>request</var>:
 
 <ol>
- <li><p>If the request isn't cross-origin, return.
+ <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with <var>request</var>'s
+ <a for=request>current URL</a>'s <a for=url>origin</a>, return.
 
- <li><p>Let <var>sensitiveHeaderList</var> be the result of filtering <a for=response>header list</a> to include only
- <a for=/>header</a>s with a <a for=/>header name</a> of `<a http-header><code>Authorization</code></a>`,
- `<a http-header><code>Cookie</code></a>`, or `<a http-header><code>Sensitive-Header-Truncated</code></a>`.
- 
- <li><p>While the serialized size of <var>sensitiveHeaderList</var> is greater than 4KB:
+ <li><p>Let <var>sensitiveHeaderList</var> be the result of running <a for="header list">filter include</a> on <var>request</var>'s
+ <a for=response>header list</a> with an include list of `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>)`.
 
  <ol>
-  <li><p>If the <a for=/>header</a> `<a http-header><code>Authorization</code></a>` is present in
-  <var>sensitiveHeaderList</var> and `<a http-header><code>Cookie</code></a>` is not present or the
-  value of `<a http-header><code>Authorization</code></a>` is larger than the value of
-  `<a http-header><code>Cookie</code></a>`.
- 
-  <ol>
-   <li><p><a for="header list">delete</a> `<a http-header><code>Authorization</code></a>` from
-   <var>sensitiveHeaderList</var>.
-   
-   <li><p><a for="header list">set</a> `<a http-header><code>Sensitive-Header-Truncated</code></a>` in
-   <var>sensitiveHeaderList</var> to the value <code>?1</code>.
-  </ol>
-  
-  <li><p>Else if the <a for=/>header</a> `<a http-header><code>Cookie</code></a>` is present in
-  <var>sensitiveHeaderList</var> and `<a http-header><code>Authorization</code></a>` is not present or the
-  value of `<a http-header><code>Cookie</code></a>` is larger than the value of
-  `<a http-header><code>Authorization</code></a>`.
-  
-  <ol>
-   <li><p><a for="header list">delete</a> `<a http-header><code>Cookie</code></a>` from
-   <var>sensitiveHeaderList</var>.
-   
-   <li><p><a for="header list">set</a> `<a http-header><code>Sensitive-Header-Truncated</code></a>` in
-   <var>sensitiveHeaderList</var> to the value <code>?1</code>.
-  </ol>
+  <li>TBD
  </ol>
  
- <li><p>Let <var>nonSensitiveHeaderList</var> be the result of filtering <a for=response>header list</a> to include
- only <a for=/>header</a>s not in <var>sensitiveHeaderList</var>
-
- <li><p>While the serialized size of <var>nonSensitiveHeaderList</var> is greater than 4KB:
+ <li><p>Let <var>nonSensitiveHeaderList</var> be the result of running <a for="header list">filter exclude</a> on <var>request</var>'s
+ <a for=response>header list</a> with an exclude list of `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>)`.
 
  <ol>
-  <li><p>Let <var>nameOfLargestHeader</var> be the name of the largest serialized <a for=/>header</a> in
-  <var>nonSensitiveHeaderList</var> except `<a http-header><code>Non-Sensitive-Header-Truncated</code></a>`.
-  
-  <li><p><a for="header list">delete</a> <var>nameOfLargestHeader</var> from <var>nonSensitiveHeaderList</var>.
-   
-  <li><p><a for="header list">set</a> `<a http-header><code>Non-Sensitive-Header-Truncated</code></a>` in
-  <var>nonSensitiveHeaderList</var> to the value <code>?1</code>.
+  <li>TBD
  </ol>
- 
- <li><p>Let <var>newHeaderList</var> be the result of taking <var>sensitiveHeaderList</var> and running
- <a for="header list">sort and combine</a> with <var>nonSensitiveHeaderList</var>.
-
- <li><p>Overwrite <a for=response>header list</a> with <var>newHeaderList</var>.
 </ol>
 
 
