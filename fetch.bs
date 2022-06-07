@@ -205,12 +205,6 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch params">task destination</dfn> (default null)
  <dd>Null, a <a for=/>global object</a>, or a <a for=/>parallel queue</a>.
 
- <dt><dfn for="fetch params">initiator type</dfn> (default null)
- <dd>Null or a string.
-
- <dt><dfn for="fetch params">timing global</dfn> (default null)
- <dd>Null or a <a for=/>global object</a>.
-
  <dt><dfn for="fetch params">cross-origin isolated capability</dfn> (default false)
  <dd>A boolean.
 
@@ -1426,6 +1420,10 @@ this flag set are subject to additional processing requirements.
 <p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers mode</dfn>, that
 is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<code>all</code>".
 
+<p>A <a for=/>request</a> has an associated null or string
+<dfn for=request export>initiator type</dfn>. Unless stated otherwise it is null.
+[[RESOURCE-TIMING]]
+
 <div class=note>
  <p>This determines which service workers will receive a {{fetch!!event}} event for this fetch.
 
@@ -2115,11 +2113,6 @@ string.
      need to mask it, whether the cache API needs to store it, etc. -->
 
 <p>A <a for=/>response</a> has an associated
-<dfn export for=response id=concept-response-body-info>body info</dfn>
-(a <a for=/>response body info</a>). Unless stated otherwise, it is a new
-<a for=/>response body info</a>.
-
-<p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-cors-exposed-header-name-list>CORS-exposed header-name list</dfn>
 (a list of zero or more <a for=/>header</a>
 <a lt=name for=header>names</a>). The list is empty unless otherwise specified.
@@ -2148,6 +2141,11 @@ initially unset.
 allowed on the resource fetched by looking at the flag of the response returned. Because the flag on
 the response of a redirect has to be set if it was set for previous responses in the redirect chain,
 this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
+
+<p>A <a for=/>response</a> has an associated
+<dfn export for=response id=concept-response-body-info>body info</dfn>
+(a <a for=/>response body info</a>). Unless stated otherwise, it is a new
+<a for=/>response body info</a>.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response>service worker timing info</dfn> (null or a
@@ -3799,17 +3797,15 @@ an optional algorithm <dfn export for=fetch><var>processEarlyHintsResponse</var>
 algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an optional
 algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
-an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), an
-optional null or string <dfn export for=fetch><var>initiatorType</var></dfn> (default null),
-and an optional "<code>client</code>", "<code>none</code>",  or a <a for=/>global object</a>
-<dfn export for=fetch><var>timingGlobal</var></dfn> (default "<code>client</code>"), run the steps
-below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting an integer
-representing the number of bytes transmitted. If given, <var>processRequestEndOfBody</var> must be an
-algorithm accepting no arguments. If given, <var>processEarlyHintsResponse</var> must be an
-algorithm accepting a <a for=/>response</a>. If given, <var>processResponse</var> must be an
-algorithm accepting a <a for=/>response</a>. If given, <var>processResponseEndOfBody</var> must be
-an algorithm accepting a <a for=/>response</a>. If given, <var>processResponseConsumeBody</var> must
-be an algorithm accepting a <a for=/>response</a> and null, failure, or a <a for=/>byte sequence</a>.
+and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
+the steps below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting
+an integer representing the number of bytes transmitted. If given,
+<var>processRequestEndOfBody</var> must be an algorithm accepting no arguments. If given,
+<var>processEarlyHintsResponse</var> must be an algorithm accepting a <a for=/>response</a>. If
+given, <var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
+<var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a>. If
+given, <var>processResponseConsumeBody</var> must be an algorithm accepting a <a for=/>response</a>
+and null, failure, or a <a for=/>byte sequence</a>.
 
 <p>The user agent may be asked to
 <dfn export for=fetch id=concept-fetch-suspend>suspend</dfn> the ongoing fetch.
@@ -3845,12 +3841,7 @@ the request.
    <li><p>Set <var>crossOriginIsolatedCapability</var> to <var>request</var>'s
    <a for=request>client</a>'s
    <a for="environment settings object">cross-origin isolated capability</a>.
-
-   <li><p>Set <var>timingGlobal</var> to <var>request</var>'s <a for=request>client</a>'s
-   <a for="environment settings object">global object</a>.
   </ol>
-
- <li><p>Assert: <var>timingGlobal</var> is "<code>none</code>" or a <a for=/>global object</a>.
 
  <li><p>If <var>useParallelQueue</var> is true, then set <var>taskDestination</var> to the result of
  <a>starting a new parallel queue</a>.
@@ -3869,8 +3860,6 @@ the request.
  <a for="fetch params">request</a> is <var>request</var>,
  <a for="fetch params">timing info</a> is <var>timingInfo</var>,
  <a for="fetch params">controller</a> is <var>controller</var>,
- <a for="fetch params">initiator type</a> is <var>initiatorType</var>,
- <a for="fetch params">timing global</a> is <var>timingGlobal</var>,
  <a for="fetch params">process request body chunk length</a> is
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
@@ -4368,23 +4357,24 @@ steps:
 
       <p class=note>This covers the case of <var>response</var> being a <a>network error</a>.
 
-     <li><p>If <var>fetchParams</var>'s <a for="fetch params">initiator type</a> is not null, then
-     <a for=/>mark resource timing</a> for <var>timingInfo</var>, <var>request</var>'s
-     <a for=request>URL</a>, <var>fetchParams</var>'s <a for="fetch params">initiator type</a>,
-     <var>global</var>, <var>cacheState</var>, and <var>bodyInfo</var>.
+     <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+     <a for=request>initiator type</a> is not null, then
+     <a for=/>mark resource timing</a> given <var>timingInfo</var>, <var>request</var>'s
+     <a for=request>URL</a>, <a for="fetch params">request</a>'s
+     <a for=request>initiator type</a>, <var>global</var>, <var>cacheState</var>, and
+     <var>bodyInfo</var>.
     </ol>
 
-   <li><p>Let <var>global</var> be <var>fetchParams</var>'s <a for="fetch params">timing global</a>.
+   <li><p>Let <var>client</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+   <a for=request>client</a>.
 
-   <li>
-    <p>If <var>fetchParams</var>'s <a for="fetch params">initiator type</a> is not null and
-    <var>fetchParams</var>'s <a for="fetch params">timing global</a> is not "<code>none</code>",
-    then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
-    <a for="fetch params">controller</a>'s <a for="fetch controller">report timing steps</a> given
-    <var>fetchParams</var>'s <a for="fetch params">timing global</a> and <var>fetchParams</var>'s
-    <a for="fetch params">initiator type</a>, with<var>fetchParams</var>'s
-    <a for="fetch params">timing global</a>.
-   </li>
+   <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+   <a for="request">initiator type</a> is not null and <var>client</var> is not null, then
+   <a>queue a fetch task</a> to run <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
+   <a for="fetch controller">report timing steps</a> given <var>client</var>'s
+   <a for="environment settings object">global object</a> and <a for="fetch params">request</a>'s
+   <a for="request">initiator type</a>, with <var>client</var>'s
+   <a for="environment settings object">global object</a>.
 
    <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is not
    null, then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
@@ -7084,6 +7074,9 @@ constructor steps are:
 
    <dt><a for=request>URL list</a>
    <dd>A <a for=list>clone</a> of <var>request</var>'s <a for=request>URL list</a>.
+
+   <dt><a for=request>initiator type</a>
+   <dd>"<code>fetch</code>".
   </dl>
 
  <li>
@@ -7735,8 +7728,8 @@ method steps are:
 
  <li>
   <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
-  <var>request</var>, with <a for=fetch><i>initiatorType</i></a> set to "<code>fetch</code>, and
-  <a for=fetch><i>processResponse</i></a> given <var>response</var> being these substeps:
+  <var>request</var> and <a for=fetch><i>processResponse</i></a> given <var>response</var> being
+  these substeps:
 
   <ol>
    <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
@@ -8221,16 +8214,6 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  <dt><a for=fetch><i>useParallelQueue</i></a>
  <dd><p>Takes a <a for=/>boolean</a> that defaults to false. Indicates where the algorithms passed
  as arguments will be invoked. Hopefully most standards will not need this.
-
- <dt><a for=fetch><i>initiatorType</i></a>
- <dd><p>Takes null or a string, to indicate the {{PerformanceResourceTiming/initiatorType}} for
- <cite>Resource Timing</cite>. If not given, the entry is not reported. [[RESOURCE-TIMING]]
-
- <dt><a for=fetch><i>timingGlobal</i></a>
- <dd><p>Takes "<code>client</code>", "<code>none</code>" or a <a for=/>global object</a> (default
- "<code>client</code>"). Indicates which <a for=/>global object</a> is used for enqueuing the
- {{PerformanceResourceTiming}} entry. If "<code>none</code>" is passed, the entry is not reported.
- [[RESOURCE-TIMING]]
 </dl>
 
 <p>When invoked, the <a for=/>fetch</a> operation returns a <a for=/>fetch controller</a>. The
