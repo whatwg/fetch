@@ -300,9 +300,9 @@ information needed by <cite>Resource Timing</cite> and <cite>Navigation Timing</
 following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
 
 <dl>
- <dt><dfn export for="response body info" id="fetch-timing-info-encoded-body-size">encoded body
+ <dt><dfn export for="response body info" id="fetch-timing-info-encoded-body-size">encoded
  size</dfn> (default 0)
- <dt><dfn export for="response body info" id="fetch-timing-info-decoded-body-size">decoded body
+ <dt><dfn export for="response body info" id="fetch-timing-info-decoded-body-size">decoded
  size</dfn> (default 0)
  <dd>A number.
 </dl>
@@ -3801,7 +3801,7 @@ algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an op
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
 an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), an
 optional null or string <dfn export for=fetch><var>initiatorType</var></dfn> (default null),
-and an optional "<code>client</code>" or a <a for=/>global object</a>
+and an optional "<code>client</code>", "<code>none</code>",  or a <a for=/>global object</a>
 <dfn export for=fetch><var>timingGlobal</var></dfn> (default "<code>client</code>"), run the steps
 below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting an integer
 representing the number of bytes transmitted. If given, <var>processRequestEndOfBody</var> must be an
@@ -3850,7 +3850,7 @@ the request.
    <a for="environment settings object">global object</a>.
   </ol>
 
- <li><p>Assert: <var>timingGlobal</var> is null or a <a for=/>global object</a>.
+ <li><p>Assert: <var>timingGlobal</var> is "<code>none</code>" or a <a for=/>global object</a>.
 
  <li><p>If <var>useParallelQueue</var> is true, then set <var>taskDestination</var> to the result of
  <a>starting a new parallel queue</a>.
@@ -4354,7 +4354,7 @@ steps:
 
      <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">end time</a> to the
      <a>relative high resolution time</a> given <var>unsafeEndTime</var> and
-     <var>global</var>.</p></li>
+     <var>global</var>.
 
      <li><p>Let <var>cacheState</var> be <var>response</var>'s <a for=response>cache state</a>.
 
@@ -4367,7 +4367,6 @@ steps:
       set <var>cacheState</var> to the empty string.
 
       <p class=note>This covers the case of <var>response</var> being a <a>network error</a>.
-     </li>
 
      <li><p>If <var>fetchParams</var>'s <a for="fetch params">initiator type</a> is not null, then
      <a for=/>mark resource timing</a> for <var>timingInfo</var>, <var>request</var>'s
@@ -4379,10 +4378,10 @@ steps:
 
    <li>
     <p>If <var>fetchParams</var>'s <a for="fetch params">initiator type</a> is not null and
-    <var>fetchParams</var>'s <a for="fetch params">timing global</a> is not null, then
-    <a>queue a fetch task</a> to run <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
-    <a for="fetch controller">report timing steps</a> given <var>fetchParams</var>'s
-    <a for="fetch params">timing global</a> and <var>fetchParams</var>'s
+    <var>fetchParams</var>'s <a for="fetch params">timing global</a> is not "<code>none</code>",
+    then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+    <a for="fetch params">controller</a>'s <a for="fetch controller">report timing steps</a> given
+    <var>fetchParams</var>'s <a for="fetch params">timing global</a> and <var>fetchParams</var>'s
     <a for="fetch params">initiator type</a>, with<var>fetchParams</var>'s
     <a for="fetch params">timing global</a>.
    </li>
@@ -5704,7 +5703,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
 
          <li><p>Increase <var>response</var>'s <a for=response>body info</a>'s
-         <a for="response body info">encoded body size</a> by <var>bytes</var>'s
+         <a for="response body info">encoded size</a> by <var>bytes</var>'s
          <a for="byte sequence">length</a>.
 
          <li>
@@ -5715,7 +5714,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
           unreliable to the extent that it was reliable to begin with.
 
          <li><p>Increase <var>response</var>'s <a for=response>body info</a>'s
-         <a for="response body info">decoded body size</a> by
+         <a for="response body info">decoded size</a> by
          <var>bytes</var>'s <a for="byte sequence">length</a>.
 
          <li><p>If <var>bytes</var> is failure, then <a for="fetch controller">terminate</a>
