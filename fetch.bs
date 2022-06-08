@@ -43,22 +43,13 @@ spec:websockets; type:attribute; text:bufferedAmount; for:WebSocket
 <pre class=biblio>
 {
     "HTTP": {
-        "aliasOf": "RFC7230"
-    },
-    "HTTP-SEMANTICS": {
-        "aliasOf": "RFC7231"
-    },
-    "HTTP-COND": {
-        "aliasOf": "RFC7232"
+        "aliasOf": "RFC9110"
     },
     "HTTP-CACHING": {
-        "aliasOf": "RFC7234"
+        "aliasOf": "RFC9111"
     },
-    "HTTP-RANGE": {
-        "aliasOf": "RFC7233"
-    },
-    "HTTP-AUTH": {
-        "aliasOf": "RFC7235"
+    "HTTP1": {
+        "aliasOf": "RFC9112"
     },
     "REFERRER": {
         "aliasOf": "referrer-policy"
@@ -191,7 +182,7 @@ and RFC 7405. [[!RFC7405]]
 
 <p><dfn id=credentials export>Credentials</dfn> are HTTP cookies, TLS client certificates, and <a
 lt="authentication entry">authentication entries</a> (for HTTP authentication). [[!COOKIES]]
-[[!TLS]] [[!HTTP-AUTH]]
+[[!TLS]] [[!HTTP]]
 
 <hr>
 
@@ -1310,7 +1301,7 @@ these steps:
  <li><p>If <var>codings</var> are not supported, then return <var>bytes</var>.
 
  <li><p>Return the result of decoding <var>bytes</var> with <var>codings</var> as explained in HTTP,
- if decoding does not result in an error, and failure otherwise. [[!HTTP]] [[!HTTP-SEMANTICS]]
+ if decoding does not result in an error, and failure otherwise. [[!HTTP]]
 </ol>
 <!-- XXX https://github.com/whatwg/fetch/issues/716
          https://github.com/httpwg/http-core/issues/58 -->
@@ -1741,8 +1732,7 @@ Unless stated otherwise, it is unset.
   fetch will be made to update the entry in the HTTP cache. If the HTTP cache contains a matching
   <a>stale response</a>, a conditional network fetch will be returned to update the entry in
   the HTTP cache. Otherwise, a non-conditional network fetch will be returned to update the entry
-  in the HTTP cache. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
-  [[!STALE-WHILE-REVALIDATE]]
+  in the HTTP cache. [[!HTTP]] [[!HTTP-CACHING]] [[!STALE-WHILE-REVALIDATE]]
 
   <dt>"<code>no-store</code>"
   <dd>Fetch behaves as if there is no HTTP cache at all.
@@ -2295,7 +2285,7 @@ or a <a for=/>URL</a>.
   <var>location</var>'s <a for=url>fragment</a> to <var>requestFragment</var>.
 
   <p class=note>This ensures that synthetic (indeed, all) responses follow the processing model for
-  redirects defined by HTTP. [[HTTP-SEMANTICS]]
+  redirects defined by HTTP. [[HTTP]]
 
  <li><p>Return <var>location</var>.
 </ol>
@@ -2331,7 +2321,7 @@ and associated with one or more <a for=/>requests</a>.
 functionality.
 <!-- fingerprinting -->
 
-<p>Further details are defined by HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+<p>Further details are defined by HTTP. [[!HTTP]] [[!HTTP-CACHING]]
 
 
 <h3 id=fetch-groups>Fetch groups</h3>
@@ -2584,8 +2574,7 @@ boolean <var>http3Only</var>, run these steps:
   <a for=connection>credentials</a> is <var>credentials</var>, and <a for=connection>timing info</a>
   is <var>timingInfo</var>. <a for=/>Record connection timing info</a> given <var>connection</var>
   and use <var>connection</var> to establish an HTTP connection to <var>host</var>, taking
-  <var>proxy</var> and <var>origin</var> into account. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]]
-  [[!HTTP-CACHING]] [[!HTTP-AUTH]] [[!TLS]]
+  <var>proxy</var> and <var>origin</var> into account. [[!HTTP]] [[!HTTP1]] [[!TLS]]
 
   <p>If <var>http3Only</var> is true, then establish an HTTP/3 connection. [[!HTTP3]]
 
@@ -2656,7 +2645,7 @@ boolean <var>http3Only</var>, run these steps:
   <p class=example id=example-connection-end-time>Suppose the user agent establishes an HTTP/2
   connection over TLS 1.3 to send a <code>GET</code> request and a <code>POST</code> request. It
   sends the ClientHello at time <var>t1</var> and then sends the <code>GET</code> request with early
-  data. The <code>POST</code> request is not safe ([[HTTP-SEMANTICS]], section 4.2.1), so the user
+  data. The <code>POST</code> request is not safe ([[HTTP]], section 9.2.1), so the user
   agent waits to complete the handshake at time <var>t2</var> before sending it. Although both
   requests used the same connection, the <code>GET</code> request reports a connection end time of
   <var>t1</var>, while the <code>POST</code> request reports <var>t2</var>.
@@ -4878,8 +4867,8 @@ steps. They return a <a for=/>response</a>.
 <var>isNewConnectionFetch</var> (default false), run these steps:
 
 <p class=note>Some implementations might support caching of partial content, as per
-<cite>HTTP Range Requests</cite>. However, this is not widely supported by browser caches.
-[[HTTP-RANGE]]
+<cite>HTTP Caching</cite>. However, this is not widely supported by browser caches.
+[[HTTP-CACHING]]
 
 <ol>
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
@@ -5364,7 +5353,7 @@ steps. They return a <a for=/>response</a>.
    <li>
     <p>Prompt the end user as appropriate in <var>request</var>'s
     <a for=request>window</a> and store the result as a
-    <a>proxy-authentication entry</a>. [[!HTTP-AUTH]]
+    <a>proxy-authentication entry</a>. [[!HTTP]]
 
     <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
 
@@ -5473,7 +5462,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     using <var>request</var> with the following caveats:
 
     <ul>
-     <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+     <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-CACHING]]
 
      <li>
       <p>If <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
@@ -8125,8 +8114,7 @@ however, it is perfectly fine to do so.
 <p>If <a>CORS protocol</a> requirements are more complicated than setting
 `<a http-header><code>Access-Control-Allow-Origin</code></a>` to <code>*</code> or a static
 <a for=/>origin</a>, `<code>Vary</code>` is to be used.
-[[!HTML]]
-[[!HTTP]] [[!HTTP-SEMANTICS]] [[!HTTP-COND]] [[!HTTP-CACHING]] [[!HTTP-AUTH]]
+[[!HTML]] [[!HTTP]] [[!HTTP-CACHING]]
 
 <pre id=example-vary-origin class=example><code class=lang-http>
 Vary: Origin
