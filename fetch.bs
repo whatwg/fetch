@@ -4344,9 +4344,6 @@ steps:
   <ol>
    <li><p>Let <var>unsafeEndTime</var> be the <a>unsafe shared current time</a>.
 
-   <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
-   <a for=request>done flag</a>.
-
    <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
    <a for=request>destination</a> is "<code>document</code>", then set <var>fetchParams</var>'s
    <a for="fetch params">controller</a>'s <a for="fetch controller">full timing info</a> to
@@ -4385,20 +4382,28 @@ steps:
      <var>bodyInfo</var>.
     </ol>
 
-   <li><p>Let <var>client</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>'s
-   <a for=request>client</a>.
+   <li>
+    <p>Let <var>processResponseEndOfBodyTask</var> be the following steps:
 
-   <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
-   <a for="request">initiator type</a> is not null and <var>client</var> is not null, then
-   <a>queue a fetch task</a> to run <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
-   <a for="fetch controller">report timing steps</a> given <var>client</var>'s
-   <a for="environment settings object">global object</a> and <a for="fetch params">request</a>'s
-   <a for="request">initiator type</a>, with <var>client</var>'s
-   <a for="environment settings object">global object</a>.
+    <ol>
+     <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is
+     not null, then call <var>fetchParams</var>'s
+     <a for="fetch params">process response end-of-body</a> given <var>response</var>.
 
-   <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response end-of-body</a> is not
-   null, then <a>queue a fetch task</a> to run <var>fetchParams</var>'s
-   <a for="fetch params">process response end-of-body</a> given <var>response</var> with
+     <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+     <a for="request">initiator type</a> is not null and <var>fetchParams</var>'s
+     <a for="fetch params">request</a>'s <a for=request>client</a> is not null, then
+     run <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
+     <a for="fetch controller">report timing steps</a> given <var>fetchParams</var>'s
+     <a for="fetch params">request</a>'s <a for=request>client</a>'s
+     <a for="environment settings object">global object</a> and <a for="fetch params">request</a>'s
+     <a for="request">initiator type</a>.
+
+     <li><p>Set <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+     <a for=request>done flag</a>.
+    </ol>
+
+   <li><p><a>Queue a fetch task</a> to run <var>processResponseEndOfBodyTask</var> with
    <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
   </ol>
  </li>
