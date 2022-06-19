@@ -4426,8 +4426,30 @@ steps:
   <ol>
    <li><p>Let <var>transformStream</var> be a new {{TransformStream}}.
 
-   <li><p>Let <var>identityTransformAlgorithm</var> be an algorithm which, given <var>chunk</var>,
-   <a for=TransformStream lt=enqueue>enqueues</a> <var>chunk</var> in <var>transformStream</var>.
+   <li>
+    <p>Let <var>identityTransformAlgorithm</var> be the following steps given
+    <a>byte sequence</a> <var>chunk</var>:
+
+    <ol>
+     <li><p><a for=TransformStream lt=enqueue>Enqueue</a> <var>chunk</var> in
+     <var>transformStream</var>.
+
+     <li>
+      <p>If <var>response</var>'s <a for=response>URL</a> is null, then:
+
+      <ol>
+       <li><p>Increment <var>response</var>'s <a for=response>body info</a>'s
+       <a for="response body info">encoded size</a> by <var>chunk</var>'s
+       <a for="byte sequence">length</a>.
+
+       <li><p>Set <var>response</var>'s <a for=response>body info</a>'s
+       <a for="response body info">decoded size</a> to <var>response</var>'s
+       <a for=response>body info</a>'s <a for="response body info">encoded size</a>
+      </ol>
+
+      <p class=note>This exposes the encoded/decoded size for responses created programmatically
+      using the {{Response}} object in a service worker. [[SW]]
+    </ol>
 
    <li><p><a for=TransformStream>Set up</a> <var>transformStream</var> with
    <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
