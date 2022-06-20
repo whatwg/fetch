@@ -6784,6 +6784,7 @@ dictionary RequestInit {
   DOMString integrity;
   boolean keepalive;
   AbortSignal? signal;
+  RequestDuplex? duplex;
   any window; // can only be set to null
 };
 
@@ -6792,6 +6793,7 @@ enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum RequestRedirect { "follow", "error", "manual" };
+enum RequestDuplex { "half", "full" };
 </pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -6880,7 +6882,15 @@ object), initially null.
 
    <dt>{{RequestInit/window}}
    <dd>Can only be null. Used to disassociate <var>request</var> from any {{Window}}.
-  </dl>
+
+   <dt>{{RequestInit/duplex}}
+   <dd>"half" for initiating a half-duplex (i.e., the user agent send all the request content
+   before starting receiving the response) fetch, and "full" for initiating a full-duplex (i.e.,
+   the user agent starts receiving the response before sending all the request content) fetch.
+   This needs to be set when {{RequestInit/body}} is a {{ReadableStream}}. <span class=note>The
+   semantics for "full" has not been specified yet. See
+   <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a>.</span>
+</dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
  <dd>Returns <var>request</var>'s HTTP method, which is "<code>GET</code>" by default.
@@ -7305,11 +7315,15 @@ constructor steps are:
  <li><p>Let <var>inputOrInitBody</var> be <var>initBody</var> if it is non-null; otherwise
  <var>inputBody</var>.
 
+ <li><p>If <var>init</var>["{{RequestInit/duplex}}"] is "full", then throw a {{TypeError}}.
+
  <li>
   <p>If <var>inputOrInitBody</var> is non-null and <var>inputOrInitBody</var>'s
   <a for=body>source</a> is null, then:
 
   <ol>
+   <li><p>If <var>init</var>["{{RequestInit/duplex}}"] is null, then throw a {{TypeError}}.
+
    <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
    "<code>same-origin</code>" nor "<code>cors</code>", then throw a {{TypeError}}.
 
