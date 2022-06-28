@@ -6784,7 +6784,7 @@ dictionary RequestInit {
   DOMString integrity;
   boolean keepalive;
   AbortSignal? signal;
-  RequestDuplex? duplex;
+  RequestDuplex duplex;
   any window; // can only be set to null
 };
 
@@ -6793,7 +6793,7 @@ enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum RequestRedirect { "follow", "error", "manual" };
-enum RequestDuplex { "half", "full" };
+enum RequestDuplex { "half" };
 </pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -6884,11 +6884,12 @@ object), initially null.
    <dd>Can only be null. Used to disassociate <var>request</var> from any {{Window}}.
 
    <dt>{{RequestInit/duplex}}
-   <dd>"half" for initiating a half-duplex (i.e., the user agent send all the request content
-   before starting receiving the response) fetch, and "full" for initiating a full-duplex (i.e.,
-   the user agent starts receiving the response before sending all the request content) fetch.
-   This needs to be set when {{RequestInit/body}} is a {{ReadableStream}}. <span class=note>The
-   semantics for "full" have not been specified yet. See
+   <dd>"<code>half</code>" is the only valid value and it is for initiating a half-duplex (i.e.,
+   the user agent send all the request content before starting receiving the response) fetch. We
+   reserve "<code>full</code>" for future use, for initiating a full-duplex (i.e., the user agent
+   starts receiving the response before sending all the request content) fetch. This member needs
+   to be set when {{RequestInit/body}} is a {{ReadableStream}}. <span class=note>The semantics for
+   "<code>full</code>" have not been specified yet. See
    <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a>.</span>
 </dl>
 
@@ -7314,8 +7315,6 @@ constructor steps are:
 
  <li><p>Let <var>inputOrInitBody</var> be <var>initBody</var> if it is non-null; otherwise
  <var>inputBody</var>.
-
- <li><p>If <var>init</var>["{{RequestInit/duplex}}"] is "full", then throw a {{TypeError}}.
 
  <li>
   <p>If <var>inputOrInitBody</var> is non-null and <var>inputOrInitBody</var>'s
