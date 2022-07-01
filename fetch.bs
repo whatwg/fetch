@@ -6792,6 +6792,7 @@ dictionary RequestInit {
   DOMString integrity;
   boolean keepalive;
   AbortSignal? signal;
+  RequestDuplex duplex;
   any window; // can only be set to null
 };
 
@@ -6800,6 +6801,7 @@ enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum RequestRedirect { "follow", "error", "manual" };
+enum RequestDuplex { "half" };
 </pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -6888,6 +6890,15 @@ object), initially null.
 
    <dt>{{RequestInit/window}}
    <dd>Can only be null. Used to disassociate <var>request</var> from any {{Window}}.
+
+   <dt>{{RequestInit/duplex}}
+   <dd>"<code>half</code>" is the only valid value and it is for initiating a half-duplex fetch
+   (i.e., the user agent sends the entire request before processing the response).
+   "<code>full</code>" is reserved for future use, for initiating a full-duplex fetch (i.e., the
+   user agent can process the response before sending the entire request). This member needs to be
+   set when {{RequestInit/body}} is a {{ReadableStream}} object. <span class=note>See
+   <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a> for defining
+   "<code>full</code>".</span>
   </dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
@@ -7318,6 +7329,9 @@ constructor steps are:
   <a for=body>source</a> is null, then:
 
   <ol>
+   <li><p>If <var>initBody</var> is non-null and <var>init</var>["{{RequestInit/duplex}}"] does
+   not <a for=map>exist</a>, then throw a {{TypeError}}.
+
    <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
    "<code>same-origin</code>" nor "<code>cors</code>", then throw a {{TypeError}}.
 
