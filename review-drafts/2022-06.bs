@@ -1,5 +1,6 @@
 <pre class=metadata>
 Group: WHATWG
+Date: 2022-06-20
 H1: Fetch
 Shortname: fetch
 Text Macro: TWITTER fetchstandard
@@ -233,7 +234,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dd>Null or an algorithm accepting a <a for=/>global object</a>.
 </dl>
 
-<p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</dfn> for a
+<p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</a> for a
 <a>fetch controller</a> <var>controller</var> given a <a for=/>global object</a> <var>global</var>:
 
 <ol>
@@ -1015,7 +1016,6 @@ is a <a>byte-case-insensitive</a> match for one of
  <li>`<code>Keep-Alive</code>`
  <li>`<a http-header><code>Origin</code></a>`
  <li>`<code>Referer</code>`
- <li>`<code>Set-Cookie</code>`
  <li>`<code>TE</code>`
  <li>`<code>Trailer</code>`
  <li>`<code>Transfer-Encoding</code>`
@@ -1026,18 +1026,10 @@ is a <a>byte-case-insensitive</a> match for one of
 <p>or a <a for=/>header name</a> that when <a>byte-lowercased</a>
 <a for="byte sequence">starts with</a> `<code>proxy-</code>` or `<code>sec-</code>`.
 
-<div class=note>
- <p>These are forbidden so the user agent remains in full control over them.
-
- <p><a for=/>Header names</a> starting with `<code>Sec-</code>` are reserved to allow new
- <a for=/>headers</a> to be minted that are safe from APIs using <a for=/>fetch</a> that allow
- control over <a for=/>headers</a> by developers, such as {{XMLHttpRequest}}. [[XHR]]
-
- <p>The `<code>Set-Cookie</code>` header is semantically a response header, so it is not useful on
- requests. Because `<code>Set-Cookie</code>` headers cannot be combined, they require more complex
- handling in the {{Headers}} object. It is forbidden here to avoid leaking this complexity into
- requests.
-</div>
+<p class=note>These are forbidden so the user agent remains in full control over them.
+<a for=/>Header names</a> starting with `<code>Sec-</code>` are reserved to allow new
+<a for=/>headers</a> to be minted that are safe from APIs using <a for=/>fetch</a> that allow
+control over <a for=/>headers</a> by developers, such as {{XMLHttpRequest}}. [[XHR]]
 
 <p>A <dfn export>forbidden response-header name</dfn> is a <a for=/>header name</a> that is a
 <a>byte-case-insensitive</a> match for one of:
@@ -1428,6 +1420,8 @@ false.
 <code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
 this flag set are subject to additional processing requirements.
 
+<p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers mode</dfn>, that
+is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<code>all</code>".
 
 <p>A <a for=/>request</a> has an associated
 <dfn for=request export>initiator type</dfn>, which is null,
@@ -1454,9 +1448,6 @@ this flag set are subject to additional processing requirements.
 "<code>other</code>". Unless stated otherwise it is null. [[RESOURCE-TIMING]]
 <!-- See https://github.com/whatwg/fetch/issues/1452 and
          https://github.com/w3c/resource-timing/issues/132 for future work -->
-
-<p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers mode</dfn>, that
-is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<code>all</code>".
 
 <div class=note>
  <p>This determines which service workers will receive a {{fetch!!event}} event for this fetch.
@@ -3893,6 +3884,7 @@ the request.
  <li><p>Let <var>fetchParams</var> be a new <a for=/>fetch params</a> whose
  <a for="fetch params">request</a> is <var>request</var>,
  <a for="fetch params">timing info</a> is <var>timingInfo</var>,
+ <a for="fetch params">controller</a> is <var>controller</var>,
  <a for="fetch params">process request body chunk length</a> is
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
@@ -6793,7 +6785,6 @@ dictionary RequestInit {
   DOMString integrity;
   boolean keepalive;
   AbortSignal? signal;
-  RequestDuplex duplex;
   any window; // can only be set to null
 };
 
@@ -6802,7 +6793,6 @@ enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum RequestRedirect { "follow", "error", "manual" };
-enum RequestDuplex { "half" };
 </pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -6891,15 +6881,6 @@ object), initially null.
 
    <dt>{{RequestInit/window}}
    <dd>Can only be null. Used to disassociate <var>request</var> from any {{Window}}.
-
-   <dt>{{RequestInit/duplex}}
-   <dd>"<code>half</code>" is the only valid value and it is for initiating a half-duplex fetch
-   (i.e., the user agent sends the entire request before processing the response).
-   "<code>full</code>" is reserved for future use, for initiating a full-duplex fetch (i.e., the
-   user agent can process the response before sending the entire request). This member needs to be
-   set when {{RequestInit/body}} is a {{ReadableStream}} object. <span class=note>See
-   <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a> for defining
-   "<code>full</code>".</span>
   </dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
@@ -7330,9 +7311,6 @@ constructor steps are:
   <a for=body>source</a> is null, then:
 
   <ol>
-   <li><p>If <var>initBody</var> is non-null and <var>init</var>["{{RequestInit/duplex}}"] does
-   not <a for=map>exist</a>, then throw a {{TypeError}}.
-
    <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
    "<code>same-origin</code>" nor "<code>cors</code>", then throw a {{TypeError}}.
 
@@ -7731,15 +7709,12 @@ method steps are:
 
  <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
 
- <li><p>Let <var>error</var> be <var>requestObject</var>'s <a for=Request>signal</a>'s
- <a for=AbortSignal>abort reason</a>.
-
  <li>
   <p>If <var>requestObject</var>'s <a for=Request>signal</a> is <a for=AbortSignal>aborted</a>,
   then:
 
   <ol>
-   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, null, and <var>error</var>.
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and null.
 
    <li><p>Return <var>p</var>.
   </ol>
@@ -7769,8 +7744,7 @@ method steps are:
   <ol>
    <li><p>Set <var>locallyAborted</var> to true.
 
-   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, <var>responseObject</var>, and
-   <var>error</var>.
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
 
    <li><p>If <var>controller</var> is not null, then <a for="fetch controller">abort</a>
    <var>controller</var>.
@@ -7785,8 +7759,8 @@ method steps are:
    <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
 
    <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then <a>abort fetch</a>
-   with <var>p</var>, <var>request</var>, <var>responseObject</var>, and <var>error</var>, and
-   terminate these substeps.
+   with <var>p</var>, <var>request</var>, and <var>responseObject</var>, and terminate these
+   substeps.
 
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
@@ -7800,12 +7774,11 @@ method steps are:
  <li><p>Return <var>p</var>.
 </ol>
 
-<p>To <dfn>abort fetch</dfn> with a <var>promise</var>, <var>request</var>,
-<var>responseObject</var>, and an optional <var>error</var>, run these steps:
+<p>To <dfn>abort fetch</dfn> with a <var>promise</var>, <var>request</var>, and
+<var>responseObject</var>, run these steps:
 
 <ol>
- <li><p>If <var>error</var> is not given, let <var>error</var> be an
- "<code><a exception>AbortError</a></code>" {{DOMException}}.
+ <li><p>Let <var>error</var> be an "<code><a exception>AbortError</a></code>" {{DOMException}}.
 
  <li>
   <p><a for=/>Reject</a> <var>promise</var> with <var>error</var>.
@@ -8353,7 +8326,6 @@ Jeff Carpenter,
 Jeff Hodges,
 Jeffrey Yasskin,
 Jensen Chappell,
-Jeremy Roman,
 Jesse M. Heines,
 Jianjun Chen,
 Jinho Bang,
@@ -8412,7 +8384,6 @@ Moritz Kneilmann,
 Ms2ger,
 Nico Schlömer,
 Nicolás Peña Moreno,
-Nidhi Jaju,
 Nikhil Marathe,
 Nikki Bee,
 Nikunj Mehta,
