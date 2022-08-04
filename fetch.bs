@@ -231,6 +231,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 
  <dt><dfn for="fetch controller">report timing steps</dfn> (default null)
  <dd>Null or an algorithm accepting a <a for=/>global object</a>.
+
+ <dt><dfn for="fetch controller">cloned error</dfn> (default "<code><a exception>AbortError</a></code>" {{DOMException}})
+ <dd>"<code><a exception>AbortError</a></code>" {{DOMException}} or a Javascript value.
 </dl>
 
 <p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</dfn> for a
@@ -254,8 +257,10 @@ given a <a>fetch controller</a> <var>controller</var>:
 </ol>
 
 <p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
-<var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
-"<code>aborted</code>".
+<var>controller</var> with optional <var>error</var>, set <var>controller</var>'s
+<a for="fetch controller">state</a> to "<code>aborted</code>", and set <var>controller</var>'s
+<a for="fetch controller">cloned error</a> to <var>error</var> if given, and otherwise to
+"<code><a exception>AbortError</a></code>" {{DOMException}}.
 
 <p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
@@ -7797,16 +7802,21 @@ method steps are:
    <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
 
+ <li><p>Let <var>serializedError</var> be the result of [$StructuredSerialize$]
+ with <var>error</var>. If that threw an exception, then reject <var>p</var> with that exception.
+
+ <li><p>Set <var>controller</var>'s <a for="fetch controller">cloned error</a> to the result of
+ [$StructuredDeserialize$] with
+ <var>serializedError</var> and <a>this</a>'s <a>relevant Realm</a>. If that threw an exception,
+ then reject <var>p</var> with that exception.
+
  <li><p>Return <var>p</var>.
 </ol>
 
 <p>To <dfn>abort fetch</dfn> with a <var>promise</var>, <var>request</var>,
-<var>responseObject</var>, and an optional <var>error</var>, run these steps:
+<var>responseObject</var>, and an <var>error</var>, run these steps:
 
 <ol>
- <li><p>If <var>error</var> is not given, let <var>error</var> be an
- "<code><a exception>AbortError</a></code>" {{DOMException}}.
-
  <li>
   <p><a for=/>Reject</a> <var>promise</var> with <var>error</var>.
 
