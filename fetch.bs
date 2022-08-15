@@ -232,8 +232,8 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch controller">report timing steps</dfn> (default null)
  <dd>Null or an algorithm accepting a <a for=/>global object</a>.
 
- <dt><dfn for="fetch controller">cloned error</dfn> (default null)
- <dd>Null, an "{{AbortError}}" {{DOMException}}, or a JavaScript value.
+ <dt><dfn for="fetch controller">serialized abort reason</dfn> (default null)
+ <dd>Null or a serialization from [$StructuredSerialize$].
 </dl>
 
 <p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</dfn> for a
@@ -259,8 +259,8 @@ given a <a>fetch controller</a> <var>controller</var>:
 <p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
 <var>controller</var> with optional <var>error</var>, set <var>controller</var>'s
 <a for="fetch controller">state</a> to "<code>aborted</code>", and set <var>controller</var>'s
-<a for="fetch controller">cloned error</a> to <var>error</var> if given, and otherwise to
-an "{{AbortError}}" {{DOMException}}.
+<a for="fetch controller">serialized abort reason</a> to <var>error</var> if given, and otherwise to
+an "<code><a exception>AbortError<code></a></code>" {{DOMException}}.
 
 <p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
@@ -7806,12 +7806,14 @@ method steps are:
    <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
 
- <li><p>Let <var>serializedError</var> be the result of calling [$StructuredSerialize$]
- with <var>error</var>. If that threw an exception, then reject <var>p</var> with that exception.
+ <li><p>If <var>error</var> is undefined, let <var>error</var> be an "{{AbortError}}" {{DOMException}}.
 
- <li><p>Set <var>controller</var>'s <a for="fetch controller">cloned error</a> to the result of
- calling [$StructuredDeserialize$] with <var>serializedError</var> and <a>this</a>'s
- <a>relevant Realm</a>. If that threw an exception, then reject <var>p</var> with that exception.
+ <li><p>Let <var>serializedError</var> be the result of calling [$StructuredSerialize$]
+ with <var>error</var>. If that threw an exception, let <var>serializedError</var> be the result of
+ calling [$StructuredSerialize$] with "{{AbortError}}" {{DOMException}}.
+
+ <li><p>Set <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> to
+ <var>serializedError</var>.
 
  <li><p>Return <var>p</var>.
 </ol>
