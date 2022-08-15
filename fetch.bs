@@ -257,10 +257,20 @@ given a <a>fetch controller</a> <var>controller</var>:
 </ol>
 
 <p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
-<var>controller</var> with optional <var>error</var>, set <var>controller</var>'s
-<a for="fetch controller">state</a> to "<code>aborted</code>", and set <var>controller</var>'s
-<a for="fetch controller">serialized abort reason</a> to <var>error</var> if given, and otherwise to
-an "<code><a exception>AbortError<code></a></code>" {{DOMException}}.
+<var>controller</var> with optional <var>error</var>:
+
+<ol>
+ <li><p>Set <var>controller</var>'s <a for="fetch controller">state</a> to "<code>aborted</code>".
+
+ <li><p>Let <var>error</var> be an "{{AbortError}}" {{DOMException}}, if it is not given.
+
+ <li><p>Let <var>serializedError</var> be the result of calling [$StructuredSerialize$] with
+ <var>error</var>. If that threw and exception, let <var>serializedError</var> be the result of calling
+ [$StructuredSerialize$] with "{{AbortError}}" {{DOMException}}.
+
+ <li><p>Set <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> to
+ <var>serializedError</var>.
+</ol>
 
 <p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
@@ -7782,7 +7792,7 @@ method steps are:
    <var>error</var>.
 
    <li><p>If <var>controller</var> is not null, then <a for="fetch controller">abort</a>
-   <var>controller</var>.
+   <var>controller</var> with error.
   </ol>
 
  <li>
