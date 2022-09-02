@@ -342,7 +342,10 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
  <dt><dfn export for="fetch timing info">post-redirect start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">final service worker start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">final network-request start time</dfn> (default 0)
+ <dt><dfn export for="fetch timing info">first interim network-response start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">final network-response start time</dfn> (default 0)
+ <dt><dfn export for="fetch timing info">final network-response headers end time</dfn> (default 0)
+ <dt><dfn export for="fetch timing info">response body start time</dfn> (default 0)
  <dt><dfn export for="fetch timing info">end time</dfn> (default 0)
  <dd>A {{DOMHighResTimeStamp}}.
 
@@ -5994,15 +5997,19 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <p>While true:
 
       <ol>
-       <li><p>If <var>timingInfo</var>'s
-       <a for="fetch timing info">final network-response start time</a> is 0, then set
-       <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a> to
+       <li><p>Set <var>timingInfo</var>'s
+       <a for="fetch timing info">final network-response start time</a> to the
        <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
        <a for="fetch params">cross-origin isolated capability</a>, immediately after the user
        agent's HTTP parser receives the first byte of the response (e.g., frame header bytes for
        HTTP/2 or response status line for HTTP/1.x).
 
        <li><p>Wait until all the HTTP response headers are transmitted.
+
+       <li><p>Set <var>timingInfo</var>'s
+       <a for="fetch timing info">final network-response headers end time</a> to
+       <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
+       <a for="fetch params">cross-origin isolated capability</a>.
 
        <li><p>Let <var>status</var> be the HTTP response's status code.
 
@@ -6016,6 +6023,14 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <ol>
          <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" and
          <var>status</var> is 101, then <a for=iteration>break</a>.
+
+         <li><p>If <var>timingInfo</var>'s
+         <a for="fetch timing info">first interim network-response start time</a> is 0, then set
+         <var>timingInfo</var>'s
+         <a for="fetch timing info">first interim network-response start time</a> to
+         <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a>.
+
+         <li><p>If <var>status</var> is 101, <a for=iteration>break</a>.
 
          <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
          <a for="fetch params">process early hints response</a> is non-null, then
@@ -6197,6 +6212,13 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
         <p>If one or more bytes have been transmitted from <var>response</var>'s message body, then:
 
         <ol>
+         <li><p>If <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
+         <a for="fetch timing info">response body start time</a> is 0, then set
+         <var>fetchParams</var>'s <a for="fetch params">timing info</a>'s
+         <a for="fetch timing info">response body start time</a> to the
+         <a for=/>coarsened shared current time</a> given <var>fetchParams</var>'s
+         <a for="fetch params">cross-origin isolated capability</a>.
+
          <li><p>Let <var>bytes</var> be the transmitted bytes.
 
          <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
