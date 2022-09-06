@@ -264,9 +264,9 @@ given a <a>fetch controller</a> <var>controller</var>:
 
  <li><p>Let <var>error</var> be an "{{AbortError}}" {{DOMException}}, if it is not given.
 
- <li><p>Let <var>serializedError</var> be the result of calling [$StructuredSerialize$] with
- <var>error</var>. If that threw and exception, let <var>serializedError</var> be the result of calling
- [$StructuredSerialize$] with "{{AbortError}}" {{DOMException}}.
+ <li><p>Let <var>serializedError</var> be [$StructuredSerialize$](<var>error</var>).
+ If that threw an exception, let <var>serializedError</var> be
+ [$StructuredSerialize$](a new "{{AbortError}}" {{DOMException}}).
 
  <li><p>Set <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> to
  <var>serializedError</var>.
@@ -7803,9 +7803,21 @@ method steps are:
   <ol>
    <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
 
-   <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then <a>abort fetch</a>
-   with <var>p</var>, <var>request</var>, <var>responseObject</var>, and <var>error</var>, and
-   terminate these substeps.
+   <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then:
+
+   <ol>
+    <li><p>Let <var>error</var> be an "{{AbortError}}" {{DOMException}}.
+
+    <li><p>If <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>
+    is not undefined, set <var>error</var> to <var>requestObject</var>'s <a for=Request>signal</a>'s
+    <a for=AbortSignal>abort reason</a>.
+
+    <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, <var>responseObject</var>, and
+    <var>error</var>.
+
+    <li><p><a for="fetch controller">Abort</a> <var>controller</var> with <var>error</var>, and
+    terminate these substeps.
+   </ol>
 
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
@@ -7823,13 +7835,6 @@ method steps are:
 <var>responseObject</var>, and an <var>error</var>, run these steps:
 
 <ol>
- <li><p>Let <var>serializedError</var> be the result of calling [$StructuredSerialize$]
- with <var>error</var>. If that threw an exception, let <var>serializedError</var> be the result of
- calling [$StructuredSerialize$] with "{{AbortError}}" {{DOMException}}.
-
- <li><p>Set <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> to
- <var>serializedError</var>.
-
  <li>
   <p><a for=/>Reject</a> <var>promise</var> with <var>error</var>.
 
