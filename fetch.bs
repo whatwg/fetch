@@ -902,7 +902,8 @@ fetch("https://victim.example/naïve-endpoint", {
     </div>
 
    <dt>`<code>range</code>`
-   <dd><p>If <var>value</var> is not a <a>simple range header value</a>, then return false.
+   <dd><p>If the result of <a>parse a single range header value</a> given <var>value</var> is
+   failure, then return false.
 
    <dt>Otherwise
    <dd><p>Return false.
@@ -966,9 +967,9 @@ a <a>byte-case-insensitive</a> match for one of
  <li>`<code>Range</code>`.
 </ul>
 
-<div class="note no-backref">
+<div class=note>
  <p>These are headers that can be set by privileged APIs, and will be preserved if their associated
- request object is copied, but will be removed if the request is modified by unprivilaged APIs.
+ request object is copied, but will be removed if the request is modified by unprivileged APIs.
 
  <p>`<code>Range</code>` headers are commonly used by <a lt="download the hyperlink">downloads</a>
  and <a lt="resource fetch algorithm">media fetches</a>, although neither of these currently specify
@@ -1121,14 +1122,14 @@ run these steps:
  <li><p>Return <var>values</var>.
 </ol>
 
-<p>To determine if a <a>byte sequence</a> <var>value</var> is a
-<dfn>simple range header value</dfn>, perform the following steps. They return a <a>boolean</a>.
+<p>To <dfn id=simple-range-header-value>parse a single range header value</dfn> from a
+<a>byte sequence</a> <var>value</var>, run these steps:
 
 <ol>
  <li><p>Let <var>data</var> be the <a>isomorphic decoding</a> of <var>value</var>.
 
  <li><p>If <var>data</var> does not <a for=string>start with</a> "<code>bytes=</code>", then return
- false.
+ failure.
 
  <li><p>Let <var>position</var> be a <a>position variable</a> for <var>data</var>, initially
  pointing at the 6th <a>code point</a> of <var>data</var>.
@@ -1136,30 +1137,37 @@ run these steps:
  <li><p>Let <var>rangeStart</var> be the result of <a>collecting a sequence of code points</a> that
  are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
 
+ <li><p>Let <var>rangeStartValue</var> be <var>rangeStart</var>, interpreted as decimal number, if
+ <var>rangeStart</var> is not the empty string; otherwise null.
+
  <li><p>If the <a>code point</a> at <var>position</var> within <var>data</var> is not U+002D (-),
- then return false.
+ then return failure.
 
  <li><p>Advance <var>position</var> by 1.
 
  <li><p>Let <var>rangeEnd</var> be the result of <a>collecting a sequence of code points</a> that
  are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
 
- <li><p>If <var>position</var> is not past the end of <var>data</var>, then return false.
+ <li><p>Let <var>rangeEndValue</var> be <var>rangeEnd</var>, interpreted as decimal number, if
+ <var>rangeEnd</var> is not the empty string; otherwise null.
+
+ <li><p>If <var>position</var> is not past the end of <var>data</var>, then return failure.
+
+ <li><p>If <var>rangeEndValue</var> and <var>rangeStartValue</var> are null, then return failure.
+
+ <li><p>If <var>rangeStartValue</var> and <var>rangeEndValue</var> are numbers, and
+ <var>rangeStartValue</var> is greater than <var>rangeEndValue</var>, then return failure.
 
  <li>
-  <p>If <var>rangeEnd</var>'s <a for=string>length</a> is 0, then return true.
+  <p>Return (<var>rangeStartValue</var>, <var>rangeEndValue</var>).
 
-  <p class="note">The range end can be omitted, e.g., `<code>bytes=0-</code>` is valid.
-
- <li><p>If <var>rangeStart</var>, interpreted as decimal number, is greater than
- <var>rangeEnd</var>, interpreted as decimal number, then return false.
-
- <li><p>Return true.
+  <p class="note">The range end or start can be omitted, e.g., `<code>bytes=0-</code>` or
+  `<code>bytes=-500</code>` are valid ranges.
 </ol>
 
-<p class="note">A <a>simple range header value</a> is a subset of allowed range header values, but
-it is the most common form used by user agents when requesting media or resuming downloads. This
-format of range header value can be set using <a>add a range header</a>.
+<p class=note><a>Parse a single range header value</a> succeeds for a subset of allowed range header
+values, but it is the most common form used by user agents when requesting media or resuming
+downloads. This format of range header value can be set using <a>add a range header</a>.
 
 <hr>
 
@@ -2177,9 +2185,9 @@ string.
 <dfn for=response id=concept-response-range-requested-flag>range-requested flag</dfn>, which is
 initially unset.
 
-<p class=note>This is used to ensure to prevent a partial response from an earlier ranged request
-being provided to an API that didn't make a range request. See the flag's usage for a detailed
-description of the attack.
+<p class=note>This is used to prevent a partial response from an earlier ranged request being
+provided to an API that didn't make a range request. See the flag's usage for a detailed description
+of the attack.
 
 <p>A <a for=/>response</a> has an associated <dfn for=response>request-includes-credentials</dfn>
 (a boolean), which is initially true.
@@ -3826,8 +3834,9 @@ run these steps:
    </tbody>
   </table>
 
- <li><p><a for="reporting">Queue</a> <var>body</var> as the <a>"<code>coep</code>" report type</a> for
- <var>endpoint</var> on <var>settingsObject</var>. [[!REPORTING]]
+ <li><p><a>Generate and queue a report</a> for <var>settingsObject</var>'s
+ <a for="environment settings object">global object</a> given the
+ <a>"<code>coep</code>" report type</a>, <var>endpoint</var>, and <var>body</var>. [[!REPORTING]]
 </ol>
 
 
@@ -5557,9 +5566,14 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
        <li>
         <p>If <var>status</var> is in the range 100 to 199, inclusive:
+        <!-- If there comes a time when there is another code besides 101 and 103 that needs special
+        processing we should generalize the "process early hints response" callback and invoke it
+        for each 1xx response and as such require callers like WebSockets to do the filtering and
+        processing we now perform here inline. -->
 
         <ol>
-         <li><p>If <var>status</var> is 101, <a for=iteration>break</a>.
+         <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" and
+         <var>status</var> is 101, then <a for=iteration>break</a>.
 
          <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
          <a for="fetch params">process early hints response</a> is non-null, then
@@ -6795,6 +6809,7 @@ interface Request {
   readonly attribute boolean isReloadNavigation;
   readonly attribute boolean isHistoryNavigation;
   readonly attribute AbortSignal signal;
+  readonly attribute RequestDuplex duplex;
 
   [NewObject] Request clone();
 };
@@ -6985,6 +7000,14 @@ object), initially null.
  {{AbortSignal}} object indicating whether or not <var>request</var> has been aborted, and its abort
  event handler.
 
+ <dt><code><var>request</var> . <a attribute for=Request>duplex</a></code>
+ <dd>Returns "<code>half</code>", meaning the fetch will be half-duplex (i.e., the user agent sends
+ the entire request before processing the response). In future, it could also return
+ "<code>full</code>", meaning the fetch will be full-duplex (i.e., the user agent can process the
+ response before sending the entire request) to indicate that the fetch will be full-duplex.
+ <span class=note>See <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a> for
+ defining "<code>full</code>".</span>
+
  <dt><code><var>request</var> . <a method for=Request>clone</a>()</code>
  <dd><p>Returns a clone of <var>request</var>.
 </dl>
@@ -7007,7 +7030,7 @@ object), initially null.
  <li><p>Set <var>requestObject</var>'s <a for=Request>signal</a> to a <a for=/>new</a>
  {{AbortSignal}} object with <var>realm</var>.
 
- <li><p>Return <var>request</var>.
+ <li><p>Return <var>requestObject</var>.
 </ol>
 
 <hr>
@@ -7434,6 +7457,9 @@ set; otherwise false.
 
 <p>The <dfn attribute for=Request><code>signal</code></dfn> getter steps are to return <a>this</a>'s
 <a for="Request">signal</a>.
+
+<p>The <dfn attribute for=Request><code>duplex</code></dfn> getter steps are to return
+"<code>half</code>".
 
 <hr>
 
@@ -8395,6 +8421,7 @@ Jordan Stephens,
 Jörn Zaefferer,
 Joseph Pecoraro,
 Josh Matthews,
+jub0bs<!-- GitHub -->,
 Julian Krispel-Samsel,
 Julian Reschke,
 송정기 (Jungkee Song),
