@@ -5804,9 +5804,21 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <ol>
        <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
 
-       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>,
-       <a for=ReadableStream>error</a> <var>stream</var> with <var>fetchParams</var>'s
-       <a for="fetch params">controller</a>'s <a for="fetch controller">serialized abort reason</a>.
+       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, then:
+
+         <ol>
+	  <li><p>Let <var>deserializedError</var> be an "<code><a exception>AbortError</a></code>"
+	  {{DOMException}}.
+
+	  <li><p>If <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
+	  <a for="fetch controller">serialized abort reason</a> is non-null, set
+	  <var>deserializedError</var> to [$StructuredDeserialize$](<var>fetchParams</var>'s
+	  <a for="fetch params">controller</a>'s <a for="fetch controller">serialized abort reason</a>).
+	  If that threw an exception or returns undefined, then set <var>deserializedError</var> to
+	  an "<code><a exception>AbortError</a></code>" {{DOMException}}.
+
+	  <li><p><a for=ReadableStream>Error</a> <var>stream</var> with <var>deserializedError</var>.
+	 </ol>
       </ol>
 
      <li><p>Otherwise, if <var>stream</var> is <a for=ReadableStream>readable</a>,
