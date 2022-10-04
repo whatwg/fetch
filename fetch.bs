@@ -33,6 +33,10 @@ urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
         url:dfn-coarsened-shared-current-time;text:coarsened shared current time
         url:dfn-unsafe-shared-current-time;text:unsafe shared current time
     type:typedef;url:dom-domhighrestimestamp;text:DOMHighResTimeStamp
+
+urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
+    url:realm;text:realm
+    url:sec-list-and-record-specification-type;text:Record
 </pre>
 
 <pre class=link-defaults>
@@ -232,8 +236,8 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  <dt><dfn for="fetch controller">report timing steps</dfn> (default null)
  <dd>Null or an algorithm accepting a <a for=/>global object</a>.
 
- <dt><dfn for="fetch controller">serialized abort reason</dfn> (default undefined)
- <dd>Undefined or a serialization from [$StructuredSerialize$].
+ <dt><dfn for="fetch controller">serialized abort reason</dfn> (default null)
+ <dd>Null or a <a>Record</a> (result of [$StructuredSerialize$]).
 </dl>
 
 <p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</dfn> for a
@@ -262,14 +266,31 @@ given a <a>fetch controller</a> <var>controller</var>:
 <ol>
  <li><p>Set <var>controller</var>'s <a for="fetch controller">state</a> to "<code>aborted</code>".
 
- <li><p>Set <var>error</var> to an "{{AbortError}}" {{DOMException}} if it is not given.
+ <li><p>Let <var>fallbackError</var> be an "{{AbortError}}" {{DOMException}}.
+
+ <li><p>Set <var>error</var> to <var>fallbackError</var> if it is not given.
 
  <li><p>Let <var>serializedError</var> be [$StructuredSerialize$](<var>error</var>).
  If that threw an exception, catch it, and let <var>serializedError</var> be
- [$StructuredSerialize$](a new "{{AbortError}}" {{DOMException}}).
+ [$StructuredSerialize$](<var>fallbackError</var>).
 
  <li><p>Set <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> to
  <var>serializedError</var>.
+</ol>
+
+<p>To <dfn>deserialize a serialized abort reason</dfn>, given null or a <a>Record</a>
+<var>abortReason</var> and a <a>realm</a> <var>realm</var>:
+
+<ol>
+ <li><p>Let <var>fallbackError</var> be an "{{AbortError}}" {{DOMException}}.
+
+ <li><p>Let <var>deserializedError</var> be <var>fallbackError</var>.
+
+ <li><p>If <var>abortReason</var> is non-null, then set <var>deserializedError</var> to
+ [$StructuredDeserialize$](<var>abortReason</var>, <var>realm</var>). If that threw an exception or
+ returned undefined, then set <var>deserializedError</var> to <var>fallbackError</var>.
+
+ <li><p>Return <var>deserializedError</var>.
 </ol>
 
 <p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
@@ -5804,20 +5825,13 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <ol>
        <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
 
-       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, then:
-
-        <ol>
-         <li><p>Let <var>deserializedError</var> be an "{{AbortError}}" {{DOMException}}.
-
-         <li><p>If <var>fetchParams</var>'s <a for="fetch params">controller</a>'s
-         <a for="fetch controller">serialized abort reason</a> is not undefined, set
-         <var>deserializedError</var> to [$StructuredDeserialize$](<var>fetchParams</var>'s
-         <a for="fetch params">controller</a>'s <a for="fetch controller">serialized abort reason</a>,
-         <a>this</a>'s <a>relevant Realm</a>). If that threw an exception or returns undefined, then
-         set <var>deserializedError</var> to an "{{AbortError}}" {{DOMException}}.
-
-         <li><p><a for=ReadableStream>Error</a> <var>stream</var> with <var>deserializedError</var>.
-        </ol>
+       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, then
+       <a for=ReadableStream>error</a> <var>stream</var> with the result of
+       <a>deserialize a serialized abort reason</a> given <var>fetchParams</var>'s
+       <a for="fetch params">controller</a>'s <a for="fetch controller">serialized abort reason</a>
+       and an <a>implementation-defined</a> <a>realm</a>.
+       <!-- XXX: At some point we really need to sort out how JavaScript streams interact with the
+            network layer a bit better. -->
       </ol>
 
      <li><p>Otherwise, if <var>stream</var> is <a for=ReadableStream>readable</a>,
@@ -7026,8 +7040,8 @@ object), initially null.
 <hr>
 
 <p>To <dfn export for=Request lt=create|creating>create</dfn> a {{Request}} object, given a
-<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
-<var>realm</var>, run these steps:
+<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and
+<a>realm</a> <var>realm</var>, run these steps:
 
 <ol>
  <li><p>Let <var>requestObject</var> be a <a for=/>new</a> {{Request}} object with <var>realm</var>.
@@ -7585,8 +7599,8 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <hr>
 
 <p>To <dfn export for=Response lt=create|creating>create</dfn> a {{Response}} object, given a
-<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
-<var>realm</var>, run these steps:
+<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and
+<a>realm</a> <var>realm</var>, run these steps:
 
 <ol>
  <li><p>Let <var>responseObject</var> be a <a for=/>new</a> {{Response}} object with
@@ -7840,20 +7854,17 @@ method steps are:
   <ol>
    <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
 
-   <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then:
+   <li>
+    <p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then:
 
-   <ol>
-    <li><p>Let <var>deserializedError</var> be an "{{AbortError}}" {{DOMException}}.
+    <ol>
+     <li><p>Let <var>deserializedError</var> be the result of
+     <a>deserialize a serialized abort reason</a> given <var>controller</var>'s
+     <a for="fetch controller">serialized abort reason</a> and <var>relevantRealm</var>.
 
-    <li><p>If <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> is not undefined,
-    set <var>deserializedError</var> to [$StructuredDeserialize$](<var>controller</var>'s
-    <a for="fetch controller">serialized abort reason</a>, <var>relevantRealm</var>).
-    If that threw an exception or returns undefined, then set <var>deserializedError</var> to an
-    "{{AbortError}}" {{DOMException}}.
-
-    <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>,
-    <var>responseObject</var>, and <var>deserializedError</var>.
-   </ol>
+     <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>,
+     <var>responseObject</var>, and <var>deserializedError</var>.
+    </ol>
 
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
