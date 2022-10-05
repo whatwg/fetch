@@ -1,5 +1,6 @@
 <pre class=metadata>
 Group: WHATWG
+Date: 2022-06-20
 H1: Fetch
 Shortname: fetch
 Text Macro: TWITTER fetchstandard
@@ -33,10 +34,6 @@ urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
         url:dfn-coarsened-shared-current-time;text:coarsened shared current time
         url:dfn-unsafe-shared-current-time;text:unsafe shared current time
     type:typedef;url:dom-domhighrestimestamp;text:DOMHighResTimeStamp
-
-urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
-    url:realm;text:realm
-    url:sec-list-and-record-specification-type;text:Record
 </pre>
 
 <pre class=link-defaults>
@@ -235,12 +232,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 
  <dt><dfn for="fetch controller">report timing steps</dfn> (default null)
  <dd>Null or an algorithm accepting a <a for=/>global object</a>.
-
- <dt><dfn for="fetch controller">serialized abort reason</dfn> (default null)
- <dd>Null or a <a>Record</a> (result of [$StructuredSerialize$]).
 </dl>
 
-<p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</dfn> for a
+<p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</a> for a
 <a>fetch controller</a> <var>controller</var> given a <a for=/>global object</a> <var>global</var>:
 
 <ol>
@@ -261,37 +255,8 @@ given a <a>fetch controller</a> <var>controller</var>:
 </ol>
 
 <p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
-<var>controller</var> with an optional <var>error</var>:
-
-<ol>
- <li><p>Set <var>controller</var>'s <a for="fetch controller">state</a> to "<code>aborted</code>".
-
- <li><p>Let <var>fallbackError</var> be an "{{AbortError}}" {{DOMException}}.
-
- <li><p>Set <var>error</var> to <var>fallbackError</var> if it is not given.
-
- <li><p>Let <var>serializedError</var> be [$StructuredSerialize$](<var>error</var>).
- If that threw an exception, catch it, and let <var>serializedError</var> be
- [$StructuredSerialize$](<var>fallbackError</var>).
-
- <li><p>Set <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> to
- <var>serializedError</var>.
-</ol>
-
-<p>To <dfn>deserialize a serialized abort reason</dfn>, given null or a <a>Record</a>
-<var>abortReason</var> and a <a>realm</a> <var>realm</var>:
-
-<ol>
- <li><p>Let <var>fallbackError</var> be an "{{AbortError}}" {{DOMException}}.
-
- <li><p>Let <var>deserializedError</var> be <var>fallbackError</var>.
-
- <li><p>If <var>abortReason</var> is non-null, then set <var>deserializedError</var> to
- [$StructuredDeserialize$](<var>abortReason</var>, <var>realm</var>). If that threw an exception or
- returned undefined, then set <var>deserializedError</var> to <var>fallbackError</var>.
-
- <li><p>Return <var>deserializedError</var>.
-</ol>
+<var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
+"<code>aborted</code>".
 
 <p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
@@ -325,8 +290,6 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
 
  <dt><dfn export for="fetch timing info">server-timing headers</dfn> (default « »)
  <dd>A <a for=/>list</a> of strings.
- <dt><dfn export for="fetch timing info">render-blocking</dfn> (default false)
- <dd>A boolean.
 </dl>
 
 <p>A <dfn export>response body info</dfn> is a <a for=/>struct</a> used to maintain
@@ -923,8 +886,7 @@ fetch("https://victim.example/naïve-endpoint", {
     </div>
 
    <dt>`<code>range</code>`
-   <dd><p>If the result of <a>parse a single range header value</a> given <var>value</var> is
-   failure, then return false.
+   <dd><p>If <var>value</var> is not a <a>simple range header value</a>, then return false.
 
    <dt>Otherwise
    <dd><p>Return false.
@@ -988,9 +950,9 @@ a <a>byte-case-insensitive</a> match for one of
  <li>`<code>Range</code>`.
 </ul>
 
-<div class=note>
+<div class="note no-backref">
  <p>These are headers that can be set by privileged APIs, and will be preserved if their associated
- request object is copied, but will be removed if the request is modified by unprivileged APIs.
+ request object is copied, but will be removed if the request is modified by unprivilaged APIs.
 
  <p>`<code>Range</code>` headers are commonly used by <a lt="download the hyperlink">downloads</a>
  and <a lt="resource fetch algorithm">media fetches</a>, although neither of these currently specify
@@ -1054,7 +1016,6 @@ is a <a>byte-case-insensitive</a> match for one of
  <li>`<code>Keep-Alive</code>`
  <li>`<a http-header><code>Origin</code></a>`
  <li>`<code>Referer</code>`
- <li>`<code>Set-Cookie</code>`
  <li>`<code>TE</code>`
  <li>`<code>Trailer</code>`
  <li>`<code>Transfer-Encoding</code>`
@@ -1065,18 +1026,10 @@ is a <a>byte-case-insensitive</a> match for one of
 <p>or a <a for=/>header name</a> that when <a>byte-lowercased</a>
 <a for="byte sequence">starts with</a> `<code>proxy-</code>` or `<code>sec-</code>`.
 
-<div class=note>
- <p>These are forbidden so the user agent remains in full control over them.
-
- <p><a for=/>Header names</a> starting with `<code>Sec-</code>` are reserved to allow new
- <a for=/>headers</a> to be minted that are safe from APIs using <a for=/>fetch</a> that allow
- control over <a for=/>headers</a> by developers, such as {{XMLHttpRequest}}. [[XHR]]
-
- <p>The `<code>Set-Cookie</code>` header is semantically a response header, so it is not useful on
- requests. Because `<code>Set-Cookie</code>` headers cannot be combined, they require more complex
- handling in the {{Headers}} object. It is forbidden here to avoid leaking this complexity into
- requests.
-</div>
+<p class=note>These are forbidden so the user agent remains in full control over them.
+<a for=/>Header names</a> starting with `<code>Sec-</code>` are reserved to allow new
+<a for=/>headers</a> to be minted that are safe from APIs using <a for=/>fetch</a> that allow
+control over <a for=/>headers</a> by developers, such as {{XMLHttpRequest}}. [[XHR]]
 
 <p>A <dfn export>forbidden response-header name</dfn> is a <a for=/>header name</a> that is a
 <a>byte-case-insensitive</a> match for one of:
@@ -1143,14 +1096,14 @@ run these steps:
  <li><p>Return <var>values</var>.
 </ol>
 
-<p>To <dfn id=simple-range-header-value>parse a single range header value</dfn> from a
-<a>byte sequence</a> <var>value</var>, run these steps:
+<p>To determine if a <a>byte sequence</a> <var>value</var> is a
+<dfn>simple range header value</dfn>, perform the following steps. They return a <a>boolean</a>.
 
 <ol>
  <li><p>Let <var>data</var> be the <a>isomorphic decoding</a> of <var>value</var>.
 
  <li><p>If <var>data</var> does not <a for=string>start with</a> "<code>bytes=</code>", then return
- failure.
+ false.
 
  <li><p>Let <var>position</var> be a <a>position variable</a> for <var>data</var>, initially
  pointing at the 6th <a>code point</a> of <var>data</var>.
@@ -1158,37 +1111,30 @@ run these steps:
  <li><p>Let <var>rangeStart</var> be the result of <a>collecting a sequence of code points</a> that
  are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
 
- <li><p>Let <var>rangeStartValue</var> be <var>rangeStart</var>, interpreted as decimal number, if
- <var>rangeStart</var> is not the empty string; otherwise null.
-
  <li><p>If the <a>code point</a> at <var>position</var> within <var>data</var> is not U+002D (-),
- then return failure.
+ then return false.
 
  <li><p>Advance <var>position</var> by 1.
 
  <li><p>Let <var>rangeEnd</var> be the result of <a>collecting a sequence of code points</a> that
  are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
 
- <li><p>Let <var>rangeEndValue</var> be <var>rangeEnd</var>, interpreted as decimal number, if
- <var>rangeEnd</var> is not the empty string; otherwise null.
-
- <li><p>If <var>position</var> is not past the end of <var>data</var>, then return failure.
-
- <li><p>If <var>rangeEndValue</var> and <var>rangeStartValue</var> are null, then return failure.
-
- <li><p>If <var>rangeStartValue</var> and <var>rangeEndValue</var> are numbers, and
- <var>rangeStartValue</var> is greater than <var>rangeEndValue</var>, then return failure.
+ <li><p>If <var>position</var> is not past the end of <var>data</var>, then return false.
 
  <li>
-  <p>Return (<var>rangeStartValue</var>, <var>rangeEndValue</var>).
+  <p>If <var>rangeEnd</var>'s <a for=string>length</a> is 0, then return true.
 
-  <p class="note">The range end or start can be omitted, e.g., `<code>bytes=0-</code>` or
-  `<code>bytes=-500</code>` are valid ranges.
+  <p class="note">The range end can be omitted, e.g., `<code>bytes=0-</code>` is valid.
+
+ <li><p>If <var>rangeStart</var>, interpreted as decimal number, is greater than
+ <var>rangeEnd</var>, interpreted as decimal number, then return false.
+
+ <li><p>Return true.
 </ol>
 
-<p class=note><a>Parse a single range header value</a> succeeds for a subset of allowed range header
-values, but it is the most common form used by user agents when requesting media or resuming
-downloads. This format of range header value can be set using <a>add a range header</a>.
+<p class="note">A <a>simple range header value</a> is a subset of allowed range header values, but
+it is the most common form used by user agents when requesting media or resuming downloads. This
+format of range header value can be set using <a>add a range header</a>.
 
 <hr>
 
@@ -1196,56 +1142,6 @@ downloads. This format of range header value can be set using <a>add a range hea
 <a>implementation-defined</a> <a for=/>header value</a> for the `<code>User-Agent</code>`
 <a for=/>header</a>.
 
-<p>To
-<dfn export for="header list" id=concept-header-list-filter-include>filter include</dfn> a
-<a for=/>header list</a> <var>list</var> and <a for=/>header name</a>s <var>includeNames</var>, run these steps:
-
-<ol>
- <li>Let <var>filteredList</var> be an empty <a for=/>header list</a>.
-
- <li><a for=list>For each</a> (<var>name</var>, <var>value</var>) in <var>list</var>:
-
-  <ol>
-   <li>If <var>name</var> in <var>includeNames</var> then <a for=list>append</a> (<var>name</var>, <var>value</var>) to <var>filteredList</var>.
-  </ol>
-
- <li><p>Return <var>filteredList</var>.
-</ol>
-
-<p>To
-<dfn export for="header list" id=concept-header-list-filter-exclude>filter exclude</dfn> a
-<a for=/>header list</a> <var>list</var> and <a for=/>header name</a>s <var>excludeNames</var>, run these steps:
-
-<ol>
- <li>Let <var>filteredList</var> be an empty <a for=/>header list</a>.
-
- <li><a for=list>For each</a> (<var>name</var>, <var>value</var>) in <var>list</var>:
-
-  <ol>
-   <li>If <var>name</var> not in <var>excludeNames</var> then <a for=list>append</a> (<var>name</var>, <var>value</var>) to <var>filteredList</var>.
-  </ol>
-
- <li><p>Return <var>filteredList</var>.
-</ol>
-
-<p>To
-<dfn export for="header list" id=concept-header-list-get-the-size>get the size</dfn> of a
-<a for=/>header list</a> <var>list</var>, run these steps:
-
-<ol>
- <li>Let <var>sizeInBytes</var> be `0`.
-
- <li><a for=list>For each</a> (<var>name</var>, <var>value</var>) in <var>list</var>:
-
-  <ol>
-   <li>Add the size of <var>name</var> to <var>sizeInBytes</var>.
-   <li>Add `2` to <var>sizeInBytes</var> (represents the `: ` after the name).
-   <li>Add the size of <var>value</var> to <var>sizeInBytes</var>.
-   <li>Add `2` to <var>sizeInBytes</var> (represents the `\r\n` after the value).
-  </ol>
-
- <li><p>Return <var>sizeInBytes</var>.
-</ol>
 
 <h4 id=statuses>Statuses</h4>
 
@@ -1524,6 +1420,8 @@ false.
 <code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
 this flag set are subject to additional processing requirements.
 
+<p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers mode</dfn>, that
+is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<code>all</code>".
 
 <p>A <a for=/>request</a> has an associated
 <dfn for=request export>initiator type</dfn>, which is null,
@@ -1550,9 +1448,6 @@ this flag set are subject to additional processing requirements.
 "<code>other</code>". Unless stated otherwise it is null. [[RESOURCE-TIMING]]
 <!-- See https://github.com/whatwg/fetch/issues/1452 and
          https://github.com/w3c/resource-timing/issues/132 for future work -->
-
-<p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers mode</dfn>, that
-is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<code>all</code>".
 
 <div class=note>
  <p>This determines which service workers will receive a {{fetch!!event}} event for this fetch.
@@ -1603,7 +1498,6 @@ the empty string,
 "<code>style</code>",
 "<code>track</code>",
 "<code>video</code>",
-"<code>webidentity</code>",
 "<code>worker</code>", or
 "<code>xslt</code>". Unless stated otherwise it is the empty string.
 
@@ -1635,7 +1529,7 @@ not always relevant and might require different behavior.
    <th>CSP directive
    <th>Features
   <tr>
-   <td rowspan=20>""
+   <td rowspan=19>""
    <td>"<code>report</code>"
    <td rowspan=2>&mdash;
    <td>CSP, NEL reports.
@@ -1698,10 +1592,6 @@ not always relevant and might require different behavior.
    <td>"<code>sharedworker</code>"
    <td><code>child-src</code>, <code>script-src</code>, <code>worker-src</code>
    <td><code>SharedWorker</code>
-  <tr>
-   <td>"<code>webidentity</code>"
-   <td><code>connect-src</code>
-   <td><code>Federated Credential Management requests</code>
   <tr>
    <td>"<code>worker</code>"
    <td><code>child-src</code>, <code>script-src</code>, <code>worker-src</code>
@@ -2261,9 +2151,9 @@ string.
 <dfn for=response id=concept-response-range-requested-flag>range-requested flag</dfn>, which is
 initially unset.
 
-<p class=note>This is used to prevent a partial response from an earlier ranged request being
-provided to an API that didn't make a range request. See the flag's usage for a detailed description
-of the attack.
+<p class=note>This is used to ensure to prevent a partial response from an earlier ranged request
+being provided to an API that didn't make a range request. See the flag's usage for a detailed
+description of the attack.
 
 <p>A <a for=/>response</a> has an associated <dfn for=response>request-includes-credentials</dfn>
 (a boolean), which is initially true.
@@ -3020,33 +2910,6 @@ run these steps:
  <li><p>Return <b>allowed</b>.
 </ol>
 
-<h3 dfn export lt="is a cors requests header size over the limit" id=is-a-cors-requests-header-size-over-the-limit>
-Is a CORS request's header size over the limit?</h3>
-
-Note: The goal of this algorithm is to prevent cross-origin requests from probing the size of sensitive <a for=/>header</a>s
-(`<a http-header><code>Authorization</code></a>` or `<a http-header><code>Cookie</code></a>`) by adding <a for=/>header</a>s
-to cross-origin requests until the total size of all HTTP request <a for=/>header</a>s exceeds the server side limit. If this
-algorithm returns true, the <a>CORS-preflight request</a> must be run. In order for this approach to succeed, servers should
-not set an HTTP request <a for=/>header</a>s size limit below 8KB.
-
-<p>Run these steps to check if <dfn>the header size is over the CORS limits</dfn> on the provided <var>request</var>:
-
-<ol>
- <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with <var>request</var>'s
- <a for=request>current URL</a>'s <a for=url>origin</a>, return `false`.
-
- <li><p>Let <var>sensitiveHeaderList</var> be the result of running <a for="header list">filter include</a> on <var>request</var>'s
- <a for=response>header list</a> with `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>) as <var>includeNames</var>`.
-
- <li><p>If the result of running <a for="header list">get the size</a> on <var>sensitiveHeaderList</var> is greater than 4KB, return `true`.
- 
- <li><p>Let <var>nonSensitiveHeaderList</var> be the result of running <a for="header list">filter exclude</a> on <var>request</var>'s
- <a for=response>header list</a> with `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>) as <var>excludeNames</var>`.
-
- <li><p>If the result of running <a for="header list">get the size</a> on <var>nonSensitiveHeaderList</var> is greater than 4KB, return `true`.
-
- <li><p>Return `false`.
-</ol>
 
 
 <h2 id=http-extensions>HTTP extensions</h2>
@@ -3937,9 +3800,8 @@ run these steps:
    </tbody>
   </table>
 
- <li><p><a>Generate and queue a report</a> for <var>settingsObject</var>'s
- <a for="environment settings object">global object</a> given the
- <a>"<code>coep</code>" report type</a>, <var>endpoint</var>, and <var>body</var>. [[!REPORTING]]
+ <li><p><a for="reporting">Queue</a> <var>body</var> as the <a>"<code>coep</code>" report type</a> for
+ <var>endpoint</var> on <var>settingsObject</var>. [[!REPORTING]]
 </ol>
 
 
@@ -4017,13 +3879,12 @@ the request.
  <li><p>Let <var>timingInfo</var> be a new <a for=/>fetch timing info</a> whose
  <a for="fetch timing info">start time</a> and
  <a for="fetch timing info">post-redirect start time</a> are the
- <a for=/>coarsened shared current time</a> given <var>crossOriginIsolatedCapability</var>, and
- <a for="fetch timing info">render-blocking</a> is set to <var>request</var>'s
- <a for=request>render-blocking</a>.
+ <a for=/>coarsened shared current time</a> given <var>crossOriginIsolatedCapability</var>.
 
  <li><p>Let <var>fetchParams</var> be a new <a for=/>fetch params</a> whose
  <a for="fetch params">request</a> is <var>request</var>,
  <a for="fetch params">timing info</a> is <var>timingInfo</var>,
+ <a for="fetch params">controller</a> is <var>controller</var>,
  <a for="fetch params">process request body chunk length</a> is
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
@@ -4809,19 +4670,17 @@ these steps:
 
   <ol>
    <li>
-    <p>If one of these conditions is true:
+    <p>If <var>makeCORSPreflight</var> is true and one of these conditions is true:
 
     <ul class=brief>
-     <li><p><var>makeCORSPreflight</var> is true and there is no <a>method cache entry match</a> for
-     <var>request</var>'s <a for=request>method</a> using <var>request</var>, and either <var>request</var>'s
+     <li><p>There is no <a>method cache entry match</a> for <var>request</var>'s
+     <a for=request>method</a> using <var>request</var>, and either <var>request</var>'s
      <a for=request>method</a> is not a <a>CORS-safelisted method</a> or <var>request</var>'s
      <a>use-CORS-preflight flag</a> is set.
 
-     <li><var>makeCORSPreflight</var> is true and there is at least one <a for=list>item</a> in the
-     <a>CORS-unsafe request-header names</a> with <var>request</var>'s <a for=request>header list</a>
-     for which there is no <a>header-name cache entry match</a> using <var>request</var>.
-     
-     <li><a>The header size is over the CORS limits</a> given <var>request</var> returns true.
+     <li>There is at least one <a for=list>item</a> in the <a>CORS-unsafe request-header names</a>
+     with <var>request</var>'s <a for=request>header list</a> for which there is no
+     <a>header-name cache entry match</a> using <var>request</var>.
     </ul>
 
     <p>Then:
@@ -5671,14 +5530,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
        <li>
         <p>If <var>status</var> is in the range 100 to 199, inclusive:
-        <!-- If there comes a time when there is another code besides 101 and 103 that needs special
-        processing we should generalize the "process early hints response" callback and invoke it
-        for each 1xx response and as such require callers like WebSockets to do the filtering and
-        processing we now perform here inline. -->
 
         <ol>
-         <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" and
-         <var>status</var> is 101, then <a for=iteration>break</a>.
+         <li><p>If <var>status</var> is 101, <a for=iteration>break</a>.
 
          <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
          <a for="fetch params">process early hints response</a> is non-null, then
@@ -5788,8 +5642,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
 
  <li><p>Let <var>cancelAlgorithm</var> be an algorithm that <a for="fetch controller">aborts</a>
- <var>fetchParams</var>'s <a for="fetch params">controller</a> with <var>reason</var>, given
- <var>reason</var>.
+ <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
  <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
@@ -5909,13 +5762,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <ol>
        <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
 
-       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, then
-       <a for=ReadableStream>error</a> <var>stream</var> with the result of
-       <a>deserialize a serialized abort reason</a> given <var>fetchParams</var>'s
-       <a for="fetch params">controller</a>'s <a for="fetch controller">serialized abort reason</a>
-       and an <a>implementation-defined</a> <a>realm</a>.
-       <!-- XXX: At some point we really need to sort out how JavaScript streams interact with the
-            network layer a bit better. -->
+       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>,
+       <a for=ReadableStream>error</a> <var>stream</var> with an
+       "<code><a exception>AbortError</a></code>" {{DOMException}}.
       </ol>
 
      <li><p>Otherwise, if <var>stream</var> is <a for=ReadableStream>readable</a>,
@@ -6918,7 +6767,6 @@ interface Request {
   readonly attribute boolean isReloadNavigation;
   readonly attribute boolean isHistoryNavigation;
   readonly attribute AbortSignal signal;
-  readonly attribute RequestDuplex duplex;
 
   [NewObject] Request clone();
 };
@@ -6937,7 +6785,6 @@ dictionary RequestInit {
   DOMString integrity;
   boolean keepalive;
   AbortSignal? signal;
-  RequestDuplex duplex;
   any window; // can only be set to null
 };
 
@@ -6946,7 +6793,6 @@ enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum RequestRedirect { "follow", "error", "manual" };
-enum RequestDuplex { "half" };
 </pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -7035,15 +6881,6 @@ object), initially null.
 
    <dt>{{RequestInit/window}}
    <dd>Can only be null. Used to disassociate <var>request</var> from any {{Window}}.
-
-   <dt>{{RequestInit/duplex}}
-   <dd>"<code>half</code>" is the only valid value and it is for initiating a half-duplex fetch
-   (i.e., the user agent sends the entire request before processing the response).
-   "<code>full</code>" is reserved for future use, for initiating a full-duplex fetch (i.e., the
-   user agent can process the response before sending the entire request). This member needs to be
-   set when {{RequestInit/body}} is a {{ReadableStream}} object. <span class=note>See
-   <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a> for defining
-   "<code>full</code>".</span>
   </dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
@@ -7109,14 +6946,6 @@ object), initially null.
  {{AbortSignal}} object indicating whether or not <var>request</var> has been aborted, and its abort
  event handler.
 
- <dt><code><var>request</var> . <a attribute for=Request>duplex</a></code>
- <dd>Returns "<code>half</code>", meaning the fetch will be half-duplex (i.e., the user agent sends
- the entire request before processing the response). In future, it could also return
- "<code>full</code>", meaning the fetch will be full-duplex (i.e., the user agent can process the
- response before sending the entire request) to indicate that the fetch will be full-duplex.
- <span class=note>See <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a> for
- defining "<code>full</code>".</span>
-
  <dt><code><var>request</var> . <a method for=Request>clone</a>()</code>
  <dd><p>Returns a clone of <var>request</var>.
 </dl>
@@ -7124,8 +6953,8 @@ object), initially null.
 <hr>
 
 <p>To <dfn export for=Request lt=create|creating>create</dfn> a {{Request}} object, given a
-<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and
-<a>realm</a> <var>realm</var>, run these steps:
+<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
+<var>realm</var>, run these steps:
 
 <ol>
  <li><p>Let <var>requestObject</var> be a <a for=/>new</a> {{Request}} object with <var>realm</var>.
@@ -7139,7 +6968,7 @@ object), initially null.
  <li><p>Set <var>requestObject</var>'s <a for=Request>signal</a> to a <a for=/>new</a>
  {{AbortSignal}} object with <var>realm</var>.
 
- <li><p>Return <var>requestObject</var>.
+ <li><p>Return <var>request</var>.
 </ol>
 
 <hr>
@@ -7482,9 +7311,6 @@ constructor steps are:
   <a for=body>source</a> is null, then:
 
   <ol>
-   <li><p>If <var>initBody</var> is non-null and <var>init</var>["{{RequestInit/duplex}}"] does
-   not <a for=map>exist</a>, then throw a {{TypeError}}.
-
    <li><p>If <a>this</a>'s <a for=Request>request</a>'s <a for=request>mode</a> is neither
    "<code>same-origin</code>" nor "<code>cors</code>", then throw a {{TypeError}}.
 
@@ -7566,9 +7392,6 @@ set; otherwise false.
 
 <p>The <dfn attribute for=Request><code>signal</code></dfn> getter steps are to return <a>this</a>'s
 <a for="Request">signal</a>.
-
-<p>The <dfn attribute for=Request><code>duplex</code></dfn> getter steps are to return
-"<code>half</code>".
 
 <hr>
 
@@ -7683,8 +7506,8 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <hr>
 
 <p>To <dfn export for=Response lt=create|creating>create</dfn> a {{Response}} object, given a
-<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and
-<a>realm</a> <var>realm</var>, run these steps:
+<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
+<var>realm</var>, run these steps:
 
 <ol>
  <li><p>Let <var>responseObject</var> be a <a for=/>new</a> {{Response}} object with
@@ -7729,8 +7552,8 @@ these steps:
     <p>If <var>response</var>'s <a for=response>status</a> is a <a>null body status</a>, then
     <a>throw</a> a {{TypeError}}.
 
-    <p class="note no-backref">101 and 103 are included in <a>null body status</a> due to their
-    use elsewhere. They do not affect this step.
+    <p class="note no-backref">101 is included in <a>null body status</a> due to its use elsewhere.
+    It does not affect this step.
 
    <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>body</var>'s
    <a for="body with type">body</a>.
@@ -7891,8 +7714,7 @@ method steps are:
   then:
 
   <ol>
-   <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>, null, and
-   <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and null.
 
    <li><p>Return <var>p</var>.
   </ol>
@@ -7922,12 +7744,10 @@ method steps are:
   <ol>
    <li><p>Set <var>locallyAborted</var> to true.
 
-   <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>, <var>responseObject</var>,
-   and <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
+   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
 
    <li><p>If <var>controller</var> is not null, then <a for="fetch controller">abort</a>
-   <var>controller</var> with <var>requestObject</var>'s <a for=Request>signal</a>'s
-   <a for=AbortSignal>abort reason</a>.
+   <var>controller</var>.
   </ol>
 
  <li>
@@ -7938,17 +7758,9 @@ method steps are:
   <ol>
    <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
 
-   <li>
-    <p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then:
-
-    <ol>
-     <li><p>Let <var>deserializedError</var> be the result of
-     <a>deserialize a serialized abort reason</a> given <var>controller</var>'s
-     <a for="fetch controller">serialized abort reason</a> and <var>relevantRealm</var>.
-
-     <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>,
-     <var>responseObject</var>, and <var>deserializedError</var>.
-    </ol>
+   <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then <a>abort fetch</a>
+   with <var>p</var>, <var>request</var>, and <var>responseObject</var>, and terminate these
+   substeps.
 
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
@@ -7962,10 +7774,12 @@ method steps are:
  <li><p>Return <var>p</var>.
 </ol>
 
-<p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn> with a
-<var>promise</var>, <var>request</var>, <var>responseObject</var>, and an <var>error</var>, run these steps:
+<p>To <dfn>abort fetch</dfn> with a <var>promise</var>, <var>request</var>, and
+<var>responseObject</var>, run these steps:
 
 <ol>
+ <li><p>Let <var>error</var> be an "<code><a exception>AbortError</a></code>" {{DOMException}}.
+
  <li>
   <p><a for=/>Reject</a> <var>promise</var> with <var>error</var>.
 
@@ -8512,7 +8326,6 @@ Jeff Carpenter,
 Jeff Hodges,
 Jeffrey Yasskin,
 Jensen Chappell,
-Jeremy Roman,
 Jesse M. Heines,
 Jianjun Chen,
 Jinho Bang,
@@ -8526,7 +8339,6 @@ Jordan Stephens,
 Jörn Zaefferer,
 Joseph Pecoraro,
 Josh Matthews,
-jub0bs<!-- GitHub -->,
 Julian Krispel-Samsel,
 Julian Reschke,
 송정기 (Jungkee Song),
@@ -8572,7 +8384,6 @@ Moritz Kneilmann,
 Ms2ger,
 Nico Schlömer,
 Nicolás Peña Moreno,
-Nidhi Jaju,
 Nikhil Marathe,
 Nikki Bee,
 Nikunj Mehta,
