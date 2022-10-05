@@ -33,6 +33,10 @@ urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
         url:dfn-coarsened-shared-current-time;text:coarsened shared current time
         url:dfn-unsafe-shared-current-time;text:unsafe shared current time
     type:typedef;url:dom-domhighrestimestamp;text:DOMHighResTimeStamp
+
+urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
+    url:realm;text:realm
+    url:sec-list-and-record-specification-type;text:Record
 </pre>
 
 <pre class=link-defaults>
@@ -231,6 +235,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 
  <dt><dfn for="fetch controller">report timing steps</dfn> (default null)
  <dd>Null or an algorithm accepting a <a for=/>global object</a>.
+
+ <dt><dfn for="fetch controller">serialized abort reason</dfn> (default null)
+ <dd>Null or a <a>Record</a> (result of [$StructuredSerialize$]).
 </dl>
 
 <p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</dfn> for a
@@ -254,8 +261,37 @@ given a <a>fetch controller</a> <var>controller</var>:
 </ol>
 
 <p>To <dfn export for="fetch controller">abort</dfn> a <a for=/>fetch controller</a>
-<var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
-"<code>aborted</code>".
+<var>controller</var> with an optional <var>error</var>:
+
+<ol>
+ <li><p>Set <var>controller</var>'s <a for="fetch controller">state</a> to "<code>aborted</code>".
+
+ <li><p>Let <var>fallbackError</var> be an "{{AbortError}}" {{DOMException}}.
+
+ <li><p>Set <var>error</var> to <var>fallbackError</var> if it is not given.
+
+ <li><p>Let <var>serializedError</var> be [$StructuredSerialize$](<var>error</var>).
+ If that threw an exception, catch it, and let <var>serializedError</var> be
+ [$StructuredSerialize$](<var>fallbackError</var>).
+
+ <li><p>Set <var>controller</var>'s <a for="fetch controller">serialized abort reason</a> to
+ <var>serializedError</var>.
+</ol>
+
+<p>To <dfn>deserialize a serialized abort reason</dfn>, given null or a <a>Record</a>
+<var>abortReason</var> and a <a>realm</a> <var>realm</var>:
+
+<ol>
+ <li><p>Let <var>fallbackError</var> be an "{{AbortError}}" {{DOMException}}.
+
+ <li><p>Let <var>deserializedError</var> be <var>fallbackError</var>.
+
+ <li><p>If <var>abortReason</var> is non-null, then set <var>deserializedError</var> to
+ [$StructuredDeserialize$](<var>abortReason</var>, <var>realm</var>). If that threw an exception or
+ returned undefined, then set <var>deserializedError</var> to <var>fallbackError</var>.
+
+ <li><p>Return <var>deserializedError</var>.
+</ol>
 
 <p>To <dfn export for="fetch controller">terminate</dfn> a <a for=/>fetch controller</a>
 <var>controller</var>, set <var>controller</var>'s <a for="fetch controller">state</a> to
@@ -5673,7 +5709,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
 
  <li><p>Let <var>cancelAlgorithm</var> be an algorithm that <a for="fetch controller">aborts</a>
- <var>fetchParams</var>'s <a for="fetch params">controller</a>.
+ <var>fetchParams</var>'s <a for="fetch params">controller</a> with <var>reason</var>, given
+ <var>reason</var>.
 
  <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
 
@@ -5793,9 +5830,13 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       <ol>
        <li><p>Set <var>response</var>'s <a for=response>aborted flag</a>.
 
-       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>,
-       <a for=ReadableStream>error</a> <var>stream</var> with an
-       "<code><a exception>AbortError</a></code>" {{DOMException}}.
+       <li><p>If <var>stream</var> is <a for=ReadableStream>readable</a>, then
+       <a for=ReadableStream>error</a> <var>stream</var> with the result of
+       <a>deserialize a serialized abort reason</a> given <var>fetchParams</var>'s
+       <a for="fetch params">controller</a>'s <a for="fetch controller">serialized abort reason</a>
+       and an <a>implementation-defined</a> <a>realm</a>.
+       <!-- XXX: At some point we really need to sort out how JavaScript streams interact with the
+            network layer a bit better. -->
       </ol>
 
      <li><p>Otherwise, if <var>stream</var> is <a for=ReadableStream>readable</a>,
@@ -7004,8 +7045,8 @@ object), initially null.
 <hr>
 
 <p>To <dfn export for=Request lt=create|creating>create</dfn> a {{Request}} object, given a
-<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
-<var>realm</var>, run these steps:
+<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and
+<a>realm</a> <var>realm</var>, run these steps:
 
 <ol>
  <li><p>Let <var>requestObject</var> be a <a for=/>new</a> {{Request}} object with <var>realm</var>.
@@ -7563,8 +7604,8 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 <hr>
 
 <p>To <dfn export for=Response lt=create|creating>create</dfn> a {{Response}} object, given a
-<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and Realm
-<var>realm</var>, run these steps:
+<a for=/>response</a> <var>response</var>, <a for=/>headers guard</a> <var>guard</var>, and
+<a>realm</a> <var>realm</var>, run these steps:
 
 <ol>
  <li><p>Let <var>responseObject</var> be a <a for=/>new</a> {{Response}} object with
@@ -7771,7 +7812,8 @@ method steps are:
   then:
 
   <ol>
-   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and null.
+   <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>, null, and
+   <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
 
    <li><p>Return <var>p</var>.
   </ol>
@@ -7801,10 +7843,12 @@ method steps are:
   <ol>
    <li><p>Set <var>locallyAborted</var> to true.
 
-   <li><p><a>Abort fetch</a> with <var>p</var>, <var>request</var>, and <var>responseObject</var>.
+   <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>, <var>responseObject</var>,
+   and <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
 
    <li><p>If <var>controller</var> is not null, then <a for="fetch controller">abort</a>
-   <var>controller</var>.
+   <var>controller</var> with <var>requestObject</var>'s <a for=Request>signal</a>'s
+   <a for=AbortSignal>abort reason</a>.
   </ol>
 
  <li>
@@ -7815,9 +7859,17 @@ method steps are:
   <ol>
    <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
 
-   <li><p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then <a>abort fetch</a>
-   with <var>p</var>, <var>request</var>, and <var>responseObject</var>, and terminate these
-   substeps.
+   <li>
+    <p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then:
+
+    <ol>
+     <li><p>Let <var>deserializedError</var> be the result of
+     <a>deserialize a serialized abort reason</a> given <var>controller</var>'s
+     <a for="fetch controller">serialized abort reason</a> and <var>relevantRealm</var>.
+
+     <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>,
+     <var>responseObject</var>, and <var>deserializedError</var>.
+    </ol>
 
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and terminate these substeps.
@@ -7831,12 +7883,10 @@ method steps are:
  <li><p>Return <var>p</var>.
 </ol>
 
-<p>To <dfn>abort fetch</dfn> with a <var>promise</var>, <var>request</var>, and
-<var>responseObject</var>, run these steps:
+<p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn> with a
+<var>promise</var>, <var>request</var>, <var>responseObject</var>, and an <var>error</var>, run these steps:
 
 <ol>
- <li><p>Let <var>error</var> be an "<code><a exception>AbortError</a></code>" {{DOMException}}.
-
  <li>
   <p><a for=/>Reject</a> <var>promise</var> with <var>error</var>.
 
@@ -8443,6 +8493,7 @@ Moritz Kneilmann,
 Ms2ger,
 Nico Schlömer,
 Nicolás Peña Moreno,
+Nidhi Jaju,
 Nikhil Marathe,
 Nikki Bee,
 Nikunj Mehta,
