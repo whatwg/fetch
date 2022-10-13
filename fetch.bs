@@ -238,6 +238,9 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
 
  <dt><dfn for="fetch controller">serialized abort reason</dfn> (default null)
  <dd>Null or a <a>Record</a> (result of [$StructuredSerialize$]).
+
+ <dt><dfn for="fetch controller">next manual redirect steps</dfn> (default null)
+ <dd>Null or an algorithm accepting nothing.
 </dl>
 
 <p>To <dfn export for="fetch controller" id="finalize-and-report-timing">report timing</dfn> for a
@@ -248,6 +251,16 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  null.
 
  <li><p>Call <a>this</a>'s <a for="fetch controller">report timing steps</a> with <var>global</var>.
+</ol>
+
+<p>To <dfn export for="fetch controller">process the next manual redirect</dfn> for a
+<a>fetch controller</a> <var>controller</var>:
+
+<ol>
+ <li><p><a for=/>Assert</a>: <var>controller</var>'s
+ <a for="fetch controller">next manual redirect steps</a> are not null.
+
+ <li><p>Call <var>controller</var>'s <a for="fetch controller">next manual redirect steps</a>.
 </ol>
 
 <p>To <dfn export for="fetch controller" id="extract-full-timing-info">extract full timing info</a>
@@ -4834,7 +4847,11 @@ these steps:
 
      <dt>"<code>manual</code>"
      <dd><p>Set <var>response</var> to an <a>opaque-redirect filtered response</a> whose
-     <a for="filtered response">internal response</a> is <var>actualResponse</var>.
+     <a for="filtered response">internal response</a> is <var>actualResponse</var>. If
+     <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>", then set
+     <var>fetchParams</var>'s <a for="fetch params">controller</a>'s <a
+     for="fetch controller">next manual redirect steps</a> to run <a>HTTP-redirect fetch</a> given
+     <var>fetchParams</var> and <var>response</var>.
 
      <dt>"<code>follow</code>"
      <dd><p>Set <var>response</var> to the result of running <a>HTTP-redirect fetch</a> given
@@ -4945,26 +4962,6 @@ run these steps:
 
   <p class=note>This has to invoke <a>main fetch</a> to get <var>request</var>'s
   <a for=request>response tainting</a> correct.
-</ol>
-
-
-<h3 id=navigate-redirect-fetch>Navigate-redirect fetch</h3>
-
-<p class=note>This algorithm is used by <cite>HTML</cite>'s navigate algorithm. It is expected to be
-invoked while <a>in parallel</a>. [[!HTML]]
-
-<p>To <dfn export id=concept-navigate-redirect-fetch>navigate-redirect fetch</dfn>, given a
-<a for=/>request</a> <var>request</var> and <a for=/>response</a> <var>response</var>, run these
-steps. They return a <a for=/>response</a>.
-
-<ol>
- <li><p>Assert: <var>request</var>'s <a for=request>redirect mode</a> is "<code>manual</code>".
-
- <li><p>Let <var>fetchParams</var> be a new <a for=/>fetch params</a> whose
- <a for="fetch params">request</a> is <var>request</var>.
-
- <li><p>Return the result of running <a>HTTP-redirect fetch</a> given <var>fetchParams</var> and
- <var>response</var>.
 </ol>
 
 
@@ -8321,10 +8318,19 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
  <cite>HTML</cite>. [[HTML]]
 
  <dt><a for=fetch><i>processResponse</i></a>
- <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates
- <a for=/>response</a>'s <a for=response>header list</a> has been received and initialized. This
- is primarily useful for standards that want to operate on <a for=/>response</a>'s
- <a for=response>body</a>'s <a for=body>stream</a> directly.
+ <dd>
+  <p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates
+  <a for=/>response</a>'s <a for=response>header list</a> has been received and initialized. This
+  is primarily useful for standards that want to operate on <a for=/>response</a>'s
+  <a for=response>body</a>'s <a for=body>stream</a> directly.
+
+  <p>If the <a for=/>request</a>'s <a for=request>mode</a> is "<code>navigate</code>" and its
+  <a for=request>redirect mode</a> is "<code>manual</code>", then callers need to follow a very
+  specific flow with this algorithm to get the intended behavior. They should compute the
+  appropriate <a for=response>location URL</a>, and if it is not null or a failure, then they
+  should call <a for="fetch controller">process the next manual redirect</a>. This will result in
+  <a for=fetch><i>processResponse</i></a> being called again, with the next <a for=/>response</a>
+  in the redirect chain.
 
  <dt><a for=fetch><i>processResponseEndOfBody</i></a>
  <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates the network is
