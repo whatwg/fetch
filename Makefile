@@ -1,5 +1,5 @@
 SHELL=/bin/bash -o pipefail
-.PHONY: local remote deploy review
+.PHONY: local remote deploy
 
 remote: fetch.bs
 	@ (HTTP_STATUS=$$(curl https://api.csswg.org/bikeshed/ \
@@ -21,7 +21,3 @@ local: fetch.bs
 deploy: fetch.bs
 	curl --remote-name --fail https://resources.whatwg.org/build/deploy.sh
 	bash ./deploy.sh
-
-review: fetch.bs
-	curl --remote-name --fail https://resources.whatwg.org/build/review.sh
-	bash ./review.sh
