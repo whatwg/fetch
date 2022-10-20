@@ -4569,7 +4569,8 @@ steps:
   "<code>blank</code>", then return a new <a for=/>response</a> whose
   <a for=response>status message</a> is `<code>OK</code>`, <a for=response>header list</a> is «
   (`<code>Content-Type</code>`, `<code>text/html;charset=utf-8</code>`) », and
-  <a for=response>body</a> is the empty byte sequence.
+  <a for=response>body</a> is the <a for="body with type">body</a> of the result of
+  <a for=BodyInit>safely extracting</a> the empty byte sequence.
 
   <p>Otherwise, return a <a>network error</a>.
 
@@ -4597,22 +4598,21 @@ steps:
       <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction serves no useful purpose
       other than being interoperable.
 
-     <li><p>Let <var>response</var> be a new <a for=/>response</a> whose
-     <a for=response>status message</a> is `<code>OK</code>`.
-
-     <li><p><a for="header list">Append</a> (`<code>Content-Length</code>`, <var>blob</var>'s
-     {{Blob/size}} attribute value) to <var>response</var>'s <a for=response>header list</a>.
-
-     <li><p><a for="header list">Append</a> (`<code>Content-Type</code>`, <var>blob</var>'s
-     {{Blob/type}} attribute value) to <var>response</var>'s <a for=response>header list</a>.
-
-     <li><p>Set <var>response</var>'s <a for=response>body</a> to
-     the result of performing the <a spec=fileapi>read operation</a> on
+     <li><p>Let <var>bodyWithType</var> be the result of <a for=BodyInit>safely extracting</a>
      <var>blob</var>.
 
-     <!-- This takes care of setting length, transmitted, and error flag as well -->
+     <li><p>Let <var>body</var> be <var>bodyWithType</var>'s <a for="body with type">body</a>.
 
-     <li><p>Return <var>response</var>.
+     <li><p>Let <var>length</var> be <var>body</var>'s <a for=body>length</a>,
+     <a lt="serialize an integer">serialized</a> and <a>isomorphic encoded</a>.
+
+     <li><p>Let <var>type</var> be <var>bodyWithType</var>'s <a for="body with type">type</a> if it
+     is non-null; otherwise the empty byte sequence.
+
+     <li><p>Return a new <a for=/>response</a> whose <a for=response>status message</a> is
+     `<code>OK</code>`, <a for=response>header list</a> is « (`<code>Content-Length</code>`,
+     <var>length</var>), (`<code>Content-Type</code>`, <var>type</var>) », and
+     <a for=response>body</a> is <var>body</var>.
     </ol>
 
    <li><p><a>If aborted</a>, then return the <a for=/>appropriate network error</a> for
@@ -4630,9 +4630,10 @@ steps:
    <li><p>Let <var>mimeType</var> be <var>dataURLStruct</var>'s
    <a for="data: URL struct">MIME type</a>, <a lt="serialize a MIME type to bytes">serialized</a>.
 
-   <li><p>Return a <a for=/>response</a> whose <a for=response>status message</a> is
+   <li><p>Return a new <a for=/>response</a> whose <a for=response>status message</a> is
    `<code>OK</code>`, <a for=response>header list</a> is « (`<code>Content-Type</code>`,
-   <var>mimeType</var>) », and <a for=response>body</a> is <var>dataURLStruct</var>'s
+   <var>mimeType</var>) », and <a for=response>body</a> is the <a for="body with type">body</a> of
+   the result of <a for=BodyInit>safely extracting</a> <var>dataURLStruct</var>'s
    <a for="data: URL struct">body</a>.
   </ol>
 
