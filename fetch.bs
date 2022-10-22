@@ -2266,6 +2266,9 @@ this is also tracked internally using the request's <a for=request>timing allow 
 <dfn export for=response>service worker timing info</dfn> (null or a
 <a for=/>service worker timing info</a>), which is initially null.
 
+<p>A <a for=/>response</a> has an associated <dfn for=response>has-cross-origin-redirects</dfn>
+(a boolean), which is initially false.
+
 <hr>
 
 <p>A <a for=/>response</a> whose
@@ -4330,6 +4333,9 @@ steps:
  <!-- If you are ever tempted to move this around, carefully consider responses from about URLs,
       blob URLs, service workers, HTTP cache, HTTP network, etc. -->
 
+ <li><p>If <var>request</var> has a <a for=request>redirect-tainted origin</a>, then set
+ <var>internalResponse</var>'s <a for=response>has-cross-origin-redirects</a> to true.
+
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set
  <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
 
@@ -4471,12 +4477,17 @@ steps:
 
       <p class=note>This covers the case of <var>response</var> being a <a>network error</a>.
 
+     <li><p>Let <var>responseStatus</var> be 0 if <var>fetchParams</var>'s
+     <a for="fetch params">request</a>'s <a for=request>mode</a> is "<code>navigate</code>" and
+     <var>response</var>'s <a for=response>has-cross-origin-redirects</a> is true; otherwise
+     <var>response</var>'s <a for=response>status</a>.
+
      <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
      <a for=request>initiator type</a> is not null, then
      <a for=/>mark resource timing</a> given <var>timingInfo</var>, <var>request</var>'s
      <a for=request>URL</a>, <a for="fetch params">request</a>'s
-     <a for=request>initiator type</a>, <var>global</var>, <var>cacheState</var>, and
-     <var>bodyInfo</var>.
+     <a for=request>initiator type</a>, <var>global</var>, <var>cacheState</var>,
+     <var>bodyInfo</var>, and <var>responseStatus</var>.
     </ol>
 
    <li>
