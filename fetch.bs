@@ -2317,10 +2317,11 @@ that offers a limited view on an associated <a for=/>response</a>. This associat
 of defining the concrete types of <a for=/>filtered responses</a>.)
 
 <div class=note>
- <p>The <a for=/>fetch</a> algorithm returns such a view to ensure APIs do not accidentally leak
- information. If the information needs to be exposed for legacy reasons, e.g., to feed image data to
- a decoder, the associated <a for="filtered response">internal response</a> can be used, which is
- only "accessible" to internal specification algorithms.
+ <p>The <a for=/>fetch</a> algorithm by way of <a for=fetch><i>processResponse</i></a> and
+ equivalent parameters exposes <a for=/>filtered responses</a> to callers to ensure they do not
+ accidentally leak information. If the information needs to be revealed for legacy reasons, e.g., to
+ feed image data to a decoder, the associated <a for="filtered response">internal response</a> can
+ be used by internal specification algorithms.
 
  <p>New specifications ought not to build further on <a>opaque filtered responses</a> or
  <a>opaque-redirect filtered responses</a>. Those are legacy constructs and cannot always be
@@ -2379,6 +2380,24 @@ is a <a>filtered response</a> whose
 
  <p>This also means that JavaScript APIs, such as
  <a attribute for=Response lt=ok><code>response.ok</code></a>, will return rather useless results.
+</div>
+
+<div class=example id=example-filtered-responses>
+ <pre><code class=lang-javascript>
+// The <a for=response>type</a> of a <a for=/>response</a> is exposed to script.
+
+(async function filteredResponseDemo() {
+  console.log(new Response().type); // "default"
+
+  console.log((await fetch("/")).type); "basic"
+
+  console.log((await fetch("https://api.example/status")).type); // "cors"
+
+  console.log((await fetch("https://crossorigin.example/image", { mode: "no-cors" })).type); // "opaque"
+
+  console.log((await fetch("/surprise-me", { redirect: "manual"})).type); // "opaqueredirect"
+})();
+</code></pre>
 </div>
 
 <hr>
