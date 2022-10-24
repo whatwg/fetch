@@ -2304,18 +2304,28 @@ known as an <dfn export id=concept-aborted-network-error>aborted network error</
 
 <hr>
 
-<p>A <dfn export id=concept-filtered-response>filtered response</dfn> is a limited view on a
-<a for=/>response</a> that is not a
-<a>network error</a>. This
-<a for=/>response</a> is referred to as the
-<a>filtered response</a>'s associated
-<dfn export id=concept-internal-response for="filtered response">internal response</dfn>.
+<p>A <dfn export id=concept-filtered-response>filtered response</dfn> is a <a for=/>response</a>
+that offers a limited view on an associated <a for=/>response</a>. This associated
+<a for=/>response</a> can be accessed through <a>filtered response</a>'s associated
+<dfn export id=concept-internal-response for="filtered response">internal response</dfn> (a
+<a for=/>response</a> that is neither a <a for=/>network error</a> nor a
+<a for=/>filtered response</a>).
 
-<p class="note no-backref">The <a for=/>fetch</a> algorithm returns such a view to ensure APIs do
-not accidentally leak information. If the information needs to be exposed for legacy reasons, e.g.,
-to feed image data to a decoder, the associated <a for="filtered response">internal response</a> can
-be used, which is only "accessible" to internal specification algorithms and is never a
-<a>filtered response</a> itself.
+<p>Unless stated otherwise a <a for=/>filtered response</a>'s associated concepts (such as its
+<a for=response>body</a>) refer to the associated concepts of its
+<a for="filtered response">internal response</a>. (The exceptions to this are listed below as part
+of defining the concrete types of <a for=/>filtered responses</a>.)
+
+<div class=note>
+ <p>The <a for=/>fetch</a> algorithm returns such a view to ensure APIs do not accidentally leak
+ information. If the information needs to be exposed for legacy reasons, e.g., to feed image data to
+ a decoder, the associated <a for="filtered response">internal response</a> can be used, which is
+ only "accessible" to internal specification algorithms.
+
+ <p>New specifications ought not to build further on <a>opaque filtered responses</a> or
+ <a>opaque-redirect filtered responses</a>. Those are legacy constructs and cannot always be
+ adequately protected given contemporary computer architecture.
+</div>
 
 <p>A <dfn export id=concept-filtered-response-basic>basic filtered response</dfn> is a
 <a>filtered response</a> whose
@@ -2357,7 +2367,7 @@ is a <a>filtered response</a> whose
 <a for=response>header list</a> is empty, and
 <a for=response>body</a> is null.
 
-<div class="note no-backref">
+<div class=note>
  <p>Exposing the <a for=response>URL list</a> for
  <a lt="opaque-redirect filtered response">opaque-redirect filtered responses</a> is harmless since
  no redirects are followed.
@@ -2370,6 +2380,8 @@ is a <a>filtered response</a> whose
  <p>This also means that JavaScript APIs, such as
  <a attribute for=Response lt=ok><code>response.ok</code></a>, will return rather useless results.
 </div>
+
+<hr>
 
 <p>To <dfn export for=response id=concept-response-clone>clone</dfn> a
 <a for=/>response</a> <var>response</var>, run these steps:
@@ -2389,6 +2401,8 @@ is a <a>filtered response</a> whose
 
  <li><p>Return <var>newResponse</var>.
 </ol>
+
+<hr>
 
 <p>A <dfn id=concept-fresh-response>fresh response</dfn> is a <a for=/>response</a> whose
 <a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.2.3>current age</a> is within its
@@ -4403,9 +4417,8 @@ steps:
    <li><p>Let <var>processBodyError</var> be this step: run <a>fetch response handover</a> given
    <var>fetchParams</var> and a <a>network error</a>.
 
-   <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>opaque</code>" or
-   <var>response</var>'s <a for=response>body</a> is null, then run <var>processBodyError</var> and
-   abort these steps.
+   <li><p>If <var>response</var>'s <a for=response>body</a> is null, then run
+   <var>processBodyError</var> and abort these steps.
 
    <li>
     <p>Let <var>processBody</var> given <var>bytes</var> be these steps:
