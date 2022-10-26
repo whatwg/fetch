@@ -7882,21 +7882,31 @@ method steps are:
   <ol>
    <li><p>Set <var>locallyAborted</var> to true.
 
-   <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>, <var>responseObject</var>,
-   and <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
+   <li><p><a for=/>Assert</a>: <var>controller</var> is non-null.
 
-   <li><p>If <var>controller</var> is not null, then <a for="fetch controller">abort</a>
-   <var>controller</var> with <var>requestObject</var>'s <a for=Request>signal</a>'s
+   <li><p><a for="fetch controller">Abort</a> <var>controller</var> with <var>requestObject</var>'s
+   <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
+
+   <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>,
+   <var>responseObject</var>, and <var>requestObject</var>'s <a for=Request>signal</a>'s
    <a for=AbortSignal>abort reason</a>.
+   <!-- ABORT-DUPLICATION
+        This step would ideally be skipped for HTTP(S) requests, except that currently the HTTP
+        cache integration with streams is not as good as it can be. Unfortunately we definitely need
+        to do this for about:blank and blob: & data: URLs.
+
+        The conceptual problem is that the underlying operation might not have been aborted by the
+        time JavaScript gets a signal. See also:
+        https://github.com/whatwg/dom/issues/1031#issuecomment-1233206400 -->
   </ol>
 
  <li>
   <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
   <var>request</var> and <a for=fetch><i>processResponse</i></a> given <var>response</var> being
-  these substeps:
+  these steps:
 
   <ol>
-   <li><p>If <var>locallyAborted</var> is true, terminate these substeps.
+   <li><p>If <var>locallyAborted</var> is true, then abort these steps.
 
    <li>
     <p>If <var>response</var>'s <a for=response>aborted flag</a> is set, then:
@@ -7908,10 +7918,12 @@ method steps are:
 
      <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>,
      <var>responseObject</var>, and <var>deserializedError</var>.
+
+     <li><p>Abort these steps.
     </ol>
 
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
-   with a {{TypeError}} and terminate these substeps.
+   with a {{TypeError}} and abort these steps.
 
    <li><p>Set <var>responseObject</var> to the result of <a for=Response>creating</a> a {{Response}}
    object, given <var>response</var>, "<code>immutable</code>", and <var>relevantRealm</var>.
@@ -7922,8 +7934,8 @@ method steps are:
  <li><p>Return <var>p</var>.
 </ol>
 
-<p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn> with a
-<var>promise</var>, <var>request</var>, <var>responseObject</var>, and an <var>error</var>, run these steps:
+<p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn>
+with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an <var>error</var>:
 
 <ol>
  <li>
@@ -7931,15 +7943,19 @@ method steps are:
 
   <p class=note>This is a no-op if <var>promise</var> has already fulfilled.
 
- <li><p>If <var>request</var>'s <a for=request>body</a> is not null and is
+ <li><p>If <var>request</var>'s <a for=request>body</a> is non-null and is
  <a for=ReadableStream>readable</a>, then <a for=ReadableStream>cancel</a> <var>request</var>'s
  <a for=request>body</a> with <var>error</var>.
 
  <li><p>If <var>responseObject</var> is null, then return.
+ <!-- ABORT-DUPLICATION
+      We might not need this and subsequent steps if we had better stream integration with the HTTP
+      cache. However, about:blank and blob: & data: URLs would probably still need this as they do
+      not have any cancelation logic. -->
 
  <li><p>Let <var>response</var> be <var>responseObject</var>'s <a for=Response>response</a>.
 
- <li><p>If <var>response</var>'s <a for=response>body</a> is not null and is
+ <li><p>If <var>response</var>'s <a for=response>body</a> is non-null and is
  <a for=ReadableStream>readable</a>, then <a for=ReadableStream>error</a> <var>response</var>'s
  <a for=response>body</a> with <var>error</var>.
 </ol>
