@@ -37,6 +37,9 @@ urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
 urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     url:realm;text:realm
     url:sec-list-and-record-specification-type;text:Record
+    url:sec-parsetext;text:ParseText
+    url:prod-Script;text:Script
+    url:script-record;text:Script Record
 </pre>
 
 <pre class=biblio>
@@ -1970,6 +1973,17 @@ Unless stated otherwise, it is false.
 
 <p class=note>This flag is for exclusive use by HTML's render-blocking mechanism. [[!HTML]]
 
+<p class=XXX>A <a for=/>request</a> has an associated
+<dfn export for=request>no-cors media request state</dfn> ...
+
+<p class=note>This is for exclusive use by the <a>opaque-response-safelist check</a>.
+
+<p>A <a for=/>request</a> has an associated
+<dfn for=request>no-cors JavaScript fallback encoding</dfn> (an <a for=/>encoding</a>). Unless
+stated otherwise, it is <a for=/>UTF-8</a>.
+
+<p class=note>This is for exclusive use by the <a>opaque-response-safelist check</a>.
+
 <hr>
 
 <p>A <a for=/>request</a> has an associated
@@ -3040,6 +3054,285 @@ run these steps:
 
  <li><p>Return <b>allowed</b>.
 </ol>
+
+
+<h3 id=orb>Opaque-response blocking</h3>
+
+<div class=note>
+ <p>Opaque-response blocking, also known as <abbr>ORB</abbr>, is a network filter that blocks access
+ to <a>opaque filtered responses</a>. These responses would likely would not have been useful to the
+ fetching party. Blocking them reduces information leakage to potential attackers.
+
+ <p>Essentially, CSS, JavaScript, images, and media (audio and video) can be requested across
+ origins without the <a>CORS protocol</a>. And unfortunately except for CSS there is no MIME type
+ enforcement. This algorithm aims to block as many responses as possible that are not one of these
+ types (or are newer variants of those types) to avoid leaking their contents through side channels.
+
+ <p>The network filter combines pro-active blocking based on response headers, sniffing a limited
+ set of bytes, and ultimately falls back to a full parse due to unfortunate (lack of) design
+ decisions in the early days of the web platform. As a result there are still quite a few responses
+ whose secrets can end up being revealed to attackers. Web developers are strongly encouraged to use
+ the `<code http-header>Cross-Origin-Resource-Policy</code>` response header to defend them.
+</div>
+
+
+<h4 id=orb-algorithm>The opaque-response-safelist check</h4>
+
+<p>The <dfn>opaque-response-safelist check</dfn>, given a <a for=/>request</a> <var>request</var>
+and a <a for=/>response</a> <var>response</var>, is to run these steps:
+
+<ol>
+ <li><p>Let <var>mimeType</var> be the result of <a>extracting a MIME type</a> from
+ <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>Let <var>nosniff</var> be the result of <a>determining nosniff</a> given
+ <var>response</var>'s <a for=response>header list</a>.
+
+ <li>
+  <p>If <var>mimeType</var> is not failure, then:
+
+  <ol>
+   <li><p>If <var>mimeType</var> is an <a>opaque-response-safelisted MIME type</a>, then return
+   true.
+
+   <li><p>If <var>mimeType</var> is an <a>opaque-response-blocklisted-never-sniffed MIME type</a>,
+   then return false.
+
+   <li><p>If <var>response</var>'s <a for=response>status</a> is 206 and <var>mimeType</var> is an
+   <a>opaque-response-blocklisted MIME type</a>, then return false.
+
+   <li><p>If <var>nosniff</var> is true and <var>mimeType</var> is an
+   <a>opaque-response-blocklisted MIME type</a> or its <a for="MIME type">essence</a> is
+   "<code>text/plain</code>", then return false.
+  </ol>
+
+ <li><p>If <var>request</var>'s <a for=request>no-cors media request state</a> is
+ "<code>subsequent</code>", then return true.
+
+ <li><p>If <var>response</var>'s <a for=response>status</a> is 206 and
+ <a>validate a partial response</a> given 0 and <var>response</var> returns invalid, then return
+ false.
+ <!-- TODO Integrate https://wicg.github.io/background-fetch/#validate-a-partial-response into Fetch -->
+
+ <li><p>Let <var>bytes</var> be the result of running
+ <a>obtain a copy of the first 1024 bytes of response</a> given <var>response</var>.
+
+ <li><p>If <var>bytes</var> is failure, then return false.
+
+ <li>
+  <p>If the <a>audio or video type pattern matching algorithm</a> given <var>bytes</var> does not
+  return undefined, then:
+
+  <ol>
+   <li><p>If <var>requests</var>'s <a for=request>no-cors media request state</a> is not
+   "<code>initial</code>", then return false.
+
+   <li><p>If <var>response</var>'s <a for=response>status</a> is not 200 or 206, then return false.
+
+   <li><p>Return true.
+  </ol>
+
+ <li><p>If <var>requests</var>'s <a for=request>no-cors media request state</a> is not
+ "<code>N/A</code>", then return false.
+
+ <li><p>If the <a>image type pattern matching algorithm</a> given <var>bytes</var> does not return
+ undefined, then return true.
+
+ <li>
+  <p>If <var>nosniff</var> is true, then return false.
+
+  <p class=note>This check is made late as unfortunately images and media are always sniffed.
+
+ <li><p>If <var>response</var>'s <a for=response>status</a> is not an <a>ok status</a>, then return
+ false.
+
+ <li>
+  <p>If <var>mimeType</var> is failure, then return true.
+
+  <p class=note>This could be improved at somewhat significant cost. See
+  <a href=https://github.com/annevk/orb/issues/28>annevk/orb #28</a>.
+
+ <li><p>If <var>mimeType</var>'s <a for="MIME type">essence</a> <a for=string>starts with</a>
+ "<code>audio/</code>", "<code>image/</code>", or "<code>video/</code>", then return false.
+
+ <li><p>Return <a>determine if response is JavaScript and not JSON</a> given <var>response</var>.
+</ol>
+
+<hr>
+
+<p>To <dfn>obtain a copy of the first 1024 bytes of response</dfn>, given a <a for=/>response</a>
+<var>response</var>, run these  steps:
+
+<ol>
+ <li><p>Let <var>first1024Bytes</var> be null.
+
+ <li>
+  <p><a for=/>In parallel</a>:
+
+  <ol>
+   <li><p>Let <var>bytes</var> be the empty <a for=/>byte sequence</a>.
+
+   <li><p>Let <var>transformStream</var> be a new {{TransformStream}}.
+
+   <li>
+    <p>Let <var>transformAlgorithm</var> given a <var>chunk</var> be these steps:
+
+    <ol>
+     <li><p><a for=ReadableStream>Enqueue</a> <var>chunk</var> in <var>transformStream</var>.
+
+     <li>
+      <p>If <var>first1024Bytes</var> is null, then:
+
+      <ol>
+       <li><p>Let <var>chunkBytes</var> be
+       <a lt="get a copy of the bytes held by the buffer source">a copy of the bytes held by</a>
+       <var>chunk</var>.
+
+       <li><p>Append <var>chunkBytes</var> to <var>bytes</var>.
+
+       <li>
+        <p>If <var>bytes</var>'s <a for="byte sequencue">length</a> is greater than 1024, then:
+
+        <ol>
+         <li><p>Truncate <var>bytes</var> from the end so that it only contains 1024 bytes.
+
+         <li><p>Set <var>first1024Bytes</var> to <var>bytes</var>.
+        </ol>
+      </ol>
+    </ol>
+
+   <li><p>Let <var>flushAlgorithm</var> be this step: if <var>first1024Bytes</var> is null, then set
+   <var>first1024Bytes</var> to <var>bytes</var>.
+
+   <li><p><a for=TransformStream>Set up</a> <var>transformStream</var> with
+   <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
+   <var>transformAlgorithm</var> and <a for="TransformStream/set up"><i>flushAlgorithm</i></a> set
+   to <var>flushAlgorithm</var>.
+
+   <li><p>Set <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> to the result
+   of <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a>
+   <a for=TransformStream>piped through</a> <var>transformStream</var>.
+  </ol>
+
+ <li><p>Wait until <var>first1024Bytes</var> is non-null or <var>response</var>'s
+ <a for=response>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>errored</a>.
+
+ <li><p>If <var>first1024Bytes</var> is null, then return failure.
+
+ <li>Return <var>first1024Bytes</var>.
+</ol>
+
+<hr>
+
+<p>To <dfn>determine if response is JavaScript and not JSON</dfn> given a <a for=/>response</a>
+<var>response</var>, run these steps:</p>
+
+<ol>
+ <li><p>Let <var>responseBodyBytes</var> be null.
+
+ <li>
+  <p>Let <var>processBody</var> given a <a for=/>byte sequence</a> <var>bytes</var> be these steps:
+
+  <ol>
+   <li><p>Set <var>responseBodyBytes</var> to <var>bytes</var>.
+
+   <li><p>Set <var>response</var>'s <a for=response>body</a> to the <a for="body with type">body</a>
+   of the result of <a for=BodyInit>safely extracting</a> <var>bytes</var>.
+  </ol>
+
+ <li><p>Let <var>processBodyError</var> be this step: set <var>responseBodyBytes</var> to failure.
+
+ <li><p><a>Fully read</a> <var>response</var>'s <a for=response>body</a> given <a>processBody</a>
+ and <var>processBodyError</var>.
+
+ <li><p>Wait for <var>responseBodyBytes</var> to be non-null.
+
+ <li><p>If <var>responseBodyBytes</var> is failure, then return false.
+
+ <li><p><a for=/>Assert</a>: <var>responseBodyBytes</var> is a <a for=/>byte sequence</a>.
+
+ <li>
+  <p>If <a>parse JSON bytes to a JavaScript value</a> given <var>responseBodyBytes</var> does not
+  throw, then return false. If it throws, catch the exception and ignore it.
+
+  <p class=note>If there is an exception, <var>response</var> is not JSON. If there is not, it is.
+
+ <li><p>Let <var>potentialMIMETypeForEncoding</var> be the result of <a>extracting a MIME type</a>
+ given <var>response</var>'s <a for=response>header list</a>.
+
+ <li>
+  <p>Let <var>encoding</var> be the result of <a>legacy extracting an encoding</a> given
+  <var>potentialMIMETypeForEncoding</var> and <var>request</var>'s
+  <a for=request>no-cors JavaScript fallback encoding</a>.
+
+  <p class=note>Equivalently to <a>fetch a classic script</a>, this ignores the
+  <a for="MIME type" lt=essence>MIME type essence</a>.
+
+ <li><p>Let <var>sourceText</var> be the result of <a for=/>decoding</a>
+ <var>responseBodyBytes</var> given <var>encoding</var>.
+
+ <li><p>If <a>ParseText</a>(<var>sourceText</var>, <a>Script</a>) returns a <a>Script Record</a>,
+ then return true.
+ <!-- Ideally HTML owns this so ECMAScript changes don't end up impacting Fetch. We could
+      potentially make this use "create a classic script" instead with some mock data. Maybe that is
+      better? -->
+
+ <li><p>Return false.
+</ol>
+
+
+<h4 id=orb-mime-type-sets>New MIME type sets</h4>
+
+<p class=note>The definitions in this section are solely for the purpose of abstracting parts of the
+<a>opaque-response-safelist check</a>. They are not suited for usage elsewhere.
+
+<p>An <dfn>opaque-response-safelisted MIME type</dfn> is a <a>JavaScript MIME type</a> or a
+<a for=/>MIME type</a> whose <a for="MIME type">essence</a> is "<code>text/css</code>" or
+"<code>image/svg+xml</code>".
+
+<p>An <dfn>opaque-response-blocklisted MIME type</dfn> is an <a>HTML MIME type</a>,
+<a>JSON MIME type</a>, or <a>XML MIME type</a>.
+
+<p>An <dfn>opaque-response-blocklisted-never-sniffed MIME type</dfn> is a <a for=/>MIME type</a>
+whose <a for="MIME type">essence</a> is one of:
+
+<ul class=brief>
+ <li>"<code>application/gzip</code>"
+ <li>"<code>application/msexcel</code>"
+ <li>"<code>application/mspowerpoint</code>"
+ <li>"<code>application/msword</code>"
+ <li>"<code>application/msword-template</code>"
+ <li>"<code>application/pdf</code>"
+ <li>"<code>application/vnd.ces-quickpoint</code>"
+ <li>"<code>application/vnd.ces-quicksheet</code>"
+ <li>"<code>application/vnd.ces-quickword</code>"
+ <li>"<code>application/vnd.ms-excel</code>"
+ <li>"<code>application/vnd.ms-excel.sheet.macroenabled.12</code>"
+ <li>"<code>application/vnd.ms-powerpoint</code>"
+ <li>"<code>application/vnd.ms-powerpoint.presentation.macroenabled.12</code>"
+ <li>"<code>application/vnd.ms-word</code>"
+ <li>"<code>application/vnd.ms-word.document.12</code>"
+ <li>"<code>application/vnd.ms-word.document.macroenabled.12</code>"
+ <li>"<code>application/vnd.msword</code>"
+ <li>"<code>application/vnd.openxmlformats-officedocument.presentationml.presentation</code>"
+ <li>"<code>application/vnd.openxmlformats-officedocument.presentationml.template</code>"
+ <li>"<code>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</code>"
+ <li>"<code>application/vnd.openxmlformats-officedocument.spreadsheetml.template</code>"
+ <li>"<code>application/vnd.openxmlformats-officedocument.wordprocessingml.document</code>"
+ <li>"<code>application/vnd.openxmlformats-officedocument.wordprocessingml.template</code>"
+ <li>"<code>application/vnd.presentation-openxml</code>"
+ <li>"<code>application/vnd.presentation-openxmlm</code>"
+ <li>"<code>application/vnd.spreadsheet-openxml</code>"
+ <li>"<code>application/vnd.wordprocessing-openxml</code>"
+ <li>"<code>application/x-gzip</code>"
+ <li>"<code>application/x-protobuf</code>"
+ <li>"<code>application/x-protobuffer</code>"
+ <li>"<code>application/zip</code>"
+ <li>"<code>multipart/byteranges</code>"
+ <li>"<code>multipart/signed</code>"
+ <li>"<code>text/event-stream</code>"
+ <li>"<code>text/csv</code>"
+</ul>
 
 
 
@@ -4846,18 +5139,22 @@ these steps:
    <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of running
    <a>HTTP-network-or-cache fetch</a> given <var>fetchParams</var>.
 
-   <li>
-    <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and a
-    <a>CORS check</a> for <var>request</var> and <var>response</var> returns failure, then return a
-    <a>network error</a>.
+   <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>opaque</code>",
+   <var>response</var>'s <a for=response>status</a> is not a <a>redirect status</a>, and the
+   <a>opaque-response-safelist check</a> given <var>request</var> and <var>response</var> returns
+   false, then return a <a>network error</a>.
 
-    <p class="note no-backref">As the <a>CORS check</a> is not to be applied to
-    <a for=/>responses</a> whose <a for=response>status</a> is 304 or 407, or <a for=/>responses</a>
-    from a service worker for that matter, it is applied here.
+   <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and
+   the <a>CORS check</a> for <var>request</var> and <var>response</var> returns failure, then return
+   a <a>network error</a>.
 
    <li><p>If the <a>TAO check</a> for <var>request</var> and <var>response</var> returns failure,
    then set <var>request</var>'s <a for=request>timing allow failed flag</a>.
   </ol>
+
+  <p class=note>As the <a>opaque-response-safelist check</a>, <a>CORS check</a>, and
+  <a>TAO check</a> are not to be applied to <a for=/>responses</a> whose <a for=response>status</a>
+  is 304 or 407, or to <a for=/>responses</a> from a service worker, they are applied here.
 
  <li>
   <p>If either <var>request</var>'s <a for=request>response tainting</a> or <var>response</var>'s
@@ -8421,6 +8718,7 @@ Mohamed Zergaoui,
 Mohammed Zubair Ahmed<!-- M-ZubairAhmed; GitHub -->,
 Moritz Kneilmann,
 Ms2ger,
+Nathan Froyd,
 Nico Schlömer,
 Nicolás Peña Moreno,
 Nidhi Jaju,
