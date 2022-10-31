@@ -1829,8 +1829,11 @@ not always relevant and might require different behavior.
 <hr>
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-priority>priority</dfn> (null or a
-user-agent-defined object). Unless otherwise stated it is null.
+<dfn export for=request>priority</dfn>, which is "<code>high</code>", "<code>low</code>", or
+"<code>auto</code>". Unless stated otherwise it is "<code>auto</code>".
+
+<p>A <a for=/>request</a> has an associated <dfn export for=request>internal priority</dfn> (null
+or an <a>implementation-defined</a> object). Unless otherwise stated it is null.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-origin>origin</dfn>, which is
@@ -4243,13 +4246,16 @@ the request.
  <a for=/>header value</a>) to <var>request</var>'s <a for=request>header list</a>.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>priority</a> is null, then use <var>request</var>'s
-  <a for=request>initiator</a>, <a for=request>destination</a>, and
-  <a for=request>render-blocking</a> appropriately in setting <var>request</var>'s
-  <a for=request>priority</a> to a user-agent-defined object.
+  <p>If <var>request</var>'s <a for=request>internal priority</a> is null, then use
+  <var>request</var>'s <a for=request>priority</a>, <a for=request>initiator</a>,
+  <a for=request>destination</a>, and <a for=request>render-blocking</a> appropriately in setting
+  <var>request</var>'s <a for=request>internal priority</a> to an <a>implementation-defined</a>
+  object.
 
-  <p class=note>The user-agent-defined object could encompass stream weight and dependency for
-  HTTP/2, and equivalent information used to prioritize dispatch and processing of HTTP/1 fetches.
+  <p class=note>The <a>implementation-defined</a> object could encompass stream weight and
+  dependency for HTTP/2, priorities used in <cite>Extensible Prioritization Scheme for HTTP</cite>
+  for transports where it applies (including HTTP/3), and equivalent information used to prioritize
+  dispatch and processing of HTTP/1 fetches. [[!RFC9218]]
 
  <li>
   <p>If <var>request</var> is a <a>subresource request</a>, then:
@@ -7009,6 +7015,7 @@ dictionary RequestInit {
   boolean keepalive;
   AbortSignal? signal;
   RequestDuplex duplex;
+  RequestPriority priority;
   any window; // can only be set to null
 };
 
@@ -7018,6 +7025,7 @@ enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum RequestRedirect { "follow", "error", "manual" };
 enum RequestDuplex { "half" };
+enum RequestPriority { "high", "low", "auto" };
 </pre>
 
 <p class="note no-backref">"<code>serviceworker</code>" is omitted from
@@ -7115,6 +7123,9 @@ object), initially null.
    set when {{RequestInit/body}} is a {{ReadableStream}} object. <span class=note>See
    <a href="https://github.com/whatwg/fetch/issues/1254">issue #1254</a> for defining
    "<code>full</code>".</span>
+
+   <dt>{{RequestInit/priority}}
+   <dd>A string to set <var>request</var>'s <a for=request>priority</a>.
   </dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
@@ -7299,8 +7310,8 @@ constructor steps are:
    <dt><a for=request>window</a>
    <dd><var>window</var>.
 
-   <dt><a for=request>priority</a>
-   <dd><var>request</var>'s <a for=request>priority</a>.
+   <dt><a for=request>internal priority</a>
+   <dd><var>request</var>'s <a for=request>internal priority</a>.
 
    <dt><a for=request>origin</a>
    <dd><var>request</var>'s <a for=request>origin</a>. <span class=note>The propagation of the
@@ -7462,6 +7473,17 @@ constructor steps are:
 
  <li><p>If <var>init</var>["{{RequestInit/signal}}"] <a for=map>exists</a>, then set
  <var>signal</var> to it.
+
+ <li>
+  <p>If <var>init</var>["{{RequestInit/priority}}"] <a for=map>exists</a>, then:
+
+  <ol>
+   <li><p>If <var>request</var>'s <a for=request>internal priority</a> is not null, then update
+   <var>request</var>'s <a for=request>internal priority</a> appropriately.
+
+   <li><p>Otherwise, set <var>request</var>'s <a for=request>priority</a> to
+   <var>init</var>["{{RequestInit/priority}}"].
+  </ol>
 
  <li><p>Set <a>this</a>'s <a for=Request>request</a> to <var>request</var>.
 
@@ -8545,6 +8567,7 @@ Odin Hørthe Omdal,
 Olli Pettay,
 Ondřej Žára,
 O. Opsec,
+Patrick Meenan,
 Perry Jiang<!-- perryjiang; Github -->,
 Philip Jägenstedt,
 R. Auburn,
