@@ -35,6 +35,7 @@ urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
     type:typedef;url:dom-domhighrestimestamp;text:DOMHighResTimeStamp
 
 urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
+    url:sec-agent-clusters;text:agent cluster
     url:realm;text:realm
     url:sec-list-and-record-specification-type;text:Record
 </pre>
@@ -1773,7 +1774,7 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-mode>mode</dfn>, which is
 "<code>same-origin</code>", "<code>cors</code>", "<code>no-cors</code>",
-"<code>navigate</code>", or "<code>websocket</code>". Unless stated otherwise, it is
+"<code>navigate</code>", "<code>unsafe-no-cors</code>" or "<code>websocket</code>". Unless stated otherwise, it is
 "<code>no-cors</code>".
 
 <div class="note no-backref">
@@ -1796,6 +1797,14 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
   <dt>"<code>navigate</code>"
   <dd>This is a special mode used only when <a>navigating</a> between documents.
 
+  <dt>"<code>unsafe-no-cors</code>"
+  <dd> This is an especially dangerous special mode. It is to be used by user agents to allow requests
+  not resticted to <a>CORS-safelisted methods</a> and <a>CORS-safelisted request-headers</a> and not
+  return an <a>opaque filtered response</a> on success while still bypassing the <a>CORS check</a>. This
+  is deliberately not exposed in the {{RequestMode}}. To mitigate potential accidental misuse an
+  "<code>unsafe-no-cors</code>" request must have a <a for="request">policy container</a> provided and must not have
+  a <a for="request">service-worker mode</a> of "<code>all</code>".
+
   <dt>"<code>websocket</code>"
   <dd>This is a special mode used only when
   <a spec=websockets lt="establish a WebSocket connection">establishing a WebSocket connection</a>.
@@ -1803,6 +1812,10 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
 
  <p>Even though the default <a for=/>request</a> <a for=request>mode</a> is "<code>no-cors</code>",
  standards are highly discouraged from using it for new features. It is rather unsafe.
+
+ <p class=warning> Using <a for=/>request</a> <a for=request>mode</a> "<code>unsafe-no-cors</code>"
+ is even more discouraged and unsafe than "<code>no-cors</code>". Any use of this mode must be in an
+ agent cluster associated with the user agent itself, not that of site content.
 </div>
 
 <p>A <a for=/>request</a> has an associated
@@ -1968,6 +1981,13 @@ Unless stated otherwise, it is false.
 Unless stated otherwise, it is false.
 
 <p class=note>This flag is for exclusive use by HTML's render-blocking mechanism. [[!HTML]]
+
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=concept-request-omit-origin-flag>omit origin flag</dfn>.
+Unless stated otherwise, it is unset.
+
+<p class=note>This flag is for exclusive use by a <a for=/>request</a> with <a>mode</a>
+"<code>unsafe-no-cors</code>" to omit the `<a http-header><code>Origin</code></a>` header.
 
 <hr>
 
@@ -3073,18 +3093,21 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
  <li><p>Let <var>serializedOrigin</var> be the result of <a>byte-serializing a request origin</a>
  with <var>request</var>.
 
- <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" or
- <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>", then
+ <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>", then
  <a for="header list">append</a> (`<code>Origin</code>`, <var>serializedOrigin</var>) to
  <var>request</var>'s <a for=request>header list</a>.
 
+ <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and
+ <var>request</var>'s <a for=request>omit origin flag</a> is not set, then
+ <a for="header list">append</a> (`<code>Origin</code>`, <var>serializedOrigin</var>) to
+ <var>request</var>'s <a for=request>header list</a>.
  <li>
   <p>Otherwise, if <var>request</var>'s <a for=request>method</a> is neither `<code>GET</code>` nor
-  `<code>HEAD</code>`, then:
+  `<code>HEAD</code>` and  <var>request</var>'s <a for=request>omit origin flag</a> is not set, then:
 
   <ol>
    <li>
-    <p>If <var>request</var>'s <a for=request>mode</a> is not "<code>cors</code>",
+    <p>If <var>request</var>'s <a for=request>mode</a> is not "<code>cors</code>" or "<code>unsafe-no-cors</code>",
     then switch on <var>request</var>'s <a for=request>referrer policy</a>:
 
     <dl class=switch>
@@ -3758,15 +3781,14 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
 </code></pre>
 
 <p>To perform a <dfn export>cross-origin resource policy check</dfn>, given an <a for=url>origin</a>
-<var>origin</var>, an <a for=/>environment settings object</a> <var>settingsObject</var>, a string
+<var>origin</var>, an <a for=/>policy container</a> <var>policyContainer</var>, a string
 <var>destination</var>, a <a for=/>response</a> <var>response</var>, and an optional boolean
 <var>forNavigation</var>, run these steps:
 
 <ol>
  <li><p>Set <var>forNavigation</var> to false if it is not given.
 
- <li><p>Let <var>embedderPolicy</var> be <var>settingsObject</var>'s
- <a for="environment settings object">policy container</a>'s
+ <li><p>Let <var>embedderPolicy</var> be <var>policyContainer</var>'s
  <a for="policy container">embedder policy</a>.
 
  <li>
@@ -4051,7 +4073,7 @@ the request.
    <a>HTTP(S) scheme</a>
 
    <li><p><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>",
-   "<code>cors</code>", or "<code>no-cors</code>"
+   "<code>cors</code>", "<code>unsafe-no-cors</code>", or "<code>no-cors</code>"
 
    <li><p><var>request</var>'s <a for=request>window</a> is not null
 
@@ -4093,6 +4115,9 @@ the request.
    <var>request</var>'s <a for=request>policy container</a> to a
    <a lt="clone a policy container">clone</a> of <var>request</var>'s <a for=request>client</a>'s
    <a for="environment settings object">policy container</a>. [[!HTML]]
+
+  <li><p><a for=/>Assert</a>: <var>request</var>'s <a for="request">mode</a> is not
+  "<code>unsafe-no-cors</code>".
 
    <li><p>Otherwise, set <var>request</var>'s <a for=request>policy container</a> to a new
    <a for=/>policy container</a>.
@@ -4172,6 +4197,10 @@ steps:
 
  <li><p>If <var>request</var>'s <a>local-URLs-only flag</a> is set and <var>request</var>'s
  <a for=request>current URL</a> is not <a lt="is local">local</a>, then set <var>response</var> to a
+ <a>network error</a>.
+
+ <li><p>If <var>request</var>'s <a>omit origin flag</a> is set and <var>request</var>'s
+ <a for=request>mode</a> is not "<code>unsafe-no-cors</code>" then set <var>response</var> to a
  <a>network error</a>.
 
  <li><p>Run <a>report Content Security Policy violations for <var>request</var></a>.
@@ -4717,6 +4746,8 @@ these steps:
   <p>If <var>request</var>'s <a>service-workers mode</a> is "<code>all</code>", then:
 
   <ol>
+   <li><p>Assert: <var>request</var>'s <a for="request">mode</a> is not "<code>unsafe-no-cors</code>".
+
    <li><p>Let <var>requestForServiceWorker</var> be a <a for=request>clone</a> of
    <var>request</var>.
 
@@ -4788,6 +4819,8 @@ these steps:
        <li><p><var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>" and
        <var>response</var>'s <a for=response>type</a> is "<code>opaque</code>"
 
+       <li><p><var>request</var>'s <a for=request>mode</a> is "<code>unsafe-no-cors</code>"
+
        <li><var>request</var>'s <a for=request>redirect mode</a> is not "<code>manual</code>" and
        <var>response</var>'s <a for=response>type</a> is "<code>opaqueredirect</code>"
 
@@ -4846,7 +4879,8 @@ these steps:
    <a>HTTP-network-or-cache fetch</a> given <var>fetchParams</var>.
 
    <li>
-    <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and a
+    <p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>",
+    <var>request</var>'s <a>mode</a> is not "<code>unsafe-no-cors</code>", and a
     <a>CORS check</a> for <var>request</var> and <var>response</var> returns failure, then return a
     <a>network error</a>.
 
@@ -4862,7 +4896,7 @@ these steps:
   <p>If either <var>request</var>'s <a for=request>response tainting</a> or <var>response</var>'s
   <a for=response>type</a> is "<code>opaque</code>", and the
   <a>cross-origin resource policy check</a> with <var>request</var>'s <a for=request>origin</a>,
-  <var>request</var>'s <a for=request>client</a>, <var>request</var>'s
+  <var>request</var>'s <a for=request>policy container</a>, <var>request</var>'s
   <a for=request>destination</a>, and <var>actualResponse</var> returns <b>blocked</b>, then return
   a <a>network error</a>.
 
@@ -4940,7 +4974,7 @@ run these steps:
  <li><p>Increase <var>request</var>'s
  <a for=request>redirect count</a> by one.
 
- <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>cors</code>",
+ <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>cors</code>" or "<code>unsafe-no-cors</code>",
  <var>locationURL</var> <a>includes credentials</a>, and <var>request</var>'s
  <a for=request>origin</a> is not <a>same origin</a> with <var>locationURL</var>'s
  <a for=url>origin</a>, then return a <a>network error</a>.
@@ -8303,6 +8337,7 @@ Axel Rauschmayer,
 Ben Kelly,
 Benjamin Gruenbaum,
 Benjamin Hawkes-Lewis,
+Benjamin VanderSloot,
 Bert Bos,
 Björn Höhrmann,
 Boris Zbarsky,
