@@ -1,32 +1,14 @@
-This repository hosts the [Fetch Standard](https://fetch.spec.whatwg.org/).
+This repository hosts the WinterCG fork of the [WHATWG Fetch Standard](https://fetch.spec.whatwg.org/).
 
-## Code of conduct
+## [Code of conduct](https://github.com/wintercg/admin/blob/main/CODE_OF_CONDUCT.md)
 
-We are committed to providing a friendly, safe, and welcoming environment for all. Please read and
-respect the [WHATWG Code of Conduct](https://whatwg.org/code-of-conduct).
+## [Contributing Guidelines](https://github.com/wintercg/admin/blob/main/CONTRIBUTING.md)
 
-## Contribution opportunities
-
-Folks notice minor and larger issues with the Fetch Standard all the time and we'd love your help
-fixing those. Pull requests for typographical and grammar errors are also most welcome.
-
-We'd be happy to mentor you through this process. If you're interested and need help getting
-started, leave a comment on the issue or ask around [on IRC](https://whatwg.org/irc).
-
-## Pull requests
-
-In short, change `fetch.bs` and submit your patch, with a
-[good commit message](https://github.com/whatwg/meta/blob/main/COMMITTING.md). Consider
-reading through the [WHATWG FAQ](https://whatwg.org/faq) if you are new here.
-
-Please add your name to the Acknowledgments section in your first pull request, even for trivial
-fixes. The names are sorted lexicographically.
+## [License](https://github.com/wintercg/admin/blob/main/LICENSE.md)
 
 ## Building "locally"
 
 For quick local iteration, run `make`. To verify your changes locally, run `make deploy`. See more
-in the
-[WHATWG Contributor Guidelines](https://github.com/whatwg/meta/blob/main/CONTRIBUTING.md#building).
 
 ## Formatting
 
@@ -113,12 +95,9 @@ etc.
 <p>Let <var>redirectMode</var> be <var>request</var>'s <a for=request>redirect mode</a>.
 ```
 
-## Merge policy
-
-If you can commit to this repository, see the
-[maintainer guidelines](https://github.com/whatwg/meta/blob/main/MAINTAINERS.md).
-
 ## Tests
 
-Tests can be found in the `fetch/` directory of
+Tests for WHATWG Fetch can be found in the `fetch/` directory of
 [web-platform-tests/wpt](https://github.com/web-platform-tests/wpt).
+
+Tests for WinterCG Fetch have not been created yet.
