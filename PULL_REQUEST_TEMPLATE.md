@@ -3,8 +3,8 @@ Thank you for contributing to the Fetch Standard! Please describe the change you
 -->
 
 - [ ] At least two implementers are interested (and none opposed):
-   * …
-   * …
+   * … Update CSP destinations to CSP Level 3
+   * … Change 'style-src' to 'style-src-elem'
 - [ ] [Tests](https://github.com/web-platform-tests/wpt) are written and can be reviewed and commented upon at:
    * …
 - [ ] [Implementation bugs](https://github.com/whatwg/meta/blob/main/MAINTAINERS.md#handling-pull-requests) are filed:
