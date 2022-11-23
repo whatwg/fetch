@@ -621,70 +621,18 @@ a <a for=/>header name</a> <var>name</var> from <a for=/>header list</a> <var>li
 steps:
 
 <ol>
- <li><p>Let <var>initialValue</var> be the result of <a for="header list">getting</a>
- <var>name</var> from <var>list</var>.
+ <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var> from
+ <var>list</var>.
 
- <li><p>If <var>initialValue</var> is null, then return null.
+ <li><p>If <var>value</var> is null, then return null.
 
- <li><p>Let <var>input</var> be the result of <a>isomorphic decoding</a> <var>initialValue</var>.
-
- <li><p>Let <var>position</var> be a <a for=string>position variable</a> for <var>input</var>,
- initially pointing at the start of <var>input</var>.
-
- <li><p>Let <var>values</var> be a <a for=/>list</a> of <a for=/>strings</a>, initially empty.
-
- <li><p>Let <var>value</var> be the empty string.
-
- <li>
-  <p>While <var>position</var> is not past the end of <var>input</var>:
-
-  <ol>
-   <li>
-    <p>Append the result of <a>collecting a sequence of code points</a> that are not U+0022 (") or
-    U+002C (,) from <var>input</var>, given <var>position</var>, to <var>value</var>.
-
-    <p class=note>The result might be the empty string.
-
-   <li>
-    <p>If <var>position</var> is not past the end of <var>input</var>, then:
-
-    <ol>
-     <li>
-      <p>If the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
-      U+0022 ("), then:
-
-      <ol>
-       <li><p>Append the result of <a>collecting an HTTP quoted string</a> from <var>input</var>,
-       given <var>position</var>, to <var>value</var>.
-
-       <li>If <var>position</var> is not past the end of <var>input</var>, then
-       <a for=iteration>continue</a>.
-      </ol>
-
-     <li>
-      <p>Otherwise:
-
-      <ol>
-       <li><p>Assert: the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
-       U+002C (,).
-
-       <li><p>Advance <var>position</var> by 1.
-      </ol>
-    </ol>
-
-   <li><p>Remove all <a>HTTP tab or space</a> from the start and end of <var>value</var>.
-
-   <li><p><a for=list>Append</a> <var>value</var> to <var>values</var>.
-
-   <li><p>Set <var>value</var> to the empty string.
-  </ol>
-
- <li><p>Return <var>values</var>.
+ <li><p>Return the result of <a for="header value">getting, decoding, and splitting</a>
+ <var>value</var>.
 </ol>
 
 <div class=example id=example-header-list-get-decode-split>
- <p>This is how <a>get, decode, and split</a> functions in practice with `<code>A</code>` as the
- <var>name</var> argument:
+ <p>This is how <a for="header list">get, decode, and split</a> functions in practice with
+ `<code>A</code>` as the <var>name</var> argument:
 
  <table>
   <tr>
@@ -754,6 +702,70 @@ A: 3
 </code></pre>
  </table>
 </div>
+
+<p>To
+<dfn for="header value" lt="get, decode, and split|getting, decoding, and splitting">get, decode, and split</dfn>
+a <a for=/>header value</a> <var>value</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>input</var> be the result of <a>isomorphic decoding</a> <var>value</var>.
+
+ <li><p>Let <var>position</var> be a <a for=string>position variable</a> for <var>input</var>,
+ initially pointing at the start of <var>input</var>.
+
+ <li><p>Let <var>values</var> be a <a for=/>list</a> of <a for=/>strings</a>, initially empty.
+
+ <li><p>Let <var>temporaryValue</var> be the empty string.
+
+ <li>
+  <p>While <var>position</var> is not past the end of <var>input</var>:
+
+  <ol>
+   <li>
+    <p>Append the result of <a>collecting a sequence of code points</a> that are not U+0022 (") or
+    U+002C (,) from <var>input</var>, given <var>position</var>, to <var>temporaryValue</var>.
+
+    <p class=note>The result might be the empty string.
+
+   <li>
+    <p>If <var>position</var> is not past the end of <var>input</var>, then:
+
+    <ol>
+     <li>
+      <p>If the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
+      U+0022 ("), then:
+
+      <ol>
+       <li><p>Append the result of <a>collecting an HTTP quoted string</a> from <var>input</var>,
+       given <var>position</var>, to <var>temporaryValue</var>.
+
+       <li>If <var>position</var> is not past the end of <var>input</var>, then
+       <a for=iteration>continue</a>.
+      </ol>
+
+     <li>
+      <p>Otherwise:
+
+      <ol>
+       <li><p>Assert: the <a for=/>code point</a> at <var>position</var> within <var>input</var> is
+       U+002C (,).
+
+       <li><p>Advance <var>position</var> by 1.
+      </ol>
+    </ol>
+
+   <li><p>Remove all <a>HTTP tab or space</a> from the start and end of <var>temporaryValue</var>.
+
+   <li><p><a for=list>Append</a> <var>temporaryValue</var> to <var>values</var>.
+
+   <li><p>Set <var>temporaryValue</var> to the empty string.
+  </ol>
+
+ <li><p>Return <var>values</var>.
+</ol>
+
+<p class=note>Except for blessed call sites, the algorithm directly above is not to be invoked
+directly. Use <a for="header list">get, decode, and split</a> instead.
 
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a <a for=/>header</a>
 (<var>name</var>, <var>value</var>) to a <a for=/>header list</a> <var>list</var>, run these steps:
@@ -1054,35 +1066,63 @@ is a <a>byte-case-insensitive</a> match for one of
  <a>CORS-safelisted request-header</a>.
 </ol>
 
-<p>A <dfn export>forbidden header name</dfn> is a <a for=/>header name</a> that is a
-<a>byte-case-insensitive</a> match for one of
+<p id=forbidden-header-name>A <a for=/>header</a> (<var>name</var>, <var>value</var>) is
+<dfn export>forbidden request-header</dfn> if these steps return true:
 
-<ul class=brief>
- <li>`<code>Accept-Charset</code>`
- <li>`<code>Accept-Encoding</code>`
- <li>`<a http-header><code>Access-Control-Request-Headers</code></a>`
- <li>`<a http-header><code>Access-Control-Request-Method</code></a>`
- <li>`<code>Connection</code>`
- <li>`<code>Content-Length</code>`
- <li>`<code>Cookie</code>`
- <li>`<code>Cookie2</code>`
- <li>`<code>Date</code>`
- <li>`<code>DNT</code>`
- <li>`<code>Expect</code>`
- <li>`<code>Host</code>`
- <li>`<code>Keep-Alive</code>`
- <li>`<a http-header><code>Origin</code></a>`
- <li>`<code>Referer</code>`
- <li>`<code>Set-Cookie</code>`
- <li>`<code>TE</code>`
- <li>`<code>Trailer</code>`
- <li>`<code>Transfer-Encoding</code>`
- <li>`<code>Upgrade</code>`
- <li>`<code>Via</code>`
-</ul>
+<ol>
+ <li>
+  <p>If <var>name</var> is a <a>byte-case-insensitive</a> match for one of:
 
-<p>or a <a for=/>header name</a> that when <a>byte-lowercased</a>
-<a for="byte sequence">starts with</a> `<code>proxy-</code>` or `<code>sec-</code>`.
+  <ul class=brief>
+   <li>`<code>Accept-Charset</code>`
+   <li>`<code>Accept-Encoding</code>`
+   <li>`<a http-header><code>Access-Control-Request-Headers</code></a>`
+   <li>`<a http-header><code>Access-Control-Request-Method</code></a>`
+   <li>`<code>Connection</code>`
+   <li>`<code>Content-Length</code>`
+   <li>`<code>Cookie</code>`
+   <li>`<code>Cookie2</code>`
+   <li>`<code>Date</code>`
+   <li>`<code>DNT</code>`
+   <li>`<code>Expect</code>`
+   <li>`<code>Host</code>`
+   <li>`<code>Keep-Alive</code>`
+   <li>`<a http-header><code>Origin</code></a>`
+   <li>`<code>Referer</code>`
+   <li>`<code>Set-Cookie</code>`
+   <li>`<code>TE</code>`
+   <li>`<code>Trailer</code>`
+   <li>`<code>Transfer-Encoding</code>`
+   <li>`<code>Upgrade</code>`
+   <li>`<code>Via</code>`
+  </ul>
+
+  <p>then return true.
+
+ <li><p>If <var>name</var> when <a>byte-lowercased</a> <a for="byte sequence">starts with</a>
+ `<code>proxy-</code>` or `<code>sec-</code>`, then return true.
+
+ <li>
+  <p>If <var>name</var> is a <a>byte-case-insensitive</a> match for one of:
+
+  <ul class=brief>
+   <li>`<code>X-HTTP-Method</code>`
+   <li>`<code>X-HTTP-Method-Override</code>`
+   <li>`<code>X-Method-Override</code>`
+  </ul>
+
+  <p>then:
+
+  <ol>
+   <li><p>Let <var>parsedValues</var> be the result of
+   <a for="header value">getting, decoding, and splitting</a> <var>value</var>.
+
+   <li><p><a for=list>For each</a> <var>method</var> in <var>parsedValues</var>: if the
+   <a>isomorphic encoding</a> of <var>method</var> is a <a>forbidden method</a>, then return true.
+  </ol>
+
+ <li><p>Return false.
+</ol>
 
 <div class=note>
  <p>These are forbidden so the user agent remains in full control over them.
@@ -1438,7 +1478,7 @@ is unset.
 <p class="note no-backref">The <a>unsafe-request flag</a> is set by APIs such as
 <a method><code>fetch()</code></a>  and {{XMLHttpRequest}} to ensure a <a>CORS-preflight fetch</a>
 is done based on the supplied <a for=request>method</a> and <a for=request>header list</a>. It does
-not free an API from outlawing <a>forbidden methods</a> and <a>forbidden header names</a>.
+not free an API from outlawing <a>forbidden methods</a> and <a>forbidden request-headers</a>.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-body>body</dfn> (null, a <a for=/>byte sequence</a>, or a
@@ -6369,7 +6409,7 @@ new Headers(meta2);
  <a>throw</a> a {{TypeError}}.
 
  <li><p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>request</code>" and
- <var>name</var> is a <a>forbidden header name</a>, return.
+ (<var>name</var>, <var>value</var>) is a <a>forbidden request-header</a>, return.
 
  <li>
   <p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>":
@@ -6395,7 +6435,7 @@ new Headers(meta2);
  <a for=Headers>header list</a>.
 
  <li><p>If <var>headers</var>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
- <a for=Headers>remove privileged no-CORS request headers</a> from <var>headers</var>.
+ <a for=Headers>remove privileged no-CORS request-headers</a> from <var>headers</var>.
 </ol>
 
 <p>To <dfn export for=Headers id=concept-headers-fill>fill</dfn> a {{Headers}} object
@@ -6420,7 +6460,7 @@ new Headers(meta2);
 </ol>
 
 <p>To
-<dfn for=Headers id=concept-headers-remove-privileged-no-cors-request-headers>remove privileged no-CORS request headers</dfn>
+<dfn for=Headers id=concept-headers-remove-privileged-no-cors-request-headers>remove privileged no-CORS request-headers</dfn>
 from a {{Headers}} object (<var>headers</var>), run these steps:
 
 <ol>
@@ -6456,8 +6496,12 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>immutable</code>", then <a>throw</a> a
  {{TypeError}}.
 
- <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request</code>" and
- <var>name</var> is a <a>forbidden header name</a>, return.
+ <li>
+  <p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request</code>" and
+  (<var>name</var>, ``) is a <a>forbidden request-header</a>, return.
+
+  <p class=note>Passing a dummy <a>header value</a> to <a>forbidden request-header</a> ought not to
+  have any negative repercussions.
 
  <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>",
  <var>name</var> is not a <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not
@@ -6473,7 +6517,7 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <a for=Headers>header list</a>.
 
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
- <a for=Headers>remove privileged no-CORS request headers</a> from <a>this</a>.
+ <a for=Headers>remove privileged no-CORS request-headers</a> from <a>this</a>.
 </ol>
 
 <p>The <dfn export for=Headers method><code>get(<var>name</var>)</code></dfn> method steps are:
@@ -6507,7 +6551,7 @@ method steps are:
  {{TypeError}}.
 
  <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request</code>" and
- <var>name</var> is a <a>forbidden header name</a>, return.
+ (<var>name</var>, <var>value</var>) is a <a>forbidden request-header</a>, return.
 
  <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
  (<var>name</var>, <var>value</var>) is not a <a>no-CORS-safelisted request-header</a>, return.
@@ -6519,7 +6563,7 @@ method steps are:
  <a for=Headers>header list</a>.
 
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
- <a for=Headers>remove privileged no-CORS request headers</a> from <a>this</a>.
+ <a for=Headers>remove privileged no-CORS request-headers</a> from <a>this</a>.
 </ol>
 
 <p>The <a>value pairs to iterate over</a> are the return value of running
@@ -8089,20 +8133,15 @@ that RFC's normative processing requirements to be compatible with deployed cont
 
 <h3 id=http-header-layer-division dfn class=no-num>HTTP header layer division</h3>
 
-<p>For the purposes of fetching, there is an API layer (HTML's
-<code>img</code>, CSS' <code>background-image</code>), early fetch layer,
-service worker layer, and network &amp; cache layer.
-`<code>Accept</code>` and
-`<code>Accept-Language</code>` are set in the early fetch layer
+<p>For the purposes of fetching, there is an API layer (HTML's <code>img</code>, CSS's
+<code>background-image</code>), early fetch layer, service worker layer, and network &amp; cache
+layer. `<code>Accept</code>` and `<code>Accept-Language</code>` are set in the early fetch layer
 (typically by the user agent). Most other headers controlled by the user agent, such as
-`<code>Accept-Encoding</code>`,
-`<code>Host</code>`, and `<code>Referer</code>`, are
-set in the network &amp; cache layer. Developers can set headers either at the API layer
-or in the service worker layer (typically through a {{Request}} object).
-Developers have almost no control over
-<a lt="forbidden header name">forbidden headers</a>, but can control
-`<code>Accept</code>` and have the means to constrain and omit
-`<code>Referer</code>` for instance.
+`<code>Accept-Encoding</code>`, `<code>Host</code>`, and `<code>Referer</code>`, are set in the
+network &amp; cache layer. Developers can set headers either at the API layer or in the service
+worker layer (typically through a {{Request}} object). Developers have almost no control over
+<a>forbidden request-headers</a>, but can control `<code>Accept</code>` and have the means to
+constrain and omit `<code>Referer</code>` for instance.
 
 
 <h3 id=atomic-http-redirect-handling dfn class=no-num>Atomic HTTP redirect handling</h3>
@@ -8404,6 +8443,7 @@ Marijn Kruisselbrink,
 Mark Nottingham,
 Mark S. Miller,
 Martin Dürst,
+Martin O'Neal<!-- dramatic-bishop; GitHub -->,
 Martin Thomson,
 Matt Andrews,
 Matt Falkenhagen,
