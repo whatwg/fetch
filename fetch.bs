@@ -6404,23 +6404,39 @@ new Headers(meta2);
 
 <hr>
 
-<p>To <dfn export for=Headers id=concept-headers-append>append</dfn> a <a for=/>header</a>
-(<var>name</var>, <var>value</var>) to a {{Headers}} object <var>headers</var>, run these steps:
+<p>To <dfn for=Headers>validate</dfn> a  <a for=/>header</a> (<var>name</var>, <var>value</var>) for
+a {{Headers}} object <var>headers</var>:
 
 <ol>
- <li><p><a for="header value">Normalize</a> <var>value</var>.
-
  <li><p>If <var>name</var> is not a <a for=/>header name</a> or <var>value</var> is not a
  <a for=/>header value</a>, then <a>throw</a> a {{TypeError}}.
 
  <li><p>If <var>headers</var>'s <a for=Headers>guard</a> is "<code>immutable</code>", then
  <a>throw</a> a {{TypeError}}.
 
- <li><p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>request</code>" and
- (<var>name</var>, <var>value</var>) is a <a>forbidden request-header</a>, return.
+ <li><p>If <var>headers</var>'s <a for=Headers>guard</a> is "<code>request</code>" and
+ (<var>name</var>, <var>value</var>) is a <a>forbidden request-header</a>, then return false.
+
+ <li><p>If <var>headers</var>'s <a for=Headers>guard</a> is "<code>response</code>" and
+ <var>name</var> is a <a>forbidden response-header name</a>, then return false.
+
+ <li><p>Return true.
+</ol>
+
+<p class=note>Steps for "<code>request-no-cors</code>" are not shared as you cannot have a fake
+value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted request-header</a>.
+
+<p>To <dfn export for=Headers id=concept-headers-append>append</dfn> a <a for=/>header</a>
+(<var>name</var>, <var>value</var>) to a {{Headers}} object <var>headers</var>, run these steps:
+
+<ol>
+ <li><p><a for="header value">Normalize</a> <var>value</var>.
+
+ <li><p>If <a for=Headers>validating</a> (<var>name</var>, <var>value</var>) for <var>headers</var>
+ returns false, then return.
 
  <li>
-  <p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>":
+  <p>If <var>headers</var>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>":
 
   <ol>
    <li><p>Let <var>temporaryValue</var> be the result of <a for="header list">getting</a>
@@ -6435,9 +6451,6 @@ new Headers(meta2);
    <li><p>If (<var>name</var>, <var>temporaryValue</var>) is not a
    <a>no-CORS-safelisted request-header</a>, then return.
   </ol>
-
- <li><p>Otherwise, if <var>headers</var>'s <a for=Headers>guard</a> is "<code>response</code>" and
- <var>name</var> is a <a>forbidden response-header name</a>, return.
 
  <li><p><a for="header list">Append</a> (<var>name</var>, <var>value</var>) to <var>headers</var>'s
  <a for=Headers>header list</a>.
@@ -6498,27 +6511,19 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
 <p>The <dfn export for=Headers method><code>delete(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
- <li><p>If <var>name</var> is not a <a for=/>header name</a>, then <a>throw</a> a {{TypeError}}.
-
- <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>immutable</code>", then <a>throw</a> a
- {{TypeError}}.
-
  <li>
-  <p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request</code>" and
-  (<var>name</var>, ``) is a <a>forbidden request-header</a>, return.
+  <p>If <a for=Headers>validating</a> (<var>name</var>, ``) for <var>headers</var> returns false,
+  then return.
 
-  <p class=note>Passing a dummy <a>header value</a> to <a>forbidden request-header</a> ought not to
-  have any negative repercussions.
+  <p class=note>Passing a dummy <a>header value</a> ought not to have any negative repercussions.
 
- <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>",
- <var>name</var> is not a <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not
- a <a>privileged no-CORS request-header name</a>, return.
-
- <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>response</code>" and
- <var>name</var> is a <a>forbidden response-header name</a>, return.
+ <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", <var>name</var>
+ is not a <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not a
+ <a>privileged no-CORS request-header name</a>, then return.
 
  <li><p>If <a>this</a>'s <a for=Headers>header list</a> <a for="header list">does not contain</a>
  <var>name</var>, then return.
+ <!-- This is intentional to avoid hitting the last step. -->
 
  <li><p><a for="header list">Delete</a> <var>name</var> from <a>this</a>'s
  <a for=Headers>header list</a>.
@@ -6551,20 +6556,11 @@ method steps are:
 <ol>
  <li><p><a for="header value">Normalize</a> <var>value</var>.
 
- <li><p>If <var>name</var> is not a <a for=/>header name</a> or <var>value</var> is not a
- <a for=/>header value</a>, then <a>throw</a> a {{TypeError}}.
+ <li><p>If <a for=Headers>validating</a> (<var>name</var>, <var>value</var>) for <var>headers</var>
+ returns false, then return.
 
- <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>immutable</code>", then <a>throw</a> a
- {{TypeError}}.
-
- <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request</code>" and
- (<var>name</var>, <var>value</var>) is a <a>forbidden request-header</a>, return.
-
- <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
- (<var>name</var>, <var>value</var>) is not a <a>no-CORS-safelisted request-header</a>, return.
-
- <li><p>Otherwise, if <a>this</a>'s <a for=Headers>guard</a> is "<code>response</code>" and
- <var>name</var> is a <a>forbidden response-header name</a>, return.
+ <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
+ (<var>name</var>, <var>value</var>) is not a <a>no-CORS-safelisted request-header</a>, then return.
 
  <li><p><a for="header list">Set</a> (<var>name</var>, <var>value</var>) in <a>this</a>'s
  <a for=Headers>header list</a>.
