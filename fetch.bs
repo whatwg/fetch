@@ -35,8 +35,6 @@ urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
     type:typedef;url:dom-domhighrestimestamp;text:DOMHighResTimeStamp
 
 urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
-    url:sec-agent-clusters;text:agent cluster
-    url:host-environment;text:host environment
     url:realm;text:realm
     url:sec-list-and-record-specification-type;text:Record
 </pre>
@@ -1804,17 +1802,18 @@ Unless stated otherwise, it is "<code>no-cors</code>".
 
   <dt>"<code>unsafe-no-cors</code>"
   <dd>This is a special mode for the [=user agent=] to use internally to wittingly make
-  requests that are unsafe. It restricts requests to using <a>CORS-safelisted methods</a> and
-  <a>CORS-safelisted request-headers</a> and a request with this mode cannot use
+  requests that are unsafe. It restricts a <a for=/>request</a> to using <a>CORS-safelisted methods</a>,
+  <a>CORS-safelisted request-headers</a>, and the <a for=/>request</a> must have a <a>parallel queue</a>
+  <a for="fetch params">task destination</a>. A <a for=/>request</a> with this mode cannot use
   <a>service-workers mode</a> "<code>all</code>". However, the request will not be required to
   pass a <a>cross-origin resource policy check</a> or to test if
   <a>Cross-Origin-Embedder-Policy allows credentials</a>. Upon success a fetch will
   return a <a>cors filtered response</a>.
 
   <p class=warning> Using <a for=/>request</a> <a for=request>mode</a> "<code>unsafe-no-cors</code>"
-  is even more discouraged and unsafe than "<code>no-cors</code>". Any use of this mode must be in an
-  <a>agent cluster</a> associated with the <a>host environment</a> itself to isolate its results from
-  misuse. This <a for=request>mode</a> is deliberately not exposed in the {{RequestMode}}.
+  is even more discouraged and unsafe than "<code>no-cors</code>". Any use of this mode must be
+  memory-isolated to the [=user agent=] to contain its results and prevent their disclosure or misuse.
+  This <a for=request>mode</a> is deliberately not exposed in the {{RequestMode}}.
 
   <dt>"<code>websocket</code>"
   <dd>This is a special mode used only when
@@ -4002,6 +4001,10 @@ the request.
  <li>
   <p><a for=/>Assert</a>: <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>" or
   <var>processEarlyHintsResponse</var> is null.
+
+  <p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>mode</a> is
+  "<code>unsafe-no-cors</code>": <a for=/>assert</a>: <var>fetchParams</var>'s
+  <a for="fetch params">task destination</a> is a <a for=/>parallel queue</a>.
 
   <p class=note>Processing of early hints (<a for=/>responses</a> whose <a for=response>status</a>
   is 103) is only vetted for navigations.
