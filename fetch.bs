@@ -1808,7 +1808,7 @@ Unless stated otherwise, it is "<code>no-cors</code>".
   <a>service-workers mode</a> "<code>all</code>". However, the request will not be required to
   pass a <a>cross-origin resource policy check</a> or to test if
   <a>Cross-Origin-Embedder-Policy allows credentials</a>. Upon success a fetch will
-  return a <a>cors filtered response</a>.
+  return a <a>basic filtered response</a>.
 
   <p class=warning> Using <a for=/>request</a> <a for=request>mode</a> "<code>unsafe-no-cors</code>"
   is even more discouraged and unsafe than "<code>no-cors</code>". Any use of this mode must be
@@ -1825,6 +1825,12 @@ Unless stated otherwise, it is "<code>no-cors</code>".
 
 
 </div>
+
+<p>A <a for=/>request</a> has an associated
+<dfn for=request>omit origin flag</dfn>. Unless stated otherwise it is unset.
+
+<p class="note no-backref">The <a for=request>omit origin flag</a> only has effect when
+<a for=/>request</a>'s <a for=request>mode</a> is "<code>unsafe-no-cors</code>".
 
 <p>A <a for=/>request</a> has an associated
 <dfn id=use-cors-preflight-flag export for=request>use-CORS-preflight flag</dfn>. Unless stated
@@ -3095,8 +3101,9 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
  with <var>request</var>.
 
  <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" or
- <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>", then
- <a for="header list">append</a> (`<code>Origin</code>`, <var>serializedOrigin</var>) to
+ <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" or
+ "<code>unsafe-no-cors</code>", then <a for="header list">append</a>
+ (`<code>Origin</code>`, <var>serializedOrigin</var>) to
  <var>request</var>'s <a for=request>header list</a>.
 
  <li>
@@ -4064,7 +4071,9 @@ the request.
  <a for="environment settings object">global object</a> is a {{Window}} object; otherwise
  "<code>no-window</code>".
 
- <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>", then set
+ <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>" and either
+ <var>request</var>'s <a for=request>mode</a> is not "<code>unsafe-no-cors</code>" or
+ and <var>request</var>'s <a for=request>omit origin flag</a> is unset, then set
  <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">origin</a>.
 
@@ -4091,7 +4100,8 @@ the request.
   <ol>
    <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>origin</a> is <a>same origin</a>
    with <var>request</var>'s <a for=request>client</a>'s
-   <a for="environment settings object">origin</a>.
+   <a for="environment settings object">origin</a> or <var>request</var>'s <a for=request>mode</a>
+   is "<code>unsafe-no-cors</code>".
 
    <li><p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
    step given a <a for=/>response</a> <var>response</var>: set <var>fetchParams</var>'s
@@ -5180,7 +5190,9 @@ run these steps:
      <var>httpRequest</var>'s <a for=request>header list</a>.
     </ol>
 
-   <li><p><a>Append a request `<code>Origin</code>` header</a> for <var>httpRequest</var>.
+   <li>If either <var>request</var>'s <a for=request>mode</a> is not "<code>unsafe-no-cors</code>"
+   or <var>request</var>'s <a for=request>omit origin flag</a> is not set,
+   <p><a>append a request `<code>Origin</code>` header</a> for <var>httpRequest</var>.
 
    <li><p><a abstract-op lt="append the Fetch metadata headers for a request">Append the Fetch metadata headers for <var>httpRequest</var></a>.
    [[!FETCH-METADATA]]
