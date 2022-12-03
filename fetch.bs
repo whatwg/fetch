@@ -4766,21 +4766,105 @@ steps:
       <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction serves no useful purpose
       other than being interoperable.
 
-     <li><p>Let <var>bodyWithType</var> be the result of <a for=BodyInit>safely extracting</a>
-     <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>.
+     <li><p>Let <var>response</var> be a new <a for=/>response</a>.
 
-     <li><p>Let <var>body</var> be <var>bodyWithType</var>'s <a for="body with type">body</a>.
-
-     <li><p>Let <var>length</var> be <var>body</var>'s <a for=body>length</a>,
+     <li><p>Let <var>fullLength</var> be <var>blobURLEntry</var>'s
+     <a for="blob URL entry">object</a>'s {{Blob/size}},
      <a lt="serialize an integer">serialized</a> and <a>isomorphic encoded</a>.
 
-     <li><p>Let <var>type</var> be <var>bodyWithType</var>'s <a for="body with type">type</a> if it
-     is non-null; otherwise the empty byte sequence.
+     <li><p>Let <var>type</var> be <var>blobURLEntry</var>'s
+     <a for="blob URL entry">object</a>'s {{Blob/type}}.
 
-     <li><p>Return a new <a for=/>response</a> whose <a for=response>status message</a> is
-     `<code>OK</code>`, <a for=response>header list</a> is « (`<code>Content-Length</code>`,
-     <var>length</var>), (`<code>Content-Type</code>`, <var>type</var>) », and
-     <a for=response>body</a> is <var>body</var>.
+     <li>
+      <p>If <var>request</var>'s <a for=request>header list</a>
+      <a for="header list">does not contain</a> `<code>Range</code>`:
+
+      <ol>
+       <li><p>Let <var>bodyWithType</var> be the result of <a for=BodyInit>safely extracting</a>
+       <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>.
+
+       <li><p>Set <var>response</var>'s <a for=response>status message</a> to `<code>OK</code>`.
+
+       <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>bodyWithType</var>'s
+       <a for="body with type">body</a>.
+
+       <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
+       (`<code>Content-Length</code>`, <var>fullLength</var>), (`<code>Content-Type</code>`,
+       <var>type</var>) ».
+      </ol>
+
+     <li>
+      <p>Otherwise:
+
+      <ol>
+       <li><p>Set <var>response</var>'s <a for=response>range-requested flag</a>.
+
+       <li><p>Let <var>rangeHeader</var> be the result of <a for="header list">getting</a>
+       `<code>Range</code>` from <var>request</var>'s <a for=request>header list</a>.
+       <!-- Range should be added to the headers defined in HTTP extensions. See
+            https://github.com/whatwg/fetch/issues/1553 for future work -->
+
+       <li><p>Let <var>rangeValue</var> be the result of <a>parsing a single range header value</a>
+       given <var>rangeHeader</var> and true.
+
+       <li><p>If <var>rangeValue</var> is failure, then return a <a>network error</a>.
+
+       <li><p>Let <var>sliceEndRange</var> be null.
+
+       <li>
+        <p>If <var>rangeValue</var>[1] is non-null, then set <var>sliceEndRange</var> to
+        <var>rangeValue</var>[1] + 1.
+
+        <p class=note>A range header denotes an inclusive byte range, while the <a>slice blob</a>
+        algorithm input range does not. To use the <a>slice blob</a> algorithm, we have to increment
+        the parsed range header end value.
+
+       <li><p>Let <var>slicedBlob</var> be the result of invoking <a>slice blob</a> given
+       <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>, <var>rangeValue</var>[0],
+       <var>sliceEndRange</var>, and <var>type</var>.
+
+       <li><p>Let <var>slicedBodyWithType</var> be the result of
+       <a for=BodyInit>safely extracting</a> <var>slicedBlob</var>.
+
+       <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>slicedBodyWithType</var>'s
+       <a for="body with type">body</a>.
+
+       <li><p>Let <var>slicedLength</var> be <var>slicedBlob</var>'s {{Blob/size}},
+       <a lt="serialize an integer">serialized</a> and <a>isomorphic encoded</a>.
+
+       <!-- The following steps for content-range should be definined in a separate algorithm.
+            See https://github.com/whatwg/fetch/issues/1552 for future work -->
+       <li><p>Let <var>contentRange</var> be `<code>bytes </code>`.
+
+       <li><p>If <var>rangeValue</var>[0] is non-null, then
+       <a lt="serialize an integer">serialize</a> and <a>isomorphic encode</a>
+       <var>rangeValue</var>[0], and append the result to <var>contentRange</var>.
+
+       <li><p>Otherwise, append 0x30 (0) to <var>contentRange</var>.
+
+       <li><p>Append 0x2D (-) to <var>contentRange</var>.
+
+       <li><p>If <var>sliceEndRange</var> is non-null, then
+       <a lt="serialize an integer">serialize</a> and <a>isomorphic encode</a>
+       <var>sliceEndRange</var>, and append the result to <var>contentRange</var>.
+
+       <li><p>Otherwise, append <var>fullLength</var> to <var>contentRange</var>.
+
+       <li><p>Append 0x2F (/) to <var>contentRange</var>.
+
+       <li><p>Append <var>fullLength</var> to <var>contentRange</var>.
+
+       <li><p>Set <var>response</var>'s <a for=response>status</a> to 206.
+
+       <li><p>Set <var>response</var>'s <a for=response>status message</a> to
+       `<code>Partial Content</code>`.
+
+       <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
+       (`<code>Content-Length</code>`, <var>slicedLength</var>), (`<code>Content-Type</code>`,
+       <var>type</var>), (`<code>Content-Range</code>`, <var>contentRange</var>) ».
+      </ol>
+
+     <li><p>Return <var>response</var>.
     </ol>
 
    <dt>"<code>data</code>"
