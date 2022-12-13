@@ -1465,9 +1465,6 @@ null), run these steps. <var>processBody</var> must be an algorithm accepting a
  <li><p>If <var>taskDestination</var> is null, then set <var>taskDestination</var> to the result of
  <a>starting a new parallel queue</a>.
 
- <li><p>Let <var>promise</var> be the result of <a>fully reading body as promise</a> given
- <var>body</var>.
-
  <li><p>Let <var>fulfilledSteps</var> given a <a>byte sequence</a> <var>bytes</var> be to
  <a>queue a fetch task</a> to run <var>processBody</var> given <var>bytes</var>, with
  <var>taskDestination</var>.
@@ -1475,22 +1472,12 @@ null), run these steps. <var>processBody</var> must be an algorithm accepting a
  <li><p>Let <var>rejectedSteps</var> be to <a>queue a fetch task</a> to run
  <var>processBodyError</var>, with <var>taskDestination</var>.
 
- <li><p><a for=promise>React</a> to <var>promise</var> with <var>fulfilledSteps</var> and
- <var>rejectedSteps</var>.
-</ol>
-</div>
-
-<div algorithm>
-<p>To <dfn export lt="fully reading body as promise">fully read body as promise</dfn>, given a
-<a for=/>body</a> <var>body</var>, run these steps:
-
-<ol>
  <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
- <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then return
- <a>a promise rejected with</a> that exception.
+ <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then run
+ <var>rejectedSteps</var> with that exception.
 
- <li><p>Return the result of <a for=ReadableStreamDefaultReader>reading all bytes</a> from
- <var>reader</var>.
+ <li><p><a for=ReadableStreamDefaultReader>Read all bytes</a> from
+ <var>reader</var>, given <var>fulfilledSteps</var> and <var>rejectedSteps</var>.
 </ol>
 </div>
 
@@ -6981,8 +6968,25 @@ the associated steps:
  <li><p>Let <var>promise</var> be <a>a promise resolved with</a> an empty
  <a for=/>byte sequence</a>.
 
- <li><p>If <var>object</var>'s <a for=Body>body</a> is non-null, then set <var>promise</var> to the
- result of <a>fully reading body as promise</a> given <var>object</var>'s <a for=Body>body</a>.
+ <li>
+  <p>If <var>object</var>'s <a for=Body>body</a> is non-null, then:
+
+  <ol>
+   <li><p>Set <var>promise</var> to <a>a new promise</a>.
+
+   <li><p>Let <var>fulfilledSteps</var> given a <a>byte sequence</a> <var>bytes</var> be to
+   <a for=/>resolve</a> <var>promise</var> given <var>bytes</var>.
+
+   <li><p>Let <var>rejectedSteps</var> given <var>error</var> be to <a>reject</a> <var>promise</var>
+   given <var>error</var>.
+
+   <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
+   <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then run
+   <var>rejectedSteps</var> with that exception.
+
+   <li><p><a for=ReadableStreamDefaultReader>Read all bytes</a> from <var>reader</var>, given
+   <var>fulfilledSteps</var> and <var>rejectedSteps</var>.
+  </ol>
 
  <li><p>Let <var>steps</var> be to return the result of <a>package data</a> with the first argument
  given, <var>type</var>, and <var>object</var>'s <a for=Body>MIME type</a>.
