@@ -6890,15 +6890,18 @@ returns failure or a <a for=/>MIME type</a>.
 
  <li><p>Set <var>promise</var> to <a>a new promise</a>.
 
- <li><p>Let <var>resolveSteps</var> given a JavaScript value <var>value</var> be to
- <a>queue a fetch task</a> to <a for=/>resolve</a> <var>promise</var> with <var>value</var>,
- given <var>object</var>'s <a>relevant settings object</a>'s
+ <li><p>Let <var>queueSettleStep</var> be the following step given an algorithm
+ <var>settleStep</var>: <a>queue a fetch task</a> to given <var>settleStep</var> and
+ <var>object</var>'s <a>relevant settings object</a>'s
  <a for="environment settings object">global object</a>.
 
- <li><p>Let <var>rejectSteps</var> given a JavaScript value <var>error</var> be to
- <a>queue a fetch task</a> to <a>reject</a> <var>promise</var> with <var>error</var>,
- given <var>object</var>'s <a>relevant settings object</a>'s
- <a for="environment settings object">global object</a>.
+ <li><p>Let <var>resolveStep</var> given a JavaScript value <var>value</var> be to run
+ <var>queueSettleStep</var> given the following step: <a for=/>resolve</a> <var>promise</var> with
+ <var>value</var>,
+
+ <li><p>Let <var>rejectStep</var> given a JavaScript value <var>error</var> be to run
+ <var>queueSettleStep</var> given the following step: <a for=/>reject</a> <var>promise</var> with
+ <var>error</var>,
 
 <li>
  <p>Let <var>packageSteps</var> given a <a for=/>byte sequence</a> <var>bytes</var> be
@@ -6906,12 +6909,12 @@ returns failure or a <a for=/>MIME type</a>.
 
  <dl class=switch>
   <dt><i>ArrayBuffer</i>
-  <dd><p>Call <var>resolveSteps</var> with a new {{ArrayBuffer}} whose contents are
-  <var>bytes</var>. If that threw a {{RangeError}} exception, call <var>rejectSteps</var>
-  with that exception.
+  <dd><p>Run <var>resolveStep</var> with a new {{ArrayBuffer}} whose contents are
+  <var>bytes</var>. If that threw a {{RangeError}} exception, run <var>rejectStep</var> with that
+  exception.
 
   <dt><i>Blob</i>
-  <dd><p>Call <var>resolveSteps</var> with a {{Blob}} whose contents are <var>bytes</var>
+  <dd><p>Run <var>resolveStep</var> with a {{Blob}} whose contents are <var>bytes</var>
   and {{Blob/type}} attribute is <var>mimeType</var>.
 
   <dt><i>FormData</i>
@@ -6945,10 +6948,10 @@ returns failure or a <a for=/>MIME type</a>.
      part. It does not change the encoding.</p>
     </li>
 
-    <li><p>If that fails for some reason, then run <var>rejectSteps</var> with a {{TypeError}} and
+    <li><p>If that fails for some reason, then run <var>rejectStep</var> with a {{TypeError}} and
     return.
 
-    <li><p>Call <var>resolveSteps</var> with a new {{FormData}} object, appending each
+    <li><p>Run <var>resolveStep</var> with a new {{FormData}} object, appending each
     <a for="entry list">entry</a>, resulting from the parsing operation, to its
     <a for=FormData>entry list</a>.
    </ol>
@@ -6966,18 +6969,18 @@ returns failure or a <a for=/>MIME type</a>.
 
     <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
 
-    <li><p>Call <var>resolveSteps</var> with a new {{FormData}} object whose
+    <li><p>Run <var>resolveStep</var> with a new {{FormData}} object whose
     <a for=FormData>entry list</a> is <var>entries</var>.
    </ol>
 
-   <p>Otherwise, call <var>rejectSteps</var> with a {{TypeError}}.
+   <p>Otherwise, run <var>rejectStep</var> with a {{TypeError}}.
 
   <dt><i>JSON</i>
-  <dd><p>Call <var>resolveSteps</var> with the result of running <a>parse JSON from bytes</a> on
+  <dd><p>Run <var>resolveStep</var> with the result of running <a>parse JSON from bytes</a> on
   <var>bytes</var>.
 
   <dt><i>text</i>
-  <dd><p>Call <var>resolveSteps</var> with the result of running <a>UTF-8 decode</a> on
+  <dd><p>Run <var>resolveStep</var> with the result of running <a>UTF-8 decode</a> on
   <var>bytes</var>.
  </dl>
 
@@ -6986,10 +6989,10 @@ returns failure or a <a for=/>MIME type</a>.
 
  <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
  <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then run
- <var>rejectSteps</var> with that exception and return.
+ <var>rejectStep</var> with that exception and return.
 
  <li><p><a for=ReadableStreamDefaultReader>Read all bytes</a> from <var>reader</var>, given
- <var>packageSteps</var> and <var>rejectSteps</var>.
+ <var>packageSteps</var> and <var>rejectStep</var>.
 
  <li><p>Return <var>promise</var>.
 </ol>
