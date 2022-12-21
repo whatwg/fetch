@@ -6879,85 +6879,6 @@ returns failure or a <a for=/>MIME type</a>.
 <a>this</a>'s <a for=Body>body</a> is non-null and <a>this</a>'s <a for=Body>body</a>'s
 <a for=body>stream</a> is <a for=ReadableStream>disturbed</a>; otherwise false.
 
-<p>The <dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
-<var>bytes</var>, <var>type</var>, and a <var>mimeType</var>, switches on <var>type</var>, and runs
-the associated steps:
-
-<dl class=switch>
- <dt><i>ArrayBuffer</i>
- <dd>
-  <p>Return a new {{ArrayBuffer}} whose contents are <var>bytes</var>.
-
-  <p class=note>Allocating an {{ArrayBuffer}} can throw a {{RangeError}}.
-
- <dt><i>Blob</i>
- <dd><p>Return a {{Blob}} whose contents are <var>bytes</var> and {{Blob/type}} attribute is
- <var>mimeType</var>.
-
- <dt><i>FormData</i>
- <dd>
-  <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is "<code>multipart/form-data</code>",
-  then:
-
-  <ol>
-   <li>
-    <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
-    <var>mimeType</var>, per the rules set forth in
-    <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]</p>
-
-    <p>Each part whose `<code>Content-Disposition</code>` header contains a `<code>filename</code>`
-    parameter must be parsed into an <a for="entry list">entry</a> whose value is a {{File}} object
-    whose contents are the contents of the part. The {{File/name}} attribute of the {{File}} object
-    must have the value of the `<code>filename</code>` parameter of the part. The {{Blob/type}}
-    attribute of the {{File}} object must have the value of the `<code>Content-Type</code>` header
-    of the part if the part has such header, and `<code>text/plain</code>` (the default defined by
-    [[!RFC7578]] section 4.4) otherwise.</p>
-
-    <p>Each part whose `<code>Content-Disposition</code>` header does not contain a
-    `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
-    value is the <a lt="UTF-8 decode without BOM">UTF-8 decoded without BOM</a> content of the part.
-    <span class=note>This is done regardless of the presence or the value of a
-    `<code>Content-Type</code>` header and regardless of the presence or the value of a
-    `<code>charset</code>` parameter.</span></p>
-
-    <p class=note>A part whose `<code>Content-Disposition</code>` header contains a
-    `<code>name</code>` parameter whose value is `<code>_charset_</code>` is parsed like any other
-    part. It does not change the encoding.</p>
-   </li>
-
-   <li><p>If that fails for some reason, then <a>throw</a> a {{TypeError}}.
-
-   <li><p>Return a new {{FormData}} object, appending each <a for="entry list">entry</a>, resulting
-   from the parsing operation, to its <a for=FormData>entry list</a>.
-  </ol>
-
-  <p class=XXX>The above is a rough approximation of what is needed for
-  `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
-  written. Volunteers welcome.
-
-  <p>Otherwise, if <var>mimeType</var>'s <a for="MIME type">essence</a> is
-  "<code>application/x-www-form-urlencoded</code>", then:
-
-  <ol>
-   <li><p>Let <var>entries</var> be the result of
-   <a lt="urlencoded parser">parsing</a> <var>bytes</var>.
-
-   <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
-
-   <li><p>Return a new {{FormData}} object whose <a for=FormData>entry list</a> is
-   <var>entries</var>.
-  </ol>
-
-  <p>Otherwise, <a>throw</a> a {{TypeError}}.
-
- <dt><i>JSON</i>
- <dd><p>Return the result of running <a>parse JSON from bytes</a> on <var>bytes</var>.
-
- <dt><i>text</i>
- <dd><p>Return the result of running <a>UTF-8 decode</a> on
- <var>bytes</var>.
-</dl>
-
 <p>The <dfn id=concept-body-consume-body for=Body>consume body</dfn> algorithm, given an
 <var>object</var> and <var>type</var>, runs these steps:
 
@@ -6965,29 +6886,110 @@ the associated steps:
  <li><p>If <var>object</var> is <a for=Body>unusable</a>, then return <a>a promise rejected with</a>
  a {{TypeError}}.
 
- <li><p>Let <var>packageSteps</var> given a <a for=/>byte sequence</a> <var>bytes</var> be to
- return the result of <a lt="package data">packaging</a> <var>bytes</var> given <var>type</var> and
- <var>object</var>'s <a for=Body>MIME type</a>.
-
- <li><p>If <var>object</var>'s <a for=Body>body</a> is null, then return
- <a>a promise resolved with</a> the result of running <var>packageSteps</var> given an empty
- <a for=/>byte sequence</a>.
+ <li><p>Let <var>mimeType</var> be <var>object</var>'s <a for=Body>MIME type</a>.
 
  <li><p>Set <var>promise</var> to <a>a new promise</a>.
 
- <li><p>Let <var>successSteps</var> given a <a>byte sequence</a> <var>bytes</var> be to
- <a for=/>resolve</a> <var>promise</var> given the result of running <var>packageSteps</var>
- with <var>bytes</var>.
+ <li><p>Let <var>resolveSteps</var> given a JavaScript value <var>value</var> be to
+ <a>queue a fetch task</a> to <a for=/>resolve</a> <var>promise</var> with <var>value</var>,
+ given <var>object</var>'s <a>relevant settings object</a>'s
+ <a for="environment settings object">global object</a>.
 
- <li><p>Let <var>errorSteps</var> given <var>error</var> be to <a>reject</a> <var>promise</var>
- given <var>error</var>.
+ <li><p>Let <var>rejectSteps</var> given a JavaScript value <var>error</var> be to
+ <a>queue a fetch task</a> to <a>reject</a> <var>promise</var> with <var>error</var>,
+ given <var>object</var>'s <a>relevant settings object</a>'s
+ <a for="environment settings object">global object</a>.
+
+<li>
+ <p>Let <var>packageSteps</var> given a <a for=/>byte sequence</a> <var>bytes</var> be
+ to switch on <var>type</var> and run the associated steps <a>in parallel</a>:
+
+ <dl class=switch>
+  <dt><i>ArrayBuffer</i>
+  <dd><p>Call <var>resolveSteps</var> with a new {{ArrayBuffer}} whose contents are
+  <var>bytes</var>. If that threw a {{RangeError}} exception, call <var>rejectSteps</var>
+  with that exception.
+
+  <dt><i>Blob</i>
+  <dd><p>Call <var>resolveSteps</var> with a {{Blob}} whose contents are <var>bytes</var>
+  and {{Blob/type}} attribute is <var>mimeType</var>.
+
+  <dt><i>FormData</i>
+  <dd>
+   <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is "<code>multipart/form-data</code>",
+   then:
+
+   <ol>
+    <li>
+     <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
+     <var>mimeType</var>, per the rules set forth in
+     <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]</p>
+
+     <p>Each part whose `<code>Content-Disposition</code>` header contains a `<code>filename</code>`
+     parameter must be parsed into an <a for="entry list">entry</a> whose value is a {{File}} object
+     whose contents are the contents of the part. The {{File/name}} attribute of the {{File}} object
+     must have the value of the `<code>filename</code>` parameter of the part. The {{Blob/type}}
+     attribute of the {{File}} object must have the value of the `<code>Content-Type</code>` header
+     of the part if the part has such header, and `<code>text/plain</code>` (the default defined by
+     [[!RFC7578]] section 4.4) otherwise.</p>
+
+     <p>Each part whose `<code>Content-Disposition</code>` header does not contain a
+     `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
+     value is the <a lt="UTF-8 decode without BOM">UTF-8 decoded without BOM</a> content of the part.
+     <span class=note>This is done regardless of the presence or the value of a
+     `<code>Content-Type</code>` header and regardless of the presence or the value of a
+     `<code>charset</code>` parameter.</span></p>
+
+     <p class=note>A part whose `<code>Content-Disposition</code>` header contains a
+     `<code>name</code>` parameter whose value is `<code>_charset_</code>` is parsed like any other
+     part. It does not change the encoding.</p>
+    </li>
+
+    <li><p>If that fails for some reason, then run <var>rejectSteps</var> with a {{TypeError}} and
+    return.
+
+    <li><p>Call <var>resolveSteps</var> with a new {{FormData}} object, appending each
+    <a for="entry list">entry</a>, resulting from the parsing operation, to its
+    <a for=FormData>entry list</a>.
+   </ol>
+
+   <p class=XXX>The above is a rough approximation of what is needed for
+   `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
+   written. Volunteers welcome.
+
+   <p>Otherwise, if <var>mimeType</var>'s <a for="MIME type">essence</a> is
+   "<code>application/x-www-form-urlencoded</code>", then:
+
+   <ol>
+    <li><p>Let <var>entries</var> be the result of
+    <a lt="urlencoded parser">parsing</a> <var>bytes</var>.
+
+    <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
+
+    <li><p>Call <var>resolveSteps</var> with a new {{FormData}} object whose
+    <a for=FormData>entry list</a> is <var>entries</var>.
+   </ol>
+
+   <p>Otherwise, call <var>rejectSteps</var> with a {{TypeError}}.
+
+  <dt><i>JSON</i>
+  <dd><p>Call <var>resolveSteps</var> with the result of running <a>parse JSON from bytes</a> on
+  <var>bytes</var>.
+
+  <dt><i>text</i>
+  <dd><p>Call <var>resolveSteps</var> with the result of running <a>UTF-8 decode</a> on
+  <var>bytes</var>.
+ </dl>
+
+ <li><p>If <var>object</var>'s <a for=Body>body</a> is null, then execute <var>packageSteps</var>
+ given an empty <a for=/>byte sequence</a>.
 
  <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
  <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then run
- <var>errorSteps</var> with that exception.
+ <var>rejectSteps</var> with that exception and return.
 
  <li><p><a for=ReadableStreamDefaultReader>Read all bytes</a> from <var>reader</var>, given
- <var>successSteps</var> and <var>errorSteps</var>.
+ <var>packageSteps</var> and <var>rejectSteps</var>.
 
  <li><p>Return <var>promise</var>.
 </ol>
