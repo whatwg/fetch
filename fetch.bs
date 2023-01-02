@@ -8437,6 +8437,56 @@ correctly. This section aims to give some advice.
 
 <p class=XXX>This is a work in progress.
 
+<h3 id=fetch-elsewhere-request>Constructing a request</h3>
+
+<p>The first step in <a for=/>fetching</a> is to create a <a for=/>request</a>, and populate its
+multiple associated parameters.
+
+<p>A <a for=/>request</a> oftenmost has a <a for=request>client</a>, which is the
+<a>environment settings object</a> that initiatated the request, and the receiver of the different
+<a for=/>response</a> callbacks. It then expects a <a for=request>URL</a>, and an HTTP
+<a for=request>method</a>, `<code>GET</code>` by default. `<code>POST</code>` and
+`<code>PUT</code>` requests also accept a <a for=request>body</a>, which is sent together with the
+request.
+
+<p>Requests accept an optional <a for=request>header list</a> parameter, custom HTTP headers to be
+sent alongside the <a for=/>request</a>. Note that sending custom headers may have implications,
+such as requiring a <a>CORS-preflight fetch</a>, so handle with care.
+
+<p>One of the most important things when constructing a <a for=/>request</a> is understanding how
+it's supposed to handle cross-origin resources. This is expressed in the <a for=/>request</a>'s
+<a for=request>mode</a>. Some features are supposed to work only in the context of the
+<a>same origin</a>, in which case the "<code>same-origin</code>" <a for=request>mode</a> is
+appropriate. For new features that require accessing cross-origin resources, "<code>cors</code>"
+should be used, alongside a <a for=request>credentials mode</a>, which defines whether the
+<a for=/>request</a> is anonymous or authenticated (e.g. with cookies and client certificates). The
+"<code>no-cors</code>" <a for=request>mode</a> is used for backwards compatibility with features
+that existed before the CORS mechanism was introduced. To use "<code>no-cors</code>" in a new
+feature, please discuss on the <a href=https://github.com/whatwg/fetch>Fetch Github repository</a>.
+"<code>navigate</code>" and "<code>websocket</code>" are reserved for specific features.
+
+<p>A <a for=/>request</a> accepts a few security-related parameters that are often configured, such
+as <a for=request>integrity metadata</a>, a string hash of the actual data that verifies that the
+received resource matches an expectation, a <a for=request>cryptographic nonce metadata</a> and
+<a for=request>parser metadata</a>, which allows more fine-grained security via
+<cite>Content Security Policy</cite>, and <a for=request>referrer policy</a>, which allows the
+<a for=/>request</a> to use a different <a for=/>referrer policy</a> from the one provided by the
+<a for=request>client</a>. [[!CSP]] [[!REFERRER]]
+
+<p>A <a for=/>request</a> also accepts a few metadata parameters, the important one being
+<a for=request>destination</a>. <a for=request>destinations</a> affect
+<cite>Content Security Policy</cite> and have other implications such as the
+`<code>sec-fetch-dest</code>` header, so they are much more than informative metadata. If a new
+feature requires a <a for=request>destination</a> that's not in the list of
+<a for=request>destinations</a>, please file an issue in the
+<a href=https://github.com/whatwg/fetch>Fetch Github repository</a>. An aditional metadata
+paramater is <a for=request>initiator type</a>, which specifies that the <a for=/>fetching</a>
+should <a for=/>mark resource timing</a> automatically once the <a for=/>response</a>'s
+<a for=response>body</a> is fully downloaded. [[!CSP]] [[RESOURCE-TIMING]]
+
+<p>The rest of the parameters for <a for=/>request</a> are used less frequently, and they are
+documented in detail in the <a href="#requests">Requests</a> section of this standard.
+
 
 <h3 id=fetch-elsewhere-fetch class=no-num>Invoking fetch</h3>
 
