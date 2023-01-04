@@ -1515,6 +1515,9 @@ these steps:
 
 <h4 id=requests>Requests</h4>
 
+<p class=note>This section documents how requests work in detail. To get started with populating a
+request, see <a href="fetch-elsewhere-request">populating a request</a>.
+
 <p>The input to <a for=/>fetch</a> is a
 <dfn export id=concept-request>request</dfn>.
 
@@ -1701,10 +1704,10 @@ and "<code>webidentity</code>" as fetches with those destinations skip service w
 not always relevant and might require different behavior.
 
 <div class=note>
- <p>The following table illustrates the relationship between a <a for=/>request</a>'s
- <a for=request>initiator</a>, <a for=request>destination</a>, CSP directives, and features. It is
- not exhaustive with respect to features. Features need to have the relevant values defined in their
- respective standards.
+ <p>The following <dfn lt="destination table">table</dfn> illustrates the relationship between a
+ <a for=/>request</a>'s <a for=request>initiator</a>, <a for=request>destination</a>, CSP
+ directives, and features. It is not exhaustive with respect to features. Features need to have the
+ relevant values defined in their respective standards.
 
  <table>
   <tbody><tr>
@@ -8437,55 +8440,68 @@ correctly. This section aims to give some advice.
 
 <p class=XXX>This is a work in progress.
 
-<h3 id=fetch-elsewhere-request>Constructing a request</h3>
+<h3 id=fetch-elsewhere-request>Populating a request</h3>
 
 <p>The first step in <a for=/>fetching</a> is to create a <a for=/>request</a>, and populate its
 multiple associated parameters.
 
-<p>A <a for=/>request</a> oftenmost has a <a for=request>client</a>, which is the
-<a>environment settings object</a> that initiatated the request, and the receiver of the different
-<a for=/>response</a> callbacks. It then expects a <a for=request>URL</a>, and an HTTP
-<a for=request>method</a>, `<code>GET</code>` by default. `<code>POST</code>` and
-`<code>PUT</code>` requests also accept a <a for=request>body</a>, which is sent together with the
-request.
+<p>Start by setting the <a for=/>request</a>'s <a for=request>URL</a> and <a for=request>method</a>,
+as defined by HTTP. If your `<code>POST</code>` or `<code>PUT</code>` <a for=/>request</a> needs a
+body, you can assign or stream it to <a for=/>request</a>'s <a for=request>body</a>. [[HTTP]]
 
-<p>Requests accept an optional <a for=request>header list</a> parameter, custom HTTP headers to be
-sent alongside the <a for=/>request</a>. Note that sending custom headers may have implications,
-such as requiring a <a>CORS-preflight fetch</a>, so handle with care.
+<p>Set your <a for=/>request</a>'s <a for=request>client</a> to the
+<a>environment settings object</a> you're operating in. Web-exposed APIs usually operate on
+<a>platform objects</a> (e.g. a <cite>Web IDL</cite> based API), which have a
+<a>relevant settings object</a>. For example, a <a for=/>request</a> associated with a DOM
+<a for=/>element</a> would set the <a for=/>request</a>'s <a for=request>client</a> to the element's
+<a>node document</a>'s <a>relevant settings object</a>. [[WEBIDL]]
 
-<p>One of the most important things when constructing a <a for=/>request</a> is understanding how
-it's supposed to handle cross-origin resources. This is expressed in the <a for=/>request</a>'s
-<a for=request>mode</a>. Some features are supposed to work only in the context of the
-<a>same origin</a>, in which case the "<code>same-origin</code>" <a for=request>mode</a> is
-appropriate. For new features that require accessing cross-origin resources, "<code>cors</code>"
-should be used, alongside a <a for=request>credentials mode</a>, which defines whether the
-<a for=/>request</a> is anonymous or authenticated (e.g. with cookies and client certificates). The
-"<code>no-cors</code>" <a for=request>mode</a> is used for backwards compatibility with features
-that existed before the CORS mechanism was introduced. To use "<code>no-cors</code>" in a new
-feature, please discuss on the <a href=https://github.com/whatwg/fetch>Fetch Github repository</a>.
-"<code>navigate</code>" and "<code>websocket</code>" are reserved for specific features.
+<p>Choose your <a for=/>request</a>'s <a for=request>destination</a>.
+<a for=request>destinations</a> affect <cite>Content Security Policy</cite> and have other
+implications such as the `<code>sec-fetch-dest</code>` header, so they are much more than
+informative metadata. If a new feature requires a <a for=request>destination</a> that's not in the
+<a>destination table</a>, please file an issue in the
+<a href=https://github.com/whatwg/fetch>Fetch Github repository</a> to discuss. [[!CSP]]
 
-<p>A <a for=/>request</a> accepts a few security-related parameters that are often configured, such
-as <a for=request>integrity metadata</a>, a string hash of the actual data that verifies that the
-received resource matches an expectation, a <a for=request>cryptographic nonce metadata</a> and
-<a for=request>parser metadata</a>, which allows more fine-grained security via
-<cite>Content Security Policy</cite>, and <a for=request>referrer policy</a>, which allows the
-<a for=/>request</a> to use a different <a for=/>referrer policy</a> from the one provided by the
-<a for=request>client</a>. [[!CSP]] [[!REFERRER]]
+<p>Think through the way you intend to handle cross-origin resources. Some features may only work in
+the <a>same origin</a>, in which case set your <a for=/>request</a> <a for=request>mode</a> to
+"<code>same-origin</code>". As a general rule, modern web-exposed features that fetch cross-origin
+resources should use "<code>cors</code>" and decide on the <a for=request>credentials mode</a> on a
+case by case basis. For example, font loading uses "<code>same-origin</code>" (credentials are only
+sent in same-origin requests), video posters use "<code>include</code>" (credentials are always
+sent), and many features make this configurable in the API. If your feature is not web-exposed, or
+you think there is another reason for it to fetch cross-origin resources without CORS, discuss this
+with your security team and ping contributors of the
+<a href=https://github.com/whatwg/fetch>Fetch Standard</a>.
 
-<p>A <a for=/>request</a> also accepts a few metadata parameters, the important one being
-<a for=request>destination</a>. <a for=request>destinations</a> affect
-<cite>Content Security Policy</cite> and have other implications such as the
-`<code>sec-fetch-dest</code>` header, so they are much more than informative metadata. If a new
-feature requires a <a for=request>destination</a> that's not in the list of
-<a for=request>destinations</a>, please file an issue in the
-<a href=https://github.com/whatwg/fetch>Fetch Github repository</a>. An aditional metadata
-paramater is <a for=request>initiator type</a>, which specifies that the <a for=/>fetching</a>
-should <a for=/>mark resource timing</a> automatically once the <a for=/>response</a>'s
-<a for=response>body</a> is fully downloaded. [[!CSP]] [[RESOURCE-TIMING]]
+<p>Figure out if your fetch needs to be reported to <cite>Resource Timing</cite>, and with which
+<a for=request>initiator type</a>. By passing an <a for=request>initiator type</a> to the
+<a for=/>request</a>, reporting to <cite>Resource Timing</cite> will be done automatically once the
+fetch is done and the <a for=/>response</a> is fully downloaded.  [[RESOURCE-TIMING]]
 
-<p>The rest of the parameters for <a for=/>request</a> are used less frequently, and they are
-documented in detail in the <a href="#requests">Requests</a> section of this standard.
+<p>If your request requires additional HTTP headers, <a for="header list">append</a> them to your
+<a for=/>request</a>'s <a for=request>header list</a>. Note that sending custom headers may have
+implications, such as requiring a <a>CORS-preflight fetch</a>, so handle with care.
+
+<p>Check if your request needs one or more of the additional security-related parameters. The
+following ones are often configurable, e.g. by an HTML attribute:
+
+<dl>
+ <dt><a for=request>integrity metadata</a>
+ <dd><p>Verifies that the content of the resource matches a pre-calculated string hash.
+
+ <dt><a for=request>referrer policy</a>
+ <dd><p>Allows using a different <a for=/>referrer policy</a> from the one provided by the
+ <a for=/>environment settings object</a>. [[!REFERRER]]
+
+ <dt><a ror=request>cryptographic nonce metadata</a>
+ <dd><p>Together with <cite>Content Security Policy</cite>, ensures that only elements that provide
+ this predetermined string can fetch this resource.
+</dl>
+
+<p>Browse through the rest of the parameters for <a for=/>request</a> to see if something else is
+relevant to you. The rest of the parameters are used less frequently, often for special purposes,
+and they are documented in detail in the <a href="#requests">Requests</a> section of this standard.
 
 
 <h3 id=fetch-elsewhere-fetch class=no-num>Invoking fetch</h3>
