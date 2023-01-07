@@ -18,6 +18,8 @@ urlPrefix:https://httpwg.org/specs/rfc8941.html#;type:dfn;spec:rfc8941
     url:rfc.section.2;text:structured field value
     url:text-serialize;text:serializing structured fields
     url:text-parse;text:parsing structured fields
+    url:name-lists;text:structured header list
+    url:;text:structured header
 
 urlPrefix:https://httpwg.org/specs/rfc9110.html#;type:dfn;spec:http
     url:method.overview;text:method
@@ -4088,6 +4090,26 @@ run these steps:
 </div>
 
 
+<h3 id="sec-purpose-header">`<code>Sec-Purpose</code>` header</h3>
+
+<p>The `<dfn export http-header id=http-sec-purpose><code>Sec-Purpose</code></dfn>` HTTP request
+header specifies that the request serves one or more purposes other than requesting the resource for
+immediate use by the user.
+
+<p>The `<a http-header><code>Sec-Purpose</code></a>` header field is a <a>structured header</a>
+whose value must be a <a data-lt="structured header list">list</a>. Its ABNF is: [[!RFC8941]]
+
+<pre><code class=lang-abnf>
+Sec-Purpose    = sf-list
+</code></pre>
+
+It may contain a Item member which is the Token "prefetch". If so, this indicates the request’s
+purpose is to download a resource it is anticipated will be fetched shortly.
+
+<p class=note>This can be used, for example, to let the server adjust the caching expiry for
+prefetches, to disallow the prefetch by rejecting the request, or treat it differently
+for the purpose of counting page visits.
+
 
 <h2 id=fetching>Fetching</h2>
 
@@ -5313,15 +5335,9 @@ run these steps:
    <li><p><a abstract-op lt="append the Fetch metadata headers for a request">Append the Fetch metadata headers for <var>httpRequest</var></a>.
    [[!FETCH-METADATA]]
 
-   <li>
-    <p>If <var>httpRequest</var>'s <a for=request>initiator</a> is "<code>prefetch</code>", then
-    <a for="header list">append</a> (`<code>Sec-Purpose</code>`, "<code>prefetch</code>") to
-    <var>httpRequest</var>'s <a for=request>header list</a>.
-
-    <p class=note>This header gives servers an opportunity to handle prefetches differently from
-    regular requests. For example, the server may allow caching for a longer period for a prefetch
-    request, disallow prefetches by rejecting the request, or treat it differently for the purpose
-    of counting page visits.
+   <li><p>If <var>httpRequest</var>'s <a for=request>initiator</a> is "<code>prefetch</code>", then
+   <a>set a structured field value</a> given (`<a http-header><code>Sec-Purpose</code></a>`,
+   "<code>prefetch</code>") in <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
