@@ -11,19 +11,32 @@ Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,type
 </pre>
 
 <pre class=anchors>
-urlPrefix:https://datatracker.ietf.org/doc/html/rfc7230#;type:dfn;spec:http
-    url:section-3.1.1;text:method
-    url:section-3.2;text:field-name
-    url:section-3.2;text:field-content
-    url:section-3.2;text:field-value
-    url:section-3.1.2;text:reason-phrase
+urlPrefix:https://httpwg.org/specs/rfc5861.html#;type:dfn;spec:stale-while-revalidate
+    url:n-the-stale-while-revalidate-cache-control-extension;text:stale-while-revalidate lifetime
 
-url:https://datatracker.ietf.org/doc/html/rfc7234#section-1.2.1;text:delta-seconds;type:dfn;spec:http-caching
+urlPrefix:https://httpwg.org/specs/rfc8941.html#;type:dfn;spec:rfc8941
+    url:rfc.section.2;text:structured field value
+    url:text-serialize;text:serializing structured fields
+    url:text-parse;text:parsing structured fields
 
-urlPrefix:https://datatracker.ietf.org/doc/html/rfc8941#;type:dfn;spec:rfc8941
-    url:section-2;text:structured field value
-    url:section-4.1;text:serializing structured fields
-    url:section-4.2;text:parsing structured fields
+urlPrefix:https://httpwg.org/specs/rfc9110.html#;type:dfn;spec:http
+    url:method.overview;text:method
+    url:fields.names;text:field-name
+    url:fields.values;text:field-value
+    url:rfc.section.9.2.1;text:unsafe
+
+urlPrefix:https://httpwg.org/specs/rfc9111.html#;type:dfn;spec:http-caching
+    url:delta-seconds;text:delta-seconds
+    url:age.calculations;text:current age
+    url:calculating.freshness.lifetime;text:freshness lifetime
+    url:response.cacheability;text:Storing Responses in Caches
+    url:invalidation;text:Invalidating Stored Responses
+    url:validation.sent;text:Sending a Validation Request
+    url:constructing.responses.from.caches;text:Constructing Responses from Caches
+    url:freshening.responses;text:Freshening Stored Responses upon Validation
+
+urlPrefix:https://httpwg.org/specs/rfc9112.html#;type:dfn;spec:http1
+    url:status.line;text:reason-phrase
 
 url:https://w3c.github.io/resource-timing/#dfn-mark-resource-timing;text:mark resource timing;type:dfn;spec:resource-timing
 
@@ -49,6 +62,12 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     },
     "HTTP1": {
         "aliasOf": "RFC9112"
+    },
+    "HTTP3": {
+        "aliasOf": "RFC9114"
+    },
+    "HTTP3-DATAGRAM": {
+        "aliasOf": "RFC9297"
     },
     "REFERRER": {
         "aliasOf": "referrer-policy"
@@ -77,32 +96,11 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
         "href": "https://www.kb.cert.org/vuls/id/150227",
         "title": "HTTP proxy default configurations allow arbitrary TCP connections."
     },
-    "EXPECT-CT": {
-        "authors": ["Emily Stark"],
-        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-expect-ct",
-        "publisher": "IETF",
-        "title": "Expect-CT Extension for HTTP"
-    },
-    "OCSP": {
-        "aliasOf": "RFC2560"
-    },
-    "HTTP3": {
-        "authors": ["M. Bishop, Ed."],
-        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-quic-http",
-        "publisher": "IETF",
-        "title": "Hypertext Transfer Protocol Version 3 (HTTP/3)"
-    },
     "WEBTRANSPORT-HTTP3": {
         "authors": ["V. Vasiliev"],
         "href": "https://datatracker.ietf.org/doc/html/draft-ietf-webtrans-http3",
         "publisher": "IETF",
         "title": "WebTransport over HTTP/3"
-    },
-    "HTTP3-DATAGRAM": {
-        "authors": ["David Schinazi", "Lucas Pardue"],
-        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-masque-h3-datagram",
-        "publisher": "IETF",
-        "title": "Using QUIC Datagrams with HTTP/3"
     },
     "SVCB": {
         "authors": ["Ben Schwartz", "Mike Bishop", "Erik Nygren"],
@@ -564,6 +562,10 @@ consistency.
 
 <h4 id=terminology-headers>Headers</h4>
 
+<p class=note>HTTP generally refers to a header as a "field" or "header field". The web platform
+uses the more colloquial term "header". [[HTTP]]
+<!-- This will become more hairy if we add trailer support. -->
+
 <p>A <dfn export id=concept-header-list>header list</dfn> is a <a for=/>list</a> of zero or more
 <a for=/>headers</a>. It is initially « ».
 
@@ -916,9 +918,9 @@ conditions:
  <li><p>Contains no 0x00 (NUL) or <a>HTTP newline bytes</a>.
 </ul>
 
-<p class=note>The definition of <a for=/>header value</a> is not defined in terms of an HTTP token
-production as
-<a href=https://github.com/httpwg/http11bis/issues/19 title="fix field-value ABNF">it is broken</a>.
+<p class=note>The definition of <a for=/>header value</a> is not defined in terms of the
+<a spec=http>field-value</a> token production as it is
+<a href=https://github.com/httpwg/http-core/issues/215 title="field-value value space">not compatible with deployed content</a>.
 
 <div algorithm>
 <p>To <dfn export for="header value" id=concept-header-value-normalize>normalize</dfn> a
@@ -1023,7 +1025,7 @@ following is true:
  <li><p><var>byte</var> is 0x22 ("), 0x28 (left parenthesis), 0x29 (right parenthesis), 0x3A (:),
  0x3C (&lt;), 0x3E (>), 0x3F (?), 0x40 (@), 0x5B ([), 0x5C (\), 0x5D (]), 0x7B ({), 0x7D (}), or
  0x7F DEL.
- <!-- Delimiters from https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6 except for ,/;=
+ <!-- Delimiters from https://httpwg.org/specs/rfc9110.html#rule.token.separators except for ,/;=
       and including DEL -->
 </ul>
 </div>
@@ -2534,13 +2536,11 @@ console.log((await fetch("/surprise-me", { redirect: "manual" })).type); // "opa
 <hr>
 
 <p>A <dfn id=concept-fresh-response>fresh response</dfn> is a <a for=/>response</a> whose
-<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.2.3>current age</a> is within its
-<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.2.1>freshness lifetime</a>.
+<a>current age</a> is within its <a>freshness lifetime</a>.
 
 <p>A <dfn id=concept-stale-while-revalidate-response>stale-while-revalidate response</dfn> is a
-<a for=/>response</a> that is not a <a>fresh response</a> and whose
-<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.2.3>current age</a> is within the
-<a href=https://datatracker.ietf.org/doc/html/rfc5861#section-3>stale-while-revalidate lifetime</a>.
+<a for=/>response</a> that is not a <a>fresh response</a> and whose <a>current age</a> is within the
+<a>stale-while-revalidate lifetime</a>. [[!HTTP-CACHING]] [[!STALE-WHILE-REVALIDATE]]
 
 <p>A <dfn export id=concept-stale-response>stale response</dfn> is a <a for=/>response</a> that is
 not a <a>fresh response</a> or a <a>stale-while-revalidate response</a>.
@@ -3629,9 +3629,9 @@ values:
 
 <ul class=brief>
  <li>`<code>application/csp-report</code>` [[CSP]]
- <li>`<code>application/expect-ct-report+json</code>` [[EXPECT-CT]]
+ <li>`<code>application/expect-ct-report+json</code>` [[RFC9163]]
  <li>`<code>application/xss-auditor-report</code>`
- <li>`<code>application/ocsp-request</code>` [[OCSP]]
+ <li>`<code>application/ocsp-request</code>` [[RFC6960]]
 </ul>
 
 <p>Specifications should avoid introducing new exceptions and should only do so with careful
@@ -4361,13 +4361,13 @@ steps:
    <li><var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> is a
    <a for=/>domain</a>
    <li>Matching <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> per
-   <a href=https://datatracker.ietf.org/doc/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
+   <a href=https://www.rfc-editor.org/rfc/rfc6797.html#section-8.2>Known HSTS Host Domain Name Matching</a>
    results in either a superdomain match with an asserted <code>includeSubDomains</code> directive
    or a congruent match (with or without an asserted <code>includeSubDomains</code> directive) [[!HSTS]]; or
    DNS resolution for the request finds a matching HTTPS RR per
    <a href=https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-svcb-https#section-9.5>section 9.5</a>
    of [[!SVCB]].
-   [[!HSTS]][[!SVCB]]
+   [[!HSTS]] [[!SVCB]]
   </ul>
   <!-- Per Mike West HSTS happens "probably after" Referrer -->
 
@@ -5395,12 +5395,12 @@ run these steps:
     <ol>
      <li>
       <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
-      <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-7>section 7</a> of
+      <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
       [[!COOKIES]]), then:
 
       <ol>
        <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
-       <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-5.4>section 5.4</a> of
+       <a href=https://httpwg.org/specs/rfc6265.html#cookie>section 5.4</a> of
        [[!COOKIES]]) with the user agent's cookie store and <var>httpRequest</var>'s
        <a for=request>current URL</a>.
 
@@ -5454,8 +5454,8 @@ run these steps:
      <li>
       <p>Set <var>storedResponse</var> to the result of selecting a response from the
       <var>httpCache</var>, possibly needing validation, as per the
-      "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4>Constructing Responses from Caches</a>"
-      chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
+      "<a>Constructing Responses from Caches</a>" chapter of <cite>HTTP Caching</cite>, if any.
+      [[!HTTP-CACHING]]
 
       <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>`
       <a for=/>header</a> into account.
@@ -5522,9 +5522,8 @@ run these steps:
            <a for=request>header list</a>.
           </ol>
 
-          <p class=note>See also the
-          "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
-          chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
+          <p class=note>See also the "<a>Sending a Validation Request</a>" chapter of
+          <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
 
          <li><p>Otherwise, set <var>response</var> to <var>storedResponse</var> and set
          <var>response</var>'s <a for=response>cache state</a> to "<code>local</code>".
@@ -5548,12 +5547,11 @@ run these steps:
    <li><p>Let <var>forwardResponse</var> be the result of running <a>HTTP-network fetch</a> given
    <var>httpFetchParams</var>, <var>includeCredentials</var>, and <var>isNewConnectionFetch</var>.
 
-   <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is
-   <a href=https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.1>unsafe</a> and
+   <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is <a>unsafe</a> and
    <var>forwardResponse</var>'s <a for=response>status</a> is in the range 200 to 399, inclusive,
    invalidate appropriate stored responses in <var>httpCache</var>, as per the
-   "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.4>Invalidation</a>" chapter of
-   <cite>HTTP Caching</cite>, and set <var>storedResponse</var> to null. [[!HTTP-CACHING]]
+   "<a>Invalidating Stored Responses</a>" chapter of <cite>HTTP Caching</cite>, and set
+   <var>storedResponse</var> to null. [[!HTTP-CACHING]]
 
    <li>
     <p>If the <var>revalidatingFlag</var> is set and <var>forwardResponse</var>'s
@@ -5563,8 +5561,8 @@ run these steps:
      <li>
       <p>Update <var>storedResponse</var>'s <a for=response>header list</a> using
       <var>forwardResponse</var>'s <a for=response>header list</a>, as per the
-      "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
-      chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+      "<a>Freshening Stored Responses upon Validation</a>" chapter of <cite>HTTP Caching</cite>.
+      [[!HTTP-CACHING]]
 
       <p class="note">This updates the stored response in cache as well.
 
@@ -5581,8 +5579,8 @@ run these steps:
 
      <li>
       <p>Store <var>httpRequest</var> and <var>forwardResponse</var> in <var>httpCache</var>, as per
-      the "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-3>Storing Responses in Caches</a>"
-      chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+      the "<a>Storing Responses in Caches</a>" chapter of <cite>HTTP Caching</cite>.
+      [[!HTTP-CACHING]]
 
       <p class=note>If <var>forwardResponse</var> is a <a>network error</a>, this effectively caches
       the network error, which is sometimes known as "negative caching".
@@ -5941,10 +5939,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
  <li><p tracking-vector>If <var>includeCredentials</var> is true and the user agent is not
  configured to block cookies for <var>request</var> (see
- <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-7>section 7</a> of [[!COOKIES]]),
- then run the "set-cookie-string" parsing algorithm (see
- <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-5.2>section 5.2</a> of [[!COOKIES]])
- on the <a for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
+ <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
+ [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see
+ <a href=https://httpwg.org/specs/rfc6265.html#set-cookie>section 5.2</a> of [[!COOKIES]]) on the
+ <a for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
  <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s
  <a for=response>header list</a>, if any, and <var>request</var>'s <a for=request>current URL</a>.
 
@@ -7848,7 +7846,7 @@ these steps:
  then <a>throw</a> a {{RangeError}}.
 
  <li><p>If <var>init</var>["{{ResponseInit/statusText}}"] does not match the
- <a spec=http>reason-phrase</a> token production, then <a>throw</a> a {{TypeError}}.
+ <a spec=http1>reason-phrase</a> token production, then <a>throw</a> a {{TypeError}}.
 
  <li><p>Set <var>response</var>'s <a for=Response>response</a>'s <a for=response>status</a> to
  <var>init</var>["{{ResponseInit/status}}"].
