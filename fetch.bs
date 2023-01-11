@@ -1319,6 +1319,58 @@ downloads. This format of range header value can be set using <a>add a range hea
 <a>implementation-defined</a> <a for=/>header value</a> for the `<code>User-Agent</code>`
 <a for=/>header</a>.
 
+<p>To
+<dfn export for="header list" id=concept-header-list-filter-include>filter include</dfn> a
+<a for=/>header list</a> <var>list</var> and a <a for=/>list</a> of <a for=header>name</a>s <var>includeNames</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>filteredList</var> be an empty <a for=/>header list</a>.
+
+ <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) in <var>list</var>:
+
+  <ol>
+   <li><p>If <var>name</var> is in <var>includeNames</var>, then <a for=list>append</a> (<var>name</var>, <var>value</var>) to <var>filteredList</var>.
+  </ol>
+
+ <li><p>Return <var>filteredList</var>.
+</ol>
+
+<p>To
+<dfn export for="header list" id=concept-header-list-filter-exclude>filter exclude</dfn> a
+<a for=/>header list</a> <var>list</var> and a <a for=/>list</a> of <a for=header>name</a>s <var>excludeNames</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>filteredList</var> be an empty <a for=/>header list</a>.
+
+ <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) in <var>list</var>:
+
+  <ol>
+   <li><p>If <var>name</var> not in <var>excludeNames</var> then <a for=list>append</a> (<var>name</var>, <var>value</var>) to <var>filteredList</var>.
+  </ol>
+
+ <li><p>Return <var>filteredList</var>.
+</ol>
+
+<p>To
+<dfn export for="header list" id=concept-header-list-get-the-size>get the size</dfn> of a
+<a for=/>header list</a> <var>list</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>sizeInBytes</var> be `0`.
+
+ <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) in <var>list</var>:
+
+  <ol>
+   <li><p>Add the <a for="byte sequence">length</a> of <var>name</var> to <var>sizeInBytes</var>.
+   <li><p>Add the <a for="byte sequence">length</a> of <var>value</var> to <var>sizeInBytes</var>.
+   <li><p>Add 4 to <var>sizeInBytes</var> (represents the `: ` after the name and the `\r\n` after the value).
+  </ol>
+
+ <li><p>Return <var>sizeInBytes</var>.
+</ol>
+
+Note: The 4 bytes added to account for the HTTP/1 syntax may need to be adjusted for different/updates syntaxes.
+
 
 <h4 id=statuses>Statuses</h4>
 
@@ -3173,6 +3225,33 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
 </ol>
 </div>
 
+<h3 dfn export lt="is a cross-origin requests header size over the limit" id=is-a-cross-origin-requests-header-size-over-the-limit>
+Is a cross-origin request's header size over the limit?</h3>
+
+Note: The goal of this algorithm is to prevent cross-origin requests from probing the size of sensitive <a for=/>header</a>s
+(`<a http-header><code>Authorization</code></a>` or `<a http-header><code>Cookie</code></a>`) by adding <a for=/>header</a>s
+to cross-origin requests until the total size of all HTTP request <a for=/>header</a>s exceeds the server side limit. If this
+algorithm returns true, the <a>CORS-preflight request</a> must be run. In order for this approach to succeed, servers should
+not set an HTTP request <a for=/>header</a>s size limit below 8 kibibyte.
+
+<p>Run these steps to check if <dfn>the header size is over the cross-origin limits</dfn> on the provided <var>request</var>:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with <var>request</var>'s
+ <a for=request>current URL</a>'s <a for=url>origin</a>, return `false`.
+
+ <li><p>Let <var>sensitiveHeaderList</var> be the result of running <a for="header list">filter include</a> on <var>request</var>'s
+ <a for=response>header list</a> with `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>) as <var>includeNames</var>`.
+
+ <li><p>If the result of running <a for="header list">get the size</a> on <var>sensitiveHeaderList</var> is greater than 4 kibibyte, return `true`.
+ 
+ <li><p>Let <var>nonSensitiveHeaderList</var> be the result of running <a for="header list">filter exclude</a> on <var>request</var>'s
+ <a for=response>header list</a> with `(<a http-header><code>Authorization</code></a>, <a http-header><code>Cookie</code></a>) as <var>excludeNames</var>`.
+
+ <li><p>If the result of running <a for="header list">get the size</a> on <var>nonSensitiveHeaderList</var> is greater than 4 kibibyte, return `true`.
+
+ <li><p>Return `false`.
+</ol>
 
 
 <h2 id=http-extensions>HTTP extensions</h2>
@@ -4961,18 +5040,19 @@ these steps:
 
   <ol>
    <li>
-    <p>If <var>makeCORSPreflight</var> is true and one of these conditions is true:
+    <p>If one of these conditions is true:
 
     <ul class=brief>
-     <li><p>There is no <a>method cache entry match</a> for <var>request</var>'s
-     <a for=request>method</a> using <var>request</var>, and either <var>request</var>'s
+     <li><p><var>makeCORSPreflight</var> is true and there is no <a>method cache entry match</a> for
+     <var>request</var>'s <a for=request>method</a> using <var>request</var>, and either <var>request</var>'s
      <a for=request>method</a> is not a <a>CORS-safelisted method</a> or <var>request</var>'s
      <a>use-CORS-preflight flag</a> is set.
 
-     <li>There is at least one <a for=list>item</a> in the <a>CORS-unsafe request-header names</a>
-     with <var>request</var>'s <a for=request>header list</a> for which there is no
-     <a>header-name cache entry match</a> using <var>request</var>.
-    </ul>
+     <li><p><var>makeCORSPreflight</var> is true and there is at least one <a for=list>item</a> in the
+     <a>CORS-unsafe request-header names</a> with <var>request</var>'s <a for=request>header list</a>
+     for which there is no <a>header-name cache entry match</a> using <var>request</var>.
+
+     <li><a>The header size is over the cross-origin limits</a> given <var>request</var> returns true.
 
     <p>Then:
 
