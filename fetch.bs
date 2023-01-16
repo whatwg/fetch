@@ -1777,7 +1777,7 @@ to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-mode>mode</dfn>, which is
 "<code>same-origin</code>", "<code>cors</code>", "<code>no-cors</code>",
-"<code>navigate</code>", "<code>unsafe-no-cors</code>", or "<code>websocket</code>".
+"<code>navigate</code>", "<code>user-agent-no-cors</code>", or "<code>websocket</code>".
 Unless stated otherwise, it is "<code>no-cors</code>".
 
 <div class="note no-backref">
@@ -1800,7 +1800,7 @@ Unless stated otherwise, it is "<code>no-cors</code>".
   <dt>"<code>navigate</code>"
   <dd>This is a special mode used only when <a>navigating</a> between documents.
 
-  <dt>"<code>unsafe-no-cors</code>"
+  <dt>"<code>user-agent-no-cors</code>"
   <dd>This is a special mode for the [=user agent=] to use internally to wittingly make
   requests that are unsafe. It restricts a <a for=/>request</a> to using <a>CORS-safelisted methods</a>,
   <a>CORS-safelisted request-headers</a>, and the <a for=/>request</a> must have a <a>parallel queue</a>
@@ -1810,7 +1810,7 @@ Unless stated otherwise, it is "<code>no-cors</code>".
   <a>Cross-Origin-Embedder-Policy allows credentials</a>. Upon success a fetch will
   return a <a>basic filtered response</a>.
 
-  <p class=warning> Using <a for=/>request</a> <a for=request>mode</a> "<code>unsafe-no-cors</code>"
+  <p class=warning> Using <a for=/>request</a> <a for=request>mode</a> "<code>user-agent-no-cors</code>"
   is even more discouraged and unsafe than "<code>no-cors</code>". Any use of this mode must be
   memory-isolated to the [=user agent=] to contain its results and prevent their disclosure or misuse.
   This <a for=request>mode</a> is deliberately not exposed in the {{RequestMode}}.
@@ -1830,7 +1830,7 @@ Unless stated otherwise, it is "<code>no-cors</code>".
 <dfn for=request>omit origin flag</dfn>. Unless stated otherwise it is unset.
 
 <p class="note no-backref">The <a for=request>omit origin flag</a> only has effect when
-<a for=/>request</a>'s <a for=request>mode</a> is "<code>unsafe-no-cors</code>".
+<a for=/>request</a>'s <a for=request>mode</a> is "<code>user-agent-no-cors</code>".
 
 <p>A <a for=/>request</a> has an associated
 <dfn id=use-cors-preflight-flag export for=request>use-CORS-preflight flag</dfn>. Unless stated
@@ -3102,7 +3102,7 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
 
  <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" or
  <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" or
- "<code>unsafe-no-cors</code>", then <a for="header list">append</a>
+ "<code>user-agent-no-cors</code>", then <a for="header list">append</a>
  (`<code>Origin</code>`, <var>serializedOrigin</var>) to
  <var>request</var>'s <a for=request>header list</a>.
 
@@ -4010,7 +4010,7 @@ the request.
   <var>processEarlyHintsResponse</var> is null.
 
   <p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>mode</a> is
-  "<code>unsafe-no-cors</code>": <a for=/>assert</a>: <var>fetchParams</var>'s
+  "<code>user-agent-no-cors</code>": <a for=/>assert</a>: <var>fetchParams</var>'s
   <a for="fetch params">task destination</a> is a <a for=/>parallel queue</a>.
 
   <p class=note>Processing of early hints (<a for=/>responses</a> whose <a for=response>status</a>
@@ -4072,7 +4072,7 @@ the request.
  "<code>no-window</code>".
 
  <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>" and either
- <var>request</var>'s <a for=request>mode</a> is not "<code>unsafe-no-cors</code>" or
+ <var>request</var>'s <a for=request>mode</a> is not "<code>user-agent-no-cors</code>" or
  and <var>request</var>'s <a for=request>omit origin flag</a> is unset, then set
  <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">origin</a>.
@@ -4085,7 +4085,7 @@ the request.
    <a>HTTP(S) scheme</a>
 
    <li><p><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>",
-   "<code>cors</code>", "<code>no-cors</code>", or "<code>unsafe-no-cors</code>"
+   "<code>cors</code>", "<code>no-cors</code>", or "<code>user-agent-no-cors</code>"
 
    <li><p><var>request</var>'s <a for=request>window</a> is not null
 
@@ -4101,7 +4101,7 @@ the request.
    <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>origin</a> is <a>same origin</a>
    with <var>request</var>'s <a for=request>client</a>'s
    <a for="environment settings object">origin</a> or <var>request</var>'s <a for=request>mode</a>
-   is "<code>unsafe-no-cors</code>".
+   is "<code>user-agent-no-cors</code>".
 
    <li><p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
    step given a <a for=/>response</a> <var>response</var>: set <var>fetchParams</var>'s
@@ -4337,7 +4337,7 @@ steps:
      <li><p>Return <var>corsWithPreflightResponse</var>.
     </ol>
 
-   <dt><var>request</var>'s <a for=request>mode</a> is "<code>unsafe-no-cors</code>"
+   <dt><var>request</var>'s <a for=request>mode</a> is "<code>user-agent-no-cors</code>"
    <dd>
     <ol>
      <li><p>Set <var>request</var>'s <a for=request>response tainting</a> to
@@ -4832,7 +4832,7 @@ these steps:
        <li><p><var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>" and
        <var>response</var>'s <a for=response>type</a> is "<code>opaque</code>"
 
-       <li><p><var>request</var>'s <a for=request>mode</a> is "<code>unsafe-no-cors</code>"
+       <li><p><var>request</var>'s <a for=request>mode</a> is "<code>user-agent-no-cors</code>"
 
        <li><var>request</var>'s <a for=request>redirect mode</a> is not "<code>manual</code>" and
        <var>response</var>'s <a for=response>type</a> is "<code>opaqueredirect</code>"
@@ -5190,7 +5190,7 @@ run these steps:
      <var>httpRequest</var>'s <a for=request>header list</a>.
     </ol>
 
-   <li>If either <var>request</var>'s <a for=request>mode</a> is not "<code>unsafe-no-cors</code>"
+   <li>If either <var>request</var>'s <a for=request>mode</a> is not "<code>user-agent-no-cors</code>"
    or <var>request</var>'s <a for=request>omit origin flag</a> is not set,
    <p><a>append a request `<code>Origin</code>` header</a> for <var>httpRequest</var>.
 
