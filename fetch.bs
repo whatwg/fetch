@@ -18,6 +18,8 @@ urlPrefix:https://httpwg.org/specs/rfc8941.html#;type:dfn;spec:rfc8941
     url:rfc.section.2;text:structured field value
     url:text-serialize;text:serializing structured fields
     url:text-parse;text:parsing structured fields
+    url:;text:structured header
+    url:token;text:structured field token
 
 urlPrefix:https://httpwg.org/specs/rfc9110.html#;type:dfn;spec:http
     url:method.overview;text:method
@@ -4088,6 +4090,22 @@ run these steps:
 </div>
 
 
+<h3 id="sec-purpose-header">`<code>Sec-Purpose</code>` header</h3>
+
+<p>The `<dfn export http-header id=http-sec-purpose><code>Sec-Purpose</code></dfn>` HTTP request
+header specifies that the request serves one or more purposes other than requesting the resource for
+immediate use by the user.
+
+<p>The `<a http-header><code>Sec-Purpose</code></a>` header field is a <a>structured header</a>
+whose value must be a <a data-lt="structured field token">token</a>.
+
+<p>The sole <a data-lt="structured field token">token</a> defined is <code>prefetch</code>. It
+indicates the request’s purpose is to fetch a resource that is anticipated to be needed shortly.
+
+<p class=note>The server can use this to adjust the caching expiry for prefetches, to disallow the
+prefetch, or to treat it differently when counting page visits.
+
+
 
 <h2 id=fetching>Fetching</h2>
 
@@ -5326,6 +5344,11 @@ run these steps:
 
    <li><p><a abstract-op lt="append the Fetch metadata headers for a request">Append the Fetch metadata headers for <var>httpRequest</var></a>.
    [[!FETCH-METADATA]]
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>initiator</a> is "<code>prefetch</code>", then
+   <a>set a structured field value</a> given (`<a http-header><code>Sec-Purpose</code></a>`,
+   the <a data-lt="structured field token">token</a> <code>prefetch</code>) in
+   <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
