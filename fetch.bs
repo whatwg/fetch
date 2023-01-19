@@ -5914,22 +5914,55 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
    <li><p>Return the <a for=/>appropriate network error</a> for <var>fetchParams</var>.
   </ol>
 
- <li><p>Let <var>pullAlgorithm</var> be an algorithm that <a lt=resumed for=fetch>resumes</a> the
- ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
+ <li>
+  <p>Let |buffer| be an empty buffer that can have bytes appended to it.
+
+  <p class="note">This represents an internal buffer inside the network layer of the user agent.
+
+ <li><p>Let |pullAlgorithm| be the followings steps:
+
+  <ol>
+   <li>[=fetch/resumed|Resume=] the ongoing fetch if it is [=fetch/suspend|suspended=].
+
+   <li>Wait until |buffer| is not empty.
+
+   <li>Let |available| be the size of |buffer|.
+
+   <li>Let |desiredSize| be |available|.
+
+   <li>If |stream|'s [=ReadableStream/current BYOB request view=] is non-null, then set
+   |desiredSize| to |stream|'s [=ReadableStream/current BYOB request view=]'s [=BufferSource/byte
+   length=].
+
+   <li>Let |extractSize| be the smaller value of |available| and |desiredSize|.
+
+   <li>Let <var>bytes</var> be the result of extracting |extractSize| of bytes from
+   <var>buffer</var>.
+
+   <li>If |stream|s [=ReadableStream/current BYOB request view=] is non-null, then
+   [=ArrayBufferView/write=] |bytes| into |stream|'s [=ReadableStream/current BYOB request view=],
+   and set |view| to |stream|'s [=ReadableStream/current BYOB request view=]. <li>Otherwise, set
+   |view| to the result of [=ArrayBufferView/create|creating=] a {{Uint8Array}} from |bytes| in
+   |stream|'s [=relevant Realm=].
+
+   <li>[=ReadableStream/Enqueue=] |view| into |stream|.
+
+   <li><p>If |stream| is [=ReadableStream/errored=], then [=fetch controller/terminate=]
+   |fetchParams|'s [=fetch params/controller=].
+
+   <li><p>If |stream| doesn't [=ReadableStream/need more data=], ask the user agent to
+   [=fetch/suspend=] the ongoing fetch.
+  </ol>
 
  <li><p>Let <var>cancelAlgorithm</var> be an algorithm that <a for="fetch controller">aborts</a>
  <var>fetchParams</var>'s <a for="fetch params">controller</a> with <var>reason</var>, given
  <var>reason</var>.
 
- <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
-
  <li><p>Let <var>stream</var> be a <a>new</a> {{ReadableStream}}.
 
- <li><p>[=ReadableStream/set up with byte reading support|Set up=] <var>stream</var> with byte
- reading support with <var>[=ReadableStream/set up/pullAlgorithm=]</var> set to
- <var>pullAlgorithm</var>, <var>[=ReadableStream/set up/cancelAlgorithm=]</var> set to
- <var>cancelAlgorithm</var>, <var>[=ReadableStream/set up/highWaterMark=]</var> set to
- <var>highWaterMark</var>.
+ <li><p>[=ReadableStream/set up with byte reading support|Set up=] |stream| with byte reading
+ support with <var>[=ReadableStream/set up/pullAlgorithm=]</var> set to |pullAlgorithm|,
+ <var>[=ReadableStream/set up/cancelAlgorithm=]</var> set to |cancelAlgorithm|.
 
  <li><p>Set <var>response</var>'s <a for=response>body</a> to a new <a for=/>body</a> whose
  <a for=body>stream</a> is <var>stream</var>.
@@ -5983,15 +6016,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>If <var>bytes</var> is failure, then <a for="fetch controller">terminate</a>
          <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
-         <li><p><a for=ReadableStream>Enqueue</a> a {{Uint8Array}} wrapping an {{ArrayBuffer}}
-         containing <var>bytes</var> into <var>stream</var>.
-
-         <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
-         <a for="fetch controller">terminate</a> <var>fetchParams</var>.'s
-         <a for="fetch params">controller</a>.
-
-         <li><p>If <var>stream</var> doesn't <a for=ReadableStream>need more data</a> ask the user
-         agent to <a for=fetch>suspend</a> the ongoing fetch.
+         <li><p>Append |bytes| to |buffer|.
         </ol>
 
        <li><p>Otherwise, if the bytes transmission for <var>response</var>'s message body is done
