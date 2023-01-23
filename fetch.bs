@@ -5922,7 +5922,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Let |pullAlgorithm| be the followings steps:
 
   <ol>
-   <li>[=fetch/resumed|Resume=] the ongoing fetch if it is [=fetch/suspend|suspended=].
+   <li>If |buffer| is empty and the ongoing fetch is [=fetch/suspend|suspended=],
+   [=fetch/resumed|resume=] the fetch.
 
    <li>Wait until |buffer| is not empty.
 
@@ -5949,9 +5950,6 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
    <li><p>If |stream| is [=ReadableStream/errored=], then [=fetch controller/terminate=]
    |fetchParams|'s [=fetch params/controller=].
-
-   <li><p>If |stream| doesn't [=ReadableStream/need more data=], ask the user agent to
-   [=fetch/suspend=] the ongoing fetch.
   </ol>
 
  <li><p>Let <var>cancelAlgorithm</var> be an algorithm that <a for="fetch controller">aborts</a>
@@ -6017,6 +6015,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
          <li><p>Append |bytes| to |buffer|.
+
+         <li><p>If the size of |buffer| is larger than a limit chosen by the user agent, ask the
+         user agent to [=fetch/suspend=] the ongoing fetch.
         </ol>
 
        <li><p>Otherwise, if the bytes transmission for <var>response</var>'s message body is done
