@@ -1,5 +1,7 @@
 <pre class=metadata>
 Group: WHATWG
+Status: RD
+Date: 2022-12-19
 H1: Fetch
 Shortname: fetch
 Text Macro: TWITTER fetchstandard
@@ -11,34 +13,19 @@ Translate IDs: typedefdef-bodyinit bodyinit,dictdef-requestinit requestinit,type
 </pre>
 
 <pre class=anchors>
-urlPrefix:https://httpwg.org/specs/rfc5861.html#;type:dfn;spec:stale-while-revalidate
-    url:n-the-stale-while-revalidate-cache-control-extension;text:stale-while-revalidate lifetime
+urlPrefix:https://datatracker.ietf.org/doc/html/rfc7230#;type:dfn;spec:http
+    url:section-3.1.1;text:method
+    url:section-3.2;text:field-name
+    url:section-3.2;text:field-content
+    url:section-3.2;text:field-value
+    url:section-3.1.2;text:reason-phrase
 
-urlPrefix:https://httpwg.org/specs/rfc8941.html#;type:dfn;spec:rfc8941
-    url:rfc.section.2;text:structured field value
-    url:text-serialize;text:serializing structured fields
-    url:text-parse;text:parsing structured fields
-    url:;text:structured header
-    url:token;text:structured field token
+url:https://datatracker.ietf.org/doc/html/rfc7234#section-1.2.1;text:delta-seconds;type:dfn;spec:http-caching
 
-urlPrefix:https://httpwg.org/specs/rfc9110.html#;type:dfn;spec:http
-    url:method.overview;text:method
-    url:fields.names;text:field-name
-    url:fields.values;text:field-value
-    url:rfc.section.9.2.1;text:unsafe
-
-urlPrefix:https://httpwg.org/specs/rfc9111.html#;type:dfn;spec:http-caching
-    url:delta-seconds;text:delta-seconds
-    url:age.calculations;text:current age
-    url:calculating.freshness.lifetime;text:freshness lifetime
-    url:response.cacheability;text:Storing Responses in Caches
-    url:invalidation;text:Invalidating Stored Responses
-    url:validation.sent;text:Sending a Validation Request
-    url:constructing.responses.from.caches;text:Constructing Responses from Caches
-    url:freshening.responses;text:Freshening Stored Responses upon Validation
-
-urlPrefix:https://httpwg.org/specs/rfc9112.html#;type:dfn;spec:http1
-    url:status.line;text:reason-phrase
+urlPrefix:https://datatracker.ietf.org/doc/html/rfc8941#;type:dfn;spec:rfc8941
+    url:section-2;text:structured field value
+    url:section-4.1;text:serializing structured fields
+    url:section-4.2;text:parsing structured fields
 
 url:https://w3c.github.io/resource-timing/#dfn-mark-resource-timing;text:mark resource timing;type:dfn;spec:resource-timing
 
@@ -64,12 +51,6 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     },
     "HTTP1": {
         "aliasOf": "RFC9112"
-    },
-    "HTTP3": {
-        "aliasOf": "RFC9114"
-    },
-    "HTTP3-DATAGRAM": {
-        "aliasOf": "RFC9297"
     },
     "REFERRER": {
         "aliasOf": "referrer-policy"
@@ -98,11 +79,32 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
         "href": "https://www.kb.cert.org/vuls/id/150227",
         "title": "HTTP proxy default configurations allow arbitrary TCP connections."
     },
+    "EXPECT-CT": {
+        "authors": ["Emily Stark"],
+        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-expect-ct",
+        "publisher": "IETF",
+        "title": "Expect-CT Extension for HTTP"
+    },
+    "OCSP": {
+        "aliasOf": "RFC2560"
+    },
+    "HTTP3": {
+        "authors": ["M. Bishop, Ed."],
+        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-quic-http",
+        "publisher": "IETF",
+        "title": "Hypertext Transfer Protocol Version 3 (HTTP/3)"
+    },
     "WEBTRANSPORT-HTTP3": {
         "authors": ["V. Vasiliev"],
         "href": "https://datatracker.ietf.org/doc/html/draft-ietf-webtrans-http3",
         "publisher": "IETF",
         "title": "WebTransport over HTTP/3"
+    },
+    "HTTP3-DATAGRAM": {
+        "authors": ["David Schinazi", "Lucas Pardue"],
+        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-masque-h3-datagram",
+        "publisher": "IETF",
+        "title": "Using QUIC Datagrams with HTTP/3"
     },
     "SVCB": {
         "authors": ["Ben Schwartz", "Mike Bishop", "Erik Nygren"],
@@ -111,10 +113,6 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
         "title": "Service binding and parameter specification via the DNS (DNS SVCB and HTTPS RRs)"
     }
 }
-</pre>
-
-<pre class=link-defaults>
-spec:infra; type:dfn; text:implementation-defined
 </pre>
 
 
@@ -415,8 +413,8 @@ number.
 <p>A <dfn export>fetch scheme</dfn> is "<code>about</code>", "<code>blob</code>",
 "<code>data</code>", "<code>file</code>", or an <a>HTTP(S) scheme</a>.
 
-<p class=note><a>HTTP(S) scheme</a> and <a>fetch scheme</a> are also used by <cite>HTML</cite>.
-[[HTML]]
+<p class="note no-backref"><a>HTTP(S) scheme</a> and <a>fetch scheme</a> are also used by
+<cite>HTML</cite>. [[HTML]]
 
 
 <h3 id=http>HTTP</h3>
@@ -429,9 +427,9 @@ means (e.g., <code>data</code> URLs).
 
 <p><dfn export>HTTP whitespace</dfn> is U+000A LF, U+000D CR, or an <a>HTTP tab or space</a>.
 
-<p class=note><a>HTTP whitespace</a> is only useful for specific constructs that are reused outside
-the context of HTTP headers (e.g., <a for=/>MIME types</a>). For HTTP header values, using
-<a>HTTP tab or space</a> is preferred, and outside that context <a>ASCII whitespace</a> is
+<p class="note no-backref"><a>HTTP whitespace</a> is only useful for specific constructs that are
+reused outside the context of HTTP headers (e.g., <a for=/>MIME types</a>). For HTTP header values,
+using <a>HTTP tab or space</a> is preferred, and outside that context <a>ASCII whitespace</a> is
 preferred. Unlike <a>ASCII whitespace</a> this excludes U+000C FF.
 
 <p>An <dfn export>HTTP newline byte</dfn> is 0x0A (LF) or 0x0D (CR).
@@ -548,31 +546,29 @@ match for `<code>DELETE</code>`, `<code>GET</code>`,
 `<code>HEAD</code>`, `<code>OPTIONS</code>`, `<code>POST</code>`, or
 `<code>PUT</code>`, <a>byte-uppercase</a> it.
 
-<p class=note><a lt=normalize for=method>Normalization</a> is done for backwards compatibility and
-consistency across APIs as <a for=/>methods</a> are actually "case-sensitive".
+<p class="note no-backref"><a lt=normalize for=method>Normalization</a> is
+done for backwards compatibility and consistency across APIs as
+<a for=/>methods</a> are actually "case-sensitive".
 
 <p id=example-normalization class=example>Using `<code>patch</code>` is highly likely to result in a
 `<code>405 Method Not Allowed</code>`. `<code>PATCH</code>` is much more likely to
 succeed.
 
-<p class=note>There are no restrictions on <a for=/>methods</a>. `<code>CHICKEN</code>` is perfectly
-acceptable (and not a misspelling of `<code>CHECKIN</code>`). Other than those that are
+<p class="note no-backref">There are no restrictions on <a for=/>methods</a>.
+`<code>CHICKEN</code>` is perfectly acceptable (and not a misspelling of
+`<code>CHECKIN</code>`). Other than those that are
 <a lt=normalize for=method>normalized</a> there are no casing restrictions either.
-`<code>Egg</code>` or `<code>eGg</code>` would be fine, though uppercase is encouraged for
-consistency.
+`<code>Egg</code>` or `<code>eGg</code>` would be fine, though uppercase is encouraged
+for consistency.
 
 
 <h4 id=terminology-headers>Headers</h4>
 
-<p class=note>HTTP generally refers to a header as a "field" or "header field". The web platform
-uses the more colloquial term "header". [[HTTP]]
-<!-- This will become more hairy if we add trailer support. -->
-
 <p>A <dfn export id=concept-header-list>header list</dfn> is a <a for=/>list</a> of zero or more
-<a for=/>headers</a>. It is initially « ».
+<a for=/>headers</a>. It is initially the empty list.
 
-<p class=note>A <a for=/>header list</a> is essentially a specialized multimap: an ordered list of
-key-value pairs with potentially duplicate keys.
+<p class="note no-backref">A <a for=/>header list</a> is essentially a
+specialized multimap: an ordered list of key-value pairs with potentially duplicate keys.
 
 <div algorithm>
 <p>To
@@ -814,9 +810,9 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
   <p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set <var>name</var>
   to the first such <a for=/>header</a>'s <a for=header>name</a>.
 
-  <p class=note>This reuses the casing of the <a for=header>name</a> of the <a for=/>header</a>
-  already in <var>list</var>, if any. If there are multiple matched <a for=/>headers</a> their
-  <a for=header>names</a> will all be identical.
+  <p class="note no-backref">This reuses the casing of the <a for=header>name</a> of the
+  <a for=/>header</a> already in <var>list</var>, if any. If there are multiple matched
+  <a for=/>headers</a> their <a for=header>names</a> will all be identical.
 
  <li><p><a for=list>Append</a> (<var>name</var>, <var>value</var>) to <var>list</var>.
 </ol>
@@ -920,9 +916,9 @@ conditions:
  <li><p>Contains no 0x00 (NUL) or <a>HTTP newline bytes</a>.
 </ul>
 
-<p class=note>The definition of <a for=/>header value</a> is not defined in terms of the
-<a spec=http>field-value</a> token production as it is
-<a href=https://github.com/httpwg/http-core/issues/215 title="field-value value space">not compatible with deployed content</a>.
+<p class=note>The definition of <a for=/>header value</a> is not defined in terms of an HTTP token
+production as
+<a href=https://github.com/httpwg/http11bis/issues/19 title="fix field-value ABNF">it is broken</a>.
 
 <div algorithm>
 <p>To <dfn export for="header value" id=concept-header-value-normalize>normalize</dfn> a
@@ -975,7 +971,7 @@ is a <dfn export>CORS-safelisted request-header</dfn>, run these steps:
     <p class=warning>This intentionally does not use <a>extract a MIME type</a> as that algorithm is
     rather forgiving and servers are not expected to implement it.
 
-    <div class=example id=example-cors-safelisted-request-header-content-type>
+    <div class="example no-backref" id=example-cors-safelisted-request-header-content-type>
      <p>If <a>extract a MIME type</a> were used the following request would not result in a CORS
      preflight and a naïve parser on the server might treat the request body as JSON:
 
@@ -1027,7 +1023,7 @@ following is true:
  <li><p><var>byte</var> is 0x22 ("), 0x28 (left parenthesis), 0x29 (right parenthesis), 0x3A (:),
  0x3C (&lt;), 0x3E (>), 0x3F (?), 0x40 (@), 0x5B ([), 0x5C (\), 0x5D (]), 0x7B ({), 0x7D (}), or
  0x7F DEL.
- <!-- Delimiters from https://httpwg.org/specs/rfc9110.html#rule.token.separators except for ,/;=
+ <!-- Delimiters from https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6 except for ,/;=
       and including DEL -->
 </ul>
 </div>
@@ -1244,8 +1240,8 @@ run these steps:
   <p>If the <a>ABNF</a> for <var>name</var> allows a single <a for=/>header</a> and <var>list</var>
   <a for="header list">contains</a> more than one, then return failure.
 
-  <p class=note>If different error handling is needed, extract the desired <a for=/>header</a>
-  first.
+  <p class="note no-backref">If different error handling is needed, extract the desired
+  <a for=/>header</a> first.
 
  <li><p>Let <var>values</var> be an empty <a for=/>list</a>.
 
@@ -1320,9 +1316,6 @@ downloads. This format of range header value can be set using <a>add a range hea
 <p>A <dfn id=default-user-agent-value export>default `<code>User-Agent</code>` value</dfn> is an
 <a>implementation-defined</a> <a for=/>header value</a> for the `<code>User-Agent</code>`
 <a for=/>header</a>.
-
-<p>The <dfn>document `<code>Accept</code>` header value</dfn> is
-`<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`.
 
 
 <h4 id=statuses>Statuses</h4>
@@ -1474,19 +1467,32 @@ null), run these steps. <var>processBody</var> must be an algorithm accepting a
  <li><p>If <var>taskDestination</var> is null, then set <var>taskDestination</var> to the result of
  <a>starting a new parallel queue</a>.
 
- <li><p>Let <var>successSteps</var> given a <a>byte sequence</a> <var>bytes</var> be to
+ <li><p>Let <var>promise</var> be the result of <a>fully reading body as promise</a> given
+ <var>body</var>.
+
+ <li><p>Let <var>fulfilledSteps</var> given a <a>byte sequence</a> <var>bytes</var> be to
  <a>queue a fetch task</a> to run <var>processBody</var> given <var>bytes</var>, with
  <var>taskDestination</var>.
 
- <li><p>Let <var>errorSteps</var> be to <a>queue a fetch task</a> to run
+ <li><p>Let <var>rejectedSteps</var> be to <a>queue a fetch task</a> to run
  <var>processBodyError</var>, with <var>taskDestination</var>.
 
- <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
- <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then run
- <var>errorSteps</var> with that exception and return.
+ <li><p><a for=promise>React</a> to <var>promise</var> with <var>fulfilledSteps</var> and
+ <var>rejectedSteps</var>.
+</ol>
+</div>
 
- <li><p><a for=ReadableStreamDefaultReader>Read all bytes</a> from
- <var>reader</var>, given <var>successSteps</var> and <var>errorSteps</var>.
+<div algorithm>
+<p>To <dfn export lt="fully reading body as promise">fully read body as promise</dfn>, given a
+<a for=/>body</a> <var>body</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
+ <var>body</var>'s <a for=body>stream</a>. If that threw an exception, then return
+ <a>a promise rejected with</a> that exception.
+
+ <li><p>Return the result of <a for=ReadableStreamDefaultReader>reading all bytes</a> from
+ <var>reader</var>.
 </ol>
 </div>
 
@@ -1523,15 +1529,15 @@ these steps:
 <a for=/>method</a>). Unless stated otherwise it is
 `<code>GET</code>`.
 
-<p class=note>This can be updated during redirects to `<code>GET</code>` as described in
-<a>HTTP fetch</a>.
+<p class="note no-backref">This can be updated during redirects to `<code>GET</code>` as
+described in <a>HTTP fetch</a>.
 
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=concept-request-url>URL</dfn>
 (a <a for=/>URL</a>).
 
-<p class=note>Implementations are encouraged to make this a pointer to the first <a for=/>URL</a> in
-<a for=/>request</a>'s <a for=request>URL list</a>. It is provided as a distinct field solely for
-the convenience of other standards hooking into Fetch.
+<p class="note no-backref">Implementations are encouraged to make this a pointer to the first
+<a for=/>URL</a> in <a for=/>request</a>'s <a for=request>URL list</a>. It is provided as a distinct
+field solely for the convenience of other standards hooking into Fetch.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export>local-URLs-only flag</dfn>. Unless stated otherwise it is
@@ -1539,13 +1545,13 @@ unset.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-header-list>header list</dfn> (a
-<a for=/>header list</a>). Unless stated otherwise it is « ».
+<a for=/>header list</a>). Unless stated otherwise it is empty.
 
 <p>A <a for=/>request</a> has an associated
 <dfn id=unsafe-request-flag export for=request>unsafe-request flag</dfn>. Unless stated otherwise it
 is unset.
 
-<p class=note>The <a>unsafe-request flag</a> is set by APIs such as
+<p class="note no-backref">The <a>unsafe-request flag</a> is set by APIs such as
 <a method><code>fetch()</code></a>  and {{XMLHttpRequest}} to ensure a <a>CORS-preflight fetch</a>
 is done based on the supplied <a for=request>method</a> and <a for=request>header list</a>. It does
 not free an API from outlawing <a>forbidden methods</a> and <a>forbidden request-headers</a>.
@@ -1554,9 +1560,9 @@ not free an API from outlawing <a>forbidden methods</a> and <a>forbidden request
 <dfn export for=request id=concept-request-body>body</dfn> (null, a <a for=/>byte sequence</a>, or a
 <a for=/>body</a>). Unless stated otherwise it is null.
 
-<p class=note>A <a for=/>byte sequence</a> will be <a for=BodyInit>safely extracted</a> into a
-<a for=/>body</a> early on in <a for=/>fetch</a>. As part of <a>HTTP fetch</a> it is possible for
-this field to be set to null due to certain redirects.
+<p class="note no-backref">A <a for=/>byte sequence</a> will be <a for=BodyInit>safely extracted</a>
+into a <a for=/>body</a> early on in <a for=/>fetch</a>. As part of <a>HTTP fetch</a> it is possible
+for this field to be set to null due to certain redirects.
 
 <hr>
 
@@ -1569,16 +1575,19 @@ this field to be set to null due to certain redirects.
 (null, an <a for=/>environment</a>, or an
 <a>environment settings object</a>). Unless stated otherwise it is null.
 
-<p class=note>This is only used by <a>navigation requests</a> and worker requests, but not service
-worker requests. It references an <a for=/>environment</a> for a <a>navigation request</a> and an
+<p class="note no-backref">This is only used by <a>navigation requests</a> and worker
+requests, but not service worker requests. It references an
+<a for=/>environment</a> for a <a>navigation request</a> and an
 <a>environment settings object</a> for a worker request.
 
 <p>A <a for=/>request</a> has an associated
 <dfn id=concept-request-replaces-client-id export for=request>replaces client id</dfn>
 (a string). Unless stated otherwise it is the empty string.
 
-<p class=note>This is only used by <a>navigation requests</a>. It is the <a for="environment">id</a>
-of the <a for="environment">target browsing context</a>'s <a>active document</a>'s
+<p class="note no-backref">This is only used by <a>navigation requests</a>. It is the
+<a for="environment">id</a> of the
+<a for="environment">target browsing context</a>'s
+<a>active document</a>'s
 <a>environment settings object</a>.
 
 <p>A <a for=/>request</a> has an associated
@@ -1589,19 +1598,21 @@ of the <a for="environment">target browsing context</a>'s <a>active document</a>
 {{Window}} object). Unless stated otherwise it is
 "<code>client</code>".
 
-<p class=note>The "<code>client</code>" value is changed to "<code>no-window</code>" or
-<a for=/>request</a>'s <a for=request>client</a> during <a lt=fetch for=/>fetching</a>. It provides
-a convenient way for standards to not have to explicitly set <a for=/>request</a>'s
+<p class="note no-backref">The "<code>client</code>" value is changed to "<code>no-window</code>" or
+<a for=/>request</a>'s <a for=request>client</a> during
+<a lt=fetch for=/>fetching</a>. It provides a convenient way for standards to not have to
+explicitly set <a for=/>request</a>'s
 <a for=request>window</a>.
 
 <p id=keep-alive-flag>A <a for=/>request</a> has an associated boolean
 <dfn for=request export id=request-keepalive-flag>keepalive</dfn>. Unless stated otherwise it is
 false.
 
-<p class=note>This can be used to allow the request to outlive the
-<a>environment settings object</a>, e.g., <code>navigator.sendBeacon()</code> and the HTML
-<code>img</code> element use this. Requests with this set to true are subject to additional
-processing requirements.
+<p class="note no-backref">This can be used to allow the request to outlive the
+<a>environment settings object</a>, e.g.,
+<code>navigator.sendBeacon</code> and the HTML <code>img</code> element set this flag. Requests with
+this flag set are subject to additional processing requirements.
+
 
 <p>A <a for=/>request</a> has an associated
 <dfn for=request export>initiator type</dfn>, which is null,
@@ -1654,9 +1665,11 @@ the empty string,
 "<code>prerender</code>", or
 "<code>xslt</code>". Unless stated otherwise it is the empty string.
 
-<p class=note>A <a for=/>request</a>'s <a for=request>initiator</a> is not particularly granular for
-the time being as other specifications do not require it to be. It is primarily a specification
-device to assist defining CSP and Mixed Content. It is not exposed to JavaScript. [[!CSP]] [[!MIX]]
+<p class="note no-backref">A <a for=/>request</a>'s
+<a for=request>initiator</a> is not particularly granular for
+the time being as other specifications do not require it to be. It is primarily a
+specification device to assist defining CSP and Mixed Content. It is not exposed to
+JavaScript. [[!CSP]] [[!MIX]]
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-destination>destination</dfn>, which is
@@ -1758,11 +1771,11 @@ not always relevant and might require different behavior.
    <code>cursor</code>, CSS' <code>list-style-image</code>, …
   <tr>
    <td>"<code>audioworklet</code>"
-   <td><code>script-src</code>, <code>script-src-elem</code>
+   <td><code>script-src</code>
    <td><code>audioWorklet.addModule()</code>
   <tr>
    <td>"<code>paintworklet</code>"
-   <td><code>script-src</code>, <code>script-src-elem</code>
+   <td><code>script-src</code>
    <td><code>CSS.paintWorklet.addModule()</code>
   <tr>
    <td>"<code>script</code>"
@@ -1786,7 +1799,7 @@ not always relevant and might require different behavior.
    <td><code>Worker</code>
   <tr>
    <td>"<code>style</code>"
-   <td><code>style-src</code>, <code>style-src-elem</code>
+   <td><code>style-src</code>
    <td>HTML's <code>&lt;link rel=stylesheet></code>, CSS' <code>@import</code>
   <tr>
    <td>"<code>track</code>"
@@ -1814,7 +1827,7 @@ not always relevant and might require different behavior.
   <tr>
    <td>"<code>prefetch</code>"
    <td rowspan=2>""
-   <td rowspan=2><code>default-src</code> (no specific directive)
+   <td rowspan=2><code>prefetch-src</code>
    <td>HTML's <code>&lt;link rel=prefetch></code>
   <tr>
    <td>"<code>prerender</code>"
@@ -1822,7 +1835,7 @@ not always relevant and might require different behavior.
   <tr>
    <td>"<code>xslt</code>"
    <td>"<code>xslt</code>"
-   <td><code>script-src-elem</code>
+   <td><code>script-src</code>
    <td><code>&lt;?xml-stylesheet></code>
  </table>
 
@@ -1849,7 +1862,7 @@ not always relevant and might require different behavior.
 "<code>client</code>" or an <a for=/>origin</a>. Unless stated otherwise it is
 "<code>client</code>".
 
-<p class=note>"<code>client</code>" is changed to an <a for=/>origin</a> during
+<p class="note no-backref">"<code>client</code>" is changed to an <a for=/>origin</a> during
 <a lt=fetch for=/>fetching</a>. It provides a convenient way for standards to not have to set
 <a for=/>request</a>'s <a for=request>origin</a>.
 
@@ -1867,15 +1880,15 @@ not always relevant and might require different behavior.
 "<code>no-referrer</code>", "<code>client</code>", or a <a for=/>URL</a>. Unless stated otherwise it
 is "<code>client</code>".
 
-<p class=note>"<code>client</code>" is changed to "<code>no-referrer</code>" or a <a for=/>URL</a>
-during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standards to not have to set
-<a for=/>request</a>'s <a for=request>referrer</a>.
+<p class="note no-backref">"<code>client</code>" is changed to "<code>no-referrer</code>" or a
+<a for=/>URL</a> during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standards
+to not have to set <a for=/>request</a>'s <a for=request>referrer</a>.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-referrer-policy>referrer policy</dfn>, which is a
 <a for=/>referrer policy</a>. Unless stated otherwise it is the empty string. [[!REFERRER]]
 
-<p class=note>This can be used to override the referrer policy to be used for this
+<p class="note no-backref">This can be used to override the referrer policy to be used for this
 <a for=/>request</a>.
 
 <p>A <a for=/>request</a> has an associated
@@ -1884,7 +1897,7 @@ during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standard
 "<code>navigate</code>", or "<code>websocket</code>". Unless stated otherwise, it is
 "<code>no-cors</code>".
 
-<div class=note>
+<div class="note no-backref">
  <dl>
   <dt>"<code>same-origin</code>"
   <dd>Used to ensure requests are made to same-origin URLs. <a for=/>Fetch</a> will return a
@@ -1917,17 +1930,17 @@ during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standard
 <dfn id=use-cors-preflight-flag export for=request>use-CORS-preflight flag</dfn>. Unless stated
 otherwise, it is unset.
 
-<p class=note>The <a>use-CORS-preflight flag</a> being set is one of several conditions that results
-in a <a>CORS-preflight request</a>. The <a>use-CORS-preflight flag</a> is set if either one or more
-event listeners are registered on an {{XMLHttpRequestUpload}} object or if a {{ReadableStream}}
-object is used in a request.
+<p class="note no-backref">The <a>use-CORS-preflight flag</a> being set is one of several conditions
+that results in a <a>CORS-preflight request</a>. The <a>use-CORS-preflight flag</a> is set if either
+one or more event listeners are registered on an {{XMLHttpRequestUpload}} object or if a
+{{ReadableStream}} object is used in a request.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-credentials-mode>credentials mode</dfn>,
 which is "<code>omit</code>", "<code>same-origin</code>", or
 "<code>include</code>". Unless stated otherwise, it is "<code>same-origin</code>".
 
-<div class=note>
+<div class="note no-backref">
  <dl>
   <dt>"<code>omit</code>"
   <dd>Excludes credentials from this request, and causes any credentials sent back in the response
@@ -1966,7 +1979,7 @@ features set it for compatibility reasons.
 "<code>no-cache</code>", "<code>force-cache</code>", or
 "<code>only-if-cached</code>". Unless stated otherwise, it is "<code>default</code>".
 
-<div class=note>
+<div class="note no-backref">
  <dl>
   <dt>"<code>default</code>"
   <dd><a for=/>Fetch</a> will inspect the HTTP cache on the way to the network. If the HTTP cache
@@ -2020,7 +2033,7 @@ features set it for compatibility reasons.
 "<code>follow</code>", "<code>error</code>", or "<code>manual</code>".
 Unless stated otherwise, it is "<code>follow</code>".
 
-<div class=note>
+<div class="note no-backref">
  <dl>
   <dt>"<code>follow</code>"
   <dd>Follow all redirects incurred when fetching a resource.
@@ -2049,8 +2062,8 @@ Unless stated otherwise, it is "<code>follow</code>".
 which is the empty string, "<code>parser-inserted</code>", or
 "<code>not-parser-inserted</code>". Unless otherwise stated, it is the empty string.
 
-<p class=note>A <a for=/>request</a>'s <a for=request>cryptographic nonce metadata</a> and
-<a for=request>parser metadata</a> are generally populated from attributes and flags on the HTML
+<p class="note no-backref">A <a for=/>request</a>'s <a for=request>cryptographic nonce metadata</a>
+and <a for=request>parser metadata</a> are generally populated from attributes and flags on the HTML
 element responsible for creating a <a for=/>request</a>. They are used by various algorithms in
 <cite>Content Security Policy</cite> to determine whether requests or responses are to be blocked in
 a given context. [[!CSP]]
@@ -2311,9 +2324,9 @@ end-user.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-url-list>URL list</dfn> (a <a for=/>list</a> of zero or
-more <a for=/>URLs</a>). Unless stated otherwise, it is « ».
+more <a for=/>URLs</a>). Unless stated otherwise, it is the empty list.
 
-<p class=note>Except for the last <a for=/>URL</a>, if any, a <a for=/>response</a>'s
+<p class="note no-backref">Except for the last <a for=/>URL</a>, if any, a <a for=/>response</a>'s
 <a for=response>URL list</a> is not exposed to script as that would violate
 <a>atomic HTTP redirect handling</a>.
 
@@ -2330,7 +2343,7 @@ message as HTTP/2 does not support them.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-header-list>header list</dfn> (a
-<a for=/>header list</a>). Unless stated otherwise it is « ».
+<a for=/>header list</a>). Unless stated otherwise it is empty.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-body>body</dfn> (null or a
@@ -2354,7 +2367,7 @@ string.
 (a list of zero or more <a for=/>header</a>
 <a lt=name for=header>names</a>). The list is empty unless otherwise specified.
 
-<p class=note>A <a for=/>response</a> will typically get its
+<p class="note no-backref">A <a for=/>response</a> will typically get its
 <a for=response>CORS-exposed header-name list</a> set by <a>extracting header values</a> from the
 `<a http-header><code>Access-Control-Expose-Headers</code></a>` header. This list is used by a
 <a>CORS filtered response</a> to determine which headers to expose.
@@ -2393,14 +2406,19 @@ this is also tracked internally using the request's <a for=request>timing allow 
 
 <hr>
 
-<p>A <dfn export id=concept-network-error>network error</dfn> is a <a for=/>response</a> whose
-<a for=response>type</a> is "<code>error</code>", <a for=response>status</a> is 0,
-<a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is « », <a for=response>body</a> is null, and
-<a for=response>body info</a> is a new <a for=/>response body info</a>.
+<p>A <a for=/>response</a> whose
+<a for=response>type</a> is "<code>error</code>" and <a for=response>aborted flag</a> is set is
+known as an <dfn export id=concept-aborted-network-error>aborted network error</dfn>.
 
-<p>An <dfn export id=concept-aborted-network-error>aborted network error</dfn> is a
-<a>network error</a> whose <a for=response>aborted flag</a> is set.
+<p>A <a for=/>response</a> whose
+<a for=response>type</a> is "<code>error</code>" is known as a
+<dfn export id=concept-network-error>network error</dfn>.
+
+<p>A <a>network error</a> is a <a for=/>response</a> whose
+<a for=response>status</a> is always 0,
+<a for=response>status message</a> is always the empty byte sequence,
+<a for=response>header list</a> is always empty, and
+<a for=response>body</a> is always null.
 
 <div algorithm>
 <p>To create the <dfn>appropriate network error</dfn> given <a for=/>fetch params</a>
@@ -2465,12 +2483,11 @@ of defining the concrete types of <a for=/>filtered responses</a>.)
 <p>An <dfn export id=concept-filtered-response-opaque>opaque filtered response</dfn> is a
 <a>filtered response</a> whose
 <a for=response>type</a> is "<code>opaque</code>",
-<a for=response>URL list</a> is « »,
+<a for=response>URL list</a> is the empty list,
 <a for=response>status</a> is 0,
 <a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is « »,
-<a for=response>body</a> is null, and
-<a for=response>body info</a> is a new <a for=/>response body info</a>.
+<a for=response>header list</a> is empty, and
+<a for=response>body</a> is null.
 
 <p>An
 <dfn export id=concept-filtered-response-opaque-redirect>opaque-redirect filtered response</dfn>
@@ -2478,9 +2495,8 @@ is a <a>filtered response</a> whose
 <a for=response>type</a> is "<code>opaqueredirect</code>",
 <a for=response>status</a> is 0,
 <a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is « »,
-<a for=response>body</a> is null, and
-<a for=response>body info</a> is a new <a for=/>response body info</a>.
+<a for=response>header list</a> is empty, and
+<a for=response>body</a> is null.
 
 <div class=note>
  <p>Exposing the <a for=response>URL list</a> for
@@ -2544,11 +2560,13 @@ console.log((await fetch("/surprise-me", { redirect: "manual" })).type); // "opa
 <hr>
 
 <p>A <dfn id=concept-fresh-response>fresh response</dfn> is a <a for=/>response</a> whose
-<a>current age</a> is within its <a>freshness lifetime</a>.
+<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.2.3>current age</a> is within its
+<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.2.1>freshness lifetime</a>.
 
 <p>A <dfn id=concept-stale-while-revalidate-response>stale-while-revalidate response</dfn> is a
-<a for=/>response</a> that is not a <a>fresh response</a> and whose <a>current age</a> is within the
-<a>stale-while-revalidate lifetime</a>. [[!HTTP-CACHING]] [[!STALE-WHILE-REVALIDATE]]
+<a for=/>response</a> that is not a <a>fresh response</a> and whose
+<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.2.3>current age</a> is within the
+<a href=https://datatracker.ietf.org/doc/html/rfc5861#section-3>stale-while-revalidate lifetime</a>.
 
 <p>A <dfn export id=concept-stale-response>stale response</dfn> is a <a for=/>response</a> that is
 not a <a>fresh response</a> or a <a>stale-while-revalidate response</a>.
@@ -2983,9 +3001,9 @@ details of reused connections are not exposed and time values are coarsened.
 <p>A <dfn>network partition key</dfn> is a tuple consisting of a <a for=/>site</a> and null or
 an <a>implementation-defined</a> value.
 
-<div algorithm>
-<p>To <dfn export>determine the network partition key</dfn>, given an
-<a for=/>environment</a> <var>environment</var>:
+<p>To
+<dfn export lt="determine the network partition key|determining the network partition key">determine the network partition key</dfn>,
+given an <a for=/>environment</a> <var>environment</var>, run these steps:
 
 <ol>
  <li><p>Let <var>topLevelOrigin</var> be <var>environment</var>'s
@@ -3007,11 +3025,10 @@ an <a>implementation-defined</a> value.
 
  <li><p>Return (<var>topLevelSite</var>, <var>secondKey</var>).
 </ol>
-</div>
 
-<div algorithm>
-<p>To <dfn for=request>determine the network partition key</dfn>, given a <a for=/>request</a>
-<var>request</var>:
+<p>To
+<dfn for=request lt="determine the network partition key|determining the network partition key">determine the network partition key</dfn>,
+given <var>request</var>, run these steps:
 
 <ol>
  <li><p>If <var>request</var>'s <a for=request>reserved client</a> is non-null, then return the
@@ -3024,13 +3041,13 @@ an <a>implementation-defined</a> value.
 
  <li><p>Return null.
 </ol>
-</div>
 
 
 <h3 id=http-cache-partitions>HTTP cache partitions</h3>
 
-<div algorithm>
-<p>To <dfn>determine the HTTP cache partition</dfn>, given a <a for=/>request</a> <var>request</var>:
+<p>To
+<dfn lt="determine the HTTP cache partition|determining the HTTP cache partition">determine the HTTP cache partition</dfn>,
+given <var>request</var>, run these steps:
 
 <ol>
  <li><p>Let <var>key</var> be the result of <a for=request>determining the network partition key</a>
@@ -3040,7 +3057,6 @@ an <a>implementation-defined</a> value.
 
  <li><p>Return the unique HTTP cache associated with <var>key</var>. [[!HTTP-CACHING]]
 </ol>
-</div>
 
 
 <h3 id=port-blocking>Port blocking</h3>
@@ -3049,9 +3065,9 @@ an <a>implementation-defined</a> value.
 through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in that case.
 [[RFC7301]]
 
-<div algorithm>
 <p>To determine whether fetching a <a for=/>request</a> <var>request</var>
-<dfn export lt="block bad port">should be blocked due to a bad port</dfn>:
+<dfn export lt="block bad port">should be blocked due to a bad port</dfn>,
+run these steps:
 
 <ol>
  <li><p>Let <var>url</var> be <var>request</var>'s <a for=request>current URL</a>.
@@ -3061,7 +3077,6 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
 
  <li><p>Return <b>allowed</b>.
 </ol>
-</div>
 
 <p>A <a for=url>port</a> is a
 <dfn export>bad port</dfn> if it is listed in the first column of the following table.
@@ -3153,7 +3168,6 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
      https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt -->
 
 
-<div algorithm="should response to request be blocked due to mime type">
 <h3 dfn export lt="should response to request be blocked due to mime type" id=should-response-to-request-be-blocked-due-to-mime-type?>Should
 <var>response</var> to <var>request</var> be blocked due to its MIME type?</h3>
 
@@ -3179,7 +3193,6 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
 
  <li><p>Return <b>allowed</b>.
 </ol>
-</div>
 
 
 
@@ -3207,7 +3220,6 @@ request <a for=/>header</a> indicates where a
 
 <hr>
 
-<div algorithm>
 <p>To <dfn id=append-a-request-origin-header>append a request `<code>Origin</code>` header</dfn>,
 given a <a for=/>request</a> <var>request</var>, run these steps:
 
@@ -3258,7 +3270,6 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
 <p class=note>A <a for=/>request</a>'s <a for=request>referrer policy</a> is taken into account for
 all fetches where the fetcher did not explicitly opt into sharing their <a for=/>origin</a> with the
 server, e.g., via using the <a>CORS protocol</a>.
-</div>
 
 
 <h3 id=http-cors-protocol>CORS protocol</h3>
@@ -3637,9 +3648,9 @@ values:
 
 <ul class=brief>
  <li>`<code>application/csp-report</code>` [[CSP]]
- <li>`<code>application/expect-ct-report+json</code>` [[RFC9163]]
+ <li>`<code>application/expect-ct-report+json</code>` [[EXPECT-CT]]
  <li>`<code>application/xss-auditor-report</code>`
- <li>`<code>application/ocsp-request</code>` [[RFC6960]]
+ <li>`<code>application/ocsp-request</code>` [[OCSP]]
 </ul>
 
 <p>Specifications should avoid introducing new exceptions and should only do so with careful
@@ -3652,7 +3663,6 @@ consideration for the security consequences. New exceptions can be proposed by
 <p>The `<code>Content-Length</code>` header is largely defined in HTTP. Its processing model is
 defined here as the model defined in HTTP is not compatible with web content. [[HTTP]]
 
-<div algorithm>
 <p>To <dfn export for="header list" lt="extract a length|extracting a length">extract a length</dfn>
 from a <a for=/>header list</a> <var>headers</var>, run these steps:
 
@@ -3680,7 +3690,6 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
 
  <li><p>Return <var>candidateValue</var>, interpreted as decimal number.
 </ol>
-</div>
 
 
 <h3 id=content-type-header>`<code>Content-Type</code>` header</h3>
@@ -3688,7 +3697,6 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
 <p>The `<code>Content-Type</code>` header is largely defined in HTTP. Its processing model is
 defined here as the model defined in HTTP is not compatible with web content. [[HTTP]]
 
-<div algorithm>
 <p>To
 <dfn export for="header list" lt="extract a MIME type|extracting a MIME type" id=concept-header-extract-mime-type>extract a MIME type</dfn>
 from a <a for=/>header list</a> <var>headers</var>, run these steps:
@@ -3741,7 +3749,6 @@ from a <a for=/>header list</a> <var>headers</var>, run these steps:
 
  <li><p>Return <var>mimeType</var>.
 </ol>
-</div>
 
 <p class=warning>When <a>extract a MIME type</a> returns failure or a <a for=/>MIME type</a> whose
 <a for="MIME type">essence</a> is incorrect for a given format, treat this as a fatal error.
@@ -3804,7 +3811,6 @@ Content-Type:
  </table>
 </div>
 
-<div algorithm>
 <p>To <dfn export>legacy extract an encoding</dfn> given failure or a <a for=/>MIME type</a>
 <var>mimeType</var> and an <a for=/>encoding</a> <var>fallbackEncoding</var>, run these steps:
 
@@ -3828,7 +3834,6 @@ Content-Type:
 
  <p>It is denoted as legacy as modern formats are to exclusively use <a for=/>UTF-8</a>.
 </div>
-</div>
 
 
 <h3 id=x-content-type-options-header>`<code>X-Content-Type-Options</code>` header</h3>
@@ -3839,7 +3844,6 @@ response <a for=/>header</a> can be used to require checking of a <a for=/>respo
 `<code>Content-Type</code>` <a for=/>header</a> against the <a for=request>destination</a> of a
 <a for=/>request</a>.
 
-<div algorithm>
 <p>To <dfn export>determine nosniff</dfn>, given a <a for=/>header list</a> <var>list</var>, run
 these steps:
 
@@ -3855,7 +3859,6 @@ these steps:
 
  <li><p>Return false.
 </ol>
-</div>
 
 <p>Web developers and conformance checkers must use the following <a for=header>value</a>
 <a>ABNF</a> for `<a http-header><code>X-Content-Type-Options</code></a>`:
@@ -3865,7 +3868,6 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive
 </code></pre>
 
 
-<div algorithm="should response to request be blocked due to nosniff">
 <h4 lt="should response to request be blocked due to nosniff" dfn id=should-response-to-request-be-blocked-due-to-nosniff?>Should
 <var>response</var> to <var>request</var> be blocked due to nosniff?</h4>
 
@@ -3889,10 +3891,9 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive
  <li><p>Return <b>allowed</b>.
 </ol>
 
-<p class=note>Only <a for=/>request</a> <a for=request>destinations</a> that are
+<p class="note no-backref">Only <a for=/>request</a> <a for=request>destinations</a> that are
 <a for=request/destination>script-like</a> or "<code>style</code>" are considered as any exploits
 pertain to them. Also, considering "<code>image</code>" was not compatible with deployed content.
-</div>
 
 
 <h3 id=cross-origin-resource-policy-header>`<code>Cross-Origin-Resource-Policy</code>` header</h3>
@@ -3910,7 +3911,6 @@ response <a for=/>header</a> can be used to require checking a <a for=/>request<
 Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-origin" ; case-sensitive
 </code></pre>
 
-<div algorithm>
 <p>To perform a <dfn export>cross-origin resource policy check</dfn>, given an <a for=url>origin</a>
 <var>origin</var>, an <a for=/>environment settings object</a> <var>settingsObject</var>, a string
 <var>destination</var>, a <a for=/>response</a> <var>response</var>, and an optional boolean
@@ -3947,14 +3947,12 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
  <li><p>Return <b>blocked</b>.
 </ol>
 
-<p class=note>Only HTML's navigate algorithm uses this check with <var>forNavigation</var> set to
-true, and it's always for nested navigations. Otherwise, <var>response</var> is either the
-<a for="filtered response">internal response</a> of an <a>opaque filtered response</a> or a
-<a for=/>response</a> which will be the <a for="filtered response">internal response</a> of an
-<a>opaque filtered response</a>. [[HTML]]
-</div>
+<p class="note no-backref">Only HTML's navigate algorithm uses this check with
+<var>forNavigation</var> set to true, and it's always for nested navigations. Otherwise,
+<var>response</var> is either the <a for="filtered response">internal response</a> of an
+<a>opaque filtered response</a> or a <a for=/>response</a> which will be the
+<a for="filtered response">internal response</a> of an <a>opaque filtered response</a>. [[HTML]]
 
-<div algorithm>
 <p>To perform a <dfn>cross-origin resource policy internal check</dfn>, given an
 <a for=url>origin</a> <var>origin</var>, an <a for=/>embedder policy value</a>
 <var>embedderPolicyValue</var>, a <a for=/>response</a> <var>response</var>, and a boolean
@@ -4037,9 +4035,7 @@ true, and it's always for nested navigations. Otherwise, <var>response</var> is 
     match a securely-transported initiator.
   </dl>
 </ol>
-</div>
 
-<div algorithm>
 <p>To <dfn>queue a cross-origin embedder policy CORP violation report</dfn>, given a
 <a for=/>response</a> <var>response</var>, an <a for=/>environment settings object</a>
 <var>settingsObject</var>, a string <var>destination</var>, and a boolean <var>reportOnly</var>,
@@ -4093,23 +4089,6 @@ run these steps:
  <a for="environment settings object">global object</a> given the
  <a>"<code>coep</code>" report type</a>, <var>endpoint</var>, and <var>body</var>. [[!REPORTING]]
 </ol>
-</div>
-
-
-<h3 id="sec-purpose-header">`<code>Sec-Purpose</code>` header</h3>
-
-<p>The `<dfn export http-header id=http-sec-purpose><code>Sec-Purpose</code></dfn>` HTTP request
-header specifies that the request serves one or more purposes other than requesting the resource for
-immediate use by the user.
-
-<p>The `<a http-header><code>Sec-Purpose</code></a>` header field is a <a>structured header</a>
-whose value must be a <a data-lt="structured field token">token</a>.
-
-<p>The sole <a data-lt="structured field token">token</a> defined is <code>prefetch</code>. It
-indicates the request’s purpose is to fetch a resource that is anticipated to be needed shortly.
-
-<p class=note>The server can use this to adjust the caching expiry for prefetches, to disallow the
-prefetch, or to treat it differently when counting page visits.
 
 
 
@@ -4120,7 +4099,6 @@ a <a for=/>request</a> and one or more algorithms to run at various points durin
 <a for=/>response</a> is passed to the last two algorithms listed below. The first two algorithms
 can be used to capture uploads.
 
-<div algorithm="fetch">
 <p>To <dfn export id=concept-fetch>fetch</dfn>, given a <a for=/>request</a> <var>request</var>, an
 optional algorithm
 <dfn export for=fetch id=process-request-body><var>processRequestBodyChunkLength</var></dfn>, an
@@ -4147,9 +4125,10 @@ The user agent may either accept or ignore the suspension request. The suspended
 ignore the suspension request if the ongoing fetch is updating the response in the HTTP cache for
 the request.
 
-<p class=note>The user agent does not update the entry in the HTTP cache for a <a for=/>request</a>
-if request's cache mode is "no-store" or a `<code>Cache-Control: no-store</code>` header appears in
-the response. [[!HTTP-CACHING]]
+<p class="note no-backref">The user agent does not update the entry in the HTTP cache for a
+<a for=/>request</a> if request's cache mode is "no-store" or a
+`<code>Cache-Control: no-store</code>` header appears in the response.
+[[!HTTP-CACHING]]
 
 <ol>
  <li>
@@ -4280,19 +4259,16 @@ the response. [[!HTTP-CACHING]]
   <ol>
    <li><p>Let <var>value</var> be `<code>*/*</code>`.
 
-   <li><p>If <var>request</var>'s <a for=request>initiator</a> is "<code>prefetch</code>", then set
-   <var>value</var> to the <a>document `<code>Accept</code>` header value</a>.
-
    <li>
-    <p>Otherwise, the user agent should set <var>value</var> to the first matching statement, if
-    any, switching on <var>request</var>'s <a for=request>destination</a>:
+    <p>A user agent should set <var>value</var> to the first matching statement, if any, switching
+    on <var>request</var>'s <a for=request>destination</a>:
     <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
 
     <dl class=switch>
      <dt>"<code>document</code>"
      <dt>"<code>frame</code>"
      <dt>"<code>iframe</code>"
-     <dd>the <a>document `<code>Accept</code>` header value</a>
+     <dd>`<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`
 
      <dt>"<code>image</code>"
      <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
@@ -4338,12 +4314,10 @@ the response. [[!HTTP-CACHING]]
 
  <li><p>Return <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 </ol>
-</div>
 
 
 <h3 id=main-fetch>Main fetch</h3>
 
-<div algorithm>
 <p>To <dfn id=concept-main-fetch>main fetch</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var> and an optional boolean <var>recursive</var> (default false), run these
 steps:
@@ -4360,8 +4334,6 @@ steps:
  <li><p>Run <a>report Content Security Policy violations for <var>request</var></a>.
 
  <li><p><a>Upgrade <var>request</var> to a potentially trustworthy URL, if appropriate</a>.
-
- <li><p><a>Upgrade a mixed content <var>request</var> to a potentially trustworthy URL, if appropriate</a>.
 
  <li><p>If <a lt="block bad port">should <var>request</var> be blocked due to a bad port</a>,
  <a lt="should fetching request be blocked as mixed content?">should fetching <var>request</var> be blocked as mixed content</a>, or
@@ -4391,13 +4363,13 @@ steps:
    <li><var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> is a
    <a for=/>domain</a>
    <li>Matching <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a> per
-   <a href=https://www.rfc-editor.org/rfc/rfc6797.html#section-8.2>Known HSTS Host Domain Name Matching</a>
+   <a href=https://datatracker.ietf.org/doc/html/rfc6797#section-8.2>Known HSTS Host Domain Name Matching</a>
    results in either a superdomain match with an asserted <code>includeSubDomains</code> directive
    or a congruent match (with or without an asserted <code>includeSubDomains</code> directive) [[!HSTS]]; or
    DNS resolution for the request finds a matching HTTPS RR per
    <a href=https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-svcb-https#section-9.5>section 9.5</a>
    of [[!SVCB]].
-   [[!HSTS]] [[!SVCB]]
+   [[!HSTS]][[!SVCB]]
   </ul>
   <!-- Per Mike West HSTS happens "probably after" Referrer -->
 
@@ -4442,9 +4414,10 @@ steps:
      <li><p>Return the result of running <a>scheme fetch</a> given <var>fetchParams</var>.
     </ol>
 
-    <p class=note>HTML assigns any documents and workers created from <a for=/>URLs</a> whose
-    <a for=url>scheme</a> is "<code>data</code>" a unique <a>opaque origin</a>. Service workers can
-    only be created from <a for=/>URLs</a> whose <a for=url>scheme</a> is an <a>HTTP(S) scheme</a>.
+    <p class="note no-backref">HTML assigns any documents and workers created from <a for=/>URLs</a>
+    whose <a for=url>scheme</a> is "<code>data</code>" a unique <a>opaque origin</a>. Service
+    workers can only be created from <a for=/>URLs</a> whose <a for=url>scheme</a> is an
+    <a>HTTP(S) scheme</a>.
     [[!HTML]] [[!SW]]
 
    <dt><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>"
@@ -4641,11 +4614,9 @@ steps:
  <li><p>Otherwise, run <a>fetch response handover</a> given <var>fetchParams</var> and
  <var>response</var>.
 </ol>
-</div>
 
 <hr>
 
-<div algorithm>
 <p>The <dfn id=fetch-finale>fetch response handover</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var> and a <a for=/>response</a> <var>response</var>, run these steps:
 
@@ -4658,12 +4629,7 @@ steps:
   <a for="fetch params">request</a>'s <a for=request>client</a> is a <a>secure context</a>, then set
   <var>timingInfo</var>'s <a for="fetch timing info">server-timing headers</a> to the
   result of <a for="header list">getting, decoding, and splitting</a> `<code>Server-Timing</code>`
-  from <var>response</var>'s <a for="filtered response">internal response</a>'s
-  <a for=response>header list</a>.
-
-  <p class=note>Using _response_'s <a for="filtered response">internal response</a> is safe as
-  exposing `<code>Server-Timing</code>` header data is guarded through the
-  `<code>Timing-Allow-Origin</code>` header.
+  from <var>response</var>'s <a for=response>header list</a>.
 
   <p>The user agent may decide to expose `<code>Server-Timing</code>` headers to non-secure contexts
   requests as well.
@@ -4699,7 +4665,8 @@ steps:
      <li>
       <p>If <var>response</var>'s <a for=response>timing allow passed flag</a> is not set,
       then set <var>timingInfo</var> to the result of <a>creating an opaque timing info</a> for
-      <var>timingInfo</var> and set <var>cacheState</var> to the empty string.
+      <var>timingInfo</var>, set <var>bodyInfo</var> to a new <a for=/>response body info</a>, and
+      set <var>cacheState</var> to the empty string.
 
       <p class=note>This covers the case of <var>response</var> being a <a>network error</a>.
 
@@ -4709,9 +4676,9 @@ steps:
      <var>response</var>'s <a for=response>status</a>.
 
      <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
-     <a for=request>initiator type</a> is non-null, then <a for=/>mark resource timing</a> given
-     <var>timingInfo</var>, <var>fetchParams</var>'s <a for="fetch params">request</a>'s
-     <a for=request>URL</a>, <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+     <a for=request>initiator type</a> is non-null, then
+     <a for=/>mark resource timing</a> given <var>timingInfo</var>, <var>request</var>'s
+     <a for=request>URL</a>, <a for="fetch params">request</a>'s
      <a for=request>initiator type</a>, <var>global</var>, <var>cacheState</var>,
      <var>bodyInfo</var>, and <var>responseStatus</var>.
     </ol>
@@ -4794,12 +4761,9 @@ steps:
    <a for="fetch params">task destination</a>.
   </ol>
 </ol>
-</div>
-
 
 <h3 id=scheme-fetch oldids=basic-fetch>Scheme fetch</h3>
 
-<div algorithm>
 <p>To <dfn id=concept-scheme-fetch oldids=concept-basic-fetch>scheme fetch</dfn>, given a
 <a for=/>fetch params</a> <var>fetchParams</var>:
 
@@ -4888,12 +4852,10 @@ steps:
 
  <li><p>Return a <a for=/>network error</a>.
 </ol>
-</div>
 
 
 <h3 id=http-fetch>HTTP fetch</h3>
 
-<div algorithm>
 <p>To <dfn export id=concept-http-fetch>HTTP fetch</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var> and an optional boolean <var>makeCORSPreflight</var> (default false), run
 these steps:
@@ -5020,18 +4982,20 @@ these steps:
      <var>preflightResponse</var>.
     </ol>
 
-    <p class=note>This step checks the <a>CORS-preflight cache</a> and if there is no suitable entry
-    it performs a <a>CORS-preflight fetch</a> which, if successful, populates the cache. The purpose
-    of the <a>CORS-preflight fetch</a> is to ensure the <a lt=fetch for=/>fetched</a> resource is
-    familiar with the <a>CORS protocol</a>. The cache is there to minimize the number of
+    <p class="note no-backref">This step checks the
+    <a>CORS-preflight cache</a> and if there is no suitable entry it
+    performs a <a>CORS-preflight fetch</a> which, if successful, populates the cache. The
+    purpose of the <a>CORS-preflight fetch</a> is to ensure the
+    <a lt=fetch for=/>fetched</a> resource is familiar with the
+    <a>CORS protocol</a>. The cache is there to minimize the number of
     <a lt="CORS-preflight fetch">CORS-preflight fetches</a>.
 
    <li>
     <p>If <var>request</var>'s <a for=request>redirect mode</a> is "<code>follow</code>", then set
     <var>request</var>'s <a>service-workers mode</a> to "<code>none</code>".
 
-    <p class=note>Redirects coming from the network (as opposed to from a service worker) are not to
-    be exposed to a service worker.
+    <p class="note no-backref">Redirects coming from the network (as opposed to from a service
+    worker) are not to be exposed to a service worker.
 
    <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of running
    <a>HTTP-network-or-cache fetch</a> given <var>fetchParams</var>.
@@ -5041,9 +5005,9 @@ these steps:
     <a>CORS check</a> for <var>request</var> and <var>response</var> returns failure, then return a
     <a>network error</a>.
 
-    <p class=note>As the <a>CORS check</a> is not to be applied to <a for=/>responses</a> whose
-    <a for=response>status</a> is 304 or 407, or <a for=/>responses</a> from a service worker for
-    that matter, it is applied here.
+    <p class="note no-backref">As the <a>CORS check</a> is not to be applied to
+    <a for=/>responses</a> whose <a for=response>status</a> is 304 or 407, or <a for=/>responses</a>
+    from a service worker for that matter, it is applied here.
 
    <li><p>If the <a>TAO check</a> for <var>request</var> and <var>response</var> returns failure,
    then set <var>request</var>'s <a for=request>timing allow failed flag</a>.
@@ -5096,16 +5060,14 @@ these steps:
     <!-- not resetting actualResponse since it's no longer used anyway -->
   </ol>
 
- <li><p>Return <var>response</var>. <span class=note>Typically <var>actualResponse</var>'s
- <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
- returning.</span>
+ <li><p>Return <var>response</var>. <span class="note no-backref">Typically
+ <var>actualResponse</var>'s <a for=response>body</a>'s
+ <a for=body>stream</a> is still being enqueued to after returning.</span>
 </ol>
-</div>
 
 
 <h3 id=http-redirect-fetch>HTTP-redirect fetch</h3>
 
-<div algorithm>
 <p>To <dfn export id=concept-http-redirect-fetch>HTTP-redirect fetch</dfn>, given a
 <a for=/>fetch params</a> <var>fetchParams</var> and a <a for=/>response</a> <var>response</var>,
 run these steps:
@@ -5184,8 +5146,8 @@ run these steps:
   <a for=BodyInit>safely extracting</a> <var>request</var>'s <a for=request>body</a>'s
   <a for=body>source</a>.
 
-  <p class=note><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s nullity has
-  already been checked.
+  <p class="note no-backref"><var>request</var>'s <a for=request>body</a>'s <a for=body>source</a>'s
+  nullity has already been checked.
 
  <li><p>Let <var>timingInfo</var> be <var>fetchParams</var>'s <a for="fetch params">timing info</a>.
 
@@ -5210,12 +5172,10 @@ run these steps:
   <p class=note>This has to invoke <a>main fetch</a> to get <var>request</var>'s
   <a for=request>response tainting</a> correct.
 </ol>
-</div>
 
 
 <h3 id=http-network-or-cache-fetch>HTTP-network-or-cache fetch</h3>
 
-<div algorithm>
 <p>To <dfn id=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</dfn>, given a
 <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
 <var>isAuthenticationFetch</var> (default false), and an optional boolean
@@ -5333,7 +5293,7 @@ run these steps:
      than 64 kibibytes, then return a <a>network error</a>.
     </ol>
 
-    <p class=note>The above limit ensures that requests that are allowed to outlive the
+    <p class="note no-backref">The above limit ensures that requests that are allowed to outlive the
     <a>environment settings object</a> and contain a body, have a bounded size and are not allowed
     to stay alive indefinitely.
 
@@ -5352,11 +5312,6 @@ run these steps:
 
    <li><p><a abstract-op lt="append the Fetch metadata headers for a request">Append the Fetch metadata headers for <var>httpRequest</var></a>.
    [[!FETCH-METADATA]]
-
-   <li><p>If <var>httpRequest</var>'s <a for=request>initiator</a> is "<code>prefetch</code>", then
-   <a>set a structured field value</a> given (`<a http-header><code>Sec-Purpose</code></a>`,
-   the <a data-lt="structured field token">token</a> <code>prefetch</code>) in
-   <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
@@ -5402,7 +5357,7 @@ run these steps:
     `<code>Range</code>`, then <a for="header list">append</a> (`<code>Accept-Encoding</code>`,
     `<code>identity</code>`) to <var>httpRequest</var>'s <a for=request>header list</a>.
 
-    <div class=note>
+    <div class="note no-backref">
      <p>This avoids a failure when <a lt="handle content codings">handling content codings</a> with
      a part of an encoded <a for=/>response</a>.
 
@@ -5417,8 +5372,8 @@ run these steps:
     <a for=request>header list</a> <a for="header list">contains</a> that <a>header</a>'s
     <a for=header>name</a>.
 
-    <p class=note>It would be great if we could make this more normative somehow. At this point
-    <a for=/>headers</a> such as
+    <p class="note no-backref">It would be great if we could make this more normative
+    somehow. At this point <a for=/>headers</a> such as
     `<code>Accept-Encoding</code>`,
     `<code>Connection</code>`,
     `<code>DNT</code>`, and
@@ -5429,9 +5384,9 @@ run these steps:
     `<code>Accept-Charset</code>`, and
     `<code>Accept-Language</code>` must not be included at this point.
 
-    <p class=note>`<code>Accept</code>` and `<code>Accept-Language</code>` are already included
-    (unless <a method><code>fetch()</code></a> is used, which does not include the latter by
-    default), and `<code>Accept-Charset</code>` is a waste of bytes. See
+    <p class="note no-backref">`<code>Accept</code>` and `<code>Accept-Language</code>` are already
+    included (unless <a method><code>fetch()</code></a> is used, which does not include the latter
+    by default), and `<code>Accept-Charset</code>` is a waste of bytes. See
     <a>HTTP header layer division</a> for more details.
 
    <li>
@@ -5440,12 +5395,12 @@ run these steps:
     <ol>
      <li>
       <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
-      <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
+      <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-7>section 7</a> of
       [[!COOKIES]]), then:
 
       <ol>
        <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
-       <a href=https://httpwg.org/specs/rfc6265.html#cookie>section 5.4</a> of
+       <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-5.4>section 5.4</a> of
        [[!COOKIES]]) with the user agent's cookie store and <var>httpRequest</var>'s
        <a for=request>current URL</a>.
 
@@ -5482,7 +5437,8 @@ run these steps:
    <li>
     <p>If there's a <a>proxy-authentication entry</a>, use it as appropriate.
 
-    <p class=note>This intentionally does not depend on <var>httpRequest</var>'s
+    <p class="note no-backref">This intentionally does not depend on
+    <var>httpRequest</var>'s
     <a for=request>credentials mode</a>.
 
    <li><p>Set <var>httpCache</var> to the result of <a>determining the HTTP cache partition</a>,
@@ -5499,8 +5455,8 @@ run these steps:
      <li>
       <p>Set <var>storedResponse</var> to the result of selecting a response from the
       <var>httpCache</var>, possibly needing validation, as per the
-      "<a>Constructing Responses from Caches</a>" chapter of <cite>HTTP Caching</cite>, if any.
-      [[!HTTP-CACHING]]
+      "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4>Constructing Responses from Caches</a>"
+      chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]], if any.
 
       <p class=note>As mandated by HTTP, this still takes the `<code>Vary</code>`
       <a for=/>header</a> into account.
@@ -5567,8 +5523,9 @@ run these steps:
            <a for=request>header list</a>.
           </ol>
 
-          <p class=note>See also the "<a>Sending a Validation Request</a>" chapter of
-          <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
+          <p class=note>See also the
+          "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.3.4>Sending a Validation Request</a>"
+          chapter of <cite>HTTP Caching</cite> [[!HTTP-CACHING]].
 
          <li><p>Otherwise, set <var>response</var> to <var>storedResponse</var> and set
          <var>response</var>'s <a for=response>cache state</a> to "<code>local</code>".
@@ -5592,11 +5549,12 @@ run these steps:
    <li><p>Let <var>forwardResponse</var> be the result of running <a>HTTP-network fetch</a> given
    <var>httpFetchParams</var>, <var>includeCredentials</var>, and <var>isNewConnectionFetch</var>.
 
-   <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is <a>unsafe</a> and
+   <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is
+   <a href=https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.1>unsafe</a> and
    <var>forwardResponse</var>'s <a for=response>status</a> is in the range 200 to 399, inclusive,
    invalidate appropriate stored responses in <var>httpCache</var>, as per the
-   "<a>Invalidating Stored Responses</a>" chapter of <cite>HTTP Caching</cite>, and set
-   <var>storedResponse</var> to null. [[!HTTP-CACHING]]
+   "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.4>Invalidation</a>" chapter of
+   <cite>HTTP Caching</cite>, and set <var>storedResponse</var> to null. [[!HTTP-CACHING]]
 
    <li>
     <p>If the <var>revalidatingFlag</var> is set and <var>forwardResponse</var>'s
@@ -5606,8 +5564,8 @@ run these steps:
      <li>
       <p>Update <var>storedResponse</var>'s <a for=response>header list</a> using
       <var>forwardResponse</var>'s <a for=response>header list</a>, as per the
-      "<a>Freshening Stored Responses upon Validation</a>" chapter of <cite>HTTP Caching</cite>.
-      [[!HTTP-CACHING]]
+      "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-4.3.4>Freshening Stored Responses upon Validation</a>"
+      chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
 
       <p class="note">This updates the stored response in cache as well.
 
@@ -5624,8 +5582,8 @@ run these steps:
 
      <li>
       <p>Store <var>httpRequest</var> and <var>forwardResponse</var> in <var>httpCache</var>, as per
-      the "<a>Storing Responses in Caches</a>" chapter of <cite>HTTP Caching</cite>.
-      [[!HTTP-CACHING]]
+      the "<a href=https://datatracker.ietf.org/doc/html/rfc7234#section-3>Storing Responses in Caches</a>"
+      chapter of <cite>HTTP Caching</cite>. [[!HTTP-CACHING]]
 
       <p class=note>If <var>forwardResponse</var> is a <a>network error</a>, this effectively caches
       the network error, which is sometimes known as "negative caching".
@@ -5739,16 +5697,14 @@ run these steps:
  <li><p>If <var>isAuthenticationFetch</var> is true, then create an <a>authentication entry</a> for
  <var>request</var> and the given realm.
 
- <li><p>Return <var>response</var>. <span class=note>Typically <var>response</var>'s
- <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
- returning.</span>
+ <li><p>Return <var>response</var>. <span class="note no-backref">Typically
+ <var>response</var>'s <a for=response>body</a>'s
+ <a for=body>stream</a> is still being enqueued to after returning.</span>
 </ol>
-</div>
 
 
 <h3 id=http-network-fetch>HTTP-network fetch</h3>
 
-<div algorithm>
 <p>To <dfn id=concept-http-network-fetch>HTTP-network fetch</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var>, an optional boolean <var>includeCredentials</var> (default false), and an
 optional boolean <var>forceNewConnection</var> (default false), run these steps:
@@ -5986,10 +5942,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
  <li><p tracking-vector>If <var>includeCredentials</var> is true and the user agent is not
  configured to block cookies for <var>request</var> (see
- <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
- [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see
- <a href=https://httpwg.org/specs/rfc6265.html#set-cookie>section 5.2</a> of [[!COOKIES]]) on the
- <a for=header>value</a> of each <a for=/>header</a> whose <a for=header>name</a> is a
+ <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-7>section 7</a> of [[!COOKIES]]),
+ then run the "set-cookie-string" parsing algorithm (see
+ <a href=https://datatracker.ietf.org/doc/html/rfc6265#section-5.2>section 5.2</a> of [[!COOKIES]])
+ on the <a for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
  <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s
  <a for=response>header list</a>, if any, and <var>request</var>'s <a for=request>current URL</a>.
 
@@ -6023,8 +5979,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
           <p>Set <var>bytes</var> to the result of <a lt="handle content codings">handling content
           codings</a> given <var>codings</var> and <var>bytes</var>.
 
-          <p class=note>This makes the `<code>Content-Length</code>` <a for=/>header</a> unreliable
-          to the extent that it was reliable to begin with.
+          <p class="note no-backref">This makes the `<code>Content-Length</code>` <a for=/>header</a>
+          unreliable to the extent that it was reliable to begin with.
 
          <li><p>Increase <var>response</var>'s <a for=response>body info</a>'s
          <a for="response body info">decoded size</a> by
@@ -6085,25 +6041,23 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     </ol>
   </ol>
 
-  <p class=note>These are run <a>in parallel</a> as at this point it is unclear whether
+  <p class="note no-backref">These are run <a>in parallel</a> as at this point it is unclear whether
   <var>response</var>'s <a for=response>body</a> is relevant (<var>response</var> might be a
   redirect).
 
- <li><p>Return <var>response</var>. <span class=note>Typically <var>response</var>'s
+ <li><p>Return <var>response</var>. <span class="note no-backref">Typically <var>response</var>'s
  <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
  returning.</span>
 </ol>
-</div>
 
 
 <h3 id=cors-preflight-fetch>CORS-preflight fetch</h3>
 
-<p class=note>This is effectively the user agent implementation of the check to see if the
-<a>CORS protocol</a> is understood. The so-called <a>CORS-preflight request</a>. If successful it
-populates the <a>CORS-preflight cache</a> to minimize the number of these
-<a lt="CORS-preflight fetch">fetches</a>.
+<p class="note no-backref">This is effectively the user agent implementation of the check to see if
+the <a>CORS protocol</a> is understood. The so-called <a>CORS-preflight request</a>. If
+successful it populates the <a>CORS-preflight cache</a> to minimize the
+number of these <a lt="CORS-preflight fetch">fetches</a>.
 
-<div algorithm>
 <p>To <dfn id=cors-preflight-fetch-0>CORS-preflight fetch</dfn>, given a <a for=/>request</a>
 <var>request</var>, run these steps:
 
@@ -6121,8 +6075,9 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
   <a for=request>mode</a> is "<code>cors</code>", and
   <a for=request>response tainting</a> is "<code>cors</code>".
 
-  <p class=note>The <a for=request>service-workers mode</a> of <var>preflight</var> does not matter
-  as this algorithm uses <a>HTTP-network-or-cache fetch</a> rather than <a>HTTP fetch</a>.
+  <p class="note no-backref">The <a for=request>service-workers mode</a> of <var>preflight</var>
+  does not matter as this algorithm uses <a>HTTP-network-or-cache fetch</a> rather than
+  <a>HTTP fetch</a>.
 
  <li><p><a for="header list">Append</a> (`<code>Accept</code>`, `<code>*/*</code>`) to
  <var>preflight</var>'s <a for=request>header list</a>.
@@ -6158,8 +6113,8 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
   <!-- CORS said 200 here but nobody implemented that:
        https://lists.w3.org/Archives/Public/public-webappsec/2013Feb/0078.html -->
 
-  <p class=note>The <a>CORS check</a> is done on <var>request</var> rather than <var>preflight</var>
-  to ensure the correct <a for=request>credentials mode</a> is used.
+  <p class="note no-backref">The <a>CORS check</a> is done on <var>request</var> rather than
+  <var>preflight</var> to ensure the correct <a for=request>credentials mode</a> is used.
 
   <ol>
    <li><p>Let <var>methods</var> be the result of <a>extracting header list values</a> given
@@ -6178,8 +6133,8 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
     is set, then set <var>methods</var> to a new list containing <var>request</var>'s
     <a for=request>method</a>.
 
-    <p class=note>This ensures that a <a>CORS-preflight fetch</a> that happened due to
-    <var>request</var>'s <a>use-CORS-preflight flag</a> being set is
+    <p class="note no-backref">This ensures that a <a>CORS-preflight fetch</a> that
+    happened due to <var>request</var>'s <a>use-CORS-preflight flag</a> being set is
     <a lt="CORS-preflight cache">cached</a>.
 
    <li><p>If <var>request</var>'s <a for=request>method</a> is not in <var>methods</var>,
@@ -6232,7 +6187,6 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
 
  <li><p>Otherwise, return a <a>network error</a>.
 </ol>
-</div>
 
 
 <h3 id=cors-preflight-cache>CORS-preflight cache</h3>
@@ -6259,7 +6213,6 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
 <a for="cache entry">max-age</a> field have passed since storing the entry. <a>Cache entries</a> may
 be removed before that moment arrives.
 
-<div algorithm>
 <p>To <dfn id=concept-cache-create-entry>create a new cache entry</dfn>, given <var>request</var>,
 <var>max-age</var>, <var>method</var>, and <var>headerName</var>, run these steps:
 
@@ -6294,7 +6247,6 @@ be removed before that moment arrives.
 
  <li><p><a for=list>Append</a> <var>entry</var> to the user agent's <a>CORS-preflight cache</a>.
 </ol>
-</div>
 
 <p>To <dfn id=concept-cache-clear>clear cache entries</dfn>, given a <var>request</var>,
 <a for=list>remove</a> any <a>cache entries</a> in the user agent's <a>CORS-preflight cache</a>
@@ -6341,7 +6293,6 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
 <h3 id=cors-check>CORS check</h3>
 
-<div algorithm>
 <p>To perform a <dfn id=concept-cors-check>CORS check</dfn> for a <var>request</var> and
 <var>response</var>, run these steps:
 
@@ -6372,12 +6323,10 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
  <li><p>Return failure.
 </ol>
-</div>
 
 
 <h3 id=tao-check>TAO check</h3>
 
-<div algorithm>
 <p>To perform a <dfn id=concept-tao-check>TAO check</dfn> for a <var>request</var> and
 <var>response</var>, run these steps:
 
@@ -6410,17 +6359,16 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
  <li><p>Return failure.
 </ol>
-</div>
 
 
 
 <h2 id=fetch-api>Fetch API</h2>
 
-<p class=note>The <a method><code>fetch()</code></a> method is relatively low-level API for
+<p class=no-backref>The <a method><code>fetch()</code></a> method is relatively low-level API for
 <a lt=fetch for=/>fetching</a> resources. It covers slightly more ground than {{XMLHttpRequest}},
 although it is currently lacking when it comes to request progression (not response progression).
 
-<div class=example id=fetch-blob-example>
+<div id=fetch-blob-example class="example no-backref">
  <p>The <a method><code>fetch()</code></a> method makes it quite straightforward to
  <a for=/>fetch</a> a resource and extract its contents as a {{Blob}}:
 
@@ -6569,7 +6517,6 @@ new Headers(meta2);
 
 <hr>
 
-<div algorithm>
 <p>To <dfn for=Headers>validate</dfn> a  <a for=/>header</a> (<var>name</var>, <var>value</var>) for
 a {{Headers}} object <var>headers</var>:
 
@@ -6588,12 +6535,10 @@ a {{Headers}} object <var>headers</var>:
 
  <li><p>Return true.
 </ol>
-</div>
 
 <p class=note>Steps for "<code>request-no-cors</code>" are not shared as you cannot have a fake
 value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted request-header</a>.
 
-<div algorithm>
 <p>To <dfn export for=Headers id=concept-headers-append>append</dfn> a <a for=/>header</a>
 (<var>name</var>, <var>value</var>) to a {{Headers}} object <var>headers</var>, run these steps:
 
@@ -6626,9 +6571,7 @@ value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted requ
  <li><p>If <var>headers</var>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
  <a for=Headers>remove privileged no-CORS request-headers</a> from <var>headers</var>.
 </ol>
-</div>
 
-<div algorithm>
 <p>To <dfn export for=Headers id=concept-headers-fill>fill</dfn> a {{Headers}} object
 <var>headers</var> with a given object <var>object</var>, run these steps:
 
@@ -6648,9 +6591,7 @@ value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted requ
  <var>key</var> → <var>value</var> of <var>object</var>, <a for=Headers>append</a> (<var>key</var>,
  <var>value</var>) to <var>headers</var>.
 </ol>
-</div>
 
-<div algorithm>
 <p>To
 <dfn for=Headers id=concept-headers-remove-privileged-no-cors-request-headers>remove privileged no-CORS request-headers</dfn>
 from a {{Headers}} object (<var>headers</var>), run these steps:
@@ -6666,9 +6607,7 @@ from a {{Headers}} object (<var>headers</var>), run these steps:
 </ol>
 
 <p class=note>This is called when headers are modified by unprivileged code.
-</div>
 
-<div algorithm>
 <p>The
 <dfn id=dom-headers export for=Headers constructor lt="Headers(init)"><code>new Headers(<var>init</var>)</code></dfn>
 constructor steps are:
@@ -6678,20 +6617,16 @@ constructor steps are:
 
  <li><p>If <var>init</var> is given, then <a for=Headers>fill</a> <a>this</a> with <var>init</var>.
 </ol>
-</div>
 
-<div algorithm>
 <p>The <dfn export for=Headers method><code>append(<var>name</var>, <var>value</var>)</code></dfn>
 method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>) to <a>this</a>.
-</div>
 
-<div algorithm>
 <p>The <dfn export for=Headers method><code>delete(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
  <li>
-  <p>If <a for=Headers>validating</a> (<var>name</var>, ``) for <a>this</a> returns false, then
-  return.
+  <p>If <a for=Headers>validating</a> (<var>name</var>, ``) for <var>headers</var> returns false,
+  then return.
 
   <p class=note>Passing a dummy <a>header value</a> ought not to have any negative repercussions.
 
@@ -6709,9 +6644,7 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
  <a for=Headers>remove privileged no-CORS request-headers</a> from <a>this</a>.
 </ol>
-</div>
 
-<div algorithm>
 <p>The <dfn export for=Headers method><code>get(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
@@ -6720,9 +6653,7 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <li><p>Return the result of <a for="header list">getting</a> <var>name</var> from <a>this</a>'s
  <a for=Headers>header list</a>.
 </ol>
-</div>
 
-<div algorithm>
 <p>The <dfn export for=Headers method><code>has(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
@@ -6731,17 +6662,15 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <li><p>Return true if <a>this</a>'s <a for=Headers>header list</a>
  <a for="header list">contains</a> <var>name</var>; otherwise false.
 </ol>
-</div>
 
-<div algorithm>
 <p>The <dfn export for=Headers method><code>set(<var>name</var>, <var>value</var>)</code></dfn>
 method steps are:
 
 <ol>
  <li><p><a for="header value">Normalize</a> <var>value</var>.
 
- <li><p>If <a for=Headers>validating</a> (<var>name</var>, <var>value</var>) for <a>this</a> returns
- false, then return.
+ <li><p>If <a for=Headers>validating</a> (<var>name</var>, <var>value</var>) for <var>headers</var>
+ returns false, then return.
 
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
  (<var>name</var>, <var>value</var>) is not a <a>no-CORS-safelisted request-header</a>, then return.
@@ -6752,7 +6681,6 @@ method steps are:
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
  <a for=Headers>remove privileged no-CORS request-headers</a> from <a>this</a>.
 </ol>
-</div>
 
 <p>The <a>value pairs to iterate over</a> are the return value of running
 <a for="header list">sort and combine</a> with <a>this</a>'s <a for=Headers>header list</a>.
@@ -6780,7 +6708,7 @@ typedef (ReadableStream or XMLHttpRequestBodyInit) BodyInit;</pre>
  <li><p>Return the result of <a for=BodyInit>extracting</a> <var>object</var>.
 </ol>
 
-<p class=note>The <a for=BodyInit>safely extract</a> operation is a subset of the
+<p class="note no-backref">The <a for=BodyInit>safely extract</a> operation is a subset of the
 <a for=BodyInit>extract</a> operation that is guaranteed to not throw an exception.
 
 <p>To <dfn id=concept-bodyinit-extract for=BodyInit export>extract</dfn> a
@@ -6953,78 +6881,38 @@ returns failure or a <a for=/>MIME type</a>.
 
 <hr>
 
-<div algorithm>
 <p>The <dfn attribute for=Body><code>body</code></dfn> getter steps are to return null if
 <a>this</a>'s <a for=Body>body</a> is null; otherwise <a>this</a>'s <a for=Body>body</a>'s
 <a for=body>stream</a>.
-</div>
 
-<div algorithm>
 <p>The <dfn attribute for=Body><code>bodyUsed</code></dfn> getter steps are to return true if
 <a>this</a>'s <a for=Body>body</a> is non-null and <a>this</a>'s <a for=Body>body</a>'s
 <a for=body>stream</a> is <a for=ReadableStream>disturbed</a>; otherwise false.
-</div>
 
-<div algorithm>
-<p id=concept-body-package-data>The <dfn id=concept-body-consume-body for=Body>consume body</dfn>
-algorithm, given an object that includes {{Body}} <var>object</var> and an algorithm that takes a
-<a for=/>byte sequence</a> and returns a JavaScript value or throws an exception
-<var>convertBytesToJSValue</var>, runs these steps:
-
-<ol>
- <li><p>If <var>object</var> is <a for=Body>unusable</a>, then return <a>a promise rejected with</a>
- a {{TypeError}}.
-
- <li><p>Let <var>promise</var> be <a>a new promise</a>.
-
- <li>Let <var>errorSteps</var> given <var>error</var> be to <a>reject</a> <var>promise</var> with
- <var>error</var>.
-
- <li>Let <var>successSteps</var> given a <a for=/>byte sequence</a> <var>data</var> be to
- <a for=/>resolve</a> <var>promise</var> with the result of running <var>convertBytesToJSValue</var>
- with <var>data</var>. If that threw an exception, then run <var>errorSteps</var> with that
- exception.
-
- <li><p>If <var>object</var>'s <a for=Body>body</a> is null, then run <var>successSteps</var>
- with an empty <a for=/>byte sequence</a>.
-
- <li><p>Otherwise, <a for=body>fully read</a> <var>object</var>'s <a for=Body>body</a> given
- <var>successSteps</var>, <var>errorSteps</var>, and <var>object</var>'s
- <a>relevant global object</a>.
-
- <li><p>Return <var>promise</var>.
-</ol>
-</div>
-
-<div algorithm>
-<p>The <dfn method for=Body><code>arrayBuffer()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and the following step given a
-<a for=/>byte sequence</a> <var>bytes</var>: return a new {{ArrayBuffer}} whose contents are
-<var>bytes</var>.
-
-<p class="note">The above method can reject with a {{RangeError}}.
-</div>
-
-<div algorithm>
-<p>The <dfn method for=Body><code>blob()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and the following step given a
-<a for=/>byte sequence</a> <var>bytes</var>: return a {{Blob}} whose contents are <var>bytes</var>
-and whose {{Blob/type}} attribute is <a>this</a>'s <a for=Body>MIME type</a>.
-</div>
-
-<div algorithm>
-<p>The <dfn method for=Body><code>formData()</code></dfn> method steps are to return the result of
-running <a for=Body>consume body</a> with <a>this</a> and the following step given a
-<a for=/>byte sequence</a> <var>bytes</var>: switch on <a>this</a>'s <a for=Body>MIME type</a>'s
-<a for="MIME type">essence</a> and run the corresponding steps:
+<p>The <dfn id=concept-body-package-data for=Body>package data</dfn> algorithm, given
+<var>bytes</var>, <var>type</var>, and a <var>mimeType</var>, switches on <var>type</var>, and runs
+the associated steps:
 
 <dl class=switch>
- <dt>"<code>multipart/form-data</code>",
+ <dt><i>ArrayBuffer</i>
  <dd>
+  <p>Return a new {{ArrayBuffer}} whose contents are <var>bytes</var>.
+
+  <p class=note>Allocating an {{ArrayBuffer}} can throw a {{RangeError}}.
+
+ <dt><i>Blob</i>
+ <dd><p>Return a {{Blob}} whose contents are <var>bytes</var> and {{Blob/type}} attribute is
+ <var>mimeType</var>.
+
+ <dt><i>FormData</i>
+ <dd>
+  <p>If <var>mimeType</var>'s <a for="MIME type">essence</a> is "<code>multipart/form-data</code>",
+  then:
+
   <ol>
    <li>
     <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
-    <a>this</a>'s <a for=Body>MIME type</a>, per the rules set forth in
+    <var>mimeType</var>, per the rules set forth in
     <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]</p>
 
     <p>Each part whose `<code>Content-Disposition</code>` header contains a `<code>filename</code>`
@@ -7057,11 +6945,12 @@ running <a for=Body>consume body</a> with <a>this</a> and the following step giv
   `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
   written. Volunteers welcome.
 
- <dt>"<code>application/x-www-form-urlencoded</code>",
- <dd>
+  <p>Otherwise, if <var>mimeType</var>'s <a for="MIME type">essence</a> is
+  "<code>application/x-www-form-urlencoded</code>", then:
+
   <ol>
-   <li><p>Let <var>entries</var> be the result of  <a lt="urlencoded parser">parsing</a>
-   <var>bytes</var>.
+   <li><p>Let <var>entries</var> be the result of
+   <a lt="urlencoded parser">parsing</a> <var>bytes</var>.
 
    <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
 
@@ -7069,22 +6958,49 @@ running <a for=Body>consume body</a> with <a>this</a> and the following step giv
    <var>entries</var>.
   </ol>
 
- <dt>Otherwise
- <dd><p><a>Throw</a> a {{TypeError}}.
+  <p>Otherwise, <a>throw</a> a {{TypeError}}.
+
+ <dt><i>JSON</i>
+ <dd><p>Return the result of running <a>parse JSON from bytes</a> on <var>bytes</var>.
+
+ <dt><i>text</i>
+ <dd><p>Return the result of running <a>UTF-8 decode</a> on
+ <var>bytes</var>.
 </dl>
-</div>
 
-<div algorithm>
-<p>The <dfn method for=Body><code>json()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and <a>parse JSON from bytes</a>.
+<p>The <dfn id=concept-body-consume-body for=Body>consume body</dfn> algorithm, given an
+<var>object</var> and <var>type</var>, runs these steps:
 
-<p class="note">The above method can reject with a {{SyntaxError}}.
-</div>
+<ol>
+ <li><p>If <var>object</var> is <a for=Body>unusable</a>, then return <a>a promise rejected with</a>
+ a {{TypeError}}.
 
-<div algorithm>
-<p>The <dfn method for=Body><code>text()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and <a>UTF-8 decode</a>.
-</div>
+ <li><p>Let <var>promise</var> be <a>a promise resolved with</a> an empty
+ <a for=/>byte sequence</a>.
+
+ <li><p>If <var>object</var>'s <a for=Body>body</a> is non-null, then set <var>promise</var> to the
+ result of <a>fully reading body as promise</a> given <var>object</var>'s <a for=Body>body</a>.
+
+ <li><p>Let <var>steps</var> be to return the result of <a>package data</a> with the first argument
+ given, <var>type</var>, and <var>object</var>'s <a for=Body>MIME type</a>.
+
+ <li><p>Return the result of <a>upon fulfillment</a> of <var>promise</var> given <var>steps</var>.
+</ol>
+
+<p>The <dfn method for=Body><code>arrayBuffer()</code></dfn> method steps are to return the result
+of running <a for=Body>consume body</a> with <a>this</a> and <i>ArrayBuffer</i>.
+
+<p>The <dfn method for=Body><code>blob()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <a>this</a> and <i>Blob</i>.
+
+<p>The <dfn method for=Body><code>formData()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <a>this</a> and <i>FormData</i>.
+
+<p>The <dfn method for=Body><code>json()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <a>this</a> and <i>JSON</i>.
+
+<p>The <dfn method for=Body><code>text()</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <a>this</a> and <i>text</i>.
 
 
 <h3 id=request-class>Request class</h3>
@@ -7149,9 +7065,10 @@ enum RequestDuplex { "half" };
 enum RequestPriority { "high", "low", "auto" };
 </pre>
 
-<p class=note>"<code>serviceworker</code>" is omitted from
+<p class="note no-backref">"<code>serviceworker</code>" is omitted from
 <a enum><code>RequestDestination</code></a> as it cannot be observed from JavaScript. Implementations
-will still need to support it as a <a for=request>destination</a>. "<code>websocket</code>" is
+will still need to support it as a
+<a for=request>destination</a>. "<code>websocket</code>" is
 omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor observed from JavaScript.
 
 <p>A {{Request}} object has an associated
@@ -7922,7 +7839,7 @@ these steps:
  then <a>throw</a> a {{RangeError}}.
 
  <li><p>If <var>init</var>["{{ResponseInit/statusText}}"] does not match the
- <a spec=http1>reason-phrase</a> token production, then <a>throw</a> a {{TypeError}}.
+ <a spec=http>reason-phrase</a> token production, then <a>throw</a> a {{TypeError}}.
 
  <li><p>Set <var>response</var>'s <a for=Response>response</a>'s <a for=response>status</a> to
  <var>init</var>["{{ResponseInit/status}}"].
@@ -7942,8 +7859,8 @@ these steps:
     <p>If <var>response</var>'s <a for=response>status</a> is a <a>null body status</a>, then
     <a>throw</a> a {{TypeError}}.
 
-    <p class=note>101 and 103 are included in <a>null body status</a> due to their use elsewhere.
-    They do not affect this step.
+    <p class="note no-backref">101 and 103 are included in <a>null body status</a> due to their
+    use elsewhere. They do not affect this step.
 
    <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>body</var>'s
    <a for="body with type">body</a>.
@@ -8219,14 +8136,14 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 <p>The user agent may <a for="fetch controller">terminate</a> an ongoing fetch if that termination
 is not observable through script.
 
-<p class=note>"Observable through script" means observable through
-<a method><code>fetch()</code></a>'s arguments and return value. Other ways, such as communicating
-with the server through a side-channel are not included.
+<p class="note no-backref">"Observable through script" means observable through
+<a method><code>fetch()</code></a>'s arguments and return value. Other ways, such as
+communicating with the server through a side-channel are not included.
 
-<p class=note>The server being able to observe garbage collection has precedent, e.g., with
-{{WebSocket}} and {{XMLHttpRequest}} objects.
+<p class="note no-backref">The server being able to observe garbage collection has precedent, e.g.,
+with {{WebSocket}} and {{XMLHttpRequest}} objects.
 
-<div class=example id=terminate-examples>
+<div id=terminate-examples class="example no-backref">
  <p>The user agent can terminate the fetch because the termination cannot be observed.
  <pre><code class=lang-javascript>
 fetch("https://www.example.com/")
@@ -8723,7 +8640,6 @@ Tiancheng "Timothy" Gu,
 Tobie Langel,
 Tom Schuster,
 Tomás Aparicio,
-Toni Williams,
 triple-underscore<!-- GitHub -->,
 保呂毅 (Tsuyoshi Horo),
 Tyler Close,
