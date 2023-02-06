@@ -18,6 +18,8 @@ urlPrefix:https://httpwg.org/specs/rfc8941.html#;type:dfn;spec:rfc8941
     url:rfc.section.2;text:structured field value
     url:text-serialize;text:serializing structured fields
     url:text-parse;text:parsing structured fields
+    url:;text:structured header
+    url:token;text:structured field token
 
 urlPrefix:https://httpwg.org/specs/rfc9110.html#;type:dfn;spec:http
     url:method.overview;text:method
@@ -1319,6 +1321,9 @@ downloads. This format of range header value can be set using <a>add a range hea
 <a>implementation-defined</a> <a for=/>header value</a> for the `<code>User-Agent</code>`
 <a for=/>header</a>.
 
+<p>The <dfn>document `<code>Accept</code>` header value</dfn> is
+`<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`.
+
 
 <h4 id=statuses>Statuses</h4>
 
@@ -1809,7 +1814,7 @@ not always relevant and might require different behavior.
   <tr>
    <td>"<code>prefetch</code>"
    <td rowspan=2>""
-   <td rowspan=2><code>prefetch-src</code>
+   <td rowspan=2><code>default-src</code> (no specific directive)
    <td>HTML's <code>&lt;link rel=prefetch></code>
   <tr>
    <td>"<code>prerender</code>"
@@ -2391,7 +2396,8 @@ this is also tracked internally using the request's <a for=request>timing allow 
 <p>A <dfn export id=concept-network-error>network error</dfn> is a <a for=/>response</a> whose
 <a for=response>type</a> is "<code>error</code>", <a for=response>status</a> is 0,
 <a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is « », and <a for=response>body</a> is null.
+<a for=response>header list</a> is « », <a for=response>body</a> is null, and
+<a for=response>body info</a> is a new <a for=/>response body info</a>.
 
 <p>An <dfn export id=concept-aborted-network-error>aborted network error</dfn> is a
 <a>network error</a> whose <a for=response>aborted flag</a> is set.
@@ -2462,8 +2468,9 @@ of defining the concrete types of <a for=/>filtered responses</a>.)
 <a for=response>URL list</a> is « »,
 <a for=response>status</a> is 0,
 <a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is « », and
-<a for=response>body</a> is null.
+<a for=response>header list</a> is « »,
+<a for=response>body</a> is null, and
+<a for=response>body info</a> is a new <a for=/>response body info</a>.
 
 <p>An
 <dfn export id=concept-filtered-response-opaque-redirect>opaque-redirect filtered response</dfn>
@@ -2471,8 +2478,9 @@ is a <a>filtered response</a> whose
 <a for=response>type</a> is "<code>opaqueredirect</code>",
 <a for=response>status</a> is 0,
 <a for=response>status message</a> is the empty byte sequence,
-<a for=response>header list</a> is « », and
-<a for=response>body</a> is null.
+<a for=response>header list</a> is « »,
+<a for=response>body</a> is null, and
+<a for=response>body info</a> is a new <a for=/>response body info</a>.
 
 <div class=note>
  <p>Exposing the <a for=response>URL list</a> for
@@ -4088,6 +4096,22 @@ run these steps:
 </div>
 
 
+<h3 id="sec-purpose-header">`<code>Sec-Purpose</code>` header</h3>
+
+<p>The `<dfn export http-header id=http-sec-purpose><code>Sec-Purpose</code></dfn>` HTTP request
+header specifies that the request serves one or more purposes other than requesting the resource for
+immediate use by the user.
+
+<p>The `<a http-header><code>Sec-Purpose</code></a>` header field is a <a>structured header</a>
+whose value must be a <a data-lt="structured field token">token</a>.
+
+<p>The sole <a data-lt="structured field token">token</a> defined is <code>prefetch</code>. It
+indicates the request’s purpose is to fetch a resource that is anticipated to be needed shortly.
+
+<p class=note>The server can use this to adjust the caching expiry for prefetches, to disallow the
+prefetch, or to treat it differently when counting page visits.
+
+
 
 <h2 id=fetching>Fetching</h2>
 
@@ -4096,6 +4120,7 @@ a <a for=/>request</a> and one or more algorithms to run at various points durin
 <a for=/>response</a> is passed to the last two algorithms listed below. The first two algorithms
 can be used to capture uploads.
 
+<div algorithm="fetch">
 <p>To <dfn export id=concept-fetch>fetch</dfn>, given a <a for=/>request</a> <var>request</var>, an
 optional algorithm
 <dfn export for=fetch id=process-request-body><var>processRequestBodyChunkLength</var></dfn>, an
@@ -4255,16 +4280,19 @@ the response. [[!HTTP-CACHING]]
   <ol>
    <li><p>Let <var>value</var> be `<code>*/*</code>`.
 
+   <li><p>If <var>request</var>'s <a for=request>initiator</a> is "<code>prefetch</code>", then set
+   <var>value</var> to the <a>document `<code>Accept</code>` header value</a>.
+
    <li>
-    <p>A user agent should set <var>value</var> to the first matching statement, if any, switching
-    on <var>request</var>'s <a for=request>destination</a>:
+    <p>Otherwise, the user agent should set <var>value</var> to the first matching statement, if
+    any, switching on <var>request</var>'s <a for=request>destination</a>:
     <!-- https://github.com/whatwg/fetch/issues/43#issuecomment-97909717 -->
 
     <dl class=switch>
      <dt>"<code>document</code>"
      <dt>"<code>frame</code>"
      <dt>"<code>iframe</code>"
-     <dd>`<code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code>`
+     <dd>the <a>document `<code>Accept</code>` header value</a>
 
      <dt>"<code>image</code>"
      <dd>`<code>image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5</code>`
@@ -4310,10 +4338,12 @@ the response. [[!HTTP-CACHING]]
 
  <li><p>Return <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 </ol>
+</div>
 
 
 <h3 id=main-fetch>Main fetch</h3>
 
+<div algorithm>
 <p>To <dfn id=concept-main-fetch>main fetch</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var> and an optional boolean <var>recursive</var> (default false), run these
 steps:
@@ -4611,9 +4641,11 @@ steps:
  <li><p>Otherwise, run <a>fetch response handover</a> given <var>fetchParams</var> and
  <var>response</var>.
 </ol>
+</div>
 
 <hr>
 
+<div algorithm>
 <p>The <dfn id=fetch-finale>fetch response handover</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var> and a <a for=/>response</a> <var>response</var>, run these steps:
 
@@ -4667,8 +4699,7 @@ steps:
      <li>
       <p>If <var>response</var>'s <a for=response>timing allow passed flag</a> is not set,
       then set <var>timingInfo</var> to the result of <a>creating an opaque timing info</a> for
-      <var>timingInfo</var>, set <var>bodyInfo</var> to a new <a for=/>response body info</a>, and
-      set <var>cacheState</var> to the empty string.
+      <var>timingInfo</var> and set <var>cacheState</var> to the empty string.
 
       <p class=note>This covers the case of <var>response</var> being a <a>network error</a>.
 
@@ -4678,9 +4709,9 @@ steps:
      <var>response</var>'s <a for=response>status</a>.
 
      <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
-     <a for=request>initiator type</a> is non-null, then
-     <a for=/>mark resource timing</a> given <var>timingInfo</var>, <var>request</var>'s
-     <a for=request>URL</a>, <a for="fetch params">request</a>'s
+     <a for=request>initiator type</a> is non-null, then <a for=/>mark resource timing</a> given
+     <var>timingInfo</var>, <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+     <a for=request>URL</a>, <var>fetchParams</var>'s <a for="fetch params">request</a>'s
      <a for=request>initiator type</a>, <var>global</var>, <var>cacheState</var>,
      <var>bodyInfo</var>, and <var>responseStatus</var>.
     </ol>
@@ -4763,9 +4794,12 @@ steps:
    <a for="fetch params">task destination</a>.
   </ol>
 </ol>
+</div>
+
 
 <h3 id=scheme-fetch oldids=basic-fetch>Scheme fetch</h3>
 
+<div algorithm>
 <p>To <dfn id=concept-scheme-fetch oldids=concept-basic-fetch>scheme fetch</dfn>, given a
 <a for=/>fetch params</a> <var>fetchParams</var>:
 
@@ -4854,10 +4888,12 @@ steps:
 
  <li><p>Return a <a for=/>network error</a>.
 </ol>
+</div>
 
 
 <h3 id=http-fetch>HTTP fetch</h3>
 
+<div algorithm>
 <p>To <dfn export id=concept-http-fetch>HTTP fetch</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var> and an optional boolean <var>makeCORSPreflight</var> (default false), run
 these steps:
@@ -5064,10 +5100,12 @@ these steps:
  <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
  returning.</span>
 </ol>
+</div>
 
 
 <h3 id=http-redirect-fetch>HTTP-redirect fetch</h3>
 
+<div algorithm>
 <p>To <dfn export id=concept-http-redirect-fetch>HTTP-redirect fetch</dfn>, given a
 <a for=/>fetch params</a> <var>fetchParams</var> and a <a for=/>response</a> <var>response</var>,
 run these steps:
@@ -5172,10 +5210,12 @@ run these steps:
   <p class=note>This has to invoke <a>main fetch</a> to get <var>request</var>'s
   <a for=request>response tainting</a> correct.
 </ol>
+</div>
 
 
 <h3 id=http-network-or-cache-fetch>HTTP-network-or-cache fetch</h3>
 
+<div algorithm>
 <p>To <dfn id=concept-http-network-or-cache-fetch>HTTP-network-or-cache fetch</dfn>, given a
 <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
 <var>isAuthenticationFetch</var> (default false), and an optional boolean
@@ -5312,6 +5352,11 @@ run these steps:
 
    <li><p><a abstract-op lt="append the Fetch metadata headers for a request">Append the Fetch metadata headers for <var>httpRequest</var></a>.
    [[!FETCH-METADATA]]
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>initiator</a> is "<code>prefetch</code>", then
+   <a>set a structured field value</a> given (`<a http-header><code>Sec-Purpose</code></a>`,
+   the <a data-lt="structured field token">token</a> <code>prefetch</code>) in
+   <var>httpRequest</var>'s <a for=request>header list</a>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>
    <a for="header list">does not contain</a> `<code>User-Agent</code>`, then user agents should
@@ -5698,10 +5743,12 @@ run these steps:
  <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
  returning.</span>
 </ol>
+</div>
 
 
 <h3 id=http-network-fetch>HTTP-network fetch</h3>
 
+<div algorithm>
 <p>To <dfn id=concept-http-network-fetch>HTTP-network fetch</dfn>, given a <a for=/>fetch params</a>
 <var>fetchParams</var>, an optional boolean <var>includeCredentials</var> (default false), and an
 optional boolean <var>forceNewConnection</var> (default false), run these steps:
@@ -5982,7 +6029,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
  [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see
  <a href=https://httpwg.org/specs/rfc6265.html#set-cookie>section 5.2</a> of [[!COOKIES]]) on the
- <a for=header>value</a> of each <var>header</var> whose <a for=header>name</a> is a
+ <a for=header>value</a> of each <a for=/>header</a> whose <a for=header>name</a> is a
  <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s
  <a for=response>header list</a>, if any, and <var>request</var>'s <a for=request>current URL</a>.
 
@@ -6081,6 +6128,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
  returning.</span>
 </ol>
+</div>
 
 
 <h3 id=cors-preflight-fetch>CORS-preflight fetch</h3>
@@ -6090,6 +6138,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 populates the <a>CORS-preflight cache</a> to minimize the number of these
 <a lt="CORS-preflight fetch">fetches</a>.
 
+<div algorithm>
 <p>To <dfn id=cors-preflight-fetch-0>CORS-preflight fetch</dfn>, given a <a for=/>request</a>
 <var>request</var>, run these steps:
 
@@ -6218,6 +6267,7 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
 
  <li><p>Otherwise, return a <a>network error</a>.
 </ol>
+</div>
 
 
 <h3 id=cors-preflight-cache>CORS-preflight cache</h3>
@@ -6244,6 +6294,7 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
 <a for="cache entry">max-age</a> field have passed since storing the entry. <a>Cache entries</a> may
 be removed before that moment arrives.
 
+<div algorithm>
 <p>To <dfn id=concept-cache-create-entry>create a new cache entry</dfn>, given <var>request</var>,
 <var>max-age</var>, <var>method</var>, and <var>headerName</var>, run these steps:
 
@@ -6278,6 +6329,7 @@ be removed before that moment arrives.
 
  <li><p><a for=list>Append</a> <var>entry</var> to the user agent's <a>CORS-preflight cache</a>.
 </ol>
+</div>
 
 <p>To <dfn id=concept-cache-clear>clear cache entries</dfn>, given a <var>request</var>,
 <a for=list>remove</a> any <a>cache entries</a> in the user agent's <a>CORS-preflight cache</a>
@@ -6324,6 +6376,7 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
 <h3 id=cors-check>CORS check</h3>
 
+<div algorithm>
 <p>To perform a <dfn id=concept-cors-check>CORS check</dfn> for a <var>request</var> and
 <var>response</var>, run these steps:
 
@@ -6354,10 +6407,12 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
  <li><p>Return failure.
 </ol>
+</div>
 
 
 <h3 id=tao-check>TAO check</h3>
 
+<div algorithm>
 <p>To perform a <dfn id=concept-tao-check>TAO check</dfn> for a <var>request</var> and
 <var>response</var>, run these steps:
 
@@ -6390,6 +6445,7 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
  <li><p>Return failure.
 </ol>
+</div>
 
 
 
@@ -6548,6 +6604,7 @@ new Headers(meta2);
 
 <hr>
 
+<div algorithm>
 <p>To <dfn for=Headers>validate</dfn> a  <a for=/>header</a> (<var>name</var>, <var>value</var>) for
 a {{Headers}} object <var>headers</var>:
 
@@ -6566,10 +6623,12 @@ a {{Headers}} object <var>headers</var>:
 
  <li><p>Return true.
 </ol>
+</div>
 
 <p class=note>Steps for "<code>request-no-cors</code>" are not shared as you cannot have a fake
 value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted request-header</a>.
 
+<div algorithm>
 <p>To <dfn export for=Headers id=concept-headers-append>append</dfn> a <a for=/>header</a>
 (<var>name</var>, <var>value</var>) to a {{Headers}} object <var>headers</var>, run these steps:
 
@@ -6602,7 +6661,9 @@ value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted requ
  <li><p>If <var>headers</var>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
  <a for=Headers>remove privileged no-CORS request-headers</a> from <var>headers</var>.
 </ol>
+</div>
 
+<div algorithm>
 <p>To <dfn export for=Headers id=concept-headers-fill>fill</dfn> a {{Headers}} object
 <var>headers</var> with a given object <var>object</var>, run these steps:
 
@@ -6622,7 +6683,9 @@ value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted requ
  <var>key</var> → <var>value</var> of <var>object</var>, <a for=Headers>append</a> (<var>key</var>,
  <var>value</var>) to <var>headers</var>.
 </ol>
+</div>
 
+<div algorithm>
 <p>To
 <dfn for=Headers id=concept-headers-remove-privileged-no-cors-request-headers>remove privileged no-CORS request-headers</dfn>
 from a {{Headers}} object (<var>headers</var>), run these steps:
@@ -6638,7 +6701,9 @@ from a {{Headers}} object (<var>headers</var>), run these steps:
 </ol>
 
 <p class=note>This is called when headers are modified by unprivileged code.
+</div>
 
+<div algorithm>
 <p>The
 <dfn id=dom-headers export for=Headers constructor lt="Headers(init)"><code>new Headers(<var>init</var>)</code></dfn>
 constructor steps are:
@@ -6648,16 +6713,20 @@ constructor steps are:
 
  <li><p>If <var>init</var> is given, then <a for=Headers>fill</a> <a>this</a> with <var>init</var>.
 </ol>
+</div>
 
+<div algorithm>
 <p>The <dfn export for=Headers method><code>append(<var>name</var>, <var>value</var>)</code></dfn>
 method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>) to <a>this</a>.
+</div>
 
+<div algorithm>
 <p>The <dfn export for=Headers method><code>delete(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
  <li>
-  <p>If <a for=Headers>validating</a> (<var>name</var>, ``) for <var>headers</var> returns false,
-  then return.
+  <p>If <a for=Headers>validating</a> (<var>name</var>, ``) for <a>this</a> returns false, then
+  return.
 
   <p class=note>Passing a dummy <a>header value</a> ought not to have any negative repercussions.
 
@@ -6675,7 +6744,9 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
  <a for=Headers>remove privileged no-CORS request-headers</a> from <a>this</a>.
 </ol>
+</div>
 
+<div algorithm>
 <p>The <dfn export for=Headers method><code>get(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
@@ -6684,7 +6755,9 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <li><p>Return the result of <a for="header list">getting</a> <var>name</var> from <a>this</a>'s
  <a for=Headers>header list</a>.
 </ol>
+</div>
 
+<div algorithm>
 <p>The <dfn export for=Headers method><code>has(<var>name</var>)</code></dfn> method steps are:
 
 <ol>
@@ -6693,15 +6766,17 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
  <li><p>Return true if <a>this</a>'s <a for=Headers>header list</a>
  <a for="header list">contains</a> <var>name</var>; otherwise false.
 </ol>
+</div>
 
+<div algorithm>
 <p>The <dfn export for=Headers method><code>set(<var>name</var>, <var>value</var>)</code></dfn>
 method steps are:
 
 <ol>
  <li><p><a for="header value">Normalize</a> <var>value</var>.
 
- <li><p>If <a for=Headers>validating</a> (<var>name</var>, <var>value</var>) for <var>headers</var>
- returns false, then return.
+ <li><p>If <a for=Headers>validating</a> (<var>name</var>, <var>value</var>) for <a>this</a> returns
+ false, then return.
 
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>" and
  (<var>name</var>, <var>value</var>) is not a <a>no-CORS-safelisted request-header</a>, then return.
@@ -6712,6 +6787,7 @@ method steps are:
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", then
  <a for=Headers>remove privileged no-CORS request-headers</a> from <a>this</a>.
 </ol>
+</div>
 
 <p>The <a>value pairs to iterate over</a> are the return value of running
 <a for="header list">sort and combine</a> with <a>this</a>'s <a for=Headers>header list</a>.
