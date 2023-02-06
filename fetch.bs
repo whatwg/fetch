@@ -572,7 +572,10 @@ uses the more colloquial term "header". [[HTTP]]
 <a for=/>headers</a>. It is initially « ».
 
 <p class=note>A <a for=/>header list</a> is essentially a specialized multimap: an ordered list of
-key-value pairs with potentially duplicate keys.
+key-value pairs with potentially duplicate keys. Since headers other than `<code>Set-Cookie</code>`
+are always combined when exposed to client-side JavaScript, implementations could choose a more
+efficient representation, as long as they also support an associated data structure for
+`<code>Set-Cookie</code>` headers.
 
 <div algorithm>
 <p>To
@@ -6523,20 +6526,6 @@ interface Headers {
   iterable&lt;ByteString, ByteString>;
 };
 </pre>
-
-<p class=note>Unlike a <a for=/>header list</a>, a {{Headers}} object combines the values of
-multiple headers of the same name into a single header value. This is problematic for the
-`<code>Set-Cookie</code>` header, as unlike all other headers, it cannot be safely combined. Because
-of this, there is some special handling for the `<code>Set-Cookie</code>` header in
-the implementation of the {{Headers}} interface, just like in the HTTP spec.
-`<code>Set-Cookie</code>` headers are not concatenated when they are returned from the {{Headers}}
-iterator, and there is a
-<code><var>headers</var> . <a method for=Headers lt=getSetCookie()>getSetCookie</a>()</code> method
-to retrieve the list of all `<code>Set-Cookie</code>`, ordered and uncombined. This means that
-specifically for this header, multiple tuples of the same name can be returned from the {{Headers}}
-iterator. Implementations could choose the more efficient {{Headers}} object representation even for
-a <a for=/>header list</a>, as long as they also support an associated data structure for
-`<code>Set-Cookie</code>` headers.
 
 <p>A {{Headers}} object has an associated
 <dfn export for=Headers id=concept-headers-header-list>header list</dfn> (a
