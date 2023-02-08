@@ -572,7 +572,10 @@ uses the more colloquial term "header". [[HTTP]]
 <a for=/>headers</a>. It is initially « ».
 
 <p class=note>A <a for=/>header list</a> is essentially a specialized multimap: an ordered list of
-key-value pairs with potentially duplicate keys.
+key-value pairs with potentially duplicate keys. Since headers other than `<code>Set-Cookie</code>`
+are always combined when exposed to client-side JavaScript, implementations could choose a more
+efficient representation, as long as they also support an associated data structure for
+`<code>Set-Cookie</code>` headers.
 
 <div algorithm>
 <p>To
@@ -891,12 +894,33 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
   <p><a for=list>For each</a> <var>name</var> of <var>names</var>:
 
   <ol>
-   <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var>
-   from <var>list</var>.
+   <li>
+    <p>If <var>name</var> is `<code>set-cookie</code>`, then:
 
-   <li><p>Assert: <var>value</var> is non-null.
+    <ol>
+     <li><p>Let <var>values</var> be a list of all <a lt=value for=header>values</a> of
+     <a for=/>headers</a> in <var>list</var> whose <a for=header>name</a> is a
+     <a>byte-case-insensitive</a> match for <var>name</var>, in order.
 
-   <li><p><a for=list>Append</a> (<var>name</var>, <var>value</var>) to <var>headers</var>.
+     <li>
+      <p><a for=list>For each</a> <var>value</var> of <var>values</var>:
+
+      <ol>
+       <li><p><a for=list>Append</a> (<var>name</var>, <var>value</var>) to <var>headers</var>.
+      </ol>
+    </ol>
+
+   <li>
+    <p>Otherwise:
+
+    <ol>
+     <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var>
+     from <var>list</var>.
+
+     <li><p>Assert: <var>value</var> is non-null.
+
+     <li><p><a for=list>Append</a> (<var>name</var>, <var>value</var>) to <var>headers</var>.
+    </ol>
   </ol>
 
  <li><p>Return <var>headers</var>.
@@ -6498,19 +6522,12 @@ interface Headers {
   undefined append(ByteString name, ByteString value);
   undefined delete(ByteString name);
   ByteString? get(ByteString name);
+  sequence&lt;ByteString> getSetCookie();
   boolean has(ByteString name);
   undefined set(ByteString name, ByteString value);
   iterable&lt;ByteString, ByteString>;
 };
 </pre>
-
-<p class=note>Unlike a <a for=/>header list</a>, a {{Headers}} object cannot represent more than one
-`<code>Set-Cookie</code>` <a for=/>header</a>. In a way this is problematic as unlike all other
-headers `<code>Set-Cookie</code>` headers cannot be combined, but since `<code>Set-Cookie</code>`
-headers are not exposed to client-side JavaScript this is deemed an acceptable compromise.
-Implementations could choose the more efficient {{Headers}} object representation even for a
-<a for=/>header list</a>, as long as they also support an associated data structure for
-`<code>Set-Cookie</code>` headers.
 
 <p>A {{Headers}} object has an associated
 <dfn export for=Headers id=concept-headers-header-list>header list</dfn> (a
@@ -6555,6 +6572,9 @@ new Headers(meta2);
  <dt><code><var>headers</var> . <a method for=Headers lt=get()>get</a>(<var>name</var>)</code>
  <dd><p>Returns as a string the values of all headers whose name is <var>name</var>, separated by a
  comma and a space.
+
+ <dt><code><var>headers</var> . <a method for=Headers lt=getSetCookie()>getSetCookie</a>()</code>
+ <dd><p>Returns a list of the values for all headers whose name is `<code>Set-Cookie</code>`.
 
  <dt><code><var>headers</var> . <a method for=Headers lt=has()>has</a>(<var>name</var>)</code>
  <dd><p>Returns whether there is a header whose name is <var>name</var>.
@@ -6719,6 +6739,19 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
 
  <li><p>Return the result of <a for="header list">getting</a> <var>name</var> from <a>this</a>'s
  <a for=Headers>header list</a>.
+</ol>
+</div>
+
+<div algorithm>
+<p>The <dfn export for=Headers method><code>getSetCookie()</code></dfn> method steps are:
+
+<ol>
+ <li><p>If <a>this</a>'s <a for=Headers>header list</a> <a for="header list">does not contain</a>
+ `<code>Set-Cookie</code>`, then return « ».
+
+ <li><p>Return the <a lt=value for=header>values</a> of all <a for=/>headers</a> in <a>this</a>'s
+ <a for=Headers>header list</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match
+ for `<code>Set-Cookie</code>`, in order.
 </ol>
 </div>
 
