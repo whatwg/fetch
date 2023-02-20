@@ -1020,7 +1020,7 @@ fetch("https://victim.example/naïve-endpoint", {
    <dd>
     <ol>
      <li><p>Let <var>rangeValue</var> be the result of <a>parsing a single range header value</a>
-     given <var>value</var>.
+     given <var>value</var> and false.
 
      <li><p>If <var>rangeValue</var> is failure, then return false.
 
@@ -1292,16 +1292,27 @@ run these steps:
 
 <div algorithm>
 <p>To <dfn id=simple-range-header-value>parse a single range header value</dfn> from a
-<a>byte sequence</a> <var>value</var>, run these steps:
+<a>byte sequence</a> <var>value</var> and a boolean <var>allowWhitespace</var>, run these steps:
 
 <ol>
  <li><p>Let <var>data</var> be the <a>isomorphic decoding</a> of <var>value</var>.
 
- <li><p>If <var>data</var> does not <a for=string>start with</a> "<code>bytes=</code>", then return
+ <li><p>If <var>data</var> does not <a for=string>start with</a> "<code>bytes</code>", then return
  failure.
 
  <li><p>Let <var>position</var> be a <a>position variable</a> for <var>data</var>, initially
- pointing at the 6th <a>code point</a> of <var>data</var>.
+ pointing at the 5th <a>code point</a> of <var>data</var>.
+
+ <li><p>If <var>allowWhitespace</var> is true, <a>collect a sequence of code points</a> that are
+ <a>HTTP tab or space</a>, from <var>data</var> given <var>position</var>.
+
+ <li><p>If the <a>code point</a> at <var>position</var> within <var>data</var> is not U+003D (=),
+ then return failure.
+
+ <li><p>Advance <var>position</var> by 1.
+
+ <li><p>If <var>allowWhitespace</var> is true, <a>collect a sequence of code points</a> that are
+ <a>HTTP tab or space</a>, from <var>data</var> given <var>position</var>.
 
  <li><p>Let <var>rangeStart</var> be the result of <a>collecting a sequence of code points</a> that
  are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
@@ -1309,10 +1320,16 @@ run these steps:
  <li><p>Let <var>rangeStartValue</var> be <var>rangeStart</var>, interpreted as decimal number, if
  <var>rangeStart</var> is not the empty string; otherwise null.
 
+ <li><p>If <var>allowWhitespace</var> is true, <a>collect a sequence of code points</a> that are
+ <a>HTTP tab or space</a>, from <var>data</var> given <var>position</var>.
+
  <li><p>If the <a>code point</a> at <var>position</var> within <var>data</var> is not U+002D (-),
  then return failure.
 
  <li><p>Advance <var>position</var> by 1.
+
+ <li><p>If <var>allowWhitespace</var> is true, <a>collect a sequence of code points</a> that are
+ <a>HTTP tab or space</a>, from <var>data</var> given <var>position</var>.
 
  <li><p>Let <var>rangeEnd</var> be the result of <a>collecting a sequence of code points</a> that
  are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
