@@ -5985,25 +5985,73 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
    <li><p>Return the <a for=/>appropriate network error</a> for <var>fetchParams</var>.
   </ol>
 
- <li><p>Let <var>pullAlgorithm</var> be an algorithm that <a lt=resumed for=fetch>resumes</a> the
- ongoing fetch if it is <a lt=suspend for=fetch>suspended</a>.
+ <li>
+  <p>Let |buffer| be an empty buffer that can have bytes appended to it.
+
+  <p class="note">This represents an internal buffer inside the network layer of the user agent.
+
+ <li>
+  <p>Let |pullAlgorithm| be the followings steps:
+
+  <ol>
+   <li><p>Let |promise| be [=a new promise=].
+
+   <li>
+    <p>Run the following steps [=in parallel=]:
+
+    <ol>
+     <li><p>If the size of |buffer| is smaller than a lower limit chosen by the user agent and the
+     ongoing fetch is [=fetch/suspend|suspended=], [=fetch/resumed|resume=] the fetch.
+
+     <li><p>Wait until |buffer| is not empty.
+
+     <li>
+      <p>[=Queue a fetch task=] to run the following steps, with |fetchParams|'s
+      [=task destination=].
+
+      <ol>
+       <li><p>Let |available| be the size of |buffer|.
+
+       <li><p>Let |desiredSize| be |available|.
+
+       <li><p>If |stream|'s [=ReadableStream/current BYOB request view=] is non-null, then set
+       |desiredSize| to |stream|'s [=ReadableStream/current BYOB request view=]'s
+       [=BufferSource/byte length=].
+
+       <li><p>Let |extractSize| be the smaller value of |available| and |desiredSize|.
+
+       <li><p>Let <var>bytes</var> be the result of extracting |extractSize| of bytes from
+       <var>buffer</var>.
+
+       <li><p>If |stream|s [=ReadableStream/current BYOB request view=] is non-null, then
+       [=ArrayBufferView/write=] |bytes| into |stream|'s
+       [=ReadableStream/current BYOB request view=], and set |view| to |stream|'s
+       [=ReadableStream/current BYOB request view=].
+
+       <li>Otherwise, set |view| to the result of [=ArrayBufferView/create|creating=] a
+       {{Uint8Array}} from |bytes| in |stream|'s [=relevant Realm=].
+
+       <li><p>[=ReadableStream/Enqueue=] |view| into |stream|.
+
+       <li><p>If |stream| is [=ReadableStream/errored=], then [=fetch controller/terminate=]
+       |fetchParams|'s [=fetch params/controller=].
+
+       <li><p>[=/Resolve=] |promise| with undefined.
+      </ol>
+    </ol>
+
+   <li><p>Return |promise|.
+  </ol>
 
  <li><p>Let <var>cancelAlgorithm</var> be an algorithm that <a for="fetch controller">aborts</a>
  <var>fetchParams</var>'s <a for="fetch params">controller</a> with <var>reason</var>, given
  <var>reason</var>.
 
- <li><p>Let <var>highWaterMark</var> be a non-negative, non-NaN number, chosen by the user agent.
-
- <li><p>Let <var>sizeAlgorithm</var> be an algorithm that accepts a <a>chunk</a> object and returns
- a non-negative, non-NaN, non-infinite number, chosen by the user agent.
-
  <li><p>Let <var>stream</var> be a <a>new</a> {{ReadableStream}}.
 
- <li><p><a for=ReadableStream>Set up</a> <var>stream</var> with
- <a for="ReadableStream/set up"><var>pullAlgorithm</var></a> set to <var>pullAlgorithm</var>,
- <a for="ReadableStream/set up"><var>cancelAlgorithm</var></a> set to <var>cancelAlgorithm</var>,
- <a for="ReadableStream/set up"><var>highWaterMark</var></a> set to <var>highWaterMark</var>, and
- <a for="ReadableStream/set up"><var>sizeAlgorithm</var></a> set to <var>sizeAlgorithm</var>.
+ <li><p>[=ReadableStream/set up with byte reading support|Set up=] |stream| with byte reading
+ support with <var>[=ReadableStream/set up/pullAlgorithm=]</var> set to |pullAlgorithm|,
+ <var>[=ReadableStream/set up/cancelAlgorithm=]</var> set to |cancelAlgorithm|.
 
  <li><p>Set <var>response</var>'s <a for=response>body</a> to a new <a for=/>body</a> whose
  <a for=body>stream</a> is <var>stream</var>.
@@ -6057,15 +6105,10 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>If <var>bytes</var> is failure, then <a for="fetch controller">terminate</a>
          <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
-         <li><p><a for=ReadableStream>Enqueue</a> a {{Uint8Array}} wrapping an {{ArrayBuffer}}
-         containing <var>bytes</var> into <var>stream</var>.
+         <li><p>Append |bytes| to |buffer|.
 
-         <li><p>If <var>stream</var> is <a for=ReadableStream>errored</a>, then
-         <a for="fetch controller">terminate</a> <var>fetchParams</var>.'s
-         <a for="fetch params">controller</a>.
-
-         <li><p>If <var>stream</var> doesn't <a for=ReadableStream>need more data</a> ask the user
-         agent to <a for=fetch>suspend</a> the ongoing fetch.
+         <li><p>If the size of |buffer| is larger than an upper limit chosen by the user agent, ask
+         the user agent to [=fetch/suspend=] the ongoing fetch.
         </ol>
 
        <li><p>Otherwise, if the bytes transmission for <var>response</var>'s message body is done
@@ -6832,7 +6875,8 @@ steps:
  running <var>object</var>'s <a for=Blob>get stream</a>.
 
  <li><p>Otherwise, set <var>stream</var> to a <a>new</a> {{ReadableStream}} object, and
- <a for=ReadableStream>set up</a> <var>stream</var>.
+ [=ReadableStream/set up with byte reading support|set up=] <var>stream</var> with byte reading
+ support.
 
  <li><p><a for=/>Assert</a>: <var>stream</var> is a {{ReadableStream}} object.
 
