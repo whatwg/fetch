@@ -1703,7 +1703,7 @@ and "<code>webidentity</code>" as fetches with those destinations skip service w
 "<code>xslt</code>" as that too can cause script execution. It is not included in the list as it is
 not always relevant and might require different behavior.
 
-<div class=note id="destination-table">
+<div class=note id=destination-table>
  <p>The following table illustrates the relationship between a <a for=/>request</a>'s
  <a for=request>initiator</a>, <a for=request>destination</a>, CSP directives, and features. It is
  not exhaustive with respect to features. Features need to have the relevant values defined in their
@@ -8440,6 +8440,7 @@ correctly. This section aims to give some advice.
 
 <p class=XXX>This is a work in progress.
 
+
 <h3 id=fetch-elsewhere-request>Setting up a request</h3>
 
 <p>The first step in <a for=/>fetching</a> is to create a <a for=/>request</a>, and populate its
@@ -8447,37 +8448,36 @@ correctly. This section aims to give some advice.
 
 <p>Start by setting the <a for=/>request</a>'s <a for=request>URL</a> and <a for=request>method</a>,
 as defined by HTTP. If your `<code>POST</code>` or `<code>PUT</code>` <a for=/>request</a> needs a
-body, you set <a for=/>request</a>'s <a for=request>body</a> to a <a for=/>byte sequence</a>
-<a for="byte sequence">as a body</a>, or to a new <a for=/>body</a> whose <a for=body>stream</a>
-is a {{ReadableStream}} you created.  [[HTTP]]
+body, you set <a for=/>request</a>'s <a for=request>body</a> to a <a for=/>byte sequence</a>, or to
+a new <a for=/>body</a> whose <a for=body>stream</a> is a {{ReadableStream}} you created. [[HTTP]]
 
 <p>Choose your <a for=/>request</a>'s <a for=request>destination</a> using the guidance in the
 <a href="#destination-table">destination table</a>. <a for=request>Destinations</a> affect
-<cite>Content Security Policy</cite> and have other implications such as the
-[:Sec-Fetch-Dest:] header, so they are much more than informative metadata. If a new
-feature requires a <a for=request>destination</a> that's not in the
-<a href="#destination-table">destination table</a>, please
+<cite>Content Security Policy</cite> and have other implications such as the [:Sec-Fetch-Dest:]
+header, so they are much more than informative metadata. If a new feature requires a
+<a for=request>destination</a> that's not in the <a href="#destination-table">destination table</a>,
+please
 <a href="https://github.com/whatwg/fetch/issues/new?title=What%20destination%20should%20my%20feature%20use">file an issue</a>
-to discuss. [[!CSP]]
+to discuss. [[CSP]]
 
 <p>Set your <a for=/>request</a>'s <a for=request>client</a> to the
 <a>environment settings object</a> you're operating in. Web-exposed APIs are generally defined with
 Web IDL, for which every object that implements an <a>interface</a> has a
-<a>relevant settings object</a> you can use. For example, a <a for=/>request</a> associated with a
-DOM <a for=/>element</a> would set the <a for=/>request</a>'s <a for=request>client</a> to the
-element's <a>node document</a>'s <a>relevant settings object</a>. All features that are directly
-web-exposed by JavaScript, HTML, CSS, or other {{Document}} subresources should have a
+<a>relevant settings object</a> you can use. For example, a <a for=/>request</a> associated with an
+<a for=/>element</a> would set the <a for=/>request</a>'s <a for=request>client</a> to the element's
+<a>node document</a>'s <a>relevant settings object</a>. All features that are directly web-exposed
+by JavaScript, HTML, CSS, or other {{Document}} subresources should have a
 <a for=request>client</a>.
 
-<p>If your <a for=/>fetching</a> is not directly web-exposed, e.g. it is sent in the background
+<p>If your <a for=/>fetching</a> is not directly web-exposed, e.g., it is sent in the background
 without relying on a current {{Window}} or {{Worker}}, leave <a for=/>request</a>'s
 <a for=request>client</a> as null and set the <a for=/>request</a>'s <a for=request>origin</a>,
 <a for=request>policy container</a>, <a for=request>service-workers mode</a>, and
-<a for=request>referrer</a> to appropriate values instead, e.g. by copying them from the
+<a for=request>referrer</a> to appropriate values instead, e.g., by copying them from the
 <a>environment settings object</a> ahead of time. In these more advanced cases, make sure the
-details of how your fetch handles <cite>Content Security Place</cite> and
-<a for=/>referrer policy</a> are fleshed out. Also make sure you handle concurrency, as callbacks (see [[#fetch-elsewhere-fetch]])
-would be posted on a <a>parallel queue</a>. [[!REFERRER]] [[!CSP]]
+details of how your fetch handles <cite>Content Security Policy</cite> and
+<a for=/>referrer policy</a> are fleshed out. Also make sure you handle concurrency, as callbacks
+(see [[#fetch-elsewhere-fetch]]) would be posted on a <a>parallel queue</a>. [[REFERRER]] [[CSP]]
 
 <p>Think through the way you intend to handle cross-origin resources. Some features may only work in
 the <a>same origin</a>, in which case set your <a for=/>request</a>'s <a for=request>mode</a> to
@@ -8489,19 +8489,19 @@ to discuss.
 
 <p>For cross-origin requests, also determines if <a for=/>credentials</a> are to be included with
 the requests, in which case set your <a for=/>request</a>'s <a for=request>credentials mode</a> to
-"<code>include</code>",
+"<code>include</code>".
 
-<p>Figure out if your fetch needs to be reported to [[RESOURCE-TIMING inline]], and with which
+<p>Figure out if your fetch needs to be reported to <cite>Resource Timing</cite>, and with which
 <a for=request>initiator type</a>. By passing an <a for=request>initiator type</a> to the
 <a for=/>request</a>, reporting to <cite>Resource Timing</cite> will be done automatically once the
-fetch is done and the <a for=/>response</a> is fully downloaded.  [[RESOURCE-TIMING]]
+fetch is done and the <a for=/>response</a> is fully downloaded. [[RESOURCE-TIMING]]
 
 <p>If your request requires additional HTTP headers, set its <a for=request>header list</a> to
-a <a for=/>header list</a> that contains those headers, e.g.
-« (`<code>My-Header-Name</code>`, `<code>My-Header-Value</code>`) ». Note that sending custom
-headers may have implications, such as requiring a <a>CORS-preflight fetch</a>, so handle with care.
+a <a for=/>header list</a> that contains those headers, e.g., « (`<code>My-Header-Name</code>`,
+`<code>My-Header-Value</code>`) ». Sending custom headers may have implications, such as requiring a
+<a>CORS-preflight fetch</a>, so handle with care.
 
-<p>If you want to override the default caching mechanism, e.g. disable caching for this
+<p>If you want to override the default caching mechanism, e.g., disable caching for this
 <a for=/>request</a>, set the request's <a for=request>cache mode</a> to a value other than
 "<code>default</code>".
 
