@@ -8769,53 +8769,28 @@ relevant to you. The rest of the parameters are used less frequently, often for 
 and they are documented in detail in the [[#requests]] section of this standard.
 
 
-<h3 id=fetch-elsewhere-fetch class=no-num>Invoking fetch</h3>
+<h3 id=fetch-elsewhere-fetch class=no-num>Invoking fetch and processing responses</h3>
 
 <p>Aside from a <a for=/>request</a> the <a for=/>fetch</a> operation takes several optional
 arguments. For those arguments that take an algorithm: the algorithm will be called from a task (or
 in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is true).
 
+<p>Once the <a for=/>request</a> is set up, to determine which algorithms to pass to
+<a for=/>fetch</a>, determine how you would like to process the <a for=/>response</a>, and in
+particular at what stage you would like to receive a callback:
+
 <dl>
- <dt><a for=fetch><i>processRequestBodyChunkLength</i></a>
- <dd><p>Takes an algorithm that will be passed the number of bytes that have been transmitted from
- the <a for=/>request</a>'s <a for=request>body</a>. The algorithm will be invoked for each
- transmitted chunk. Most standards will not need this.
-
- <dt><a for=fetch><i>processRequestEndOfBody</i></a>
- <dd><p>Takes an algorithm that will be passed nothing. Indicates <a for=/>request</a>'s
- <a for=request>body</a> has been transmitted. Most standards will not need this.
-
- <dt><a for=fetch><i>processEarlyHintsResponse</i></a>
- <dd><p>Takes an algorithm that will be passed a <a for=/>response</a> (whose
- <a for=response>status</a> is 103). Can only be used for navigations as defined by
- <cite>HTML</cite>. [[HTML]]
-
- <dt><a for=fetch><i>processResponse</i></a>
+ <dt>Upon completion
  <dd>
-  <p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates
-  <a for=/>response</a>'s <a for=response>header list</a> has been received and initialized. This
-  is primarily useful for standards that want to operate on <a for=/>response</a>'s
-  <a for=response>body</a>'s <a for=body>stream</a> directly.
+  <p>This is how most callers handle a <a for=/>response</a>, for example
+  <a lt="fetch a classic script">scripts</a> and <a lt="fetch a style resource">style resources</a>.
+  The <a for=/>response</a>'s <a for=response>body</a> is read in its entirety into a
+  <a>byte sequence</a>, and then processed by the caller.
 
-  <p>If the <a for=/>request</a>'s <a for=request>mode</a> is "<code>navigate</code>" and its
-  <a for=request>redirect mode</a> is "<code>manual</code>", then callers need to follow a very
-  specific flow with this algorithm to get the intended behavior. They should compute the
-  appropriate <a for=response>location URL</a>, and if it is non-null or failure, then they should
-  call <a for="fetch controller">process the next manual redirect</a>. This will result in
-  <a for=fetch><i>processResponse</i></a> being called again, with the next <a for=/>response</a>
-  in the redirect chain.
-
- <dt><a for=fetch><i>processResponseEndOfBody</i></a>
- <dd><p>Takes an algorithm that will be passed a <a for=/>response</a>. Indicates the network is
- done transmitting the response. This does not read <a for=/>response</a>'s
- <a for=response>body</a>.
-
- <dt><a for=fetch><i>processResponseConsumeBody</i></a>
- <dd>
-  <p>Takes an algorithm that will be passed a <a for=/>response</a> and null, failure, or a
-  <a>byte sequence</a>. This is useful for standards that wish to operate on the entire
-  <a for=/>response</a>'s <a for=response>body</a>, of which the result of reading it is supplied as
-  second argument. The second argument's values have the following meaning:
+  <p>To process a <a for=/>response</a> upon completion, pass an algorithm as the
+  <a for=fetch><i>processResponseConsumeBody</i></a> argument of <a for=/>fetch</a>. The given
+  algorithm is passed a <a for=/>response</a> and an argument representing the fully read
+  <a for=response>body</a>. The second argument's values have the following meaning:
 
   <dl>
    <dt>null
@@ -8831,20 +8806,122 @@ in a <a for=/>parallel queue</a> if <a for=fetch><i>useParallelQueue</i></a> is 
    <a for=response>body</a> succeeded.
   </dl>
 
-  <p class=warning>A standard that uses this argument cannot operate on <a for=/>response</a>'s
-  <a for=response>body</a> itself as providing this argument will cause it to be read and it can be
-  read only once.
+  <div id=example-callback-upon-completion class=example>
+   <ol>
+    <li><p>Let <var>request</var> be a <a for=/>request</a> whose <a for=request>URL</a> is
+    <code>https://stuff.example.com/</code> and <a for=request>client</a> is <a>this</a>'s
+    <a>relevant settings object</a>.
 
- <dt><a for=fetch><i>useParallelQueue</i></a>
- <dd><p>Takes a <a for=/>boolean</a> that defaults to false. Indicates where the algorithms passed
- as arguments will be invoked. Hopefully most standards will not need this.
+    <li>
+     <p><a for=/>Fetch</a> <var>request</var>, with
+     <a for=fetch><i>processResponseConsumeBody</i></a> set to the following steps given
+     a <a for=/>response</a> <var>response</var> and null, failure, or a <a>byte sequence</a>
+     <var>contents</var>:
+
+     <ol>
+      <li><p>If <var>contents</var> is null or failure, then present an error to the user.
+
+      <li><p>Otherwise, parse <var>contents</var> considering the metadata from <var>response</var>,
+      and perform your own operations on it.
+     </ol>
+    </li>
+  </div>
+ </dd>
+
+ <dt>Headers first, then chunk-by-chunk
+ <dd>
+  <p>In some cases, for example when playing video or progressively loading images, callers might
+  want to stream the response, and process it one chunk at a time. The <a for=/>response</a> is
+  handed over to the fetch caller once the headers are processed, and the caller
+  continues from there.
+
+  <p>To process a <a for=/>response</a> chunk-by-chunk, pass an algorithm to the
+  <a for=fetch><i>processResponse</i></a> argument of <a for/>fetch</a>. The given
+  algorithm is passed a <a for=/>response</a> when the response's headers have been
+  received and is responsible for reading the <a for=/>response</a>'s
+  <a for=response>body</a>'s <a for=body>stream</a> in order to download the rest
+  of the response. For convenience, you may also pass an algorithm to the
+  <a for=fetch><i>processResponseEndOfBody</i></a> argument, which is called once you have finished
+  fully reading the response and its <a for=response>body</a>. Note that unlike
+  <a for=fetch><i>processResponseConsumeBody</i></a>, passing the
+  <a for=fetch><i>processResponse</i></a> or <a for=fetch><i>processResponseEndOfBody</i></a> arguments
+  does not guarantee that the response will be fully read, and callers are responsible to
+  read it themselves.
+
+  <p>The <a for=fetch><i>processResponse</i></a> argument is also useful for handling the
+  <a for=/>response</a>'s <a for=response>header list</a> and <a for=response>status</a> without
+  handling the <a for=response>body</a> at all. This is used, for example, when handling responses
+  that do not have an <a for=/>ok status</a>.
+
+  <div id=example-callback-chunk-by-chunk class=example>
+   <ol>
+    <li><p>Let <var>request</var> be a <a for=/>request</a> whose <a for=request>URL</a> is
+    <code>https://stream.example.com/</code> and <a for=request>client</a> is <a>this</a>'s
+    <a>relevant settings object</a>.
+
+    <li>
+     <p><a for=/>Fetch</a> <var>request</var>, with
+     <a for=fetch><i>processResponse</i></a> set to the following steps given a
+     <a for=/>response</a> <var>response</var>:
+
+     <ol>
+      <li><p>If <var>response</var> is a <a>network error</a>, then present an error to the user.
+
+      <li><p>Otherwise, if <var>response</var>'s <a for=response>status</a> is not an
+      <a>ok status</a>, present some fallback value to the user.
+
+      <li><p>Otherwise, <a for=ReadableStream>get a reader</a> for <a for=/>response</a>'s
+      <a for=response>body</a>'s <a for=body>stream</a>, and process in an appropriate way for the
+      MIME type identified by <a>extracting a MIME type</a> from <var>response</var>'s <a for=response>headers list</a>.
+     </ol>
+    </li>
+  </div>
+ </dd>
+
+ <dt>Ignore the response
+ <dd>
+  <p>In some cases, there is no need for a <a for=/>response</a> at all, e.g., in the case of
+  {{Navigator/sendBeacon()|navigator.sendBeacon()}}. Processing a response and passing callbacks to
+  <a for=/>fetch</a> is optional, so omitting the callback would <a for=/>fetch</a> without
+  expecting a response. In such cases, the <a for=/>response</a>'s <a for=response>body</a>'s
+  <a for=body>stream</a> will be discarded, and the caller does not have to worry about downloading
+  the contents unnecessarily.
+
+  <p id=example-no-callback class=example><a for=/>Fetch</a> a <a for=/>request</a> whose
+  <a for=request>URL</a> is <code>https://fire-and-forget.example.com/</code>,
+  <a for=request>method</a> is `<code>POST</code>`, and <a for=request>client</a> is <a>this</a>'s
+  <a>relevant settings object</a>.
+ </dd>
 </dl>
 
-<p>When invoked, the <a for=/>fetch</a> operation returns a <a for=/>fetch controller</a>. The
-controller is used for performing actions on a fetch operation that has already started, such as
-<a for="fetch controller" lt=abort>aborting</a> the operation by the user or page logic, or
-<a for="fetch controller" lt=terminate>terminating</a> it due to a browser-internal circumstance.
+<p>Apart from the callbacks to handle responses, <a for=/>fetch</a> accepts additional callbacks
+for advanced cases. <a for=fetch><i>processEarlyHintsResponse</i></a> is intended specifically for
+<a for=/>responses</a> whose <a for=response>status</a> is 103, and is currently handled only by
+navigations. <a for=fetch><i>processRequestBodyChunkLength</i></a> and
+<a for=fetch><i>processRequestEndOfBody</i></a> notify the caller of request body uploading
+progress.
 
+<p>Note that the <a for=/>fetch</a> operation starts in the same thread from which it was called,
+and then breaks off to run its internal operations <a>in parallel</a>. The aforementioned callbacks
+are posted to a given <a for=/>event loop</a> which is, by default, the
+<a for=request>client</a>'s <a for="environment settings object">global object</a>. To process
+responses <a>in parallel</a> and handle interactions with the main thread by yourself,
+<a for=/>fetch</a> with <a for=fetch><i>useParallelQueue</i></a> set to true.
+
+
+<h3 id=fetch-elsewhere-ongoing>Manipulating an ongoing fetch</h3>
+
+<p>To manipulate a <a for=/>fetch</a> operation that has already started, use the
+<a for=/>fetch controller</a> returned by calling <a for=/>fetch</a>. For example, you may
+<a for="fetch controller">abort</a> the <a>fetch controller</a> due the user or page logic, or
+<a for="fetch controller">terminate</a> it due to browser-internal circumstances.
+
+<p>In addition to terminating and aborting, callers may <a for="fetch controller">report timing</a>
+if this was not done automatically by passing the <a for=request>initiator type</a>, or
+<a for="fetch controller">extract full timing info</a> and handle it on the caller side (this is
+done only by navigations). The <a>fetch controller</a> is also used to
+<a for="fetch controller">process the next manual redirect</a> for <a for=/>requests</a> with
+<a for=request>redirect mode</a> set to "<code>manual</code>".
 
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
