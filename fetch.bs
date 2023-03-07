@@ -3961,6 +3961,9 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
 <var>forNavigation</var>, run these steps:
 
 <ol>
+ <li><p>If the running the <a>public subresource check</a> on <var>destination</var> and
+ <var>response</var> returns true, then return <b>allowed</b>.
+
  <li><p>Set <var>forNavigation</var> to false if it is not given.
 
  <li><p>Let <var>embedderPolicy</var> be <var>settingsObject</var>'s
@@ -6517,6 +6520,9 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 <var>response</var>, run these steps:
 
 <ol>
+ <li><p>If the result of preforming a <a>public subresource check</a> given <var>request</var>'s
+ <a for=request>destination</a> and <var>response</var> returns true, then return success.
+
  <li><p>Let <var>origin</var> be the result of <a for="header list">getting</a>
  `<a http-header><code>Access-Control-Allow-Origin</code></a>` from <var>response</var>'s
  <a for=response>header list</a>.
@@ -6556,6 +6562,9 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is set, then return
  failure.
 
+ <li><p>If the result of preforming a <a>public subresource check</a> given <var>request</var>'s
+ <a for=request>destination</a> and <var>response</var> returns true, then return success.
+
  <li><p>Let <var>values</var> be the result of
  <a for="header list">getting, decoding, and splitting</a> `<code>Timing-Allow-Origin</code>` from
  <var>response</var>'s <a for=response>header list</a>.
@@ -6583,6 +6592,46 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 </ol>
 </div>
 
+<h3 id=public-resource-check>Public Subresource check</h3>
+<div algorithm="public-subresource-check">
+<p>To perform a <dfn id=concept-public-subresource-check>Public subresource check</dfn> for a
+string <var>destination</var> and a <a for=/>response</a> <var>response</var>, run these steps:
+
+<ol>
+ <li><p>If <var>destination</var> is not "<code>image</code>", return false.
+
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a>
+ `<code>Subresource-Access-Control</code>` from <var>response</var>'s
+ <a for=response>header list</a>.
+
+ <li>
+  <p>If <var>values</var>[0] is not an <a>ASCII case-insensitive</a> match for
+  "<code>unsafe-public;image</code>", then return false.
+
+  <p class=note>TODO: define header + rigorous parsing, this is an initial proposal.
+
+ <li><p>Let <var>varyValues</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a>
+ `<code>Vary</code>` from <var>response</var>'s
+ <a for=response>header list</a>.
+
+ <li><p>If <var>varyValues</var> <a for=list>contains</a> a value that is an
+ <a>ASCII case-insensitive</a> match to "<code>cookie</code>", return false.
+
+ <li><p>Let <var>cacheControlValues</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a>
+ `<code>Cache-Control</code>` from <var>response</var>'s
+ <a for=response>header list</a>.
+
+ <li><p>If <var>cacheControlValues</var> <a for=list>contains</a> a value that is an
+ <a>ASCII case-insensitive</a> match to "<code>no-store</code>", return false.
+
+ <li><p>Return true.
+</ol>
+
+<p class=note>We might want to add more mitigations here to avoid misusing this header.
+</div>
 
 
 <h2 id=fetch-api>Fetch API</h2>
