@@ -3027,6 +3027,78 @@ details of reused connections are not exposed and time values are coarsened.
 </div>
 
 
+<h3 id=preemptive-connection-operations>Preemptive connection operations</h3>
+
+<div algorithm="preemmptively-obtain-a-connection">
+<p>To <dfn export>preemptively obtain a connection</dfn>, given an
+<a>environment settings object</a> <var>environment</var>, a <a for=/>URL</a> <var>url</var>, and a
+boolean <var>credentials</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>key</var> be the result of <a for=/>determining the network partition key</a> given
+ <var>environment</var>.
+
+ <li>
+  <p><a>Check CSP for preemptive operation</a> with <var>environment</var> and <var>url</var>. If
+  that returns <b>allowed</b>, <a>Obtain a connection</a> with <var>key</var>, <var>url</var> and
+  <var>credentials</var>.
+
+  <p class=note>This connection is obtained but not used directly. It will remain in the
+  <a>connection pool</a> for subsequent use.
+
+  <p class=note>The user agent should attempt to initiate a preconnect and perform the full
+  connection handshake (DNS+TCP for HTTP, and DNS+TCP+TLS for HTTPS origins) whenever possible, but
+  is allowed to elect to perform a partial handshake (DNS only for HTTP, and DNS or DNS+TCP for
+  HTTPS origins), or skip it entirely, due to resource constraints or other reasons.</p>
+
+  <p class=note>The optimal number of connections per origin is dependent on the negotiated
+  protocol, users current connectivity profile, available device resources, global connection
+  limits, and other context specific variables. As a result, the decision for how many connections
+  should be opened is deferred to the user agent.</p>
+</ol>
+</div>
+
+<div algorithm="preemmptively-resolve-an-origin">
+<p>To <dfn export>preemptively resolve an origin</dfn>, given an
+<a>environment settings object</a> <var>environment</var> and a <a for=/>URL</a> <var>url</var>, run
+these steps:
+
+<ol>
+ <li><p>Let <var>key</var> be the result of <a for=/>determining the network partition key</a> given
+ <var>environment</var>.
+
+ <li><p><a>Check CSP for preemptive operation</a> with <var>environment</var> and <var>url</var>. If
+ that returns <b>blocked</b>, return.
+
+ <li><p>Let <var>proxies</var> be the result of finding proxies for <var>url</var> in an
+ <a>implementation-defined</a> manner.
+
+ <li>
+  <p>If there <var>proxies</var> is <a for=list>empty</a>, or if <var>proxies</var>
+  <a for=list>contains</a> "<code>DIRECT</code>", then <a>resolve an origin</a> given <var>key</var>
+  and <var>url</var>'s <a for=url>origin</a>.
+
+  <p class=note>As the results of this algorithm can be cached, future fetches could be faster.
+</ol>
+</div>
+
+<div algorithm="check-preemptive-operation-csp">
+<p>To <dfn>Check CSP for preemptive operation</dfn>, given an
+<a>environment settings object</a> <var>environment</var>, and a <a for=/>URL</a> <var>url</var>,
+run these steps:
+
+<ol>
+ <li><p>Let <var>request</var> be a <a for=/>request</a> whose <a for=request>URL</a> is
+ <var>url</var>, <a for=request>initiator</a> is "<code>prefetch</code>", and whose
+ <a for=request>client</a> is <var>environment</var>.
+
+ <li><p>Return the result of running <a>should request be blocked by Content Security Policy?</a>
+ given <var>request</var>.
+
+</ol>
+</div>
+
+
 <h3 id=network-partition-keys>Network partition keys</h3>
 
 <p>A <dfn>network partition key</dfn> is a tuple consisting of a <a for=/>site</a> and null or
@@ -8720,7 +8792,7 @@ to discuss. [[CSP]]
 <a>environment settings object</a> you're operating in. Web-exposed APIs are generally defined with
 Web IDL, for which every object that implements an <a>interface</a> has a
 <a>relevant settings object</a> you can use. For example, a <a for=/>request</a> associated with an
-<a for=/>element</a> would set the <a for=/>request</a>'s <a for=request>client</a> to the element's
+{{Element}} would set the <a for=/>request</a>'s <a for=request>client</a> to the element's
 <a>node document</a>'s <a>relevant settings object</a>. All features that are directly web-exposed
 by JavaScript, HTML, CSS, or other {{Document}} subresources should have a
 <a for=request>client</a>.
