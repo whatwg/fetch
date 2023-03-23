@@ -4886,14 +4886,16 @@ steps:
       <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction serves no useful purpose
       other than being interoperable.
 
+     <li><p>Let <var>blob</var> be <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>.
+
      <li><p>Let <var>response</var> be a new <a for=/>response</a>.
 
-     <li><p>Let <var>fullLength</var> be <var>blobURLEntry</var>'s
-     <a for="blob URL entry">object</a>'s {{Blob/size}},
+     <li><p>Let <var>fullLength</var> be <var>blob</var>'s {{Blob/size}}.
+
+     <li><p>Let <var>serializedFullLength</var> be <var>fullLength</var>,
      <a lt="serialize an integer">serialized</a> and <a>isomorphic encoded</a>.
 
-     <li><p>Let <var>type</var> be <var>blobURLEntry</var>'s
-     <a for="blob URL entry">object</a>'s {{Blob/type}}.
+     <li><p>Let <var>type</var> be <var>blob</var>'s {{Blob/type}}.
 
      <li>
       <p>If <var>request</var>'s <a for=request>header list</a>
@@ -4901,7 +4903,7 @@ steps:
 
       <ol>
        <li><p>Let <var>bodyWithType</var> be the result of <a for=BodyInit>safely extracting</a>
-       <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>.
+       <var>blob</var>.
 
        <li><p>Set <var>response</var>'s <a for=response>status message</a> to `<code>OK</code>`.
 
@@ -4909,8 +4911,8 @@ steps:
        <a for="body with type">body</a>.
 
        <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
-       (`<code>Content-Length</code>`, <var>fullLength</var>), (`<code>Content-Type</code>`,
-       <var>type</var>) ».
+       (`<code>Content-Length</code>`, <var>serializedFullLength</var>),
+       (`<code>Content-Type</code>`, <var>type</var>) ».
       </ol>
 
      <li>
@@ -4929,19 +4931,35 @@ steps:
 
        <li><p>If <var>rangeValue</var> is failure, then return a <a>network error</a>.
 
-       <li><p>Let <var>sliceEndRange</var> be null.
+       <li><p>Let (<var>rangeStart</var>, <var>rangeEnd</var>) be <var>rangeValue</var>.
 
        <li>
-        <p>If <var>rangeValue</var>[1] is non-null, then set <var>sliceEndRange</var> to
-        <var>rangeValue</var>[1] + 1.
+        <p>If <var>rangeStart</var> is null:
+
+        <ol>
+         <li><p>Set <var>rangeStart</var> to <var>fullLength</var> &minus; <var>rangeEnd</var>.
+
+         <li><p>Set <var>rangeEnd</var> to <var>rangeStart</var> + <var>rangeEnd</var> &minus; 1.
+        </ol>
+
+       <li>
+        <p>Otherwise:
+
+        <ol>
+         <li><p>If <var>rangeStart</var> is greater than or equal to <var>fullLength</var>, then
+         return a <a>network error</a>.
+
+         <li><p>If <var>rangeEnd</var> is null or <var>rangeEnd</var> is greater than or equal to
+         <var>fullLength</var>, then set <var>rangeEnd</var> to <var>fullLength</var> &minus; 1.
+        </ol>
+
+       <li>
+        <p>Let <var>slicedBlob</var> be the result of invoking <a>slice blob</a> given
+        <var>blob</var>, <var>rangeStart</var>, <var>rangeEnd</var> + 1, and <var>type</var>.
 
         <p class=note>A range header denotes an inclusive byte range, while the <a>slice blob</a>
         algorithm input range does not. To use the <a>slice blob</a> algorithm, we have to increment
-        the parsed range header end value.
-
-       <li><p>Let <var>slicedBlob</var> be the result of invoking <a>slice blob</a> given
-       <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>, <var>rangeValue</var>[0],
-       <var>sliceEndRange</var>, and <var>type</var>.
+        <var>rangeEnd</var>.
 
        <li><p>Let <var>slicedBodyWithType</var> be the result of
        <a for=BodyInit>safely extracting</a> <var>slicedBlob</var>.
@@ -4949,30 +4967,24 @@ steps:
        <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>slicedBodyWithType</var>'s
        <a for="body with type">body</a>.
 
-       <li><p>Let <var>slicedLength</var> be <var>slicedBlob</var>'s {{Blob/size}},
+       <li><p>Let <var>serializedSlicedLength</var> be <var>slicedBlob</var>'s {{Blob/size}},
        <a lt="serialize an integer">serialized</a> and <a>isomorphic encoded</a>.
 
        <!-- The following steps for content-range should be definined in a separate algorithm.
             See https://github.com/whatwg/fetch/issues/1552 for future work -->
        <li><p>Let <var>contentRange</var> be `<code>bytes </code>`.
 
-       <li><p>If <var>rangeValue</var>[0] is non-null, then
-       <a lt="serialize an integer">serialize</a> and <a>isomorphic encode</a>
-       <var>rangeValue</var>[0], and append the result to <var>contentRange</var>.
-
-       <li><p>Otherwise, append 0x30 (0) to <var>contentRange</var>.
+       <li><p>Append <var>rangeStart</var>, <a lt="serialize an integer">serialized</a> and
+       <a>isomorphic encoded</a>, to <var>contentRange</var>.
 
        <li><p>Append 0x2D (-) to <var>contentRange</var>.
 
-       <li><p>If <var>sliceEndRange</var> is non-null, then
-       <a lt="serialize an integer">serialize</a> and <a>isomorphic encode</a>
-       <var>sliceEndRange</var>, and append the result to <var>contentRange</var>.
-
-       <li><p>Otherwise, append <var>fullLength</var> to <var>contentRange</var>.
+       <li><p>Append <var>rangeEnd</var>, <a lt="serialize an integer">serialized</a> and
+       <a>isomorphic encoded</a> to <var>contentRange</var>.
 
        <li><p>Append 0x2F (/) to <var>contentRange</var>.
 
-       <li><p>Append <var>fullLength</var> to <var>contentRange</var>.
+       <li><p>Append <var>serializedFullLength</var> to <var>contentRange</var>.
 
        <li><p>Set <var>response</var>'s <a for=response>status</a> to 206.
 
@@ -4980,8 +4992,9 @@ steps:
        `<code>Partial Content</code>`.
 
        <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
-       (`<code>Content-Length</code>`, <var>slicedLength</var>), (`<code>Content-Type</code>`,
-       <var>type</var>), (`<code>Content-Range</code>`, <var>contentRange</var>) ».
+       (`<code>Content-Length</code>`, <var>serializedSlicedLength</var>),
+       (`<code>Content-Type</code>`, <var>type</var>), (`<code>Content-Range</code>`,
+       <var>contentRange</var>) ».
       </ol>
 
      <li><p>Return <var>response</var>.
