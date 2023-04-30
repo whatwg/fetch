@@ -4810,7 +4810,11 @@ steps:
  <a for="fetch params">process response</a> given <var>response</var>, with <var>fetchParams</var>'s
  <a for="fetch params">task destination</a>.
 
- <li><p>If <var>response</var>'s <a for=response>body</a> is null, then run
+ <li><p>Let <var>actualResponse</var> be <var>response</var>'s
+ <a for="filtered response">internal response</a> if <var>response</var> is a
+ <a>filtered response</a>; Otherwise <var>response</var>.
+
+ <li><p>If <var>actualResponse</var>'s <a for=response>body</a> is null, then run
  <var>processResponseEndOfBody</var>.
 
  <li>
@@ -4828,8 +4832,8 @@ steps:
    <a for="TransformStream/set up"><i>flushAlgorithm</i></a> set to
    <var>processResponseEndOfBody</var>.
 
-   <li><p>Set <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> to the result
-   of <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a>
+   <li><p>Set <var>actualResponse</var>'s <a for=response>body</a>'s <a for=body>stream</a> to the
+   result of <var>actualResponse</var>'s <a for=response>body</a>'s <a for=body>stream</a>
    <a for=ReadableStream>piped through</a> <var>transformStream</var>.
   </ol>
 
@@ -4843,17 +4847,18 @@ steps:
   <ol>
    <li><p>Let <var>processBody</var> given <var>nullOrBytes</var> be this step: run
    <var>fetchParams</var>'s <a for="fetch params">process response consume body</a> given
-   <var>response</var> and <var>nullOrBytes</var>.
+   <var>actualResponse</var> and <var>nullOrBytes</var>.
 
    <li><p>Let <var>processBodyError</var> be this step: run <var>fetchParams</var>'s
-   <a for="fetch params">process response consume body</a> given <var>response</var> and failure.
+   <a for="fetch params">process response consume body</a> given <var>actualResponse</var> and
+   failure.
 
-   <li><p>If <var>response</var>'s <a for=response>body</a> is null, then <a>queue a fetch task</a>
+   <li><p>If <var>actualResponse</var>'s <a for=response>body</a> is null, then <a>queue a fetch task</a>
    to run <var>processBody</var> given null, with <var>fetchParams</var>'s
    <a for="fetch params">task destination</a>.
 
-   <li><p>Otherwise, <a for=body>fully read</a> <var>response</var>'s <a for=response>body</a> given
-   <var>processBody</var>, <var>processBodyError</var>, and <var>fetchParams</var>'s
+   <li><p>Otherwise, <a for=body>fully read</a> <var>actualResponse</var>'s <a for=response>body</a>
+   given <var>processBody</var>, <var>processBodyError</var>, and <var>fetchParams</var>'s
    <a for="fetch params">task destination</a>.
   </ol>
 </ol>
