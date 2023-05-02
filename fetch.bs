@@ -7542,8 +7542,8 @@ object), initially null.
 
 <div algorithm>
 <p>To <dfn export for=Request lt=create|creating>create</dfn> a {{Request}} object, given a
-<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>, and
-<a>realm</a> <var>realm</var>, run these steps:
+<a for=/>request</a> <var>request</var>, <a for=/>headers guard</a> <var>guard</var>,
+{{AbortSignal}} object <var>signal</var>, and <a>realm</a> <var>realm</var>:
 
 <ol>
  <li><p>Let <var>requestObject</var> be a <a for=/>new</a> {{Request}} object with <var>realm</var>.
@@ -7554,8 +7554,7 @@ object), initially null.
  object with <var>realm</var>, whose <a for=Headers>headers list</a> is <var>request</var>'s
  <a for=request>headers list</a> and <a for=Headers>guard</a> is <var>guard</var>.
 
- <li><p>Set <var>requestObject</var>'s <a for=Request>signal</a> to a <a for=/>new</a>
- {{AbortSignal}} object with <var>realm</var>.
+ <li><p>Set <var>requestObject</var>'s <a for=Request>signal</a> to <var>signal</var>.
 
  <li><p>Return <var>requestObject</var>.
 </ol>
@@ -7826,11 +7825,12 @@ constructor steps are:
 
  <li><p>Set <a>this</a>'s <a for=Request>request</a> to <var>request</var>.
 
- <li><p>Set <a>this</a>'s <a for=Request>signal</a> to a <a for=/>new</a> {{AbortSignal}} object
- with <a>this</a>'s <a>relevant realm</a>.
+ <li><p>Let <var>signals</var> be « <var>signal</var> » if <var>signal</var> is non-null; otherwise
+ « ».
 
- <li><p>If <var>signal</var> is non-null, then make <a>this</a>'s <a for=Request>signal</a>
- <a for=AbortSignal>follow</a> <var>signal</var>.
+ <li><p>Set <a>this</a>'s <a for=Request>signal</a> to the result of
+ <a>creating a dependent abort signal</a> from <var>signals</var>, using {{AbortSignal}} and
+ <a>this</a>'s <a>relevant realm</a>.
 
  <li><p>Set <a>this</a>'s <a for=Request>headers</a> to a <a for=/>new</a> {{Headers}} object with
  <a>this</a>'s <a>relevant realm</a>, whose <a for=Headers>header list</a> is <var>request</var>'s
@@ -8015,12 +8015,15 @@ set; otherwise false.
  <li><p>Let <var>clonedRequest</var> be the result of <a lt=clone for=request>cloning</a>
  <a>this</a>'s <a for=Request>request</a>.
 
- <li><p>Let <var>clonedRequestObject</var> be the result of <a for=Request>creating</a> a
- {{Request}} object, given <var>clonedRequest</var>, <a>this</a>'s
- <a for=Request>headers</a>'s <a for=Headers>guard</a>, and <a>this</a>'s <a>relevant realm</a>.
+ <li><p><a for=/>Assert</a>: <a>this</a>'s <a for=Request>signal</a> is non-null.
 
- <li><p>Make <var>clonedRequestObject</var>'s <a for=Request>signal</a>
- <a for=AbortSignal>follow</a> <a>this</a>'s <a for=Request>signal</a>.
+ <li><p>Let <var>clonedSignal</var> be the result of <a>creating a dependent abort signal</a> from
+ « <a>this</a>'s <a for=Request>signal</a> », using {{AbortSignal}} and <a>this</a>'s
+ <a>relevant realm</a>.
+
+ <li><p>Let <var>clonedRequestObject</var> be the result of <a for=Request>creating</a> a
+ {{Request}} object, given <var>clonedRequest</var>, <a>this</a>'s <a for=Request>headers</a>'s
+ <a for=Headers>guard</a>, <var>clonedSignal</var> and <a>this</a>'s <a>relevant realm</a>.
 
  <li><p>Return <var>clonedRequestObject</var>.
 </ol>
