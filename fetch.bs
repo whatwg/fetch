@@ -2850,7 +2850,7 @@ steps:
    <a>connection</a>.
   </ol>
 
- <li><p>Let <var>proxies</var> of calling <a>resolve proxies</a>.
+ <li><p>Let <var>proxies</var> of calling <a>resolve proxies</a> given <var>url</var>.
 
  <li><p>Let <var>timingInfo</var> be a new <a for=/>connection timing info</a>.
 
@@ -2908,8 +2908,9 @@ reused across <a>connections</a> whose <a for=connection>credentials</a> are fal
 <hr>
 
 <div algorithm>
-<p>To <dfn>resolve proxies</dfn>, return the result of finding proxies for <var>url</var> in an
-<a>implementation-defined</a> manner. If there are no proxies, return « "<code>DIRECT</code>" ».
+<p>To <dfn>resolve proxies</dfn> given a <a for=/>URL</a> <var>url</var>, return the result of
+finding proxies for <var>url</var> in an <a>implementation-defined</a> manner. If there are no
+proxies, return « "<code>DIRECT</code>" ».
 
 <p class=note>This is where non-standard technology such as
 <a href="https://en.wikipedia.org/wiki/Web_Proxy_Auto-Discovery_Protocol">Web Proxy Auto-Discovery Protocol (WPAD)</a>
@@ -3033,7 +3034,7 @@ details of reused connections are not exposed and time values are coarsened.
 
 <h3 id=preemptive-connections>Preemptive connections</h3>
 
-<div algorithm="preemmptively-obtain-a-connection">
+<div algorithm>
 <p>To <dfn export>preemptively obtain a connection</dfn>, given an
 <a>environment settings object</a> <var>environment</var>, a <a for=/>URL</a> <var>url</var>, and a
 boolean <var>credentials</var>, run these steps:
@@ -3043,9 +3044,9 @@ boolean <var>credentials</var>, run these steps:
  <var>environment</var>.
 
  <li>
-  <p><a>Check CSP for preemptive operation</a> with <var>environment</var> and <var>url</var>. If
-  that returns <b>allowed</b>, <a>obtain a connection</a> with <var>key</var>, <var>url</var> and
-  <var>credentials</var>.
+  <p>Run <a>Should connection be allowed by Content Security Policy?</a> with
+  <var>environment</var> and <var>url</var>. If that returns <b>allowed</b>,
+  <a>obtain a connection</a> with <var>key</var>, <var>url</var>, and <var>credentials</var>.
 
   <p class=note>This connection is obtained but not used directly. It will remain in the
   <a>connection pool</a> for subsequent use.
@@ -3062,7 +3063,7 @@ boolean <var>credentials</var>, run these steps:
 </ol>
 </div>
 
-<div algorithm="preemmptively-resolve-an-origin">
+<div>
 <p>To <dfn export>preemptively resolve an origin</dfn>, given an
 <a>environment settings object</a> <var>environment</var> and a <a for=/>URL</a> <var>url</var>, run
 these steps:
@@ -3071,8 +3072,8 @@ these steps:
  <li><p>Let <var>key</var> be the result of <a for=/>determining the network partition key</a> given
  <var>environment</var>.
 
- <li><p><a>Check CSP for preemptive operation</a> with <var>environment</var> and <var>url</var>. If
- that returns <b>blocked</b>, return.
+ <li>Run <p><a>Should connection be allowed by Content Security Policy?</a> with
+ <var>environment</var> and <var>url</var>. If that returns <b>blocked</b>, return.
 
  <li><p>Let <var>proxies</var> be the result of calling <a>resolve proxies</a>.
 
@@ -3085,7 +3086,7 @@ these steps:
 </div>
 
 <div algorithm="check-preemptive-operation-csp">
-<p>To <dfn>check CSP for preemptive operation</dfn>, given an
+<p>To <dfn>Should connection be allowed by Content Security Policy?</dfn>, given an
 <a>environment settings object</a> <var>environment</var>, and a <a for=/>URL</a> <var>url</var>,
 run these steps:
 
