@@ -6770,6 +6770,62 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 </ol>
 </div>
 
+<h3 id=deferred-fetching>Deferred fetching</h3>
+
+<p>Deferred fetches allow callers to request that a fetch is invoked at the latest possible moment,
+when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout after it is
+<a for="fetch group">deactivated</a>.
+
+<div algorithm="request-a-deferred-fetch">
+<p>To <dfn>request a deferred fetch</dfn> given a
+<a for=/>request</a> <var>request</var> and a null-or-{{DOMHighResTimeStamp}}
+<var>inactiveTimeout</var> (default null):
+
+<ol>
+ <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
+ <a>environment settings object</a>.
+
+ <li>Let <var>totalScheduledDeferredBytesForOrigin</var> be 0.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>body</a> is not null then:
+
+  <ol>
+   <li><p>If <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a> is null, then throw a {{TypeError}}.
+
+   <li><p>Set <var>totalScheduledDeferredBytesForOrigin</var> to <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a>.
+  </ol>
+ </li>
+
+ <li><p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
+ <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
+ <a for="fetch group">deferred fetch records</a>: if <var>deferredRecord</var>'s
+ <a for="deferred fetch record">request</a>'s <a for=request>body</a> is not null and
+ <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s <a for=request>URL</a>'s
+ <a for=url>origin</a> is <a>same origin</a> with <var>request</var>'s <a for=request>URL</a>'s
+ <a for=url>origin</a>, then increment <var>totalScheduledDeferredBytesForOrigin</var> by
+ <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
+ <a for=body>length</a>.
+
+ <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
+ throw a {{QuotaExceededError}}.
+
+ <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
+ <a for="deferred fetch record">request</a> is <var>request</var>.
+
+ <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">inactive timeout</a> to
+ <var>inactiveTimeout</var>.
+
+ <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
+ <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
+ <a for="fetch group">deferred fetch records</a>.
+
+ <li><p>Return <var>deferredRecord</var>.
+</ol>
+</div>
+
 
 
 <h2 id=fetch-api>Fetch API</h2>
@@ -8497,7 +8553,7 @@ otherwise false.
 </div>
 
 
-<h3 id=fetch-method>Fetch method</h3>
+<h2 id=fetch-method>Fetch methods</h2>
 
 <pre class=idl>
 partial interface mixin WindowOrWorkerGlobalScope {
@@ -8637,6 +8693,60 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 </div>
 
 
+<h3 id=request-deferred-fetch-method>RequestDeferredFetch method</h3>
+
+<pre class=idl>
+
+dictionary DeferredRequestInit : RequestInit {
+  DOMHighResTimeStamp inactiveTimeout;
+};
+
+partial interface mixin WindowOrWorkerGlobalScope {
+  [NewObject] Promise&lt;Response> requestDeferredFetch(RequestInfo input, optional DeferredRequestInit init = {});
+};
+</pre>
+
+<div algorithm="dom-requestdeferredfetch">
+<p>The
+<dfn id=dom-global-requestdeferredfetch method for=WindowOrWorkerGlobalScope><code>requestDeferredFetch(<var>input</var>, <var>init</var>)</code></dfn>
+method steps are:
+
+<ol>
+ <li><p>Let <var>promise</var> be a new promise.
+
+ <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
+ constructor with <var>input</var> and <var>init</var> as arguments. If that threw an exception,
+ <a for=/>reject</a> <var>promise</var> with that exception and return <var>promise</var>.
+
+ <li><p>If <var>requestObject</var>'s <a for=Request>signal</a> is <a for=AbortSignal>aborted</a>,
+ then <a for=/>reject</a> <var>promise</var> with <var>requestObject</var>'s
+ <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a> and return <var>promise</var>.
+
+ <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
+
+ <li><p>Let <var>inactiveTimeout</var> be null.
+
+ <li><p>If <var>init</var> is given and <var>init</var>["<code>inactiveTimeout</code>"]
+ <a for=map>exists</a> then set <var>inactiveTimeout</var> to
+ <var>init</var>["<code>inactiveTimeout</code>"].
+
+ <li><p>If <var>inactiveTimeout</var> is not a {{DOMHighResTimeStamp}} then throw a {{TypeError}}.
+
+ <li><p>Let <var>deferredRecord</var> be the result of calling
+ <a>request a deferred fetch</a> given <var>request</var> and <var>inactiveTimeout</var>. If that
+ threw an exception, <a for=/>reject</a> <var>promise</var> with that exception and return
+ <var>promise</var>.
+
+ <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke callback</a> to
+ <a for=/>resolve</a> <var>promise</var>.
+
+ <li><p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
+ <a for=Request>signal</a>: <a for=list>remove</a> <var>deferredRecord</var> from
+ <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
+ <a for="fetch group">deferred fetch records</a>.
+</ol>
+
+
 <h3 id=garbage-collection>Garbage collection</h3>
 
 <p>The user agent may <a for="fetch controller">terminate</a> an ongoing fetch if that termination
@@ -8692,117 +8802,6 @@ fetch("https://www.example.com/")
 </div>
 
 
-
-<h2 id=deferred-fetching>Deferred fetching</h2>
-
-<p>Deferred fetches allow callers to request that a fetch is invoked at the latest possible moment,
-when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout after it is
-<a for="fetch group">deactivated</a>.
-
-<h3 id="requesting-a-deferred-fetch">Requesting a deferred fetch</h3>
-
-<div algorithm="request-a-deferred-fetch">
-<p>To <dfn>request a deferred fetch</dfn> given a
-<a for=/>request</a> <var>request</var> and a null-or-{{DOMHighResTimeStamp}}
-<var>inactiveTimeout</var> (default null):
-
-<ol>
- <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
- <a>environment settings object</a>.
-
- <li>Let <var>totalScheduledDeferredBytesForOrigin</var> be 0.
-
- <li>
-  <p>If <var>request</var>'s <a for=request>body</a> is not null then:
-
-  <ol>
-   <li><p>If <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a> is null, then throw a {{TypeError}}.
-
-   <li><p>Set <var>totalScheduledDeferredBytesForOrigin</var> to <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a>.
-  </ol>
- </li>
-
- <li><p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
- <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
- <a for="fetch group">deferred fetch records</a>: if <var>deferredRecord</var>'s
- <a for="deferred fetch record">request</a>'s <a for=request>body</a> is not null and
- <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s <a for=request>URL</a>'s
- <a for=url>origin</a> is <a>same origin</a> with <var>request</var>'s <a for=request>URL</a>'s
- <a for=url>origin</a>, then increment <var>totalScheduledDeferredBytesForOrigin</var> by
- <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
- <a for=body>length</a>.
-
- <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
- throw a {{QuotaExceededError}}.
-
- <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
- <a for="deferred fetch record">request</a> is <var>request</var>.
-
- <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">inactive timeout</a> to
- <var>inactiveTimeout</var>.
-
- <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
- <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
- <a for="fetch group">deferred fetch records</a>.
-
- <li><p>Return <var>deferredRecord</var>.
-</ol>
-</div>
-
-<h3 id=request-deferred-fetch-method>RequestDeferredFetch method</h3>
-
-<pre class=idl>
-
-dictionary DeferredRequestInit : RequestInit {
-  DOMHighResTimeStamp? inactiveTimeout;
-};
-
-partial interface mixin WindowOrWorkerGlobalScope {
-  [NewObject] Promise&lt;Response> requestDeferredFetch(RequestInfo input, optional DeferredRequestInit init = {});
-};
-</pre>
-
-<div algorithm="dom-requestdeferredfetch">
-<p>The
-<dfn id=dom-global-requestdeferredfetch method for=WindowOrWorkerGlobalScope><code>requestDeferredFetch(<var>input</var>, <var>init</var>)</code></dfn>
-method steps are:
-
-<ol>
- <li><p>Let <var>promise</var> be a new promise.
-
- <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
- constructor with <var>input</var> and <var>init</var> as arguments. If that threw an exception,
- <a for=/>reject</a> <var>promise</var> with that exception and return <var>promise</var>.
-
- <li><p>If <var>requestObject</var>'s <a for=Request>signal</a> is <a for=AbortSignal>aborted</a>,
- then <a for=/>reject</a> <var>promise</var> with <var>requestObject</var>'s
- <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a> and return <var>promise</var>.
-
- <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
-
- <li><p>Let <var>inactiveTimeout</var> be null.
-
- <li><p>If <var>init</var> is given and <var>init</var>["<code>inactiveTimeout</code>"]
- <a for=map>exists</a> then set <var>inactiveTimeout</var> to
- <var>init</var>["<code>inactiveTimeout</code>"].
-
- <li><p>If <var>inactiveTimeout</var> is not a {{DOMHighResTimeStamp}} then throw a {{TypeError}}.
-
- <li><p>Let <var>deferredRecord</var> be the result of calling
- <a>request a deferred fetch</a> given <var>request</var> and <var>inactiveTimeout</var>. If that
- threw an exception, <a for=/>reject</a> <var>promise</var> with that exception and return
- <var>promise</var>.
-
- <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke callback</a> to
- <a for=/>resolve</a> <var>promise</var>.
-
- <li><p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
- <a for=Request>signal</a>: <a for=list>remove</a> <var>deferredRecord</var> from
- <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
- <a for="fetch group">deferred fetch records</a>.
-</ol>
 
 <h2 id=data-urls><code>data:</code> URLs</h2>
 
