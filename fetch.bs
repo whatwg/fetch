@@ -5045,9 +5045,7 @@ these steps:
 <ol>
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
 
- <li><p>Let <var>response</var> be null.
-
- <li><p>Let <var>actualResponse</var> be null.
+ <li><p>Let <var>response</var> and <var>internalResponse</var> be null.
 
  <li>
   <p>If <var>request</var>'s <a>service-workers mode</a> is "<code>all</code>", then:
@@ -5108,9 +5106,9 @@ these steps:
      <li>If <var>request</var>'s <a for=request>body</a> is non-null, then
      <a for=ReadableStream>cancel</a> <var>request</var>'s <a for=request>body</a> with undefined.
 
-     <li><p>Set <var>actualResponse</var> to <var>response</var>, if <var>response</var> is not a
-     <a>filtered response</a>, and to <var>response</var>'s
-     <a for="filtered response">internal response</a> otherwise.
+     <li><p>Set <var>internalResponse</var> to <var>response</var>, if <var>response</var> is not a
+     <a>filtered response</a>; otherwise to <var>response</var>'s
+     <a for="filtered response">internal response</a>.
 
      <li>
       <p>If one of the following is true
@@ -5176,7 +5174,7 @@ these steps:
     <p class=note>Redirects coming from the network (as opposed to from a service worker) are not to
     be exposed to a service worker.
 
-   <li><p>Set <var>response</var> and <var>actualResponse</var> to the result of running
+   <li><p>Set <var>response</var> and <var>internalResponse</var> to the result of running
    <a>HTTP-network-or-cache fetch</a> given <var>fetchParams</var>.
 
    <li>
@@ -5197,8 +5195,8 @@ these steps:
   <a for=response>type</a> is "<code>opaque</code>", and the
   <a>cross-origin resource policy check</a> with <var>request</var>'s <a for=request>origin</a>,
   <var>request</var>'s <a for=request>client</a>, <var>request</var>'s
-  <a for=request>destination</a>, and <var>actualResponse</var> returns <b>blocked</b>, then return
-  a <a>network error</a>.
+  <a for=request>destination</a>, and <var>internalResponse</var> returns <b>blocked</b>, then
+  return a <a>network error</a>.
 
   <p class=note>The <a>cross-origin resource policy check</a> runs for responses coming from the
   network and responses coming from the service worker. This is different from the
@@ -5206,11 +5204,11 @@ these steps:
   have different embedder policies.
 
  <li>
-  <p>If <var>actualResponse</var>'s <a for=response>status</a> is a <a>redirect status</a>, then:
+  <p>If <var>internalResponse</var>'s <a for=response>status</a> is a <a>redirect status</a>:
 
   <ol>
    <li>
-    <p>If <var>actualResponse</var>'s <a for=response>status</a> is not 303, <var>request</var>'s
+    <p>If <var>internalResponse</var>'s <a for=response>status</a> is not 303, <var>request</var>'s
     <a for=request>body</a> is non-null, and the <a>connection</a> uses HTTP/2, then user agents
     may, and are even encouraged to, transmit an <code>RST_STREAM</code> frame.
 
@@ -5234,7 +5232,7 @@ these steps:
        given <var>fetchParams</var> and <var>response</var>.
 
        <li><p>Otherwise, set <var>response</var> to an <a>opaque-redirect filtered response</a>
-       whose <a for="filtered response">internal response</a> is <var>actualResponse</var>.
+       whose <a for="filtered response">internal response</a> is <var>internalResponse</var>.
       </ol>
 
      <dt>"<code>follow</code>"
@@ -5242,10 +5240,10 @@ these steps:
       <ol><li><p>Set <var>response</var> to the result of running <a>HTTP-redirect fetch</a> given
       <var>fetchParams</var> and <var>response</var>.</ol>
     </dl>
-    <!-- not resetting actualResponse since it's no longer used anyway -->
+    <!-- not resetting internalResponse since it's no longer used anyway -->
   </ol>
 
- <li><p>Return <var>response</var>. <span class=note>Typically <var>actualResponse</var>'s
+ <li><p>Return <var>response</var>. <span class=note>Typically <var>internalResponse</var>'s
  <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
  returning.</span>
 </ol>
@@ -5262,11 +5260,11 @@ run these steps:
 <ol>
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
 
- <li><p>Let <var>actualResponse</var> be <var>response</var>, if <var>response</var> is not a
- <a>filtered response</a>, and <var>response</var>'s
- <a for="filtered response">internal response</a> otherwise.
+ <li><p>Let <var>internalResponse</var> be <var>response</var>, if <var>response</var> is not a
+ <a>filtered response</a>; otherwise <var>response</var>'s
+ <a for="filtered response">internal response</a>.
 
- <li><p>Let <var>locationURL</var> be <var>actualResponse</var>'s <a for=response>location URL</a>
+ <li><p>Let <var>locationURL</var> be <var>internalResponse</var>'s <a for=response>location URL</a>
  given <var>request</var>'s <a for=request>current URL</a>'s <a for=url>fragment</a>.
 
  <li><p>If <var>locationURL</var> is null, then return <var>response</var>.
@@ -5292,7 +5290,7 @@ run these steps:
 
   <p class=note>This catches a cross-origin resource redirecting to a same-origin URL.
 
- <li><p>If <var>actualResponse</var>'s <a for=response>status</a> is not 303, <var>request</var>'s
+ <li><p>If <var>internalResponse</var>'s <a for=response>status</a> is not 303, <var>request</var>'s
  <a for=request>body</a> is non-null, and <var>request</var>'s <a for=request>body</a>'s
  <a for=body>source</a> is null, then return a <a>network error</a>.
 
@@ -5300,9 +5298,9 @@ run these steps:
   <p>If one of the following is true
 
   <ul class=brief>
-   <li><p><var>actualResponse</var>'s <a for=response>status</a> is 301 or 302 and
+   <li><p><var>internalResponse</var>'s <a for=response>status</a> is 301 or 302 and
    <var>request</var>'s <a for=request>method</a> is `<code>POST</code>`
-   <li><p><var>actualResponse</var>'s <a for=response>status</a> is 303 and <var>request</var>'s
+   <li><p><var>internalResponse</var>'s <a for=response>status</a> is 303 and <var>request</var>'s
    <a for=request>method</a> is not `<code>GET</code>` or `<code>HEAD</code>`
   </ul>
 
@@ -5351,7 +5349,7 @@ run these steps:
  <a for=request>URL list</a>.
 
  <li><p>Invoke <a>set <var>request</var>'s referrer policy on redirect</a> on <var>request</var> and
- <var>actualResponse</var>. [[!REFERRER]]
+ <var>internalResponse</var>. [[!REFERRER]]
 
  <li><p>Let <var>recursive</var> be true.
 
