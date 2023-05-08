@@ -2750,7 +2750,7 @@ has the following <a for=struct>items</a>:
  <dt><dfn export for="deferred fetch record">request</dfn>
  <dd>A <a for=/>request</a>
 
- <dt><dfn export for="deferred fetch record">inactive timeout</dfn> (default null)
+ <dt><dfn export for="deferred fetch record">inactivity deferred delay</dfn> (default null)
  <dd>Null or a <a>duration</a>
 
  <dt><dfn export for="deferred fetch record">pending steps</dfn> (default null)
@@ -2818,12 +2818,13 @@ has the following <a for=struct>items</a>:
  <li>
   <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
   <var>fetchGroup</var>'s <a for="fetch group">deferred fetch records</a> whose
-  <a for="deferred fetch record">inactive timeout</a> is not null: set <var>deferredRecord</var>'s
-  <a for="deferred fetch record">pending steps</a> to running the following steps <a>in parallel</a>:
+  <a for="deferred fetch record">inactivity deferred delay</a> is not null: set
+  <var>deferredRecord</var>'s <a for="deferred fetch record">pending steps</a> to running the
+  following steps <a>in parallel</a>:
 
   <ol>
     <li><p>Wait until <var>deferredRecord</var>'s
-    <a for="deferred fetch record">inactive timeout</a> have passed.
+    <a for="deferred fetch record">inactivity deferred delay</a> have passed.
 
     <li>
     <p><a>Queue a fetch task</a> to run the following steps with
@@ -6779,7 +6780,7 @@ when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a tim
 <div algorithm="request-a-deferred-fetch">
 <p>To <dfn>request a deferred fetch</dfn> given a
 <a for=/>request</a> <var>request</var> and a null-or-{{DOMHighResTimeStamp}}
-<var>inactiveTimeout</var> (default null):
+<var>inactivityDeferredDelay</var> (default null):
 
 <ol>
  <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
@@ -6815,8 +6816,8 @@ when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a tim
  <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
  <a for="deferred fetch record">request</a> is <var>request</var>.
 
- <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">inactive timeout</a> to
- <var>inactiveTimeout</var>.
+ <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">inactivity deferred delay</a>
+ to <var>inactivityDeferredDelay</var>.
 
  <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
  <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
@@ -8693,22 +8694,22 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 </div>
 
 
-<h3 id=request-deferred-fetch-method>RequestDeferredFetch method</h3>
+<h3 id=fetch-later-method>FetchLater method</h3>
 
 <pre class=idl>
 
 dictionary DeferredRequestInit : RequestInit {
-  DOMHighResTimeStamp inactiveTimeout;
+  DOMHighResTimeStamp backgroundTimeout;
 };
 
 partial interface mixin WindowOrWorkerGlobalScope {
-  [NewObject] Promise&lt;Response> requestDeferredFetch(RequestInfo input, optional DeferredRequestInit init = {});
+  [NewObject] Promise&lt;Response> fetchLater(RequestInfo input, optional DeferredRequestInit init = {});
 };
 </pre>
 
-<div algorithm="dom-requestdeferredfetch">
+<div algorithm="dom-fetch-later">
 <p>The
-<dfn id=dom-global-requestdeferredfetch method for=WindowOrWorkerGlobalScope><code>requestDeferredFetch(<var>input</var>, <var>init</var>)</code></dfn>
+<dfn id=dom-global-fetch-later method for=WindowOrWorkerGlobalScope><code>fetchLater(<var>input</var>, <var>init</var>)</code></dfn>
 method steps are:
 
 <ol>
@@ -8724,16 +8725,16 @@ method steps are:
 
  <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
 
- <li><p>Let <var>inactiveTimeout</var> be null.
+ <li><p>Let <var>backgroundTimeout</var> be null.
 
- <li><p>If <var>init</var> is given and <var>init</var>["<code>inactiveTimeout</code>"]
- <a for=map>exists</a> then set <var>inactiveTimeout</var> to
- <var>init</var>["<code>inactiveTimeout</code>"].
+ <li><p>If <var>init</var> is given and <var>init</var>["<code>backgroundTimeout</code>"]
+ <a for=map>exists</a> then set <var>backgroundTimeout</var> to
+ <var>init</var>["<code>backgroundTimeout</code>"].
 
- <li><p>If <var>inactiveTimeout</var> is not a {{DOMHighResTimeStamp}} then throw a {{TypeError}}.
+ <li><p>If <var>backgroundTimeout</var> is not a {{DOMHighResTimeStamp}} then throw a {{TypeError}}.
 
  <li><p>Let <var>deferredRecord</var> be the result of calling
- <a>request a deferred fetch</a> given <var>request</var> and <var>inactiveTimeout</var>. If that
+ <a>request a deferred fetch</a> given <var>request</var> and <var>backgroundTimeout</var>. If that
  threw an exception, <a for=/>reject</a> <var>promise</var> with that exception and return
  <var>promise</var>.
 
