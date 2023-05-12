@@ -1510,11 +1510,12 @@ must be an algorithm accepting an exception.
 </div>
 
 <div algorithm>
-<p>To <dfn export for=body>fully read</dfn> a <a for=/>body</a> <var>body</var>, given an algorithm
-<var>processBody</var>, an algorithm <var>processBodyError</var>, and an optional null,
-<a for=/>parallel queue</a>, or <a for=/>global object</a> <var>taskDestination</var> (default
-null), run these steps. <var>processBody</var> must be an algorithm accepting a
-<a for=/>byte sequence</a>. <var>processBodyError</var> must be an algorithm accepting no arguments.
+<p>To <dfn export for=body>fully read</dfn> a <a for=/>body</a> <var>body</var>, given an
+optional number <var>maxByteLength</var>, an algorithm <var>processBody</var>, an
+algorithm <var>processBodyError</var>, and an optional null, <a for=/>parallel queue</a>, or
+<a for=/>global object</a> <var>taskDestination</var> (default null), run these steps.
+<var>processBody</var> must be an algorithm accepting a <a for=/>byte sequence</a>.
+<var>processBodyError</var> must be an algorithm accepting no arguments.
 
 <ol>
  <li><p>If <var>taskDestination</var> is null, then set <var>taskDestination</var> to the result of
@@ -1532,7 +1533,7 @@ null), run these steps. <var>processBody</var> must be an algorithm accepting a
  <var>errorSteps</var> with that exception and return.
 
  <li><p><a for=ReadableStreamDefaultReader>Read all bytes</a> from
- <var>reader</var>, given <var>successSteps</var> and <var>errorSteps</var>.
+ <var>reader</var>, given <var>maxByteLength</var>, <var>successSteps</var> and <var>errorSteps</var>.
 </ol>
 </div>
 
@@ -7115,11 +7116,15 @@ steps:
 interface mixin Body {
   readonly attribute ReadableStream? body;
   readonly attribute boolean bodyUsed;
-  [NewObject] Promise&lt;ArrayBuffer> arrayBuffer();
-  [NewObject] Promise&lt;Blob> blob();
-  [NewObject] Promise&lt;FormData> formData();
-  [NewObject] Promise&lt;any> json();
-  [NewObject] Promise&lt;USVString> text();
+  [NewObject] Promise&lt;ArrayBuffer> arrayBuffer(optional BodyConsumeOptions options = {});
+  [NewObject] Promise&lt;Blob> blob(optional BodyConsumeOptions options = {});
+  [NewObject] Promise&lt;FormData> formData(optional BodyConsumeOptions options = {});
+  [NewObject] Promise&lt;any> json(optional BodyConsumeOptions options = {});
+  [NewObject] Promise&lt;USVString> text(optional BodyConsumeOptions options = {});
+};
+
+dictionary BodyConsumeOptions {
+  [EnforceRange] unsigned long long maxByteLength;
 };</pre>
 
 <p class=note>Formats you would not want a network layer to be dependent upon, such as
@@ -7148,19 +7153,19 @@ returns failure or a <a for=/>MIME type</a>.
  <dt><code><var>requestOrResponse</var> . <a attribute for=Body>bodyUsed</a></code>
  <dd><p>Returns whether <var>requestOrResponse</var>'s body has been read from.
 
- <dt><code><var>requestOrResponse</var> . <a method for=Body>arrayBuffer</a>()</code>
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>arrayBuffer</a>(options)</code>
  <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{ArrayBuffer}}.
 
- <dt><code><var>requestOrResponse</var> . <a method for=Body>blob</a>()</code>
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>blob</a>(options)</code>
  <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{Blob}}.
 
- <dt><code><var>requestOrResponse</var> . <a method for=Body>formData</a>()</code>
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>formData</a>(options)</code>
  <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as {{FormData}}.
 
- <dt><code><var>requestOrResponse</var> . <a method for=Body>json</a>()</code>
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>json</a>(options)</code>
  <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body parsed as JSON.
 
- <dt><code><var>requestOrResponse</var> . <a method for=Body>text</a>()</code>
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>text</a>(options)</code>
  <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as string.
 </dl>
 
@@ -7180,9 +7185,10 @@ returns failure or a <a for=/>MIME type</a>.
 
 <div algorithm>
 <p id=concept-body-package-data>The <dfn id=concept-body-consume-body for=Body>consume body</dfn>
-algorithm, given an object that includes {{Body}} <var>object</var> and an algorithm that takes a
-<a for=/>byte sequence</a> and returns a JavaScript value or throws an exception
-<var>convertBytesToJSValue</var>, runs these steps:
+algorithm, given an object that includes {{Body}} <var>object</var>, a
+{{BodyConsumeOptions}} <var>options</var> and an algorithm that takes a <a for=/>byte sequence</a> and
+returns a JavaScript value or throws an exception <var>convertBytesToJSValue</var>, runs these
+steps:
 
 <ol>
  <li><p>If <var>object</var> is <a for=Body>unusable</a>, then return <a>a promise rejected with</a>
@@ -7202,32 +7208,32 @@ algorithm, given an object that includes {{Body}} <var>object</var> and an algor
  with an empty <a for=/>byte sequence</a>.
 
  <li><p>Otherwise, <a for=body>fully read</a> <var>object</var>'s <a for=Body>body</a> given
- <var>successSteps</var>, <var>errorSteps</var>, and <var>object</var>'s
- <a>relevant global object</a>.
+ <var>options</var>'s {{BodyConsumeOptions/maxByteLength}}, <var>successSteps</var>, <var>errorSteps</var>,
+ and <var>object</var>'s <a>relevant global object</a>.
 
  <li><p>Return <var>promise</var>.
 </ol>
 </div>
 
 <div algorithm>
-<p>The <dfn method for=Body><code>arrayBuffer()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and the following step given a
-<a for=/>byte sequence</a> <var>bytes</var>: return a new {{ArrayBuffer}} whose contents are
+<p>The <dfn method for=Body><code>arrayBuffer(options)</code></dfn> method steps are to return the result
+of running <a for=Body>consume body</a> with <a>this</a>, <a>options</a> and the following step
+given a <a for=/>byte sequence</a> <var>bytes</var>: return a new {{ArrayBuffer}} whose contents are
 <var>bytes</var>.
 
 <p class="note">The above method can reject with a {{RangeError}}.
 </div>
 
 <div algorithm>
-<p>The <dfn method for=Body><code>blob()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and the following step given a
-<a for=/>byte sequence</a> <var>bytes</var>: return a {{Blob}} whose contents are <var>bytes</var>
-and whose {{Blob/type}} attribute is <a>this</a>'s <a for=Body>MIME type</a>.
+<p>The <dfn method for=Body><code>blob(options)</code></dfn> method steps are to return the result
+of running <a for=Body>consume body</a> with <a>this</a>, <a>options</a> and the following step
+given a <a for=/>byte sequence</a> <var>bytes</var>: return a {{Blob}} whose contents are
+<var>bytes</var> and whose {{Blob/type}} attribute is <a>this</a>'s <a for=Body>MIME type</a>.
 </div>
 
 <div algorithm>
-<p>The <dfn method for=Body><code>formData()</code></dfn> method steps are to return the result of
-running <a for=Body>consume body</a> with <a>this</a> and the following step given a
+<p>The <dfn method for=Body><code>formData(options)</code></dfn> method steps are to return the result of
+running <a for=Body>consume body</a> with <a>this</a>, <a>options</a> and the following step given a
 <a for=/>byte sequence</a> <var>bytes</var>: switch on <a>this</a>'s <a for=Body>MIME type</a>'s
 <a for="MIME type">essence</a> and run the corresponding steps:
 
@@ -7288,15 +7294,16 @@ running <a for=Body>consume body</a> with <a>this</a> and the following step giv
 </div>
 
 <div algorithm>
-<p>The <dfn method for=Body><code>json()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and <a>parse JSON from bytes</a>.
+<p>The <dfn method for=Body><code>json(options)</code></dfn> method steps are to return the result
+of running <a for=Body>consume body</a> with <a>this</a>, <a>options</a> and
+<a>parse JSON from bytes</a>.
 
 <p class="note">The above method can reject with a {{SyntaxError}}.
 </div>
 
 <div algorithm>
-<p>The <dfn method for=Body><code>text()</code></dfn> method steps are to return the result
-of running <a for=Body>consume body</a> with <a>this</a> and <a>UTF-8 decode</a>.
+<p>The <dfn method for=Body><code>text(options)</code></dfn> method steps are to return the result
+of running <a for=Body>consume body</a> with <a>this</a>, <a>options</a> and <a>UTF-8 decode</a>.
 </div>
 
 
