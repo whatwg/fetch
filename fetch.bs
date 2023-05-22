@@ -586,7 +586,8 @@ efficient representation, as long as they also support an associated data struct
 <p>To
 <dfn export for="header list" id=concept-header-list-get-structured-header>get a structured field value</dfn>
 given a <a for=/>header name</a> <var>name</var> and a string <var>type</var> from a
-<a for=/>header list</a> <var>list</var>, run these steps:
+<a for=/>header list</a> <var>list</var>, run these steps. They return null or a
+<a>structured field value</a>.
 
 <ol>
  <li><p>Assert: <var>type</var> is one of "<code>dictionary</code>", "<code>list</code>", or
@@ -615,7 +616,7 @@ given a <a for=/>header name</a> <var>name</var> and a string <var>type</var> fr
 <p>To
 <dfn export for="header list" id=concept-header-list-set-structured-header>set a structured field value</dfn>
 given a <a for=/>tuple</a> (<a for=/>header name</a> <var>name</var>, <a>structured field value</a>
-<var>structuredValue</var>), in a <a for=/>header list</a> <var>list</var>, run these steps:
+<var>structuredValue</var>), in a <a for=/>header list</a> <var>list</var>:
 
 <ol>
  <li><p>Let <var>serializedValue</var> be the result of executing the
@@ -645,7 +646,8 @@ preserved end-to-end. [[!RFC8941]]
 
 <div algorithm>
 <p>To <dfn export for="header list" id=concept-header-list-get>get</dfn> a <a for=/>header name</a>
-<var>name</var> from a <a for=/>header list</a> <var>list</var>, run these steps:
+<var>name</var> from a <a for=/>header list</a> <var>list</var>, run these steps. They return null
+or a <a for=/>header value</a>.
 
 <ol>
  <li><p>If <var>list</var> <a for="header list">does not contain</a> <var>name</var>, then return
@@ -661,7 +663,8 @@ preserved end-to-end. [[!RFC8941]]
 <p>To
 <dfn export for="header list" lt="get, decode, and split|getting, decoding, and splitting" id=concept-header-list-get-decode-split>get, decode, and split</dfn>
 a <a for=/>header name</a> <var>name</var> from <a for=/>header list</a> <var>list</var>, run these
-steps:
+steps. They return null or a <a for=/>list</a> of <a for=/>strings</a>.
+<!-- "isomorphic" strings -->
 
 <ol>
  <li><p>Let <var>value</var> be the result of <a for="header list">getting</a> <var>name</var> from
@@ -750,7 +753,9 @@ A: 3
 <div algorithm>
 <p>To
 <dfn for="header value" lt="get, decode, and split|getting, decoding, and splitting">get, decode, and split</dfn>
-a <a for=/>header value</a> <var>value</var>, run these steps:
+a <a for=/>header value</a> <var>value</var>, run these steps. They return a <a for=/>list</a> of
+<a for=/>strings</a>.
+<!-- "isomorphic" strings -->
 
 <ol>
  <li><p>Let <var>input</var> be the result of <a>isomorphic decoding</a> <var>value</var>.
@@ -815,7 +820,7 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
 
 <div algorithm>
 <p>To <dfn export for="header list" id=concept-header-list-append>append</dfn> a <a for=/>header</a>
-(<var>name</var>, <var>value</var>) to a <a for=/>header list</a> <var>list</var>, run these steps:
+(<var>name</var>, <var>value</var>) to a <a for=/>header list</a> <var>list</var>:
 
 <ol>
  <li>
@@ -839,7 +844,7 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
 
 <div algorithm>
 <p>To <dfn export for="header list" id=concept-header-list-set>set</dfn> a <a for=/>header</a>
-(<var>name</var>, <var>value</var>) in a <a for=/>header list</a> <var>list</var>, run these steps:
+(<var>name</var>, <var>value</var>) in a <a for=/>header list</a> <var>list</var>:
 
 <ol>
  <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
@@ -853,7 +858,7 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
 <div algorithm>
 <p>To <dfn export for="header list" id=concept-header-list-combine>combine</dfn> a
 <a for=/>header</a> (<var>name</var>, <var>value</var>) in a <a for=/>header list</a>
-<var>list</var>, run these steps:
+<var>list</var>:
 
 <ol>
  <li><p>If <var>list</var> <a for="header list">contains</a> <var>name</var>, then set the
@@ -869,7 +874,8 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
 
 <div algorithm>
 <p>To <dfn>convert header names to a sorted-lowercase set</dfn>, given a <a for=/>list</a> of
-<a lt=name for=header>names</a> <var>headerNames</var>, run these steps:
+<a lt=name for=header>names</a> <var>headerNames</var>, run these steps. They return an
+<a for=/>ordered set</a> of <a for=/>header names</a>.
 
 <ol>
  <li><p>Let <var>headerNamesSet</var> be a new <a for=/>ordered set</a>.
@@ -885,11 +891,10 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
 
 <div algorithm>
 <p>To <dfn export for="header list" id=concept-header-list-sort-and-combine>sort and combine</dfn> a
-<a for=/>header list</a> <var>list</var>:
+<a for=/>header list</a> <var>list</var>, run these steps. They return a <a for=/>header list</a>.
 
 <ol>
- <li><p>Let <var>headers</var> be an empty <a for=/>list</a> of <a for=/>headers</a> with the key
- being the <a for=header>name</a> and value the <a for=header>value</a>.
+ <li><p>Let <var>headers</var> be a <a for=/>header list</a>.
 
  <li><p>Let <var>names</var> be the result of
  <a>convert header names to a sorted-lowercase set</a> with all the <a lt=name for=header>names</a>
