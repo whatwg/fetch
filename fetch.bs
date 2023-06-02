@@ -3747,7 +3747,8 @@ defined here as the model defined in HTTP is not compatible with web content. [[
 <div algorithm>
 <p>To
 <dfn export for="header list" lt="extract a MIME type|extracting a MIME type" id=concept-header-extract-mime-type>extract a MIME type</dfn>
-from a <a for=/>header list</a> <var>headers</var>, run these steps:
+from a <a for=/>header list</a> <var>headers</var>, run these steps. They return failure or a
+<a for=/>MIME type</a>.
 
 <ol>
  <li><p>Let <var>charset</var> be null.
@@ -4773,7 +4774,7 @@ steps:
        <a for="header list">extracting a MIME type</a> from <var>response</var>'s
        <a for=response>header list</a>.
 
-       <li><p>If <var>mimeType</var> is non-null, then set <var>bodyInfo</var>'s
+       <li><p>If <var>mimeType</var> is not failure, then set <var>bodyInfo</var>'s
        <a for="response body info">content type</a> to the result of
        <a>minimizing a supported MIME type</a> given <var>mimeType</var>.
       </ol>
@@ -7138,10 +7139,6 @@ HTML, will likely not be exposed here. Rather, an HTML parser API might accept a
 due course.
 <!-- https://lists.w3.org/Archives/Public/public-whatwg-archive/2014Jun/thread.html#msg72 -->
 
-<p>Objects including the {{Body}} interface mixin need to define an associated
-<dfn id=concept-body-mime-type for=Body>MIME type</dfn> algorithm which takes no arguments and
-returns failure or a <a for=/>MIME type</a>.
-
 <p>Objects including the {{Body}} interface mixin have an associated
 <dfn id=concept-body-body for=Body>body</dfn> (null or a <a for=/>body</a>).
 
@@ -7176,6 +7173,28 @@ returns failure or a <a for=/>MIME type</a>.
 </dl>
 
 <hr>
+
+<div algorithm>
+<p>To <dfn id=concept-body-mime-type for=Body>get the MIME type</dfn>, given a {{Request}} or
+{{Response}} object <var>requestOrResponse</var>:
+
+<ol>
+ <li><p>Let <var>headers</var> be null.
+
+ <li><p>If <var>requestOrResponse</var> is a {{Request}} object, then set <var>headers</var> to
+ <var>requestOrResponse</var>'s <a for=Request>request</a>'s <a for=request>header list</a>.
+
+ <li><p>Otherwise, set <var>headers</var> to <var>requestOrResponse</var>'s
+ <a for=Response>response</a>'s <a for=response>header list</a>.
+
+ <li><p>Let <var>mimeType</var> be the result of <a for="header list">extracting a MIME type</a>
+ from <var>headers</var>.
+
+ <li><p>If <var>mimeType</var> is failure, then return null.
+
+ <li><p>Return <var>mimeType</var>.
+</ol>
+</div>
 
 <div algorithm>
 <p>The <dfn attribute for=Body><code>body</code></dfn> getter steps are to return null if
@@ -7233,69 +7252,76 @@ of running <a for=Body>consume body</a> with <a>this</a> and the following step 
 <p>The <dfn method for=Body><code>blob()</code></dfn> method steps are to return the result
 of running <a for=Body>consume body</a> with <a>this</a> and the following step given a
 <a for=/>byte sequence</a> <var>bytes</var>: return a {{Blob}} whose contents are <var>bytes</var>
-and whose {{Blob/type}} attribute is <a>this</a>'s <a for=Body>MIME type</a>.
+and whose {{Blob/type}} attribute is the result of <a for=Body>get the MIME type</a> with
+<a>this</a>.
+<!-- This is wrong. It should really set an underlying concept to this. -->
 </div>
 
 <div algorithm>
 <p>The <dfn method for=Body><code>formData()</code></dfn> method steps are to return the result of
 running <a for=Body>consume body</a> with <a>this</a> and the following step given a
-<a for=/>byte sequence</a> <var>bytes</var>: switch on <a>this</a>'s <a for=Body>MIME type</a>'s
-<a for="MIME type">essence</a> and run the corresponding steps:
+<a for=/>byte sequence</a> <var>bytes</var>:
 
-<dl class=switch>
- <dt>"<code>multipart/form-data</code>",
- <dd>
-  <ol>
-   <li>
-    <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
-    <a>this</a>'s <a for=Body>MIME type</a>, per the rules set forth in
-    <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]</p>
+<ol>
+ <li><p>Let <var>mimeType</var> be the result of <a for=Body>get the MIME type</a> with <a>this</a>.
 
-    <p>Each part whose `<code>Content-Disposition</code>` header contains a `<code>filename</code>`
-    parameter must be parsed into an <a for="entry list">entry</a> whose value is a {{File}} object
-    whose contents are the contents of the part. The {{File/name}} attribute of the {{File}} object
-    must have the value of the `<code>filename</code>` parameter of the part. The {{Blob/type}}
-    attribute of the {{File}} object must have the value of the `<code>Content-Type</code>` header
-    of the part if the part has such header, and `<code>text/plain</code>` (the default defined by
-    [[!RFC7578]] section 4.4) otherwise.</p>
+ <li>
+  <p>If <var>mimeType</var> is non-null, then switch on <var>mimeType</var>'s
+  <a for="MIME type">essence</a> and run the corresponding steps:
 
-    <p>Each part whose `<code>Content-Disposition</code>` header does not contain a
-    `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
-    value is the <a lt="UTF-8 decode without BOM">UTF-8 decoded without BOM</a> content of the part.
-    <span class=note>This is done regardless of the presence or the value of a
-    `<code>Content-Type</code>` header and regardless of the presence or the value of a
-    `<code>charset</code>` parameter.</span></p>
+  <dl class=switch>
+   <dt>"<code>multipart/form-data</code>"
+   <dd>
+    <ol>
+     <li>
+      <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
+      <var>mimeType</var>, per the rules set forth in
+      <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]
 
-    <p class=note>A part whose `<code>Content-Disposition</code>` header contains a
-    `<code>name</code>` parameter whose value is `<code>_charset_</code>` is parsed like any other
-    part. It does not change the encoding.</p>
-   </li>
+      <p>Each part whose `<code>Content-Disposition</code>` header contains a
+      `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
+      value is a {{File}} object whose contents are the contents of the part. The {{File/name}}
+      attribute of the {{File}} object must have the value of the `<code>filename</code>` parameter
+      of the part. The {{Blob/type}} attribute of the {{File}} object must have the value of the
+      `<code>Content-Type</code>` header of the part if the part has such header, and
+      `<code>text/plain</code>` (the default defined by [[!RFC7578]] section 4.4) otherwise.
 
-   <li><p>If that fails for some reason, then <a>throw</a> a {{TypeError}}.
+      <p>Each part whose `<code>Content-Disposition</code>` header does not contain a
+      `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
+      value is the <a lt="UTF-8 decode without BOM">UTF-8 decoded without BOM</a> content of the
+      part. <span class=note>This is done regardless of the presence or the value of a
+      `<code>Content-Type</code>` header and regardless of the presence or the value of a
+      `<code>charset</code>` parameter.</span>
 
-   <li><p>Return a new {{FormData}} object, appending each <a for="entry list">entry</a>, resulting
-   from the parsing operation, to its <a for=FormData>entry list</a>.
-  </ol>
+      <p class=note>A part whose `<code>Content-Disposition</code>` header contains a
+      `<code>name</code>` parameter whose value is `<code>_charset_</code>` is parsed like any other
+      part. It does not change the encoding.
 
-  <p class=XXX>The above is a rough approximation of what is needed for
-  `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
-  written. Volunteers welcome.
+     <li><p>If that fails for some reason, then <a>throw</a> a {{TypeError}}.
 
- <dt>"<code>application/x-www-form-urlencoded</code>",
- <dd>
-  <ol>
-   <li><p>Let <var>entries</var> be the result of  <a lt="urlencoded parser">parsing</a>
-   <var>bytes</var>.
+     <li><p>Return a new {{FormData}} object, appending each <a for="entry list">entry</a>,
+     resulting from the parsing operation, to its <a for=FormData>entry list</a>.
+    </ol>
 
-   <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
+    <p class=XXX>The above is a rough approximation of what is needed for
+    `<code>multipart/form-data</code>`, a more detailed parsing specification is to be written.
+    Volunteers welcome.
 
-   <li><p>Return a new {{FormData}} object whose <a for=FormData>entry list</a> is
-   <var>entries</var>.
-  </ol>
+   <dt>"<code>application/x-www-form-urlencoded</code>"
+   <dd>
+    <ol>
+     <li><p>Let <var>entries</var> be the result of  <a lt="urlencoded parser">parsing</a>
+     <var>bytes</var>.
 
- <dt>Otherwise
- <dd><p><a>Throw</a> a {{TypeError}}.
-</dl>
+     <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a new {{FormData}} object whose <a for=FormData>entry list</a> is
+     <var>entries</var>.
+    </ol>
+  </dl>
+
+ <li><p><a>Throw</a> a {{TypeError}}.
+</ol>
 </div>
 
 <div algorithm>
@@ -7386,10 +7412,6 @@ omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor obser
 
 <p>A {{Request}} object has an associated <dfn for=Request>signal</dfn> (null or an {{AbortSignal}}
 object), initially null.
-
-<p>A {{Request}} object's <a for=Body>MIME type</a> is to return the result of
-<a for="header list">extracting a MIME type</a> from its <a for=Request>request</a>'s
-<a for=request>header list</a>.
 
 <p>A {{Request}} object's <a for=Body>body</a> is its
 <a for=Request>request</a>'s
@@ -8077,10 +8099,6 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
 
 <p>A {{Response}} object also has an associated <dfn for=Response export>headers</dfn> (null or a
 {{Headers}} object), initially null.
-
-<p>A {{Response}} object's <a for=Body>MIME type</a> is to return the result of
-<a for="header list">extracting a MIME type</a> from its <a for=Response>response</a>'s
-<a for=response>header list</a>.
 
 <p>A {{Response}} object's <a for=Body>body</a> is its
 <a for=Response>response</a>'s <a for=response>body</a>.
@@ -8978,6 +8996,7 @@ Brad Porter,
 Bryan Smith,
 Caitlin Potter,
 Cameron McCormack,
+白丞祐 (Cheng-You Bai)<!-- CYBAI; GitHub -->,
 Chirag S Kumar<!-- fictionistique; GitHub -->,
 Chris Needham,
 Chris Rebert,
