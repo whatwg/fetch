@@ -7174,8 +7174,8 @@ due course.
 <hr>
 
 <div algorithm>
-<p>To <dfn id=concept-body-get-mime-type for=Body>get the MIME type</dfn>, given a {{Request}}
-or {{Response}} object <var>requestOrResponse</var>:
+<p>To <dfn id=concept-body-mime-type for=Body>get the MIME type</dfn>, given a {{Request}} or
+{{Response}} object <var>requestOrResponse</var>:
 
 <ol>
  <li><p>Let <var>headers</var> be null.
@@ -7259,65 +7259,61 @@ running <a for=Body>consume body</a> with <a>this</a> and the following step giv
 <a for=/>byte sequence</a> <var>bytes</var>:
 
 <ol>
- <li><p>Let <var>mimeType</var> be the result of <a for=Body>get the MIME type</a>
- with <a>this</a>.
+ <li><p>Let <var>mimeType</var> be the result of <a for=Body>get the MIME type</a> with <a>this</a>.
 
  <li>
   <p>If <var>mimeType</var> is non-null, then switch on <var>mimeType</var>'s
   <a for="MIME type">essence</a> and run the corresponding steps:
 
   <dl class=switch>
-   <dt>"<code>multipart/form-data</code>",
-    <dd>
-     <ol>
-      <li>
-       <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
-       <var>mimeType</var>, per the rules set forth in
-       <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]</p>
+   <dt>"<code>multipart/form-data</code>"
+   <dd>
+    <ol>
+     <li>
+      <p>Parse <var>bytes</var>, using the value of the `<code>boundary</code>` parameter from
+      <var>mimeType</var>, per the rules set forth in
+      <cite>Returning Values from Forms: multipart/form-data</cite>. [[!RFC7578]]
 
-       <p>Each part whose `<code>Content-Disposition</code>` header contains a
-       `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a>
-       whose value is a {{File}} object whose contents are the contents of the part. The
-       {{File/name}} attribute of the {{File}} object must have the value of the
-       `<code>filename</code>` parameter of the part. The {{Blob/type}} attribute of the {{File}}
-       object must have the value of the `<code>Content-Type</code>` header of the part if the part
-       has such header, and `<code>text/plain</code>` (the default defined by [[!RFC7578]] section
-       4.4) otherwise.
-       </p>
+      <p>Each part whose `<code>Content-Disposition</code>` header contains a
+      `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
+      value is a {{File}} object whose contents are the contents of the part. The {{File/name}}
+      attribute of the {{File}} object must have the value of the `<code>filename</code>` parameter
+      of the part. The {{Blob/type}} attribute of the {{File}} object must have the value of the
+      `<code>Content-Type</code>` header of the part if the part has such header, and
+      `<code>text/plain</code>` (the default defined by [[!RFC7578]] section 4.4) otherwise.
 
-       <p>Each part whose `<code>Content-Disposition</code>` header does not contain a
-       `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
-       value is the <a lt="UTF-8 decode without BOM">UTF-8 decoded without BOM</a> content of the
-       part. <span class=note>This is done regardless of the presence or the value of a
-       `<code>Content-Type</code>` header and regardless of the presence or the value of a
-       `<code>charset</code>` parameter.</span></p>
+      <p>Each part whose `<code>Content-Disposition</code>` header does not contain a
+      `<code>filename</code>` parameter must be parsed into an <a for="entry list">entry</a> whose
+      value is the <a lt="UTF-8 decode without BOM">UTF-8 decoded without BOM</a> content of the
+      part. <span class=note>This is done regardless of the presence or the value of a
+      `<code>Content-Type</code>` header and regardless of the presence or the value of a
+      `<code>charset</code>` parameter.</span>
 
-       <p class=note>A part whose `<code>Content-Disposition</code>` header contains a
-       `<code>name</code>` parameter whose value is `<code>_charset_</code>` is parsed like any
-       other part. It does not change the encoding.</p>
-      </li>
+      <p class=note>A part whose `<code>Content-Disposition</code>` header contains a
+      `<code>name</code>` parameter whose value is `<code>_charset_</code>` is parsed like any other
+      part. It does not change the encoding.
 
-      <li><p>If that fails for some reason, then <a>throw</a> a {{TypeError}}.
+     <li><p>If that fails for some reason, then <a>throw</a> a {{TypeError}}.
 
-      <li><p>Return a new {{FormData}} object, appending each <a for="entry list">entry</a>,
-      resulting from the parsing operation, to its <a for=FormData>entry list</a>.
-     </ol>
+     <li><p>Return a new {{FormData}} object, appending each <a for="entry list">entry</a>,
+     resulting from the parsing operation, to its <a for=FormData>entry list</a>.
+    </ol>
 
-     <p class=XXX>The above is a rough approximation of what is needed for
-     `<code>multipart/form-data</code>`, a more detailed parsing specification is to be
-     written. Volunteers welcome.
+    <p class=XXX>The above is a rough approximation of what is needed for
+    `<code>multipart/form-data</code>`, a more detailed parsing specification is to be written.
+    Volunteers welcome.
 
-   <dt>"<code>application/x-www-form-urlencoded</code>",
-    <dd>
-     <ol>
-      <li><p>Let <var>entries</var> be the result of  <a lt="urlencoded parser">parsing</a>
-      <var>bytes</var>.
+   <dt>"<code>application/x-www-form-urlencoded</code>"
+   <dd>
+    <ol>
+     <li><p>Let <var>entries</var> be the result of  <a lt="urlencoded parser">parsing</a>
+     <var>bytes</var>.
 
-      <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
+     <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
 
-      <li><p>Return a new {{FormData}} object whose <a for=FormData>entry list</a> is
-      <var>entries</var>.
-     </ol>
+     <li><p>Return a new {{FormData}} object whose <a for=FormData>entry list</a> is
+     <var>entries</var>.
+    </ol>
   </dl>
 
  <li><p><a>Throw</a> a {{TypeError}}.
