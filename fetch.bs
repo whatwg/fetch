@@ -2761,7 +2761,9 @@ has the following <a for=struct>items</a>:
   <p>"<code>deferred</code>", "<code>scheduled</code>", "<code>terminated</code>",
   "<code>aborted</code>", or "<code>sent</code>"
 
-  <p class=note>This value can be modified <a>in parallel</a>.
+  <p class=note>This value can be modified <a>in parallel</a>. To set it safely, use atomic
+  operations, e.g. atomically exchange the value (set it to the new value and return the new value
+  in one operation).
 </dl>
 
 
@@ -8711,12 +8713,10 @@ method steps are:
 
 <ol>
  <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
- constructor with <var>input</var> and <var>init</var> as arguments. If that threw an exception,
- <a for=/>reject</a> <var>promise</var> with that exception and return <var>promise</var>.
+ constructor with <var>input</var> and <var>init</var> as arguments. This may throw an exception.
 
  <li><p>If <var>requestObject</var>'s <a for=Request>signal</a> is <a for=AbortSignal>aborted</a>,
- then <a for=/>reject</a> <var>promise</var> with <var>requestObject</var>'s
- <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a> and return <var>promise</var>.
+ then throw <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
 
  <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
 
