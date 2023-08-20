@@ -2750,20 +2750,18 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
  <dt><dfn export for="deferred fetch record">request</dfn>
  <dd>A <a for=/>request</a>.
 
- <dt><dfn export for="deferred fetch record">inactivity deferred delay</dfn> (default null)
+ <dt><dfn export for="deferred fetch record">inactivity delay</dfn> (default null)
  <dd>Null or a <a>duration</a>.
-
- <dt><dfn export for="deferred fetch record">sent</dfn> (default false)
- <dd>A boolean.
 
  <dt><dfn export for="deferred fetch record">invoke state</dfn> (default "<code>deferred</code>")
  <dd>
   <p>"<code>deferred</code>", "<code>scheduled</code>", "<code>terminated</code>",
-  "<code>aborted</code>", or "<code>sent</code>".
+  "<code>aborted</code>", or "<code>activated</code>".
 
-  <p class=note>This value can be modified <a>in parallel</a>. To set it safely, use atomic
-  operations, e.g. atomically exchange the value (set it to the new value and return the new value
-  in one operation).
+  <p class=note>This value can be modified <a>in parallel</a>. There could be a race condition where
+  the <code>Document</code> object's <a for=/>event loop</a> might change it to
+  "<code>deferred</code>" at the same time that it is changed to "<code>activated</code>". UAs can
+  mitigate this race condition in an <a>implementation-defined</a> manner.
 </dl>
 
 
@@ -2773,26 +2771,33 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
 <dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>:
 
 <ol>
- <li><p>For each <a for="fetch group">fetch record</a> <var>record</var> in <var>fetchGroup</var>'s
- <a for="fetch group">fetch records</a>, if <var>record</var>'s <a for="fetch record">controller</a>
- is non-null and <var>record</var>'s <a for="fetch record">request</a>'s <a>done flag</a> is unset
- and <a for=request>keepalive</a> is false, <a for="fetch controller">terminate</a>
- <var>record</var>'s <a for="fetch record">controller</a>.
+ <li><p><a for=list>For each</a> <a for="fetch group">fetch record</a> <var>record</var> of
+ <var>fetchGroup</var>'s <a for="fetch group">fetch records</a>, if <var>record</var>'s
+ <a for="fetch record">controller</a> is non-null and <var>record</var>'s
+ <a for="fetch record">request</a>'s <a>done flag</a> is unset and <a for=request>keepalive</a> is
+ false, <a for="fetch controller">terminate</a> <var>record</var>'s
+ <a for="fetch record">controller</a>.
 
- <li><p><a for=list>For each</a> <a for="fetch group">deferred fetch record</a>
- <var>deferredRecord</var> in <var>fetchGroup</var>'s
- <a for="fetch group">deferred fetch records</a>: If the result of atomically exchanging the value
- of <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> with
- "<code>terminated</code>" is not "<code>sent</code>", then the user agent should
- <a for=/>fetch</a> <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>. The
- exact time in which the <a for=/>fetch</a> takes place is <a>implementation-defined</a>.
+ <li>
+  <p><a for=list>For each</a> <a for="fetch group">deferred fetch record</a>
+  <var>deferredRecord</var> of <var>fetchGroup</var>'s
+  <a for="fetch group">deferred fetch records</a>:
+
+  <ol>
+   <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
+   "<code>terminated</code>".
+
+   <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s
+   <a for="deferred fetch record">request</a>.
+  </ol>
+ </li>
 </ol>
 
 <p>When a <a for=fetch>fetch group</a> <var>fetchGroup</var> is
 <dfn export for="fetch group" id=concept-fetch-group-deactivate>deactivated</dfn>:
-<a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
+<a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> of
 <var>fetchGroup</var>'s <a for="fetch group">deferred fetch records</a> whose
-<a for="deferred fetch record">inactivity deferred delay</a> is not null:
+<a for="deferred fetch record">inactivity delay</a> is not null:
 
 <ol>
  <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
@@ -2803,28 +2808,20 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
 
   <ol>
    <li><p>The user agent should wait until <var>deferredRecord</var>'s
-   <a for="deferred fetch record">inactivity deferred delay</a> have passed or until
+   <a for="deferred fetch record">inactivity delay</a> have passed or until
    <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is not
    "<code>scheduled</code>". The user agent may wait for a longer or shorter period time, e.g., to
    optimize batching of deferred fetches.
 
-   <li><p>If the result of atomically exchanging the value of <var>deferredRecord</var>'s
-   <a for="deferred fetch record">invoke state</a> with "<code>sent</code>" is
-   "<code>scheduled</code>", then <a for=/>fetch</a> <var>record</var>'s
-   <a for="fetch record">request</a>.
+   <li><p>If <var>deferredRecord</var>'s is not "<code>scheduled</code>", abort these steps.
+
+   <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
+   "<code>activated</code>".
+
+   <li><p><a for=/>Fetch</a> <var>record</var>'s <a for="fetch record">request</a>.
   </ol>
- </li>
 </ol>
 
-<p>When a <a for=fetch>fetch group</a> <var>fetchGroup</var> is
-<dfn export for="fetch group" id=concept-fetch-group-reactivate>reactivated</dfn>:
-<a for=list>For each</a> <a for=/>deferred fetch record</a> <var>deferredRecord</var> in
-<var>fetchGroup</var>'s <a for="fetch group">deferred fetch records</a>: If the result of atomically
-exchanging the value of <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a>
-with "<code>deferred</code>" is "<code>sent</code>", then <a for=list>remove</a>
-<var>deferredRecord</var> from <var>fetchGroup</var>'s
-<a for="fetch group">deferred fetch records</a> and set <var>deferredRecord</var>'s
-<a for="deferred fetch record">sent</a> to true.
 
 
 <h3 id=resolving-domains>Resolving domains</h3>
@@ -6804,8 +6801,8 @@ is <a for="fetch group">deactivated</a>.
  <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
  <a for="deferred fetch record">request</a> is <var>request</var>.
 
- <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">inactivity deferred delay</a>
- to <var>inactivityDeferredDelay</var>.
+ <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">inactivity delay</a> to
+ <var>inactivityDeferredDelay</var>.
 
  <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
  <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
@@ -8692,7 +8689,7 @@ dictionary DeferredRequestInit : RequestInit {
 };
 
 interface FetchLaterResult {
-  readonly attribute boolean sent;
+  readonly attribute boolean activated;
 };
 
 partial interface mixin WindowOrWorkerGlobalScope {
@@ -8704,8 +8701,9 @@ partial interface mixin WindowOrWorkerGlobalScope {
 <dfn for=FetchLaterResult>deferred record</dfn>.
 
 <div algorithm>
-<p>The <dfn attribute for=FetchLaterResult><code>sent</code></dfn> getter steps are to return
-<a>this</a>'s <a for=FetchLaterResult>deferred record</a>'s <a for="deferred fetch record">sent</a>.
+<p>The <dfn attribute for=FetchLaterResult><code>activated</code></dfn> getter steps are to return
+true if <a>this</a>'s <a for=FetchLaterResult>deferred record</a>'s
+<a for="deferred fetch record">invoke state</a> is "<code>activated</code>"; Otherwise false.
 </div>
 
 <div algorithm="dom-fetch-later">
