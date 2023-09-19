@@ -2731,7 +2731,7 @@ functionality.
 <p>A <a for=fetch>fetch group</a> holds an ordered list of
 <dfn lt="fetch record" export for="fetch group" id=concept-fetch-record>fetch records</dfn>.
 
-<p>A <a for=fetch>fetch group</a> holds an ordered list of
+<p>A <a for=fetch>fetch group</a> holds an <a for=/>list</a> of
 <dfn export for="fetch group" id=concept-defer=fetch-record>deferred fetch records</dfn>.
 
 <p>A <a for="fetch group">fetch record</a> has an associated
@@ -2750,16 +2750,12 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
  <dt><dfn export for="deferred fetch record">request</dfn>
  <dd>A <a for=/>request</a>.
 
- <dt><dfn export for="deferred fetch record">inactivity delay</dfn> (default null)
- <dd>Null or a <a>duration</a>.
-
  <dt><dfn export for="deferred fetch record">invoke state</dfn> (default "<code>deferred</code>")
  <dd>
-  <p>"<code>deferred</code>", "<code>scheduled</code>", "<code>terminated</code>",
-  "<code>aborted</code>", or "<code>activated</code>".
+  <p>"<code>deferred</code>", "<code>aborted</code>", or "<code>activated</code>".
 
   <p class=note>This value can be modified <a>in parallel</a>. There could be a race condition where
-  the <code>Document</code> object's <a for=/>event loop</a> might change it to
+  the <code>Document</code> object's <a for=/>event loop</a> might read it as
   "<code>deferred</code>" at the same time that it is changed to "<code>activated</code>". UAs can
   mitigate this race condition in an <a>implementation-defined</a> manner.
 </dl>
@@ -2778,48 +2774,7 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
  false, <a for="fetch controller">terminate</a> <var>record</var>'s
  <a for="fetch record">controller</a>.
 
- <li>
-  <p><a for=list>For each</a> <a for="fetch group">deferred fetch record</a>
-  <var>deferredRecord</var> of <var>fetchGroup</var>'s
-  <a for="fetch group">deferred fetch records</a>:
-
-  <ol>
-   <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
-   "<code>terminated</code>".
-
-   <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s
-   <a for="deferred fetch record">request</a>.
-  </ol>
- </li>
-</ol>
-
-<p>When a <a for=fetch>fetch group</a> <var>fetchGroup</var> is
-<dfn export for="fetch group" id=concept-fetch-group-deactivate>deactivated</dfn>:
-<a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> of
-<var>fetchGroup</var>'s <a for="fetch group">deferred fetch records</a> whose
-<a for="deferred fetch record">inactivity delay</a> is not null:
-
-<ol>
- <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
- "<code>scheduled</code>".
-
- <li>
-  <p>Run the following steps <a>in parallel</a>:
-
-  <ol>
-   <li><p>The user agent should wait until <var>deferredRecord</var>'s
-   <a for="deferred fetch record">inactivity delay</a> have passed or until
-   <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is not
-   "<code>scheduled</code>". The user agent may wait for a longer or shorter period time, e.g., to
-   optimize batching of deferred fetches.
-
-   <li><p>If <var>deferredRecord</var>'s is not "<code>scheduled</code>", abort these steps.
-
-   <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
-   "<code>activated</code>".
-
-   <li><p><a for=/>Fetch</a> <var>record</var>'s <a for="fetch record">request</a>.
-  </ol>
+ <li><p><a>process deferred fetches</a> for <var>fetchGroup</var>.
 </ol>
 
 
@@ -6757,13 +6712,12 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 <h3 id=deferred-fetching>Deferred fetching</h3>
 
 <p>Deferred fetches allow callers to request that a fetch is invoked at the latest possible moment,
-i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout after it
-is <a for="fetch group">deactivated</a>.
+i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout.
 
 <div algorithm="request-a-deferred-fetch">
 <p>To <dfn>request a deferred fetch</dfn> given a
-<a for=/>request</a> <var>request</var> and a null-or-{{DOMHighResTimeStamp}}
-<var>inactivityDeferredDelay</var> (default null):
+<a for=/>request</a> <var>request</var> and a null or {{DOMHighResTimeStamp}}
+<var>activationTimeout</var> (default null):
 
 <ol>
  <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
@@ -6801,16 +6755,58 @@ is <a for="fetch group">deactivated</a>.
  <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
  <a for="deferred fetch record">request</a> is <var>request</var>.
 
- <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">inactivity delay</a> to
- <var>inactivityDeferredDelay</var>.
-
  <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
  <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
  <a for="fetch group">deferred fetch records</a>.
 
+ <li>
+  <p>If <var>activationTimeout</var> is not null, then run the following steps <a>in parallel</a>:</p>
+
+  <ol>
+   <li><p>The user agent should wait until <var>activationTimeout</var> milliseconds have passed.
+   The user agent may wait for a longer or shorter period time, e.g., to optimize batching of
+   deferred fetches.
+
+   <li><p><a>Process a deferred fetch</a> given <var>deferredRecord</var>.
+  </ol>
+ </li>
+
  <li><p>Return <var>deferredRecord</var>.
 </ol>
 </div>
+
+<div algorithm="process-deferred-fetches">
+<p>To <dfn export>process deferred fetches</dfn> given a <a>fetch group</a> <var>fetchGroup</var>:
+
+<ol>
+ <li><p>Let <var>deferredFetchRecords</var> be <var>fetchGroup</var>'s
+ <a for="fetch group">deferred fetch records</a>.
+
+ <li><p>Let <var>fetchGroup</var>'s
+ <a for="fetch group">deferred fetch records</a> be « ».
+
+ <li><p><a for=list>For each</a> <a for="fetch group">deferred fetch record</a>
+ <var>deferredRecord</var> of <var>deferredFetchRecords</var>, <a>process a deferred fetch</a> given
+ <var>deferredRecord</var>.
+</ol>
+</div>
+
+<div algorithm="process-a-deferred-fetch">
+<p>To <dfn>process a deferred fetch</dfn> <var>deferredRecord</var>:
+<ol>
+ <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is not
+ "<code>deferred</code>", then return.
+
+ <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
+ "<code>activated</code>".
+
+ <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s
+ <a for="deferred fetch record">request</a>.
+</ol>
+</div>
+
+<p>The user agent may <a>process deferred fetches</a> at any given moment, for example when the
+browser is about to terminate or lose the ability to execute code.
 
 
 
@@ -8685,7 +8681,7 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 <pre class=idl>
 
 dictionary DeferredRequestInit : RequestInit {
-  DOMHighResTimeStamp backgroundTimeout;
+  DOMHighResTimeStamp activationTimeout;
 };
 
 interface FetchLaterResult {
@@ -8734,18 +8730,18 @@ method steps are:
  <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
  [=potentially trustworthy url=], then throw a {{SecurityError}}.
 
- <li><p>Let <var>backgroundTimeout</var> be null.
+ <li><p>Let <var>activationTimeout</var> be null.
 
- <li><p>If <var>init</var> is given and <var>init</var>["<code>backgroundTimeout</code>"]
- <a for=map>exists</a> then set <var>backgroundTimeout</var> to
- <var>init</var>["<code>backgroundTimeout</code>"].
+ <li><p>If <var>init</var> is given and <var>init</var>["<code>activationTimeout</code>"]
+ <a for=map>exists</a> then set <var>activationTimeout</var> to
+ <var>init</var>["<code>activationTimeout</code>"].
 
- <li><p>If <var>backgroundTimeout</var> is not a {{DOMHighResTimeStamp}} then throw a {{TypeError}}.
+ <li><p>If <var>activationTimeout</var> is not a {{DOMHighResTimeStamp}} then throw a {{TypeError}}.
 
- <li><p>If <var>backgroundTimeout</var> is less than 0 then throw a {{RangeError}}.
+ <li><p>If <var>activationTimeout</var> is less than 0 then throw a {{RangeError}}.
 
  <li><p>Let <var>deferredRecord</var> be the result of calling
- <a>request a deferred fetch</a> given <var>request</var> and <var>backgroundTimeout</var>. This
+ <a>request a deferred fetch</a> given <var>request</var> and <var>activationTimeout</var>. This
  may throw an exception.
 
  <li>
