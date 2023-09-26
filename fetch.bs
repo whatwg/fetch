@@ -3268,6 +3268,86 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
 
 <h2 id=http-extensions>HTTP extensions</h2>
 
+<h3 id=cookie-header>`<code>Cookie</code>` header</h3>
+
+<p>The `<dfn export http-header id=http-cookie><code>Cookie</code></dfn>`
+request <a for=/>header</a> allows the request to carry locally stored state, such as user credentials.
+<div algorithm>
+<p>To <dfn id=append-a-request-cookie-header>append a request `<code>Cookie</code>` header</dfn>,
+given a <a for=/>request</a> <var>request</var>, run these steps:
+  <ol>
+     <li><p>Let |sameSite| be the result of [=determining the same-site mode=] for <var>request</var>.
+     <li><p>Let |secure| be false.
+     <li><p>If <var>request</var>'s <a for=request>current URL</a>'s <var>scheme</var> is "<code>https</code>", then set |secure| to true.
+     <p class=note>Note that this doesn't use the arguably superior definition of [=secure context=]
+     <li><p>Let |httpOnly| be true.
+     <p class=note>Fetch implies that the request is http-only, as opposed to document.cookie
+     <li><p>Let |partitionKey| be the result of [=computing the cookie partition key=] for <var>request</var>.
+     <li><p>Let |partitionedContext| be the result of [=determining the partitioned context state=] for |request|.
+     <li><p>Let |cookies| be the result of [=getting the sorted list of cookies=] given <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>, <var>request</var>'s <a for=request>current URL</a>'s <a for=url>path</a>, |secure|, |httpOnly|, |sameSite|, |partitionKey|, |partitionedContext|.
+
+     <p class=note>It is expected that the cookie store returns an ordered list of cookies
+     <li>If |cookies| <a for="list">is empty</a>, then return.
+     <li>Let |value| be the result of [=serializing a cookie list=] given |cookies|.
+     <li><a for="header list">Append</a> (`<code>Cookie</code>`, <var>value</var>) to <var>request</var>'s <a for=request>header list</a>.
+  </ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>determine the same-site mode</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
+  <ol>
+   <li><p>If <var>request</var>'s <a for=request>client</a>'s has cross-site ancestor is false, return "None".
+   <p class=XXX>TODO: This refers to the cross-site ancestor flag added in https://github.com/whatwg/html/pull/8036
+   <li><p>Let <var>topLevelOrigin</var> be <var>environment</var>'s <a for="environment">top-level origin</a>.
+   <li><p>...
+   <p class=XXX>TODO: Formalize what's written up in https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-12#name-strict-and-lax-enforcement here
+   <li><p>Profit!
+  </ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>compute the cookie partition key</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
+  <p class=XXX>See https://dcthetall.github.io/CHIPS-spec/draft-cutler-httpbis-partitioned-cookies.html#name-computing-the-cookie-partit
+  <ol>
+   <li><p>Let <var>topLevelOrigin</var> be <var>environment</var>'s
+   <a for="environment">top-level origin</a>.
+
+   <li><p>Let <var>topLevelSite</var> be the result of <a lt="obtain a site">obtaining a site</a>,
+   given <var>topLevelOrigin</var>.
+
+   <li>
+    <p>Let <var>crossSiteAncestors</var> be <var>request</var>'s <a for=request>client</a>'s has cross-site ancestor.
+    <p class=XXX>This will need to be decided in https://github.com/privacycg/CHIPS/issues/40
+
+   <li><p>Return (<var>topLevelSite</var>, <var>crossSiteAncestors</var>).
+  </ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>determine the partitioned context state</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
+  <ol>
+    <li><p>If <var>request</var>'s <a for=request>client</a>'s has cross-site ancestor is false, return false.
+    <p class=XXX>TODO: This refers to the cross-site ancestor flag added in https://github.com/whatwg/html/pull/8036
+    <li><p>If <var>request</var>'s <a for=request>client</a>'s [=environment/has storage access=] is true, return false.
+    <p class=XXX>TODO: This refers to the flag added in https://privacycg.github.io/storage-access/#environment-has-storage-access
+    <li><p>Return true.
+  </ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>get the sorted list of cookies</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
+  <ol>
+     <p class=XXX>TODO: We have to define this interface in 6265bis
+  </ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>serialize a cookie list</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
+  <ol>
+     <p class=XXX>TODO: We have to define this interface in 6265bis
+  </ol>
+</div>
+
 <h3 id=origin-header>`<code>Origin</code>` header</h3>
 
 <p>The `<dfn export http-header id=http-origin><code>Origin</code></dfn>`
@@ -5637,24 +5717,7 @@ run these steps:
     <a>HTTP header layer division</a> for more details.
 
    <li>
-    <p>If <var>includeCredentials</var> is true, then:
-
-    <ol>
-     <li>
-      <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
-      <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
-      [[!COOKIES]]), then:
-
-      <ol>
-       <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
-       <a href=https://httpwg.org/specs/rfc6265.html#cookie>section 5.4</a> of
-       [[!COOKIES]]) with the user agent's cookie store and <var>httpRequest</var>'s
-       <a for=request>current URL</a>.
-
-       <li>If <var>cookies</var> is not the empty string, then <a for="header list">append</a>
-       (`<code>Cookie</code>`, <var>cookies</var>) to <var>httpRequest</var>'s
-       <a for=request>header list</a>.
-      </ol>
+    <p>If <var>includeCredentials</var> is true, <a>append a request `<code>Cookie</code>` header</a> for <var>httpRequest</var>.
 
      <li>
       <p>If <var>httpRequest</var>'s <a for=request>header list</a>
