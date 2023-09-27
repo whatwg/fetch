@@ -83,104 +83,29 @@ is.
 
 End tags may be included (if done consistently) and attributes may be quoted (using double quotes), though the prevalent theme is to omit end tags and not quote attributes (unless they contain a space).
 
-## Formatting
-
-Use a column width of 100 characters.
-
-Do not use newlines inside "inline" elements, even if that means exceeding the column width requirement.
+Place one newline between paragraphs (including list elements). Place three newlines before `<h2>`, and two newlines before other headings. This does not apply when a nested heading follows the parent heading.
 ```html
-<p>The
-<dfn method for=DOMTokenList lt=remove(tokens)|remove()><code>remove(<var>tokens</var>&hellip;)</code></dfn>
-method, when invoked, must run these steps:
-```
-is okay and
-  ```html
-<p>The <dfn method for=DOMTokenList
-lt=remove(tokens)|remove()><code>remove(<var>tokens</var>&hellip;)</code></dfn> method, when
-invoked, must run these steps:
-```
-is not.
+<ul>
+ <li><p>Do not place a newline above.
 
-Using newlines between "inline" element tag names and their content is also forbidden. (This actually alters the content, by adding spaces.) That is
+ <li><p>Place a newline above.
+</ul>
+
+<p>Place a newline above.
+
+
+<h3>Place two newlines above.</h3>
+
+<h4>Placing one newline is OK here.</h4>
+
+
+<h4>Place two newlines above.</h4>
+```
+Use camel-case for variable names and "spaced" names for definitions, algorithms, etc.
 ```html
-<a>token</a>
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=concept-request-redirect-mode>redirect mode</dfn>,...
 ```
-is fine and
 ```html
-<a>token
-</a>
+<p>Let <var>redirectMode</var> be <var>request</var>'s <a for=request>redirect mode</a>.
 ```
-is not.
-
-An `<li>` element always has a `<p>` element inside it, unless it's a child of `<ul class=brief>`.
-
-If a "block" element contains a single "block" element, do not put it on a newline.
-
-Do not indent for anything except a new "block" element. For instance
-```html
- <li><p>For each <var>token</var> in <var>tokens</var>, in given order, that is not in
- <a>tokens</a>, append <var>token</var> to <a>tokens</a>.
-```
-is not indented, but
-```html
-<ol>
- <li>
-  <p>For each <var>token</var> in <var>tokens</var>, run these substeps:
-
-  <ol>
-   <li><p>If <var>token</var> is the empty string, <a>throw</a> a {{SyntaxError}} exception.
-```
-is.
-
-End tags may be included (if done consistently) and attributes may be quoted (using double quotes), though the prevalent theme is to omit end tags and not quote attributes (unless they contain a space).
-
-## Formatting
-
-Use a column width of 100 characters.
-
-Do not use newlines inside "inline" elements, even if that means exceeding the column width requirement.
-```html
-<p>The
-<dfn method for=DOMTokenList lt=remove(tokens)|remove()><code>remove(<var>tokens</var>&hellip;)</code></dfn>
-method, when invoked, must run these steps:
-```
-is okay and
-  ```html
-<p>The <dfn method for=DOMTokenList
-lt=remove(tokens)|remove()><code>remove(<var>tokens</var>&hellip;)</code></dfn> method, when
-invoked, must run these steps:
-```
-is not.
-
-Using newlines between "inline" element tag names and their content is also forbidden. (This actually alters the content, by adding spaces.) That is
-```html
-<a>token</a>
-```
-is fine and
-```html
-<a>token
-</a>
-```
-is not.
-
-An `<li>` element always has a `<p>` element inside it, unless it's a child of `<ul class=brief>`.
-
-If a "block" element contains a single "block" element, do not put it on a newline.
-
-Do not indent for anything except a new "block" element. For instance
-```html
- <li><p>For each <var>token</var> in <var>tokens</var>, in given order, that is not in
- <a>tokens</a>, append <var>token</var> to <a>tokens</a>.
-```
-is not indented, but
-```html
-<ol>
- <li>
-  <p>For each <var>token</var> in <var>tokens</var>, run these substeps:
-
-  <ol>
-   <li><p>If <var>token</var> is the empty string, <a>throw</a> a {{SyntaxError}} exception.
-```
-is.
-
-End tags may be included (if done consistently) and attributes may be quoted (using double quotes), though the prevalent theme is to omit end tags and not quote attributes (unless they contain a space).
