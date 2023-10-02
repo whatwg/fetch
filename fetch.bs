@@ -2742,6 +2742,9 @@ functionality.
 <dfn export for="fetch record" id=concept-fetch-record-fetch>controller</dfn> (a
 <a for=/>fetch controller</a> or null).
 
+
+<hr>
+
 <p>A <dfn export>deferred fetch record</dfn> is a <a for=/>struct</a> used to maintain state needed
 to invoke a fetch at a later time, e.g., when a <code>Document</code> object is unloaded or becomes
 not <a for=Document>fully active</a>. It has the following <a for=struct>items</a>:
@@ -2774,7 +2777,7 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
  false, <a for="fetch controller">terminate</a> <var>record</var>'s
  <a for="fetch record">controller</a>.
 
- <li><p><a>process deferred fetches</a> for <var>fetchGroup</var>.
+ <li><p><a>Process deferred fetches</a> for <var>fetchGroup</var>.
 </ol>
 
 
@@ -6717,7 +6720,7 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 <div algorithm="request-a-deferred-fetch">
 <p>To <dfn>request a deferred fetch</dfn> given a
 <a for=/>request</a> <var>request</var> and a null or {{DOMHighResTimeStamp}}
-<var>activationTimeout</var> (default null):
+<var>activationDeadline</var> (default null):
 
 <ol>
  <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
@@ -6760,12 +6763,16 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <a for="fetch group">deferred fetch records</a>.
 
  <li>
-  <p>If <var>activationTimeout</var> is not null, then run the following steps <a>in parallel</a>:</p>
+  <p>If <var>activationDeadline</var> is not null, then run the following steps <a>in parallel</a>:</p>
 
   <ol>
-   <li><p>The user agent should wait until <var>activationTimeout</var> milliseconds have passed.
-   The user agent may wait for a longer or shorter period time, e.g., to optimize batching of
-   deferred fetches.
+   <li><p>The user agent should wait until <var>activationDeadline</var> milliseconds have passed,
+   or until the user agent has a reason to believe that it is about to lose the opportunity to
+   execute scripts, e.g. when the browser is moved to the background.
+
+   <li><p>The user agent may wait for a further <a>implementation-defined</a> <a>duration</a>, e.g.
+   in order to batch several requests together or to wait until <a for=request>keepalive</a>
+   requests are complete.
 
    <li><p><a>Process a deferred fetch</a> given <var>deferredRecord</var>.
   </ol>
@@ -6804,10 +6811,6 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <a for="deferred fetch record">request</a>.
 </ol>
 </div>
-
-<p>The user agent may <a>process deferred fetches</a> at any given moment, for example when the
-browser is about to terminate or lose the ability to execute code.
-
 
 
 <h2 id=fetch-api>Fetch API</h2>
@@ -8537,7 +8540,7 @@ otherwise false.
 
 <h2 id="fetch-methods">Fetch methods</h2>
 
-<h3 id="fetch-method">Fetch Method</h3>
+<h3 id="fetch-method">Fetch Methods</h3>
 <pre class=idl>
 partial interface mixin WindowOrWorkerGlobalScope {
   [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional RequestInit init = {});
@@ -8675,15 +8678,13 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 </ol>
 </div>
 
-
-<h3 id=fetch-later-method>FetchLater method</h3>
-
 <pre class=idl>
 
 dictionary DeferredRequestInit : RequestInit {
-  DOMHighResTimeStamp activationTimeout;
+  DOMHighResTimeStamp activationDeadline;
 };
 
+[Exposed=Window,Worker]
 interface FetchLaterResult {
   readonly attribute boolean activated;
 };
@@ -8709,15 +8710,15 @@ method steps are:
 
 <ol>
  <li>
-  <p>If the user-agent has determined that deferred fetching is not allowed in this context, then
+  <p>If the user agent has determined that deferred fetching is not allowed in this context, then
   throw a {{NotAllowedError}}.
 
-  <p class=note>User-agents can, for example, decide that deferred fetching is not allowed for
+  <p class=note>user agents can, for example, decide that deferred fetching is not allowed for
   subframes or gated behind some permission.
  </li>
 
  <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
- constructor with <var>input</var> and <var>init</var> as arguments. This may throw an exception.
+ constructor with <var>input</var> and <var>init</var> as arguments.
 
  <li><p>If <var>requestObject</var>'s <a for=Request>signal</a> is <a for=AbortSignal>aborted</a>,
  then throw <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
@@ -8730,24 +8731,26 @@ method steps are:
  <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
  [=potentially trustworthy url=], then throw a {{SecurityError}}.
 
+ <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
+
  <li>
   <p>If <var>request</var>'s <a for=request>body</a> is not null and <var>request</var>'s
   <a for=request>body</a>'s <a for=body>source</a> is null, then throw a {{TypeError}}.
 
   <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
 
- <li><p>Let <var>activationTimeout</var> be null.
+ <li><p>Let <var>activationDeadline</var> be null.
 
- <li><p>If <var>init</var> is given and <var>init</var>["<code>activationTimeout</code>"]
- <a for=map>exists</a> then set <var>activationTimeout</var> to
- <var>init</var>["<code>activationTimeout</code>"].
+ <li><p>If <var>init</var> is given and <var>init</var>["<code>activationDeadline</code>"]
+ <a for=map>exists</a>, then set <var>activationDeadline</var> to
+ <var>init</var>["<code>activationDeadline</code>"].
 
- <li><p>If <var>activationTimeout</var> is not a {{DOMHighResTimeStamp}} then throw a {{TypeError}}.
+ <li><p>If <var>activationDeadline</var> is not a {{DOMHighResTimeStamp}}, then throw a {{TypeError}}.
 
- <li><p>If <var>activationTimeout</var> is less than 0 then throw a {{RangeError}}.
+ <li><p>If <var>activationDeadline</var> is less than 0, then throw a {{RangeError}}.
 
  <li><p>Let <var>deferredRecord</var> be the result of calling
- <a>request a deferred fetch</a> given <var>request</var> and <var>activationTimeout</var>. This
+ <a>request a deferred fetch</a> given <var>request</var> and <var>activationDeadline</var>. This
  may throw an exception.
 
  <li>
