@@ -6726,6 +6726,20 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
  <a>environment settings object</a>.
 
+ <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
+ <a>HTTP(S) scheme</a> then throw a {{TypeError}}.
+
+ <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
+ [=potentially trustworthy url=], then throw a "{{SecurityError}}" {{DOMException}}.
+
+ <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>body</a> is not null and <var>request</var>'s
+  <a for=request>body</a>'s <a for=body>source</a> is null, then throw a {{TypeError}}.
+
+  <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
+
  <li>Let <var>totalScheduledDeferredBytesForOrigin</var> be 0.
 
  <li>
@@ -6751,7 +6765,7 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <a for=body>length</a>.
 
  <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
- throw a {{QuotaExceededError}}.
+ throw a "{{QuotaExceededError}}" {{DOMException}}.
 
  <li><p>Set <var>request</var>'s <a for=request>keepalive</a> to true.
 
@@ -8725,20 +8739,6 @@ method steps are:
 
  <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
 
- <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
- <a>HTTP(S) scheme</a> then throw a {{TypeError}}.
-
- <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
- [=potentially trustworthy url=], then throw a {{SecurityError}}.
-
- <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
-
- <li>
-  <p>If <var>request</var>'s <a for=request>body</a> is not null and <var>request</var>'s
-  <a for=request>body</a>'s <a for=body>source</a> is null, then throw a {{TypeError}}.
-
-  <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
-
  <li><p>Let <var>activationDeadline</var> be null.
 
  <li><p>If <var>init</var> is given and <var>init</var>["<code>activationDeadline</code>"]
@@ -8750,8 +8750,7 @@ method steps are:
  <li><p>If <var>activationDeadline</var> is less than 0, then throw a {{RangeError}}.
 
  <li><p>Let <var>deferredRecord</var> be the result of calling
- <a>request a deferred fetch</a> given <var>request</var> and <var>activationDeadline</var>. This
- may throw an exception.
+ <a>request a deferred fetch</a> given <var>request</var> and <var>activationDeadline</var>.
 
  <li>
   <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
