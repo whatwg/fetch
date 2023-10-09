@@ -6720,7 +6720,7 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 <div algorithm="request-a-deferred-fetch">
 <p>To <dfn>request a deferred fetch</dfn> given a
 <a for=/>request</a> <var>request</var> and a null or {{DOMHighResTimeStamp}}
-<var>activationDeadline</var> (default null):
+<var>activateAfter</var> (default null):
 
 <ol>
  <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
@@ -6777,12 +6777,14 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <a for="fetch group">deferred fetch records</a>.
 
  <li>
-  <p>If <var>activationDeadline</var> is not null, then run the following steps <a>in parallel</a>:</p>
+  <p>If <var>activateAfter</var> is not null, then run the following steps <a>in parallel</a>:</p>
 
   <ol>
-   <li><p>The user agent should wait until <var>activationDeadline</var> milliseconds have passed,
+   <li><p>The user agent should wait until <var>activateAfter</var> milliseconds have passed,
    or until the user agent has a reason to believe that it is about to lose the opportunity to
-   execute scripts, e.g. when the browser is moved to the background.
+   execute scripts, e.g. when the browser is moved to the background, or when <var>request</var>'s
+   <a for=request>client</a> is a <code>Document</code> that had a "<code>hidden</code>"
+   <a for=Document>visibility state</a> for a long period of time.
 
    <li><p>The user agent may wait for a further <a>implementation-defined</a> <a>duration</a>, e.g.
    in order to batch several requests together or to wait until <a for=request>keepalive</a>
@@ -8694,7 +8696,7 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 <pre class=idl>
 
 dictionary DeferredRequestInit : RequestInit {
-  DOMHighResTimeStamp activationDeadline;
+  DOMHighResTimeStamp activateAfter;
 };
 
 [Exposed=Window,Worker]
@@ -8738,18 +8740,18 @@ method steps are:
 
  <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
 
- <li><p>Let <var>activationDeadline</var> be null.
+ <li><p>Let <var>activateAfter</var> be null.
 
- <li><p>If <var>init</var> is given and <var>init</var>["<code>activationDeadline</code>"]
- <a for=map>exists</a>, then set <var>activationDeadline</var> to
- <var>init</var>["<code>activationDeadline</code>"].
+ <li><p>If <var>init</var> is given and <var>init</var>["<code>activateAfter</code>"]
+ <a for=map>exists</a>, then set <var>activateAfter</var> to
+ <var>init</var>["<code>activateAfter</code>"].
 
- <li><p>If <var>activationDeadline</var> is not a {{DOMHighResTimeStamp}}, then throw a {{TypeError}}.
+ <li><p>If <var>activateAfter</var> is not a {{DOMHighResTimeStamp}}, then throw a {{TypeError}}.
 
- <li><p>If <var>activationDeadline</var> is less than 0, then throw a {{RangeError}}.
+ <li><p>If <var>activateAfter</var> is less than 0, then throw a {{RangeError}}.
 
  <li><p>Let <var>deferredRecord</var> be the result of calling
- <a>request a deferred fetch</a> given <var>request</var> and <var>activationDeadline</var>.
+ <a>request a deferred fetch</a> given <var>request</var> and <var>activateAfter</var>.
 
  <li>
   <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
