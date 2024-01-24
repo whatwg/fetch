@@ -16,7 +16,7 @@ remote: fetch.bs
 	);
 
 local: fetch.bs
-	bikeshed spec fetch.bs fetch.html --md-Text-Macro="COMMIT-SHA LOCAL COPY"
+	bikeshed spec fetch.bs fetch.html --md-Text-Macro="COMMIT-SHA LOCAL-COPY"
 
 deploy: fetch.bs
 	curl --remote-name --fail https://resources.whatwg.org/build/deploy.sh
