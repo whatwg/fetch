@@ -1724,10 +1724,6 @@ is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<co
  </dl>
 </div>
 
-<p>A <a for=/>request</a> has an associated <dfn for=request export>service-workers race token</dfn> (a string). Unless stated otherwise it is null.
-
-<p class=note>This is only set by <a for=/>handle fetch</a> in service workers.
-
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-initiator>initiator</dfn>, which is
 the empty string,
@@ -4510,6 +4506,9 @@ steps:
 
  <li><p>If <var>recursive</var> is false, then run the remaining steps <a>in parallel</a>.
 
+ <li><p>Let |raceReesponse| be the result of [=lookup-race-response=].
+ <li><p>If |raceReesponse| is <var>response</var>, return |raceReesponse|.
+
  <li>
   <p>If <var>response</var> is null, then set <var>response</var> to the result of running the steps
   corresponding to the first matching statement:
@@ -4525,22 +4524,6 @@ steps:
      <a for="fetch params">preloaded response candidate</a> is a <a for=/>response</a>.
 
      <li><p>Return <var>fetchParams</var>'s <a for="fetch params">preloaded response candidate</a>.
-    </ol>
-
-   <dt><var>request</var>'s <a for=request>service-workers race token</a> is not null
-   <dd>
-    <ol>
-     <li><p>Let <var>raceReesponse</var> to the result of [=lookup-race-response=] given <var>request</var>'s <a for=request>service-workers race token</a>, <var>request</var>'s <a for=request>reserved client</a>, <var>request</var>'s <a for=request>URL</a>.
-     <li><p>If <var>raceReesponse</var> is non-null, then:
-      <ol>
-       <li><p>Wait until <var>raceReesponse</var> settles.
-       <li><p>If <var>raceReesponse</var> resolves with <var>response</var>, then:
-        <ol>
-         <li><p><a for=/>Assert</a>: <var>response</var> is a <a for=/>response</a>.
-         <li><p>Return <var>response</var>.
-        </ol>
-       <li><p>If <var>raceReesponse</var> rejects, return a <a>network error</a>.
-      </ol>
     </ol>
 
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> is
