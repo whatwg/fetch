@@ -6732,40 +6732,90 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
  [=potentially trustworthy url=], then throw a "{{SecurityError}}" {{DOMException}}.
 
+ <li><p>If <var>request</var>'s <a for=request>body</a> is null then throw a {{TypeError}}.
+
+ <li><p>If <var>request</var>'s
+ <a for=request>body</a>'s <a for=body>length</a> is null, then throw a {{TypeError}}.
+
  <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
 
  <li>
-  <p>If <var>request</var>'s <a for=request>body</a> is not null and <var>request</var>'s
-  <a for=request>body</a>'s <a for=body>source</a> is null, then throw a {{TypeError}}.
+  <p>If <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is null, then throw a
+  {{TypeError}}.
 
   <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
 
- <li>Let <var>totalScheduledDeferredBytesForOrigin</var> be 0.
+ <li>
+  <p>Let <var>quotaRelevantTopLevelNavigables</var> be an the
+  <a>quota-relevant top-level navigables</a> given <var>request</var>'s <a for=request>client</a>.
+
+  <p class=note>In most cases this will list will contain a single {{Document}}. The exception would
+  be when the request comes from a {{SharedWorker}}, in which case all the documents that directly
+  or indirectly obtain this worker would have to check their quota.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>body</a> is not null then:
+  <p><a for=list>For each</a> <var>topLevelNavigable</var> in
+  <var>quotaRelevantTopLevelNavigables</var>:
+
+  <p class=note>This algorithm asserts that this deferred fetch doesn't exceed two quotas: one for
+  the top-level document (640kb), and one for the reporting origin (64kb). The larger quota ensures
+  that the top-level {{Document}} and its subresources don't continue using an unlimited amount of
+  bandwidth after being destroyed. The smaller quota ensures that a single reporting sink doesn't
+  reserve the whole quota to itself.
 
   <ol>
-   <li><p>If <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a> is null, then throw a {{TypeError}}.
+   <li><p>Let <var>totalScheduledDeferredBytesForTopLevelDocument</var> be
+   <var>request</var>'s <a for=request>body</a>'s <a for=body>length</a>.
 
-   <li><p>Set <var>totalScheduledDeferredBytesForOrigin</var> to <var>request</var>'s
+   <li><p>Let <var>totalScheduledDeferredBytesForOrigin</var> be <var>request</var>'s
    <a for=request>body</a>'s <a for=body>length</a>.
+
+   <li><p>Let <var>participatingClients</var> be an empty <a for=/>set</a>.
+
+   <li><p><a for=list>For each</a> <var>navigable</var> of <var>topLevelNavigable</var>'s
+   <a>active document</a>'s <a for=Document>inclusive descendant navigables</a>,
+   <a for=set>append</a> <var>navigable</var>'s <a>active document</a> to
+   <var>participatingClients</var>.
+
+   <li>
+    <p><a for=list>For each</a> {{WorkerGlobalScope}} <var>worker</var>:
+
+    <ol>
+     <li><p>For each <var>owner</var> of <var>worker</var>'s <a>owner set</a>: if
+     <var>participatingClients</var> <a for=set>contains</a> <var>owner</var>, then
+     <a for=set>append</a> <var>worker</var> to <var>participatingClients</var>.
+    </ol>
+
+   <li>
+    <p><a for=list>For each</a> <var>client</var> of <var>participatingClients</var>:
+    <ol>
+     <li>
+      <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
+      <var>client</var>'s <a for=fetch>fetch group</a>'s
+      <a for="fetch group">deferred fetch records</a>:</p>
+
+      <ol>
+       <li><p>Let <var>length</var> be <var>deferredRecord</var>'s
+       <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
+       <a for=body>length</a>.
+
+       <li><p>Increment <var>totalScheduledDeferredBytesForTopLevelDocument</var> by <var>length</var>.
+
+       <li><p>If <var>totalScheduledDeferredBytesForTopLevelDocument</var> is greater than 640
+       kilobytes, then throw a "{{QuotaExceededError}}" {{DOMException}}.
+
+       <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
+       <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with
+       <var>request</var>'s <a for=request>origin</a>, then increment
+       <var>totalScheduledDeferredBytesForOrigin</var> by <var>length</var>.
+
+       <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
+       throw a "{{QuotaExceededError}}" {{DOMException}}.
+      </ol>
+     </li>
+    </ol>
+   </li>
   </ol>
- </li>
-
- <li><p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
- <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
- <a for="fetch group">deferred fetch records</a>: if <var>deferredRecord</var>'s
- <a for="deferred fetch record">request</a>'s <a for=request>body</a> is not null and
- <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s <a for=request>URL</a>'s
- <a for=url>origin</a> is <a>same origin</a> with <var>request</var>'s <a for=request>URL</a>'s
- <a for=url>origin</a>, then increment <var>totalScheduledDeferredBytesForOrigin</var> by
- <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
- <a for=body>length</a>.
-
- <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
- throw a "{{QuotaExceededError}}" {{DOMException}}.
 
  <li><p>Set <var>request</var>'s <a for=request>keepalive</a> to true.
 
@@ -6796,6 +6846,30 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 
  <li><p>Return <var>deferredRecord</var>.
 </ol>
+</div>
+
+<div algorithm="quota-relevant-top-level-navigables">
+<p>To retrieve the <dfn>quota-relevant top-level navigables</dfn> given an
+<a>environment settings object</a> <var>client</var>:</p>
+
+<ol>
+ <li>
+  <p>If <var>client</var> is a {{Document}}, then:
+
+  <ol>
+   <li><p>If <var>client</var> is <a>fully active</a> then return
+   « <var>client</var>'s <a for=Document>inclusive ancestor navigables</a>[0] ».
+
+   <li><p>Return « ».
+  </ol>
+
+ <li><p>Let <var>topLevelNavigables</var> be « ».
+
+ <li><p><a for=list>For each</a> <var>owner</var> in <var>client</var>'s
+ <a for=WorkerGlobalScope>owner set</a>, <a for=list>extend</a>
+ <var>topLevelNavigables</var> with <var>owner</var>'s <a>quota-relevant top-level navigables</a>.
+
+ <li><p>Return <var>topLevelNavigables</var>.
 </div>
 
 <div algorithm="process-deferred-fetches">
