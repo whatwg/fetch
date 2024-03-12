@@ -50,6 +50,10 @@ urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
         url:dfn-unsafe-shared-current-time;text:unsafe shared current time
     type:typedef;url:dom-domhighrestimestamp;text:DOMHighResTimeStamp
 
+urlPrefix:https://w3c.github.io/webappsec-permissions-policy;spec:permissions-policy
+    type:dfn
+        url:is-feature-enabled;text:is feature enabled in document for origin?
+
 urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     url:realm;text:realm
     url:sec-list-and-record-specification-type;text:Record
@@ -6746,16 +6750,30 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
   <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
 
  <li>
-  <p>Let <var>quotaRelevantTopLevelNavigables</var> be an the
-  <a>quota-relevant top-level navigables</a> given <var>request</var>'s <a for=request>client</a>.
+  <p>Let <var>quotaRelevantDocuments</var> be the
+  <a>quota-relevant documents</a> given <var>request</var>'s <a for=request>client</a>.
 
   <p class=note>In most cases this will list will contain a single {{Document}}. The exception would
   be when the request comes from a {{SharedWorker}}, in which case all the documents that directly
   or indirectly obtain this worker would have to check their quota.
 
+ <li><p>Let <var>topLevelDocuments</var> be an empty <a for=/>set</a>.
+
  <li>
-  <p><a for=list>For each</a> <var>topLevelNavigable</var> in
-  <var>quotaRelevantTopLevelNavigables</var>:
+  <p>For each <var>doc</var> in <var>quotaRelevantDocuments</var>:
+
+  <ol>
+   <li><p>If the result of calling <a>is feature enabled in document for origin?</a> given
+   "<code>deferred-fetch</code>", <var>doc</var>, and <var>request</var>'s <a for=request>origin</a>
+   is <code>Disabled</code>, then throw a {{NotAllowedError}}.
+
+   <li><p><a for=set>Append</a> <var>doc</var>'s
+   <a for=Document>inclusive ancestor navigables</a>[0]'s <a>active document</a> to
+   <var>topLevelDocuments</var>.
+  </ol>
+
+ <li>
+  <p><a for=list>For each</a> <var>topLevelDocument</var> in <var>topLevelDocuments</var>:
 
   <p class=note>This algorithm asserts that this deferred fetch doesn't exceed two quotas: one for
   the top-level document (640kb), and one for the reporting origin (64kb). The larger quota ensures
@@ -6772,10 +6790,9 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 
    <li><p>Let <var>participatingClients</var> be an empty <a for=/>set</a>.
 
-   <li><p><a for=list>For each</a> <var>navigable</var> of <var>topLevelNavigable</var>'s
-   <a>active document</a>'s <a for=Document>inclusive descendant navigables</a>,
-   <a for=set>append</a> <var>navigable</var>'s <a>active document</a> to
-   <var>participatingClients</var>.
+   <li><p><a for=list>For each</a> <var>navigable</var> of <var>topLevelDocument</var>'s
+   <a for=Document>inclusive descendant navigables</a>, <a for=set>append</a> <var>navigable</var>'s
+   <a>active document</a> to <var>participatingClients</var>.
 
    <li>
     <p><a for=list>For each</a> {{WorkerGlobalScope}} <var>worker</var>:
@@ -6848,9 +6865,9 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 </ol>
 </div>
 
-<div algorithm="quota-relevant-top-level-navigables">
-<p>To retrieve the <dfn>quota-relevant top-level navigables</dfn> given an
-<a>environment settings object</a> <var>client</var>:</p>
+<div algorithm="quota-relevant-documents">
+<p>To retrieve the <dfn>quota-relevant documents</dfn> given an <a>environment settings object</a>
+<var>client</var>:</p>
 
 <ol>
  <li>
@@ -6858,18 +6875,18 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 
   <ol>
    <li><p>If <var>client</var> is <a>fully active</a> then return
-   « <var>client</var>'s <a for=Document>inclusive ancestor navigables</a>[0] ».
+   « <var>client</var> ».
 
    <li><p>Return « ».
   </ol>
 
- <li><p>Let <var>topLevelNavigables</var> be « ».
+ <li><p>Let <var>documents</var> be « ».
 
  <li><p><a for=list>For each</a> <var>owner</var> in <var>client</var>'s
  <a for=WorkerGlobalScope>owner set</a>, <a for=list>extend</a>
- <var>topLevelNavigables</var> with <var>owner</var>'s <a>quota-relevant top-level navigables</a>.
+ <var>documents</var> with <var>owner</var>'s <a>quota-relevant documents</a>.
 
- <li><p>Return <var>topLevelNavigables</var>.
+ <li><p>Return <var>documents</var>.
 </div>
 
 <div algorithm="process-deferred-fetches">
