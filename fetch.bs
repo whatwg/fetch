@@ -6727,8 +6727,10 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 <var>activateAfter</var> (default null):
 
 <ol>
- <li><p>Assert: <var>request</var>'s <a for=request>client</a> is an
- <a>environment settings object</a>.
+ <li><p>Assert: <var>request</var>'s <a for=request>client</a> is a <a>fully active</a>
+ {{Document}}.
+
+ <li><p>Let <var>document</var> be <var>request</var>'s <a for=request>client</a>.
 
  <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
  <a>HTTP(S) scheme</a> then throw a {{TypeError}}.
@@ -6749,31 +6751,20 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 
   <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
 
- <li>
-  <p>Let <var>quotaRelevantDocuments</var> be the
-  <a>quota-relevant documents</a> given <var>request</var>'s <a for=request>client</a>.
+ <li><p>If the result of calling <a>is feature enabled in document for origin?</a> given
+ "<code>deferred-fetch</code>", <var>document</var>, and <var>request</var>'s
+ <a for=request>origin</a> is <code>Disabled</code>, then throw a {{NotAllowedError}}.
 
-  <p class=note>In most cases this will list will contain a single {{Document}}. The exception would
-  be when the request comes from a {{SharedWorker}}, in which case all the documents that directly
-  or indirectly obtain this worker would have to check their quota.
+ <li><p>Let <var>totalScheduledDeferredBytesForTopLevelDocument</var> be
+ <var>request</var>'s <a for=request>body</a>'s <a for=body>length</a>.
 
- <li><p>Let <var>topLevelDocuments</var> be an empty <a for=/>set</a>.
-
- <li>
-  <p>For each <var>doc</var> in <var>quotaRelevantDocuments</var>:
-
-  <ol>
-   <li><p>If the result of calling <a>is feature enabled in document for origin?</a> given
-   "<code>deferred-fetch</code>", <var>doc</var>, and <var>request</var>'s <a for=request>origin</a>
-   is <code>Disabled</code>, then throw a {{NotAllowedError}}.
-
-   <li><p><a for=set>Append</a> <var>doc</var>'s
-   <a for=Document>inclusive ancestor navigables</a>[0]'s <a>active document</a> to
-   <var>topLevelDocuments</var>.
-  </ol>
+ <li><p>Let <var>totalScheduledDeferredBytesForOrigin</var> be <var>request</var>'s
+ <a for=request>body</a>'s <a for=body>length</a>.
 
  <li>
-  <p><a for=list>For each</a> <var>topLevelDocument</var> in <var>topLevelDocuments</var>:
+  <p><a for=list>For each</a> <var>navigable</var> of <var>document</var>'s
+  <a>node navigable</a>'s <a for=navigable>top-level traversable</a>'s
+  <a for=Document>inclusive descendant navigables</a>:
 
   <p class=note>This algorithm asserts that this deferred fetch doesn't exceed two quotas: one for
   the top-level document (640kb), and one for the reporting origin (64kb). The larger quota ensures
@@ -6782,54 +6773,28 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
   reserve the whole quota to itself.
 
   <ol>
-   <li><p>Let <var>totalScheduledDeferredBytesForTopLevelDocument</var> be
-   <var>request</var>'s <a for=request>body</a>'s <a for=body>length</a>.
-
-   <li><p>Let <var>totalScheduledDeferredBytesForOrigin</var> be <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a>.
-
-   <li><p>Let <var>participatingClients</var> be an empty <a for=/>set</a>.
-
-   <li><p><a for=list>For each</a> <var>navigable</var> of <var>topLevelDocument</var>'s
-   <a for=Document>inclusive descendant navigables</a>, <a for=set>append</a> <var>navigable</var>'s
-   <a>active document</a> to <var>participatingClients</var>.
-
    <li>
-    <p><a for=list>For each</a> {{WorkerGlobalScope}} <var>worker</var>:
+    <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
+    <var>navigable</var>'s <a>active document</a>'s <a for=fetch>fetch group</a>'s
+    <a for="fetch group">deferred fetch records</a>:</p>
 
     <ol>
-     <li><p>For each <var>owner</var> of <var>worker</var>'s <a>owner set</a>: if
-     <var>participatingClients</var> <a for=set>contains</a> <var>owner</var>, then
-     <a for=set>append</a> <var>worker</var> to <var>participatingClients</var>.
-    </ol>
+     <li><p>Let <var>length</var> be <var>deferredRecord</var>'s
+     <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
+     <a for=body>length</a>.
 
-   <li>
-    <p><a for=list>For each</a> <var>client</var> of <var>participatingClients</var>:
-    <ol>
-     <li>
-      <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
-      <var>client</var>'s <a for=fetch>fetch group</a>'s
-      <a for="fetch group">deferred fetch records</a>:</p>
+     <li><p>Increment <var>totalScheduledDeferredBytesForTopLevelDocument</var> by <var>length</var>.
 
-      <ol>
-       <li><p>Let <var>length</var> be <var>deferredRecord</var>'s
-       <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
-       <a for=body>length</a>.
+     <li><p>If <var>totalScheduledDeferredBytesForTopLevelDocument</var> is greater than 640
+     kilobytes, then throw a "{{QuotaExceededError}}" {{DOMException}}.
 
-       <li><p>Increment <var>totalScheduledDeferredBytesForTopLevelDocument</var> by <var>length</var>.
+     <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
+     <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with
+     <var>request</var>'s <a for=request>origin</a>, then increment
+     <var>totalScheduledDeferredBytesForOrigin</var> by <var>length</var>.
 
-       <li><p>If <var>totalScheduledDeferredBytesForTopLevelDocument</var> is greater than 640
-       kilobytes, then throw a "{{QuotaExceededError}}" {{DOMException}}.
-
-       <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
-       <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with
-       <var>request</var>'s <a for=request>origin</a>, then increment
-       <var>totalScheduledDeferredBytesForOrigin</var> by <var>length</var>.
-
-       <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
-       throw a "{{QuotaExceededError}}" {{DOMException}}.
-      </ol>
-     </li>
+     <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
+     throw a "{{QuotaExceededError}}" {{DOMException}}.
     </ol>
    </li>
   </ol>
@@ -6863,30 +6828,6 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 
  <li><p>Return <var>deferredRecord</var>.
 </ol>
-</div>
-
-<div algorithm="quota-relevant-documents">
-<p>To retrieve the <dfn>quota-relevant documents</dfn> given an <a>environment settings object</a>
-<var>client</var>:</p>
-
-<ol>
- <li>
-  <p>If <var>client</var> is a {{Document}}, then:
-
-  <ol>
-   <li><p>If <var>client</var> is <a>fully active</a> then return
-   « <var>client</var> ».
-
-   <li><p>Return « ».
-  </ol>
-
- <li><p>Let <var>documents</var> be « ».
-
- <li><p><a for=list>For each</a> <var>owner</var> in <var>client</var>'s
- <a for=WorkerGlobalScope>owner set</a>, <a for=list>extend</a>
- <var>documents</var> with <var>owner</var>'s <a>quota-relevant documents</a>.
-
- <li><p>Return <var>documents</var>.
 </div>
 
 <div algorithm="process-deferred-fetches">
@@ -8790,12 +8731,12 @@ dictionary DeferredRequestInit : RequestInit {
   DOMHighResTimeStamp activateAfter;
 };
 
-[Exposed=Window,Worker]
+[Exposed=Window]
 interface FetchLaterResult {
   readonly attribute boolean activated;
 };
 
-partial interface mixin WindowOrWorkerGlobalScope {
+partial interface mixin Window {
   [NewObject] FetchLaterResult fetchLater(RequestInfo input, optional DeferredRequestInit init = {});
 };
 </pre>
