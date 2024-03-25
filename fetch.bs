@@ -2732,20 +2732,22 @@ functionality.
 <p>Each <a>environment settings object</a> has an associated
 <dfn export id=concept-fetch-group for=fetch>fetch group</dfn>.
 
-<p>A <a for=fetch>fetch group</a> holds an ordered list of
-<dfn lt="fetch record" export for="fetch group" id=concept-fetch-record>fetch records</dfn>.
+<p>A <a for=fetch>fetch group</a> has an associated
+<dfn lt="fetch record" export for="fetch group" id=concept-fetch-record>fetch records</dfn>,
+a <a for=/>list</a> of <a for="/" data-lt="fetch record">fetch records</a>.
 
-<p>A <a for=fetch>fetch group</a> holds a <a for=/>list</a> of
-<dfn export for="fetch group" id=concept-defer=fetch-record>deferred fetch records</dfn>.
+<p>A <a for=fetch>fetch group</a> has an associated
+<dfn export for="fetch group" id=concept-defer=fetch-record>deferred fetch records</dfn>,
+a <a for=/>list</a> of <a data-lt="deferred fetch record">deferred fetch records</a>.
 
-<p>A <a for="fetch group">fetch record</a> has an associated
-<dfn export for="fetch record" id=concept-fetch-record-request>request</dfn> (a
-<a for=/>request</a>).
+<p>A <dfn export>fetch record</dfn> is a [=struct=]. It has the following items:
 
-<p>A <a for="fetch group">fetch record</a> has an associated
-<dfn export for="fetch record" id=concept-fetch-record-fetch>controller</dfn> (a
-<a for=/>fetch controller</a> or null).
+<dl>
+ <dt><dfn export for="fetch record">request</dfn>
+ <dd>A <a for=/>request</a>.
 
+ <dt><dfn export for="fetch record">controller</dfn>
+ <dd>A <a for=/>fetch controller</a> or null.
 
 <hr>
 
@@ -2763,8 +2765,8 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
 
   <p class=note>This value can be modified <a>in parallel</a>. There could be a race condition where
   the <code>Document</code> object's <a for=/>event loop</a> might read it as
-  "<code>deferred</code>" at the same time that it is changed to "<code>activated</code>". UAs can
-  mitigate this race condition in an <a>implementation-defined</a> manner.
+  "<code>deferred</code>" at the same time that it is changed to "<code>activated</code>". User
+  agents can mitigate this race condition in an <a>implementation-defined</a> manner.
 </dl>
 
 
@@ -6719,9 +6721,9 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 <h3 id=deferred-fetching>Deferred fetching</h3>
 
 <p>Deferred fetches allow callers to request that a fetch is invoked at the latest possible moment,
-i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout.
+i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout.
 
-<div algorithm="request-a-deferred-fetch">
+<div algorithm>
 <p>To <dfn>request a deferred fetch</dfn> given a
 <a for=/>request</a> <var>request</var> and a null or {{DOMHighResTimeStamp}}
 <var>activateAfter</var> (default null):
@@ -6736,14 +6738,14 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <a>HTTP(S) scheme</a>, then throw a {{TypeError}}.
 
  <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
- [=potentially trustworthy url=], then throw a "{{SecurityError}}" {{DOMException}}.
+ <a>potentially trustworthy url</a>, then throw a "{{SecurityError}}" {{DOMException}}.
 
- <li><p>If the result of calling <a>is feature enabled in document for origin?</a> given
+ <li><p>If the result of calling 	<a>is feature enabled in document for origin?</a> given
  "<code>deferred-fetch</code>", <var>document</var>, and <var>request</var>'s
  <a for=request>origin</a> is <code>Disabled</code>, then throw a {{NotAllowedError}}.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>body</a> is not null then:
+  <p>If <var>request</var>'s <a for=request>body</a> is non-null then:
 
   <ol>
    <li><p>If <var>request</var>'s
@@ -6767,10 +6769,10 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
     <a for=Document>inclusive descendant navigables</a>:
 
     <p class=note>This algorithm asserts that this deferred fetch doesn't exceed two quotas: one for
-    the top-level document (640kb), and one for the reporting origin (64kb). The larger quota ensures
-    that the top-level {{Document}} and its subresources don't continue using an unlimited amount of
-    bandwidth after being destroyed. The smaller quota ensures that a single reporting sink doesn't
-    reserve the whole quota to itself.
+    the top-level document (640 kibibytes), and one for the reporting origin (64 kibibytes). The
+    larger quota ensures that the top-level {{Document}} and its subresources don't continue using
+    an unlimited amount of bandwidth after being destroyed. The smaller quota ensures that a single
+    reporting sink doesn't reserve the whole quota to itself.
 
     <ol>
      <li>
@@ -6786,14 +6788,14 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
        <li><p>Increment <var>totalScheduledDeferredBytesForTopLevelDocument</var> by <var>length</var>.
 
        <li><p>If <var>totalScheduledDeferredBytesForTopLevelDocument</var> is greater than 640
-       kilobytes, then throw a "{{QuotaExceededError}}" {{DOMException}}.
+       kibibytes, then throw a "{{QuotaExceededError}}" {{DOMException}}.
 
        <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
        <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with
        <var>request</var>'s <a for=request>origin</a>, then increment
        <var>totalScheduledDeferredBytesForOrigin</var> by <var>length</var>.
 
-       <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kilobytes, then
+       <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kibibytes, then
        throw a "{{QuotaExceededError}}" {{DOMException}}.
       </ol>
      </li>
@@ -6813,16 +6815,16 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <a for="fetch group">deferred fetch records</a>.
 
  <li>
-  <p>If <var>activateAfter</var> is not null, then run the following steps <a>in parallel</a>:</p>
+  <p>If <var>activateAfter</var> is non-null, then run the following steps <a>in parallel</a>:</p>
 
   <ol>
    <li><p>The user agent should wait until <var>activateAfter</var> milliseconds have passed,
    or until the user agent has a reason to believe that it is about to lose the opportunity to
-   execute scripts, e.g. when the browser is moved to the background, or when <var>request</var>'s
+   execute scripts, e.g., when the browser is moved to the background, or when <var>request</var>'s
    <a for=request>client</a> is a <code>Document</code> that had a "<code>hidden</code>"
    <a for=Document>visibility state</a> for a long period of time.
 
-   <li><p>The user agent may wait for a further <a>implementation-defined</a> <a>duration</a>, e.g.
+   <li><p>The user agent may wait for a further <a>implementation-defined</a> <a>duration</a>, e.g.,
    in order to batch several requests together or to wait until <a for=request>keepalive</a>
    requests are complete.
 
@@ -6834,7 +6836,7 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 </ol>
 </div>
 
-<div algorithm="process-deferred-fetches">
+<div algorithm>
 <p>To <dfn export>process deferred fetches</dfn> given a <a>fetch group</a> <var>fetchGroup</var>:
 
 <ol>
@@ -6850,7 +6852,7 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
 </ol>
 </div>
 
-<div algorithm="process-a-deferred-fetch">
+<div algorithm>
 <p>To <dfn>process a deferred fetch</dfn> <var>deferredRecord</var>:
 <ol>
  <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is not
@@ -6863,6 +6865,7 @@ i.e. when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after 
  <a for="deferred fetch record">request</a>.
 </ol>
 </div>
+
 
 
 <h2 id=fetch-api>Fetch API</h2>
@@ -8596,6 +8599,20 @@ otherwise false.
 partial interface mixin WindowOrWorkerGlobalScope {
   [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional RequestInit init = {});
 };
+
+
+dictionary DeferredRequestInit : RequestInit {
+  DOMHighResTimeStamp activateAfter;
+};
+
+[Exposed=Window]
+interface FetchLaterResult {
+  readonly attribute boolean activated;
+};
+
+partial interface mixin Window {
+  [NewObject] FetchLaterResult fetchLater(RequestInfo input, optional DeferredRequestInit init = {});
+};
 </pre>
 
 <div algorithm>
@@ -8729,22 +8746,6 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 </ol>
 </div>
 
-<pre class=idl>
-
-dictionary DeferredRequestInit : RequestInit {
-  DOMHighResTimeStamp activateAfter;
-};
-
-[Exposed=Window]
-interface FetchLaterResult {
-  readonly attribute boolean activated;
-};
-
-partial interface mixin Window {
-  [NewObject] FetchLaterResult fetchLater(RequestInfo input, optional DeferredRequestInit init = {});
-};
-</pre>
-
 <p>A {{FetchLaterResult}} has an associated <a>deferred fetch record</a>
 <dfn for=FetchLaterResult>deferred record</dfn>.
 
@@ -8773,8 +8774,6 @@ method steps are:
  <li><p>If <var>init</var> is given and <var>init</var>["<code>activateAfter</code>"]
  <a for=map>exists</a>, then set <var>activateAfter</var> to
  <var>init</var>["<code>activateAfter</code>"].
-
- <li><p>If <var>activateAfter</var> is not a {{DOMHighResTimeStamp}}, then throw a {{TypeError}}.
 
  <li><p>If <var>activateAfter</var> is less than 0, then throw a {{RangeError}}.
 
