@@ -2737,6 +2737,13 @@ a <a for=/>list</a> of <a for="/" data-lt="fetch record">fetch records</a>.
 <dfn export for="fetch group" id=concept-defer=fetch-record>deferred fetch records</dfn>,
 a <a for=/>list</a> of <a data-lt="deferred fetch record">deferred fetch records</a>.
 
+<p>A <a for=fetch>fetch group</a> has an associated boolean
+<dfn for="fetch group">is eligible for deferred fetching</dfn>.
+
+To initialize a <a for=fetch>fetch group</a> for a given <a>environment settings object</a>
+<var>settings</var>, set its <a for="fetch group">is eligible for deferred fetching</a> to the
+result of calling <a>check deferred fetching eligibility</a> given <var>settings</var>.
+
 <p>A <dfn export>fetch record</dfn> is a [=struct=]. It has the following items:
 
 <dl>
@@ -6737,9 +6744,9 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
  <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
  <a>potentially trustworthy url</a>, then throw a "{{SecurityError}}" {{DOMException}}.
 
- <li><p>If the result of calling [$Is feature enabled in document for origin?$] given
- "<code>deferred-fetch</code>", <var>document</var>, and <var>request</var>'s
- <a for=request>origin</a> is <code>Disabled</code>, then throw a {{NotAllowedError}}.
+ <li><p>If <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>
+ <a for="fetch group">is eligible for deferred fetching</a> is false, then throw a
+ "{{NotAllowedError}}" {{DOMException}}.
 
  <li>
   <p>If <var>request</var>'s <a for=request>body</a> is non-null then:
@@ -6754,50 +6761,11 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
 
     <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
 
-   <li><p>Let <var>totalScheduledDeferredBytesForTopLevelDocument</var> be
-   <var>request</var>'s <a for=request>body</a>'s <a for=body>length</a>.
-
-   <li><p>Let <var>totalScheduledDeferredBytesForOrigin</var> be <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a>.
-
-   <li>
-    <p><a for=list>For each</a> <var>navigable</var> of <var>document</var>'s
-    <a>node navigable</a>'s <a for=navigable>top-level traversable</a>'s
-    <a for=Document>inclusive descendant navigables</a>:
-
-    <p class=note>This algorithm asserts that this deferred fetch doesn't exceed two quotas: one for
-    the top-level document (640 kibibytes), and one for the reporting origin (64 kibibytes). The
-    larger quota ensures that the top-level {{Document}} and its subresources don't continue using
-    an unlimited amount of bandwidth after being destroyed. The smaller quota ensures that a single
-    reporting sink doesn't reserve the whole quota to itself.
-
-    <ol>
-     <li>
-      <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
-      <var>navigable</var>'s <a>active document</a>'s <a for=fetch>fetch group</a>'s
-      <a for="fetch group">deferred fetch records</a>:</p>
-
-      <ol>
-       <li><p>Let <var>length</var> be <var>deferredRecord</var>'s
-       <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
-       <a for=body>length</a>.
-
-       <li><p>Increment <var>totalScheduledDeferredBytesForTopLevelDocument</var> by <var>length</var>.
-
-       <li><p>If <var>totalScheduledDeferredBytesForTopLevelDocument</var> is greater than 640
-       kibibytes, then throw a "{{QuotaExceededError}}" {{DOMException}}.
-
-       <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
-       <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with
-       <var>request</var>'s <a for=request>origin</a>, then increment
-       <var>totalScheduledDeferredBytesForOrigin</var> by <var>length</var>.
-
-       <li><p>If <var>totalScheduledDeferredBytesForOrigin</var> is greater than 64 kibibytes, then
-       throw a "{{QuotaExceededError}}" {{DOMException}}.
-      </ol>
-     </li>
-    </ol>
-   </li>
+   <li><p>If the
+   <a>available deferred fetching quota</a> given <var>document</var> and <var>request</var>'s
+   <a for=request>URL</a>'s <a for=url>origin</a> is less than <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a>, then throw a "{{QuotaExceededError}}"
+   {{DOMException}}.
   </ol>
 
  <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
@@ -6831,6 +6799,119 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
 
  <li><p>Return <var>deferredRecord</var>.
 </ol>
+</div>
+
+<div algorithm>
+<p>To get the <dfn>available deferred fetching quota</dfn> given a <code>Document</code>
+<var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
+
+<p class=note>This algorithm asserts that this deferred fetch doesn't exceed two quotas: one for the
+top-level document (640 kibibytes), and one for the reporting origin (64 kibibytes). The larger
+quota ensures that the top-level {{Document}} and its subresources don't continue using an unlimited
+amount of bandwidth after being destroyed. The smaller quota ensures that a single reporting sink
+doesn't reserve the whole quota to itself.
+
+<ol>
+ <li><p>Let <var>closestSameOriginInclusiveAncestor</var> be <var>document</var>'s
+ <a>node navigable</a>.
+
+ <li><p>While <var>closestSameOriginInclusiveAncestor</var>'s <a for=navigable>parent</a> is a
+ <a for=/>navigable</a> whose <a>active document</a>'s <a for=Document>origin</a> is <a>same origin</a>
+ with <var>document</var>'s <a for=Document>origin</a>, set
+ <var>closestSameOriginInclusiveAncestor</var> to <var>closestSameOriginInclusiveAncestor</var>'s
+ <a for=navigable>parent</a>.
+
+ <li><p>Let <var>directRelativeSameOriginNavigables</var> be the
+ <a>inclusive direct same origin descendants</a> of <var>closestSameOriginInclusiveAncestor</var>.
+
+ <li><p>Let <var>remainingTotalQuota</var> be 640 kibibytes if
+ <var>directRelativeSameOriginNavigables</var> includes <var>document</var>'s
+ <a>node navigable</a>'s <a for=navigable>top-level traversable</a>, and 64 kibibytes otherwise.
+
+ <li><p>Let <var>remainingQuotaForOrigin</var> be 64 kibibytes.
+
+ <li>
+  <p><a for=list>For each</a> <var>navigable</var> in
+  <var>directRelativeSameOriginNavigables</var>:
+
+  <ol>
+   <li>
+    <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
+    <var>navigable</var>'s <a>active document</a>'s <a for=fetch>fetch group</a>'s
+    <a for="fetch group">deferred fetch records</a>:</p>
+
+    <ol>
+     <li><p>Let <var>length</var> be <var>deferredRecord</var>'s
+     <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
+     <a for=body>length</a>.
+
+     <li><p>Decrement <var>remainingTotalQuota</var> by <var>length</var>.
+
+     <li><p>If <var>origin</var> is not null, and <var>deferredRecord</var>'s
+     <a for="deferred fetch record">request</a>'s <a for=request>URL</a>'s <a for=url>origin</a> is
+     <a>same origin</a> with <var>origin</var>, then decrement <var>remainingQuotaForOrigin</var> by
+     <var>length</var>.
+    </ol>
+   </li>
+
+   <li><p>Let <var>navigableContainers</var> be a list of all <a>shadow-including descendants</a> of
+   <var>navigable</var>'s <a>active document</a> that are <a>navigable containers</a>.
+
+   <li>
+    <p><a for=list>For each</a> <var>childNavigable</var> of <var>navigableContainers</var>:
+
+    <ol>
+     <li><p>If <var>childNavigable</var>'s <a>active document</a>'s <a for=Document>origin</a> is
+     not <a>same origin</a> with <a for=/>navigable</a>'s <a>active document</a>'s
+     <a for=Document>origin</a> and <var>childNavigable</var>'s <a>active document</a>'s
+     <a for=fetch>fetch group</a>'s <a for="fetch group">is eligible for deferred fetching</a> is true,
+     then decrement <var>remainingTotalQuota</var> by 64 kibibytes.
+    </ol>
+   </li>
+  </ol>
+ </li>
+
+ <li><p>If <var>remainingTotalQuota</var> is less than <var>remainingQuotaForOrigin</var>, then
+ return <var>remainingTotalQuota</var>.
+
+ <li><p>Return <var>remainingQuotaForOrigin</var>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To get the <dfn>inclusive direct same origin descendants</dfn> of a <a for=/>navigable</a>
+<var>root</var>:</p>
+
+<ol>
+ <li><p>Let <var>descendants</var> be  « <var>root</var> ».
+
+ <li><p>Let <var>navigableContainers</var> be a list of all <a>shadow-including descendants</a>
+ of <var>root</var>'s <a>active document</a> that are <a>navigable containers</a>.
+
+ <li><p><a for=list>For each</a> <var>childNavigable</var> of <var>navigableContainers</var>
+ whose <a>active document</a>'s <a for=Document>origin</a> is <a>same origin</a> with
+ <a for=/>navigable</a>'s <a>active document</a>'s <a for=Document>origin</a>, <a for=list>extend</a>
+ <var>descendants</var> with <var>childNavigable</var>'s
+ <a>inclusive direct same origin descendants</a>.
+
+ <li><p>Return <var>descendants</var>.
+</ol>
+</div>
+
+<div algorithm>
+To <dfn>check deferred fetching eligibility</dfn> given an <a>environment settings object</a>
+<var>settings</var>:
+
+<ol>
+ <li><p>If <var>settings</var> is not a <code>Document</code>, return false.
+
+ <li><p>If the result of calling [$Is feature enabled in document for origin?$] given
+ <var>settings</var> is <code>Disabled</code>, return false.
+
+ <li><p>If the <a>available deferred fetching quota</a> given <var>settings</var> and null is less
+ than 64 kibibytes, return false.
+
+ <li><p>Return true.
 </div>
 
 <div algorithm>
