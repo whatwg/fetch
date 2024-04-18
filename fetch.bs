@@ -40,6 +40,10 @@ urlPrefix:https://httpwg.org/specs/rfc9111.html#;type:dfn;spec:http-caching
 urlPrefix:https://httpwg.org/specs/rfc9112.html#;type:dfn;spec:http1
     url:status.line;text:reason-phrase
 
+urlPrefix:https://https://html-preview.github.io/?url=https://raw.githubusercontent.com/johannhof/http-extensions/gh-pages/draft-ietf-httpbis-rfc6265bis.html#;type:dfn;spec:cookies
+    url:name-serialize-cookies;text:serialize cookies
+    url:name-retrieve-cookies;text:retrieve cookies
+
 url:https://w3c.github.io/resource-timing/#dfn-mark-resource-timing;text:mark resource timing;type:dfn;spec:resource-timing
 
 urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
@@ -53,10 +57,20 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     url:realm;text:realm
     url:sec-list-and-record-specification-type;text:Record
     url:current-realm;text:current realm
+
+spec: storage-access; urlPrefix: https://privacycg.github.io/storage-access
+    type: dfn
+        for: environment
+            text: has storage access; url: #environment-has-storage-access
 </pre>
 
 <pre class=biblio>
 {
+    "COOKIES": {
+        "authors": ["Johann Hofmann", "Anne Van Kesteren"],
+        "href": "https://html-preview.github.io/?url=https://raw.githubusercontent.com/johannhof/http-extensions/gh-pages/draft-ietf-httpbis-rfc6265bis.html#name-retrieve-cookies",
+        "title": "Cookies: HTTP State Management Mechanism"
+    },
     "HTTP": {
         "aliasOf": "RFC9110"
     },
@@ -2222,9 +2236,8 @@ or "<code>object</code>".
 <hr>
 
 <div algorithm>
-<p>A <a for=/>request</a> <var>request</var> has a
-<dfn for=request id=concept-request-tainted-origin>redirect-tainted origin</dfn> if these steps
-return true:
+<p>To get <a for=/>request</a> <var>request</var>'s
+<dfn for=request id=concept-request-redirect-taint>redirect-taint</dfn>:
 
 <ol>
  <li><p>Let <var>lastURL</var> be null.
@@ -2236,23 +2249,26 @@ return true:
    <li><p>If <var>lastURL</var> is null, then set <var>lastURL</var> to <var>url</var> and
    <a for=iteration>continue</a>.
 
+   <li><p>If <var>url</var>'s <a for=url>origin</a> is not <a for=/>same site</a> with
+   <var>lastURL</var>'s <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is
+   not <a for=/>same site</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return "Cross-Site".
+
    <li><p>If <var>url</var>'s <a for=url>origin</a> is not <a>same origin</a> with
    <var>lastURL</var>'s <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is
-   not <a>same origin</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return true.
+   not <a>same origin</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return "Same-Site-Cross-Origin".
 
    <li>Set <var>lastURL</var> to <var>url</var>.
   </ol>
 
- <li>Return false.
+ <li>Return "None".
 </ol>
 </div>
 
-<div algorithm>
 <p><dfn>Serializing a request origin</dfn>, given a <a for=/>request</a> <var>request</var>, is to
 run these steps:
 
 <ol>
- <li><p>If <var>request</var> has a <a for=request>redirect-tainted origin</a>, then return
+ <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is not "None", then return
  "<code>null</code>".
 
  <li><p>Return <var>request</var>'s <a for=request>origin</a>,
@@ -2358,8 +2374,8 @@ source of security bugs. Please seek security review for features that deal with
  "<a for="embedder policy value"><code>credentialless</code></a>", then return true.</p>
 
  <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
- <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and <var>request</var>
- does not have a <a for=request>redirect-tainted origin</a>, then return true.</p>
+ <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and <var>request</var>'s
+ <a for=request>redirect-taint</a> is not "None", then return true.</p>
 
  <li><p>Return false.</p>
 </ol>
@@ -2475,6 +2491,8 @@ this is also tracked internally using the request's <a for=request>timing allow 
 <p>A <a for=/>response</a> has an associated <dfn for=response>has-cross-origin-redirects</dfn>
 (a boolean), which is initially false.
 
+<p>A <a for=/>response</a> has an associated <dfn for=response>has-cross-site-redirects</dfn>
+(a boolean), which is initially false.
 <hr>
 
 <p>A <dfn export id=concept-network-error>network error</dfn> is a <a for=/>response</a> whose
@@ -3284,18 +3302,25 @@ request <a for=/>header</a> allows the request to carry locally stored state, su
 given a <a for=/>request</a> <var>request</var>, run these steps:
   <ol>
      <li><p>Let |sameSite| be the result of [=determining the same-site mode=] for <var>request</var>.
-     <li><p>Let |secure| be false.
-     <li><p>If <var>request</var>'s <a for=request>current URL</a>'s <var>scheme</var> is "<code>https</code>", then set |secure| to true.
+     <li><p>Let |isSecure| be false.
+     <li><p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is "<code>https</code>", then set |isSecure| to true.
      <p class=note>Note that this doesn't use the arguably superior definition of [=secure context=]
-     <li><p>Let |httpOnly| be true.
+     <li><p>Let |httpOnlyAllowed| be true.
      <p class=note>Fetch implies that the request is http-only, as opposed to document.cookie
      <li><p>Let |partitionKey| be the result of [=computing the cookie partition key=] for <var>request</var>.
      <li><p>Let |partitionedContext| be the result of [=determining the partitioned context state=] for |request|.
-     <li><p>Let |cookies| be the result of [=getting the sorted list of cookies=] given <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>, <var>request</var>'s <a for=request>current URL</a>'s <a for=url>path</a>, |secure|, |httpOnly|, |sameSite|, |partitionKey|, |partitionedContext|.
+     <li><p>Let |cookies| be the result of running <a>retrieve cookies</a> given
+      |isSecure|,
+      <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>,
+      <var>request</var>'s <a for=request>current URL</a>'s <a for=url>path</a>,
+      |httpOnlyAllowed|,
+      |sameSite|,
+      |partitionKey|
+      and |partitionedContext|.
 
      <p class=note>It is expected that the cookie store returns an ordered list of cookies
      <li>If |cookies| <a for="list">is empty</a>, then return.
-     <li>Let |value| be the result of [=serializing a cookie list=] given |cookies|.
+     <li>Let |value| be the result of running <a>serialize cookies</a> given |cookies|.
      <li><a for="header list">Append</a> (`<code>Cookie</code>`, <var>value</var>) to <var>request</var>'s <a for=request>header list</a>.
   </ol>
 </div>
@@ -3303,12 +3328,15 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
 <div algorithm>
 <p>To <dfn>determine the same-site mode</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
   <ol>
-   <li><p>If <var>request</var>'s <a for=request>client</a>'s has cross-site ancestor is false, return "None".
+   <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>method</a> is "GET" or "POST".
+   <li><p>If <var>request</var>'s <a for=request>method</a> is "GET" and
+    <var>request</var>'s <a for=request>destination</a> is "document", return "LaxOrLess".
+   <p class=XXX>TODO: This needs to describe Lax-Allowing-Unsafe quirks
+   <li><p>If <var>request</var>'s <a for=request>client</a>'s has cross-site ancestor is true, return "None".
    <p class=XXX>TODO: This refers to the cross-site ancestor flag added in https://github.com/whatwg/html/pull/8036
-   <li><p>Let <var>topLevelOrigin</var> be <var>environment</var>'s <a for="environment">top-level origin</a>.
-   <li><p>...
-   <p class=XXX>TODO: Formalize what's written up in https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-12#name-strict-and-lax-enforcement here
-   <li><p>Profit!
+   <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is "Cross-Site", return "None".
+    <p class=XXX>Should we default to "UnsetOrLess" in place of "None", i.e. is "None" or "Lax" the default for us?
+   <li><p>Return "StrictOrLess".
   </ol>
 </div>
 
@@ -3316,7 +3344,7 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
 <p>To <dfn>compute the cookie partition key</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
   <p class=XXX>See https://dcthetall.github.io/CHIPS-spec/draft-cutler-httpbis-partitioned-cookies.html#name-computing-the-cookie-partit
   <ol>
-   <li><p>Let <var>topLevelOrigin</var> be <var>environment</var>'s
+   <li><p>Let <var>topLevelOrigin</var> be <var>request</var>'s <a for=request>client</a>'s
    <a for="environment">top-level origin</a>.
 
    <li><p>Let <var>topLevelSite</var> be the result of <a lt="obtain a site">obtaining a site</a>,
@@ -3324,7 +3352,6 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
 
    <li>
     <p>Let <var>crossSiteAncestors</var> be <var>request</var>'s <a for=request>client</a>'s has cross-site ancestor.
-    <p class=XXX>This will need to be decided in https://github.com/privacycg/CHIPS/issues/40
 
    <li><p>Return (<var>topLevelSite</var>, <var>crossSiteAncestors</var>).
   </ol>
@@ -3338,20 +3365,6 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
     <li><p>If <var>request</var>'s <a for=request>client</a>'s [=environment/has storage access=] is true, return false.
     <p class=XXX>TODO: This refers to the flag added in https://privacycg.github.io/storage-access/#environment-has-storage-access
     <li><p>Return true.
-  </ol>
-</div>
-
-<div algorithm>
-<p>To <dfn>get the sorted list of cookies</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
-  <ol>
-     <p class=XXX>TODO: We have to define this interface in 6265bis
-  </ol>
-</div>
-
-<div algorithm>
-<p>To <dfn>serialize a cookie list</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
-  <ol>
-     <p class=XXX>TODO: We have to define this interface in 6265bis
   </ol>
 </div>
 
@@ -4732,8 +4745,11 @@ steps:
  <!-- If you are ever tempted to move this around, carefully consider responses from about URLs,
       blob URLs, service workers, HTTP cache, HTTP network, etc. -->
 
- <li><p>If <var>request</var> has a <a for=request>redirect-tainted origin</a>, then set
+ <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is not "<code>None</code>", then set
  <var>internalResponse</var>'s <a for=response>has-cross-origin-redirects</a> to true.
+
+ <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is "<code>Cross-Site</code>", then set
+ <var>internalResponse</var>'s <a for=response>has-cross-site-redirects</a> to true.
 
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set
  <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
