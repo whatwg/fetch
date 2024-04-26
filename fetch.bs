@@ -6736,8 +6736,6 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
  <li><p>If <var>request</var>'s <a for=request>client</a> is not a <a>fully active</a>
  {{Document}}, then throw an "{{InvalidStateError}}" {{DOMException}}.
 
- <li><p>Let <var>document</var> be <var>request</var>'s <a for=request>client</a>.
-
  <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
  <a>HTTP(S) scheme</a>, then throw a {{TypeError}}.
 
@@ -6747,6 +6745,14 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
  <li><p>If <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>
  <a for="fetch group">is eligible for deferred fetching</a> is false, then throw a
  "{{NotAllowedError}}" {{DOMException}}.
+
+ <li><p>Let <var>totalRequestLength</var> be the [=string/length=] of <var>request</var>'s
+ <a for=request>URL</a>, <a lt="URL serializer">serialized</a> with
+ [=URL serializer/exclude fragment=] set to true.
+
+ <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) in
+ <a for=request>header list</a>, increment <var>totalRequestLength</var> by <var>name</var>'s
+ [=byte sequence/length=] + <var>value</var>'s [=byte sequence/length=].
 
  <li>
   <p>If <var>request</var>'s <a for=request>body</a> is non-null then:
@@ -6761,12 +6767,13 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
 
     <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
 
-   <li><p>If the
-   <a>available deferred fetching quota</a> given <var>document</var> and <var>request</var>'s
-   <a for=request>URL</a>'s <a for=url>origin</a> is less than <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a>, then throw a "{{QuotaExceededError}}"
-   {{DOMException}}.
+   <li><p>Increment <var>totalRequestLength</var> by <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a>.
   </ol>
+
+ <li><p>If the <a>available deferred fetching quota</a> given <var>request</var>'s
+ <a for=request>client</a> and <var>request</var>'s <a for=request>URL</a>'s <a for=url>origin</a>
+ is less than <var>totalRequestLength</var>, then throw a "{{QuotaExceededError}}" {{DOMException}}.
 
  <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
 
