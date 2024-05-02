@@ -2865,8 +2865,9 @@ steps:
 <a>network partition key</a> <var>key</var>, <a for=/>URL</a> <var>url</var>, boolean
 <var>credentials</var>, an optional <a>new connection setting</a> <var>new</var> (default
 "<code>no</code>"), and an optional boolean
-<dfn export for="obtain a connection"><var>http3Only</var></dfn> (default false), run these steps:
-<!-- new's "yes-and-dedicated" and http3Only have been added for WebTransport -->
+<dfn export for="obtain a connection"><var>requireUnreliable</var></dfn> (default false), run these
+steps:
+<!-- new's "yes-and-dedicated" and requireUnreliable have been added for WebTransport -->
 
 <ol>
  <li>
@@ -2878,11 +2879,11 @@ steps:
    <a for=connection>origin</a> is <var>url</var>'s <a for=url>origin</a>, and
    <a for=connection>credentials</a> is <var>credentials</var>.
 
-   <li><p>If <var>connections</var> is not empty and <var>http3Only</var> is false, then return
-   one of <var>connections</var>.
+   <li><p>If <var>connections</var> is not empty and <var>requireUnreliable</var> is false, then
+   return one of <var>connections</var>.
 
-   <li><p>If there is an HTTP/3 <a>connection</a> in <var>connections</var>, then return that
-   <a>connection</a>.
+   <li><p>If there is a <a>connection</a> capable of supporting unreliable transport in
+   <var>connections</var>, e.g., HTTP/3, then return that <a>connection</a>.
   </ol>
 
  <li>
@@ -2920,8 +2921,8 @@ steps:
     <p>Let <var>connection</var> be the result of running this step: run <a>create a connection</a>
     given <var>key</var>, <var>url</var>'s <a for=url>origin</a>, <var>credentials</var>,
     <var>proxy</var>, an <a>implementation-defined</a> <a for=/>host</a> from <var>hosts</var>,
-    <var>timingInfo</var>, and <var>http3Only</var> an <a>implementation-defined</a> number of
-    times, <a>in parallel</a> from each other, and wait for at least 1 to return a value. In an
+    <var>timingInfo</var>, and <var>requireUnreliable</var> an <a>implementation-defined</a> number
+    of times, <a>in parallel</a> from each other, and wait for at least 1 to return a value. In an
     <a>implementation-defined</a> manner, select a value to return from the returned values and
     return it. Any other returned values that are <a>connections</a> may be closed.
 
@@ -2955,7 +2956,7 @@ reused across <a>connections</a> whose <a for=connection>credentials</a> are fal
 <p>To <dfn>create a connection</dfn>, given a <a for=/>network partition key</a> <var>key</var>,
 <a for=/>origin</a> <var>origin</var>, boolean <var>credentials</var>, string <var>proxy</var>,
 <a for=/>host</a> <var>host</var>, <a for=/>connection timing info</a> <var>timingInfo</var>, and
-boolean <var>http3Only</var>, run these steps:
+boolean <var>requireUnreliable</var>, run these steps:
 
 <ol>
  <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">connection start time</a> to the
@@ -2971,16 +2972,19 @@ boolean <var>http3Only</var>, run these steps:
   [[!HTTP1]] [[!TLS]]
 
   <ul>
-   <li><p>If <var>http3Only</var> is true, then establish an HTTP/3 connection. [[!HTTP3]]
+   <li><p>If <var>requireUnreliable</var> is true, then establish a connection capable of unreliable
+   transport, e.g., an HTTP/3 connection. [[!HTTP3]]
 
-   <li><p>When establishing an HTTP/3 connection, include SETTINGS_ENABLE_WEBTRANSPORT with a value
-   of 1 and H3_DATAGRAM with a value of 1 in the initial SETTINGS frame. [[!WEBTRANSPORT-HTTP3]]
-   [[!HTTP3-DATAGRAM]]
+   <li><p>When establishing a connection capable of unreliable transport, enable options that are
+   necessary for WebTransport. For HTTP/3, this means including
+   <code>SETTINGS_ENABLE_WEBTRANSPORT</code> with a value of <code>1</code> and
+   <code>H3_DATAGRAM</code> with a value of <code>1</code> in the initial <code>SETTINGS</code>
+   frame. [[!WEBTRANSPORT-HTTP3]] [[!HTTP3-DATAGRAM]]
 
    <li><p>If <var>credentials</var> is false, then do not send a TLS client certificate.
 
-   <li><p>If establishing a connection does not succeed (e.g., a TCP or TLS error), then return
-   failure.
+   <li><p>If establishing a connection does not succeed (e.g., a UDP, TCP, or TLS error), then
+   return failure.
   </ul>
 
  <li>
