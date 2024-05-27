@@ -3344,7 +3344,6 @@ and a <a for=/>response</a> <var>response</var>, is to run these steps:
  <li><p>If <var>response</var>'s <a for=response>status</a> is 206 and
  <a>validate a partial response</a> given 0 and <var>response</var> returns invalid, then return
  false.
- <!-- TODO Integrate https://wicg.github.io/background-fetch/#validate-a-partial-response into Fetch -->
 
  <li><p>Let <var>bytes</var> be the result of running
  <a>obtain a copy of the first 1024 bytes of response</a> given <var>response</var>.
@@ -3389,6 +3388,81 @@ and a <a for=/>response</a> <var>response</var>, is to run these steps:
 
  <li><p>Return <a>determine if response is JavaScript and not JSON</a> given <var>response</var>.
 </ol>
+
+<hr>
+
+<div algorithm>
+<p>To <dfn>extract content-range values</dfn>, given a <a for=/>response</a> <var>response</var>
+run these steps:<p>
+
+<ol>
+ <li><p>If <var>response</var>’s <a for=response>header list</a> <a for="header list">does not contain</a> `<code>Content-Range</code>`, then return failure.
+
+ <li><p>Let <var>contentRangeValue</var> be the <a lt=value for=header>value</a> of the first <a for=/>header</a> whose <a for=header>name</a> is a
+ <a>byte-case-insensitive</a> match for `<code>Content-Range</code>` in <var>response</var>’s <a for=response>header list</a>.
+
+ <li><p>If parsing <var>contentRangeValue</var> per <a>single byte content-range</a> fails, then return failure.
+
+ <li><p>Let <var>firstBytePos</var> be the portion of <var>contentRangeValue</var> named
+ first-byte-pos when parsed as <a>single byte content-range</a>, parsed as an integer.
+
+ <li><p>Let <var>lastBytePos</var> be the portion of <var>contentRangeValue</var> named
+ last-byte-pos when parsed as <a>single byte content-range</a>, parsed as an integer.
+
+ <li><p>Let <var>completeLength</var> be the portion of <var>contentRangeValue</var> named
+ complete-length when parsed as <a>single byte content-range</a>.
+
+ <li><p>If <var>completeLength</var> is "<code>*</code>", then set <var>completeLength</var> to null, otherwise
+ set <var>completeLength</var> to <var>completeLength</var> parsed as an integer.
+
+ <li><p>Return <var>firstBytePos</var>, <var>lastBytePos</var>, and <var>completeLength</var>.
+</ol>
+
+<p class=XXX>Parsing as an integer <a href="https://github.com/whatwg/infra/issues/189">infra/189</a>
+</div>
+
+<hr>
+
+<div algorithm>
+<p>To <dfn>validate a partial response</dfn>, given an integer <var>expectedRangeStart</var> , a
+<a for=/>response</a> <var>partialResponse</var>, and an optional <a for=/>response</a> <var>previousResponse</var> (default null),
+run these steps:</p>
+
+<ol>
+ <li><p>Assert: <var>partialResponse</var>'s <a for=response>status</a> is `206`.
+
+ <li><p>Let <var>responseFirstBytePos</var>, <var ignore>responseLastBytePos</var>, and <var>responseCompleteLength</var> be the
+ result of <a>extracting content-range values</a> from <var>partialResponse</var>. If this fails, then return invalid.
+
+ <li><p>If <var>responseFirstBytePos</var> does not equal <var>expectedRangeStart</var>, then return invalid.
+
+ <li><p>If <var>previousResponse</var> is not null, then:
+
+  <ol>
+   <li><p>For <var>headerName</var> of « `<code>ETag</code>`, `<code>Last-Modified</code>` »:
+
+    <ol>
+     <li>If <var>previousResponse</var>'s <a for=response>header list</a> <a for="header list">contains</a> <var>headerName</var>
+     and the <a for="header list">combined</a> value of <var>headerName</var>
+     in <var>previousResponse</var>'s <a for=response>header list</a> does not equal the
+     <a for="header list">combined</a> value of <var>headerName</var> in <var>partialResponse</var>'s
+     <a for=response>header list</a>, then return invalid.
+    </ol>
+
+   <li><p>If <var>previousResponse</var>'s <a for=response>status</a> is 206, then:
+
+    <ol>
+     <li><p>Let <var ignore>previousResponseFirstBytePos</var>, <var ignore>previousResponseLastBytePos</var>,
+     and <var>previousResponseCompleteLength</var> be the result of <a>extracting content-range values</a>
+     from <var>previousResponse</var>. If this fails, then return invalid.
+
+     <li><p>If <var>previousResponseCompleteLength</var> is not null, and
+     <var>responseCompleteLength</var> does not equal <var>previousResponseCompleteLength</var>, then return invalid.
+    </ol>
+  </ol>
+ <li>Return valid.
+</ol>
+</div>
 
 <hr>
 
@@ -3813,6 +3887,45 @@ response <a for=/>headers</a>, the <a for=header>value</a> `<code>*</code>` coun
 <a for=/>requests</a> without <a for=/>credentials</a>. For such <a for=/>requests</a> there is no
 way to solely match a <a for=/>header name</a> or <a for=/>method</a> that is `<code>*</code>`.
 
+<p><a>ABNF</a> for a <dfn export> single byte content-range</dfn>:
+
+<pre><code class=lang-abnf>
+"bytes=" first-byte-pos "-" last-byte-pos "/" complete-length
+first-byte-pos = 1*DIGIT
+last-byte-pos  = 1*DIGIT
+complete-length = ( 1*DIGIT / "*" )
+</code></pre>
+
+<p class=note>This is a subset of what <a href="https://tools.ietf.org/html/rfc7233#section-3.1">RFC 7233</a> allows.
+
+<div class="note">
+
+  The above as a railroad diagram:
+
+  <pre class="railroad">
+  T: "bytes="
+  Stack:
+    Sequence:
+      Comment: first-byte-pos
+      OneOrMore:
+        N: digit
+      Comment: /first-byte-pos
+      N: "/"
+    Sequence:
+      Comment: last-byte-pos
+      OneOrMore:
+        N: digit
+      Comment: /last-byte-pos
+      N: "/"
+    Sequence:
+      Comment: complete-length
+      Choice:
+        N: "*"
+        OneOrMore:
+          N: digit
+      Comment: /complete-length
+  </pre>
+</div>
 
 <h4 id=cors-protocol-and-credentials>CORS protocol and credentials</h4>
 
