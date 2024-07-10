@@ -2744,6 +2744,26 @@ functionality.
 <!-- Should we assert the scheme here to be an HTTP(S) scheme or a WebRTC scheme? -->
 
 <ol>
+ <li><p>Let <var>ipAddresses</var> be the result of running <a>resolve an origin internal</a> given
+ <var>key</var> and <var>origin</var>.
+
+ <li><p>If <var>ipAddresses</var> is failure, then return failure.
+
+ <li><p>If <var>ipAddresses</var> <a for=set>contains</a> <code>::</code> or <code>0.0.0.0</code>,
+ then return failure.
+
+ <li><p>Return <var>ipAddresses</var>.
+</ol>
+
+<p>The results of <a>resolve an origin</a> may be cached. If they are cached, <var>key</var> should
+be used as part of the cache key.
+</div>
+
+<div>
+<p>The <dfn>resolve an origin internal</dfn> algorithm, given a <a for=/>network partition key</a>
+<var>key</var> and an <a for=/>origin</a> <var>origin</var>, runs these steps:
+
+<ol>
  <li><p>If <var>origin</var>'s <a for=origin>host</a> is an <a for=/>IP address</a>, then return
  « <var>origin</var>'s <a for=origin>host</a> ».
 
@@ -2753,7 +2773,8 @@ functionality.
 
  <li>
   <p>Perform an <a>implementation-defined</a> operation to turn <var>origin</var> into a
-  <a for=/>set</a> of one or more <a for=/>IP addresses</a>.
+  <a for=/>set</a> of one or more <a for=/>IP addresses</a>, taking <var>key</var> into account as
+  appropriate.
 
   <p>It is also <a>implementation-defined</a> whether other operations might be performed to get
   connection information beyond just <a for=/>IP addresses</a>. For example, if <var>origin</var>'s
@@ -2767,16 +2788,13 @@ functionality.
  <li><p>Return failure.
 </ol>
 
-<p>The results of <a>resolve an origin</a> may be cached. If they are cached, <var>key</var> should
-be used as part of the cache key.
-
 <div class=note>
  <p>Typically this operation would involve DNS and as such caching can happen on DNS servers without
  <var>key</var> being taken into account. Depending on the implementation it might also not be
  possible to take <var>key</var> into account locally. [[RFC1035]]
 
- <p>The order of the <a for=/>IP addresses</a> that the <a>resolve an origin</a> algorithm can return
- can differ between invocations.
+ <p>The order of the <a for=/>IP addresses</a> that the <a>resolve an origin internal</a> algorithm
+ can return can differ between invocations.
 
  <p>The particulars (apart from the cache key) are not tied down as they are not pertinent to the
  system the Fetch Standard establishes. Other documents ought not to build on this primitive without
@@ -9015,6 +9033,7 @@ done only by navigations). The <a>fetch controller</a> is also used to
 <p>Thanks to
 Adam Barth,
 Adam Lavin,
+Alain Emilia Anna Zscheile<!-- fogti; GitHub -->,
 Alan Jeffrey,
 Alexey Proskuryakov,
 Andreas Kling,
@@ -9026,7 +9045,7 @@ Arkadiusz Michalski,
 Arne Johannessen,
 Artem Skoretskiy,
 Arthur Barstow,
-Arthur Sonzogni, <!-- ArthurSonzogni; GitHub -->
+Arthur Sonzogni<!-- ArthurSonzogni; GitHub -->,
 Asanka Herath,
 Axel Rauschmayer,
 Ben Kelly,
