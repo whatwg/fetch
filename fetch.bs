@@ -2738,11 +2738,12 @@ a <a for=/>list</a> of <a for="/" data-lt="fetch record">fetch records</a>.
 a <a for=/>list</a> of <a data-lt="deferred fetch record">deferred fetch records</a>.
 
 <p>A <a for=fetch>fetch group</a> has an associated boolean
-<dfn for="fetch group">is eligible for deferred fetching</dfn>.
+<dfn for="fetch group">is eligible for full-quota deferred fetching</dfn>.
 
 To initialize a <a for=fetch>fetch group</a> for a given <a>environment settings object</a>
-<var>settings</var>, set its <a for="fetch group">is eligible for deferred fetching</a> to the
-result of calling <a>check deferred fetching eligibility</a> given <var>settings</var>.
+<var>settings</var>, set its <a for="fetch group">is eligible for full-quota deferred fetching</a>
+to the result of calling <a>check full-quota deferred fetching eligibility</a> given
+<var>settings</var>.
 
 <p>A <dfn export>fetch record</dfn> is a [=struct=]. It has the following items:
 
@@ -6742,10 +6743,6 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
  <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
  <a>potentially trustworthy url</a>, then throw a "{{SecurityError}}" {{DOMException}}.
 
- <li><p>If <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>
- <a for="fetch group">is eligible for deferred fetching</a> is false, then throw a
- "{{NotAllowedError}}" {{DOMException}}.
-
  <li><p>Let <var>totalRequestLength</var> be the [=string/length=] of <var>request</var>'s
  <a for=request>URL</a>, <a lt="URL serializer">serialized</a> with
  [=URL serializer/exclude fragment=] set to true.
@@ -6819,6 +6816,16 @@ amount of bandwidth after being destroyed. The smaller quota ensures that a sing
 doesn't reserve the whole quota to itself.
 
 <ol>
+ <li>
+  <p>If <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>
+  <a for="fetch group">is eligible for full-quota deferred fetching</a> is false, the user agent may
+  return 0.
+
+  <p class=note>This allows implementations to prevent 3rd party environments from taking up
+  non-abortable bandwidth without the consent of the top-level document. Without this constraint,
+  those environments can still take up a small amount of bandwidth (16 kibibytes) for deferred
+  fetching.
+
  <li><p>Let <var>closestSameOriginInclusiveAncestor</var> be <var>document</var>'s
  <a>node navigable</a>.
 
@@ -6831,11 +6838,22 @@ doesn't reserve the whole quota to itself.
  <li><p>Let <var>directRelativeSameOriginNavigables</var> be the
  <a>inclusive direct same origin descendants</a> of <var>closestSameOriginInclusiveAncestor</var>.
 
- <li><p>Let <var>remainingTotalQuota</var> be 640 kibibytes if
- <var>directRelativeSameOriginNavigables</var> includes <var>document</var>'s
- <a>node navigable</a>'s <a for=navigable>top-level traversable</a>, and 64 kibibytes otherwise.
+ <li>
+  <p>Let <var>remainingTotalQuota</var> be the result of the first matching statement:
 
- <li><p>Let <var>remainingQuotaForOrigin</var> be 64 kibibytes.
+  <dl class=switch>
+   <dt><var>directRelativeSameOriginNavigables</var> includes <var>document</var>'s
+   <a>node navigable</a>'s <a for=navigable>top-level traversable</a>
+   <dd>640 kibibytes
+
+   <dt><var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>
+   <a for="fetch group">is eligible for full-quota deferred fetching</a> is true
+   <dd>64 kibibytes
+
+
+   <dt>Otherwise
+   <dd>16 kibibytes
+  </dl>
 
  <li>
   <p><a for=list>For each</a> <var>navigable</var> in
@@ -6871,7 +6889,8 @@ doesn't reserve the whole quota to itself.
      <li><p>If <var>childNavigable</var>'s <a>active document</a>'s <a for=Document>origin</a> is
      not <a>same origin</a> with <a for=/>navigable</a>'s <a>active document</a>'s
      <a for=Document>origin</a> and <var>childNavigable</var>'s <a>active document</a>'s
-     <a for=fetch>fetch group</a>'s <a for="fetch group">is eligible for deferred fetching</a> is true,
+     <a for=fetch>fetch group</a>'s
+     <a for="fetch group">is eligible for full-quota deferred fetching</a> is true,
      then decrement <var>remainingTotalQuota</var> by 64 kibibytes.
     </ol>
    </li>
@@ -6906,8 +6925,8 @@ doesn't reserve the whole quota to itself.
 </div>
 
 <div algorithm>
-To <dfn>check deferred fetching eligibility</dfn> given an <a>environment settings object</a>
-<var>settings</var>:
+To <dfn>check full-quota deferred fetching eligibility</dfn> given an
+<a>environment settings object</a> <var>settings</var>:
 
 <ol>
  <li><p>If <var>settings</var> is not a <code>Document</code>, return false.
@@ -6915,12 +6934,16 @@ To <dfn>check deferred fetching eligibility</dfn> given an <a>environment settin
  <li><p>If the result of calling [$Is feature enabled in document for origin?$] given
  <var>settings</var> is <code>Disabled</code>, return false.
 
- <li><p>If <var>settings</var>'s <a>node navigable</a>'s <a for=navigable>parent</a> is a
- <a for=/>navigable</a> whose <a for=navigable>active document</a>'s <a for=fetch>fetch group</a>'s
- <a>is eligible for deferred fetching</a> is true, then return true.
+ <li><p>Let <var>parentDocument</var> be <var>settings</var>'s <a>node navigable</a>'s
+ <a for=navigable>parent</a>'s <a for=navigable>active document</a>.
 
- <li><p>If the <a>available deferred fetching quota</a> given <var>settings</var> and null is less
- than 64 kibibytes, return false.
+ <li><p>If <var>parentDocument</var> is null, then return true.
+
+ <li><p>If <var>parentDocument</var>'s <a for=Document>origin</a> is <a>same origin</a> with
+ <var>settings</var>'s <a for=Document>origin</a> then return true.
+
+ <li><p>If the <a>available deferred fetching quota</a> given <var>parentDocument</var> and null is
+ less than 64 kibibytes, return false.
 
  <li><p>Return true.
 </div>
