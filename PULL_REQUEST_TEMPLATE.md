@@ -1,6 +1,8 @@
 <!--
 Thank you for contributing to the Fetch Standard! Please describe the change you are making and complete the checklist below if your change is not editorial.
-When editing this comment after the PR is created, check that PR-Preview doesn't overwrite your changes.
+
+When you submit this PR, and each time you edit this comment (including checking a checkbox through the UI!), PR Preview will run and update it. As such make any edits in one go and only after PR Preview has run.
+
 If you think your PR is ready to land, please double-check that the build is passing and the checklist is complete before pinging.
 -->
 
