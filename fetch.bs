@@ -56,6 +56,10 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     url:current-realm;text:current realm
 </pre>
 
+<pre class=link-defaults>
+  spec:infra; type:dfn; text:user agent
+</pre>
+
 <pre class=biblio>
 {
     "HTTP": {
@@ -1970,8 +1974,8 @@ during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standard
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-mode>mode</dfn>, which is
 "<code>same-origin</code>", "<code>cors</code>", "<code>no-cors</code>",
-"<code>navigate</code>", or "<code>websocket</code>". Unless stated otherwise, it is
-"<code>no-cors</code>".
+"<code>navigate</code>", "<code>user-agent-no-cors</code>", or "<code>websocket</code>".
+Unless stated otherwise, it is "<code>no-cors</code>".
 
 <div class=note>
  <dl>
@@ -1993,6 +1997,21 @@ during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standard
   <dt>"<code>navigate</code>"
   <dd>This is a special mode used only when <a>navigating</a> between documents.
 
+  <dt>"<code>user-agent-no-cors</code>"
+  <dd>This is a special mode for the [=user agent=] to use internally to wittingly make
+  requests that are unsafe. It restricts a <a for=/>request</a> to using <a>CORS-safelisted methods</a>,
+  <a>CORS-safelisted request-headers</a>, and the <a for=/>request</a> must have a <a>parallel queue</a>
+  <a for="fetch params">task destination</a>. A <a for=/>request</a> with this mode cannot use
+  <a>service-workers mode</a> "<code>all</code>". However, the request will not be required to
+  pass a <a>cross-origin resource policy check</a> or to test if
+  <a>Cross-Origin-Embedder-Policy allows credentials</a>. Upon success a fetch will
+  return a <a>basic filtered response</a>.
+
+  <p class=warning> Using <a for=/>request</a> <a for=request>mode</a> "<code>user-agent-no-cors</code>"
+  is even more discouraged and unsafe than "<code>no-cors</code>". Any use of this mode must be
+  memory-isolated to the [=user agent=] to contain its results and prevent their disclosure or misuse.
+  This <a for=request>mode</a> is deliberately not exposed in the {{RequestMode}}.
+
   <dt>"<code>websocket</code>"
   <dd>This is a special mode used only when
   <a spec=websockets lt="establish a WebSocket connection">establishing a WebSocket connection</a>.
@@ -2000,7 +2019,15 @@ during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standard
 
  <p>Even though the default <a for=/>request</a> <a for=request>mode</a> is "<code>no-cors</code>",
  standards are highly discouraged from using it for new features. It is rather unsafe.
+
+
 </div>
+
+<p>A <a for=/>request</a> has an associated
+<dfn for=request>omit origin flag</dfn>. Unless stated otherwise it is unset.
+
+<p class="note no-backref">The <a for=request>omit origin flag</a> only has effect when
+<a for=/>request</a>'s <a for=request>mode</a> is "<code>user-agent-no-cors</code>".
 
 <p>A <a for=/>request</a> has an associated
 <dfn id=use-cors-preflight-flag export for=request>use-CORS-preflight flag</dfn>. Unless stated
@@ -3327,8 +3354,9 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
  with <var>request</var>.
 
  <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" or
- <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>", then
- <a for="header list">append</a> (`<code>Origin</code>`, <var>serializedOrigin</var>) to
+ <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" or
+ "<code>user-agent-no-cors</code>", then <a for="header list">append</a>
+ (`<code>Origin</code>`, <var>serializedOrigin</var>) to
  <var>request</var>'s <a for=request>header list</a>.
 
  <li>
@@ -4272,6 +4300,10 @@ the response. [[!HTTP-CACHING]]
   <p><a for=/>Assert</a>: <var>request</var>'s <a for=request>mode</a> is "<code>navigate</code>" or
   <var>processEarlyHintsResponse</var> is null.
 
+  <p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>mode</a> is
+  "<code>user-agent-no-cors</code>": <a for=/>assert</a>: <var>fetchParams</var>'s
+  <a for="fetch params">task destination</a> is a <a for=/>parallel queue</a>.
+
   <p class=note>Processing of early hints (<a for=/>responses</a> whose <a for=response>status</a>
   is 103) is only vetted for navigations.
 
@@ -4330,7 +4362,9 @@ the response. [[!HTTP-CACHING]]
  <a for="environment settings object">global object</a> is a {{Window}} object; otherwise
  "<code>no-window</code>".
 
- <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>", then set
+ <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>" and either
+ <var>request</var>'s <a for=request>mode</a> is not "<code>user-agent-no-cors</code>" or
+ and <var>request</var>'s <a for=request>omit origin flag</a> is unset, then set
  <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">origin</a>.
 
@@ -4342,7 +4376,7 @@ the response. [[!HTTP-CACHING]]
    <a>HTTP(S) scheme</a>
 
    <li><p><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>",
-   "<code>cors</code>", or "<code>no-cors</code>"
+   "<code>cors</code>", "<code>no-cors</code>", or "<code>user-agent-no-cors</code>"
 
    <li><p><var>request</var>'s <a for=request>window</a> is an <a>environment settings object</a>
 
@@ -4357,7 +4391,8 @@ the response. [[!HTTP-CACHING]]
   <ol>
    <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>origin</a> is <a>same origin</a>
    with <var>request</var>'s <a for=request>client</a>'s
-   <a for="environment settings object">origin</a>.
+   <a for="environment settings object">origin</a> or <var>request</var>'s <a for=request>mode</a>
+   is "<code>user-agent-no-cors</code>".
 
    <li><p>Let <var>onPreloadedResponseAvailable</var> be an algorithm that runs the following
    step given a <a for=/>response</a> <var>response</var>: set <var>fetchParams</var>'s
@@ -4603,6 +4638,15 @@ steps:
      <a>clear cache entries</a> using <var>request</var>.
 
      <li><p>Return <var>corsWithPreflightResponse</var>.
+    </ol>
+
+   <dt><var>request</var>'s <a for=request>mode</a> is "<code>user-agent-no-cors</code>"
+   <dd>
+    <ol>
+     <li><p>Set <var>request</var>'s <a for=request>response tainting</a> to
+     "<code>basic</code>".
+
+     <li><p>Return the result of running <a>HTTP fetch</a> given <var>fetchParams</var>.
     </ol>
 
    <dt>Otherwise
@@ -5200,6 +5244,8 @@ these steps:
        <li><p><var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>" and
        <var>response</var>'s <a for=response>type</a> is "<code>opaque</code>"
 
+       <li><p><var>request</var>'s <a for=request>mode</a> is "<code>user-agent-no-cors</code>"
+
        <li><var>request</var>'s <a for=request>redirect mode</a> is not "<code>manual</code>" and
        <var>response</var>'s <a for=response>type</a> is "<code>opaqueredirect</code>"
 
@@ -5586,7 +5632,9 @@ run these steps:
      <var>httpRequest</var>'s <a for=request>header list</a>.
     </ol>
 
-   <li><p><a>Append a request `<code>Origin</code>` header</a> for <var>httpRequest</var>.
+   <li>If either <var>request</var>'s <a for=request>mode</a> is not "<code>user-agent-no-cors</code>"
+   or <var>request</var>'s <a for=request>omit origin flag</a> is not set,
+   <p><a>append a request `<code>Origin</code>` header</a> for <var>httpRequest</var>.
 
    <li><p><a abstract-op lt="append the Fetch metadata headers for a request">Append the Fetch metadata headers for <var>httpRequest</var></a>.
    [[!FETCH-METADATA]]
@@ -9054,6 +9102,7 @@ Axel Rauschmayer,
 Ben Kelly,
 Benjamin Gruenbaum,
 Benjamin Hawkes-Lewis,
+Benjamin VanderSloot,
 Bert Bos,
 Björn Höhrmann,
 Boris Zbarsky,
