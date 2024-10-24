@@ -2737,14 +2737,6 @@ a <a for=/>list</a> of <a for="/" data-lt="fetch record">fetch records</a>.
 <dfn export for="fetch group" id=concept-defer=fetch-record>deferred fetch records</dfn>,
 a <a for=/>list</a> of <a data-lt="deferred fetch record">deferred fetch records</a>.
 
-<p>A <a for=fetch>fetch group</a> has an associated boolean
-<dfn for="fetch group">is eligible for full-quota deferred fetching</dfn>.
-
-To initialize a <a for=fetch>fetch group</a> for a given <a>environment settings object</a>
-<var>settings</var>, set its <a for="fetch group">is eligible for full-quota deferred fetching</a>
-to the result of calling <a>check full-quota deferred fetching eligibility</a> given
-<var>settings</var>.
-
 <p>A <dfn export>fetch record</dfn> is a [=struct=]. It has the following items:
 
 <dl>
@@ -2774,6 +2766,8 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
   agents can mitigate this race condition in an <a>implementation-defined</a> manner.
 </dl>
 
+<p>A <a for=/>navigable</a> has an associated <dfn>allotted deferred fetching quota</dfn>, initially
+zero.
 
 <hr>
 
@@ -6810,56 +6804,34 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
 <var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
 
 <p class=note>This algorithm asserts that this deferred fetch doesn't exceed two quotas: one for the
-top-level document (640 kibibytes), and one for the reporting origin (64 kibibytes). The larger
-quota ensures that the top-level {{Document}} and its subresources don't continue using an unlimited
-amount of bandwidth after being destroyed. The smaller quota ensures that a single reporting sink
-doesn't reserve the whole quota to itself.
-
+document and it's same-origin same-tree relatives, and one for the reporting origin (64 kibibytes).
+The larger quota ensures that the top-level {{Document}} and its subresources don't continue using
+an unlimited amount of bandwidth after being destroyed. The smaller quota ensures that a single
+reporting sink doesn't reserve the whole quota to itself.
 <ol>
- <li>
-  <p>If <var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>
-  <a for="fetch group">is eligible for full-quota deferred fetching</a> is false, the user agent may
-  return 0.
+ <li><p>Let <var>relativeNavigables</var> be all <a for=/>navigables</a> whose
+ <a>active document</a>'s <a>relevant agent</a> is <var>document</var>'s <a>relevant agent</a>'s,
+ <a for=navigable>top-level traversable</a> is <var>document</var>'s <a>node navigable</a>'s
+ <a for=navigable>top-level traversable</a>, and whose <a>active document</a>'s
+ <a for=Document>origin</a> is <a>same origin</a> with <var>document</var>'s
+ <a for=Document>origin</a>.
 
-  <p class=note>This allows implementations to prevent 3rd party environments from taking up
-  non-abortable bandwidth without the consent of the top-level document. Without this constraint,
-  those environments can still take up a small amount of bandwidth (16 kibibytes) for deferred
-  fetching.
-
- <li><p>Let <var>closestSameOriginInclusiveAncestor</var> be <var>document</var>'s
- <a>node navigable</a>.
-
- <li><p>While <var>closestSameOriginInclusiveAncestor</var>'s <a for=navigable>parent</a> is a
- <a for=/>navigable</a> whose <a>active document</a>'s <a for=Document>origin</a> is <a>same origin</a>
- with <var>document</var>'s <a for=Document>origin</a>, set
- <var>closestSameOriginInclusiveAncestor</var> to <var>closestSameOriginInclusiveAncestor</var>'s
- <a for=navigable>parent</a>.
-
- <li><p>Let <var>directRelativeSameOriginNavigables</var> be the
- <a>inclusive direct same origin descendants</a> of <var>closestSameOriginInclusiveAncestor</var>.
+ <li><p>Let <var>remainingTotalQuota</var> be zero.
 
  <li>
-  <p>Let <var>remainingTotalQuota</var> be the result of the first matching statement:
-
-  <dl class=switch>
-   <dt><var>directRelativeSameOriginNavigables</var> includes <var>document</var>'s
-   <a>node navigable</a>'s <a for=navigable>top-level traversable</a>
-   <dd>640 kibibytes
-
-   <dt><var>request</var>'s <a for=request>client</a>'s <a for=fetch>fetch group</a>
-   <a for="fetch group">is eligible for full-quota deferred fetching</a> is true
-   <dd>64 kibibytes
-
-
-   <dt>Otherwise
-   <dd>16 kibibytes
-  </dl>
-
- <li>
-  <p><a for=list>For each</a> <var>navigable</var> in
-  <var>directRelativeSameOriginNavigables</var>:
+  <p><a for=list>For each</a> <var>navigable</var> in <var>relativeNavigables</var>:
 
   <ol>
+   <li><p>Increment <var>remainingTotalQuota</var> by <var>navigable</var>'s
+   <a>allotted deferred fetching quota</a>.</p>
+ </li>
+
+ <li><p>Let <var>remainingQuotaForOrigin</var> be <var>remainingTotalQuota</var>.
+ <li><p>If <var>remainingQuotaForOrigin</var> is greater than 64 kibibytes, then set
+ <var>remainingQuotaForOrigin</var> to 64 kibibytes.
+
+ <li>
+  <p><a for=list>For each</a> <var>navigable</var> in <var>relativeNavigables</var>:
    <li>
     <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
     <var>navigable</var>'s <a>active document</a>'s <a for=fetch>fetch group</a>'s
@@ -6879,21 +6851,13 @@ doesn't reserve the whole quota to itself.
     </ol>
    </li>
 
-   <li><p>Let <var>navigableContainers</var> be a list of all <a>shadow-including descendants</a> of
-   <var>navigable</var>'s <a>active document</a> that are <a>navigable containers</a>.
+   <li><p><a for=list>For each</a> <var>descendant</var> of <var>navigable</var>'s
+   <a>active document</a>'s <a>shadow-including descendants</a> that are
+   <a>navigable containers</a>, decrement <var>remainingTotalQuota</var> by <var>descendant</var>'s
+   <a>content navigable</a>'s <a>allotted deferred fetching quota</a>.
 
-   <li>
-    <p><a for=list>For each</a> <var>childNavigable</var> of <var>navigableContainers</var>:
-
-    <ol>
-     <li><p>If <var>childNavigable</var>'s <a>active document</a>'s <a for=Document>origin</a> is
-     not <a>same origin</a> with <a for=/>navigable</a>'s <a>active document</a>'s
-     <a for=Document>origin</a> and <var>childNavigable</var>'s <a>active document</a>'s
-     <a for=fetch>fetch group</a>'s
-     <a for="fetch group">is eligible for full-quota deferred fetching</a> is true,
-     then decrement <var>remainingTotalQuota</var> by 64 kibibytes.
-    </ol>
-   </li>
+   <li><p>If <var>remainingTotalQuota</var> is greater than <var>remainingQuotaForOrigin</var>
+   return <var>remainingQuotaForOrigin</var>; Otherwise return <var>remainingTotalQuota</var>.
   </ol>
  </li>
 
@@ -6922,30 +6886,6 @@ doesn't reserve the whole quota to itself.
 
  <li><p>Return <var>descendants</var>.
 </ol>
-</div>
-
-<div algorithm>
-To <dfn>check full-quota deferred fetching eligibility</dfn> given an
-<a>environment settings object</a> <var>settings</var>:
-
-<ol>
- <li><p>If <var>settings</var> is not a <code>Document</code>, return false.
-
- <li><p>If the result of calling [$Is feature enabled in document for origin?$] given
- <var>settings</var> is <code>Disabled</code>, return false.
-
- <li><p>Let <var>parentDocument</var> be <var>settings</var>'s <a>node navigable</a>'s
- <a for=navigable>parent</a>'s <a for=navigable>active document</a>.
-
- <li><p>If <var>parentDocument</var> is null, then return true.
-
- <li><p>If <var>parentDocument</var>'s <a for=Document>origin</a> is <a>same origin</a> with
- <var>settings</var>'s <a for=Document>origin</a> then return true.
-
- <li><p>If the <a>available deferred fetching quota</a> given <var>parentDocument</var> and null is
- less than 64 kibibytes, return false.
-
- <li><p>Return true.
 </div>
 
 <div algorithm>
