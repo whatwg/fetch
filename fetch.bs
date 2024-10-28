@@ -2734,8 +2734,9 @@ functionality.
 <dfn lt="fetch record" export for="fetch group" id=concept-fetch-record>fetch records</dfn>,
 a <a for=/>list</a> of <a for="/" data-lt="fetch record">fetch records</a>.
 
-<p>Each [=/navigable=] has an associated <dfn>allotted deferred fetching quota</dfn>, a number
-(initially zero).
+<p>Each <a>navigable container</a> has an associated <dfn>deferred fetching policy</dfn>
+(<code>disabled</code>, <code>deferred-fetch</code> and <code>deferred-fetch-minimal</code>). Unless
+stated otherwise, it is <code>disabled</code>.
 
 <p>A <a for=fetch>fetch group</a> has an associated
 <dfn export for="fetch group" id=concept-defer=fetch-record>deferred fetch records</dfn>,
@@ -6844,21 +6845,47 @@ The larger quota ensures that the top-level {{Document}} and its subresources do
 an unlimited amount of bandwidth after being destroyed. The smaller quota ensures that a single
 reporting sink doesn't reserve the whole quota to itself.
 <ol>
- <li><p>Let <var>relativeNavigables</var> be all <a for=/>navigables</a> whose
- <a>active document</a>'s <a>relevant agent</a> is <var>document</var>'s <a>relevant agent</a>'s,
- <a for=navigable>top-level traversable</a> is <var>document</var>'s <a>node navigable</a>'s
- <a for=navigable>top-level traversable</a>, and whose <a>active document</a>'s
- <a for=Document>origin</a> is <a>same origin</a> with <var>document</var>'s
- <a for=Document>origin</a>.
+ <li><p>Let <var>relativeNavigables</var> be <var>document</var>'s
+ <a>direct relative navigables</a>.
 
  <li><p>Let <var>remainingTotalQuota</var> be zero.
 
  <li>
-  <p><a for=list>For each</a> <var>navigable</var> in <var>relativeNavigables</var>, increment
-  <var>remainingTotalQuota</var> by <var>navigable</var>'s
-  <a>allotted deferred fetching quota</a>.</p>
+  <p><a for=list>For each</a> <var>navigable</var> in <var>relativeNavigables</var>:
+  <ol>
+   <li>
+    <p>If <var>document</var>'s <a>node navigable</a> is a <a for=/>top level traversable</a> then:
+    <ol>
+     <li><p>Let <var>origin</var> be <var>document</var>'s <a for=Document>URL</a>'s
+     <a for=url>origin</a>.
+
+     <li><p>If the result of calling [$Is feature enabled in document for origin?$] given
+     <code>deferred-fetch</code>, <var>document</var> and <var>origin</var> is
+     <code>Disabled</code>, then return 0.
+
+     <li>
+      <p>If the result of calling [$Is feature enabled in document for origin?$] given
+      <code>deferred-fetch-minimal</code>, <var>document</var> and <var>origin</var> is
+      <code>Enabled</code>, then set <var>remainingTotalQuota</var> to 512 kibibytes.
+
+      <p class=note>When this permission policy is enabled, this document delegates 8KB to each of
+      the first 16 cross-origin subframes leaving 512kb for its own quota.
+
+     <li>
+      <p>Set <var>remainingTotalQuota</var> to 640 kibibytes.
+      <p class="note allow-2119">640kb should be enough for everyone.
+    </ol>
+
+   <li><p>Otherwise, of the result of calling [$Is feature enabled in document for origin?$] given
+   <var>document</var>'s <a>node navigable</a>'s <a for=navigable>container</a>'s
+   <a>deferred fetching policy</a>, <var>document</var> and <var>origin</var> is
+   <code>Enabled</code>, then set <var>remainingTotalQuota</var> to the
+   <a>initial subframe deferred fetch quota</a> given <var>document</var>'s <a>node navigable</a>'s
+   <a for=navigable>container</a>'s <a>deferred fetching policy</a>.
+  </ol>
 
  <li><p>Let <var>remainingQuotaForOrigin</var> be <var>remainingTotalQuota</var>.
+
  <li><p>If <var>remainingQuotaForOrigin</var> is greater than 64 kibibytes, then set
  <var>remainingQuotaForOrigin</var> to 64 kibibytes.
 
@@ -6884,15 +6911,21 @@ reporting sink doesn't reserve the whole quota to itself.
     </ol>
    </li>
 
-   <li><p><a for=list>For each</a> <var>descendant</var> of <var>navigable</var>'s
-   <a>active document</a>'s <a>shadow-including descendants</a> that are
-   <a>navigable containers</a>, if <var>relativeNavigables</var> does not <a for=list>contain</a>
-   <var>descendant</var>'s <a>content navigable</a>, then decrement <var>remainingTotalQuota</var>
-   by <var>descendant</var>'s <a>content navigable</a>'s <a>allotted deferred fetching quota</a>.
+   <li><p>Let <var>relevantContainers</var> be « ».
+   <li><p><a for=list>For each</a> <var>relative</var> in <var>navigable</var>'s
+   <a>direct relative navigables</a>, <a for=list>extend</a> <var>relevantContainers</var> with
+   every <a>shadow-including descendant</a> of <var>relative</var> which is a
+   <a>navigable container</a>.
 
-   <li><p>If <var>remainingTotalQuota</var> is greater than <var>remainingQuotaForOrigin</var>
-   return <var>remainingQuotaForOrigin</var>; Otherwise return <var>remainingTotalQuota</var>.
-  </ol>
+   <li>
+    <p><a for=list>For each</a> <var>descendantContainer</var> of <var>relevantContainers</var>,
+    decrement <var>remainingTotalQuota</var> by the <a>initial subframe deferred fetch quota</a>
+    given <var>descendantContainer</var>'s <a>deferred fetching policy</a>:
+
+   <li><p>If <var>remainingTotalQuota</var> is less than <var>remainingQuotaForOrigin</var>, then
+   return <var>remainingTotalQuota</var>.
+
+   <li><p>Return <var>remainingQuotaForOrigin</var>.
  </li>
 
  <li><p>If <var>remainingTotalQuota</var> is less than <var>remainingQuotaForOrigin</var>, then
@@ -6903,93 +6936,84 @@ reporting sink doesn't reserve the whole quota to itself.
 </div>
 
 <div algorithm>
-<p>To <dfn export>allocate top-level deferred fetching quota</dfn> for a
-<a for=/>top-level traversable</a> <var>traversable</var>:
+To determine the <dfn>initial subframe deferred fetch quota</dfn> given <var>policy</var>, switch on
+<var>policy</var> and return the result:
+<dl class=switch>
+  <dt><code>deferred-fetch</code>
+  <dd>64 kibibytes
 
-<p class=note>This is called when creating a new top-level document.
+  <dt><code>deferred-fetch-minimal</code>
+  <dd>8 kibibytes
+
+  <dt><code>disabled</code>
+  <dd>0 kibibytes
+</ul>
+</div>
+
+<div algorithm>
+<p>To <dfn export>determine subframe deferred fetching policy</dfn> for a <a>navigable container</a>
+<var>container</var> and an <a for=/>origin</a> <var>originToNavigateTo</var>:
+
+<p class=note>This is called whenever a <a>navigable container</a> is being navigated, e.g. an
+IFrame changes its <a for=HTMLIframeElement>src</a> attribute.
 
 <ol>
- <li><p>Let <var>document</var> be <var>traversable</var>'s <a>active document</a>.
+ <li><p>Set <var>container</var>'s <a>deferred fetch policy</a> to <code>disabled</code>.
 
- <li><p>Let <var>origin</var> be <var>document</var>'s <a for=Document>URL</a>'s
- <a for=url>origin</a>.
+ <li><p>If the <a data-x="define an inherited policy for feature in container"inherited policy</a>
+ for <code>deferred-fetch</code>, <var>navigable</var>'s <a>navigable container</a> and
+ <var>originToNavigateTo</var> is <code>Enabled</code>, and the
+ <a>available deferred fetching quota</a> for <var>container</var>'s <a>container document</a> is
+ equal greater than 64 kibibytes, then set <var>navigable</var>'s
+ <a>deferred fetch policy</a> to <code>deferred-fetch</code> and return.
 
- <li><p>If the result of calling [$Is feature enabled in document for origin?$] given
- <code>deferred-fetch</code>, <var>document</var> and <var>origin</var> is <code>Disabled</code>,
- then set <var>traversable</var>'s <a>allotted deferred fetching quota</a> to 0 and return.
+ <li><p>If the <a data-x="define an inherited policy for feature in container">inherited policy</a>
+ for <code>deferred-fetch-minimal</code>, <var>container</var> and <var>originToNavigateTo</var> is
+ <code>Disabled</code>, then set <var>container</var>'s <a>deferred fetch policy</a> to
+ <code>disabled</code> and return.
+
+
+ <li><p>Let <var>topLevelRelatives</var> be <var>container</var>'s <a>container document</a>'s
+ <a>direct relative navigables</a>.
 
  <li>
-  <p>If the result of calling [$Is feature enabled in document for origin?$] given
-  <code>deferred-fetch-minimal</code>, <var>document</var> and <var>origin</var> is
-  <code>Enabled</code>, then set <var>traversable</var>'s <a>allotted deferred fetching quota</a>
-  to 512 kibibytes and return.
+  <p>If <var>topLevelRelatives</var> does not <a for=list>contain</a> <var>container</var>'s
+  <a>node navigable</a>'s <a for=navigable>top-level traversable</a>, then
+  set <var>container</var>'s <a>deferred fetch policy</a> to <code>disabled</code> and
+  return.
 
-  <p class=note>When this permission policy is enabled, this document delegates 8KB to each of the
-  first 16 cross-origin subframes leaving 512kb for its own quota.
+  <p class=note>Only the top level document and related documents can delegate the
+  <code>deferred-fetch-minimal</code> policy.
+
+ <li><p>Let <var>framesWithminimalQuota</var> be zero.
+ <p><a for=list>For each</a> <var>navigable</var> that matches the following conditions:
 
  <li>
-  <p>Set <var>traversable</var>'s <a>allotted deferred fetching quota</a> to 640 kibibytes.
 
-  <p class="note allow-2119">640kb should be enough for everyone.
+  <ul class=brief>
+   <li><p><var>topLevelRelatives</var> <a for=list>contains</a> <var>navigable</var>
+   <a for=navigable>parent</a>
+
+   <li><p><var>topLevelRelatives</var> does not <a for=list>contain</a> <var>navigable</var>
+
+   <li><p><var>navigable</var>'s <a>deferred fetch policy</a> is
+   <code>deferred-fetch-minimal</code>
+  </ul>
+
+  <p>Increment <var>quota</var> by 1.
+
+ <li><p>If <var>quota</var> is less than 16, then set <var>container</var>'s
+ <a>deferred fetch policy</a> to <code>deferred-fetch-minimal</code>.
 </ol>
 </div>
 
 <div algorithm>
-<p>To <dfn export>allocate subframe deferred fetching quota</dfn> for a [=/navigable=]
-<var>navigable</var> and an [=/origin=] <var>initialOrigin</var>:
-
-<p class=note>This is called when the container navigates the subframe.
-
-<ol>
- <li><p>Assert: <var>navigable</var>'s [=navigable/parent=] is not null.
-
- <li><p>Let <var>parentDocument</var> be <var>navigable</var>'s [=navigable/parent=]'s
- [=navigable/active document=].
-
- <li><p>If the [=define an inherited policy for feature in container|inherited policy=]
- for <code>deferred-fetch</code>, <var>navigable</var>'s [=navigable container=] and
- <var>initialOrigin</var> is <code>Enabled</code>, and the [=available deferred fetching quota=]
- given <var>parentDocument</var> and null is equal greater than 64 kibibytes, then set
- <var>navigable</var>'s [=allotted deferred fetching quota=] to 64 kibibytes and return.
-
- <li><p>If the [=define an inherited policy for feature in container|inherited policy=]
- for <code>deferred-fetch-minimal</code>, <var>navigable</var>'s [=navigable container=] and
- <var>initialOrigin</var> is <code>Disabled</code>, then return zero.
-
- <li><p>Let <var>topLevelRelatives</var> be all <a for=/>navigables</a> whose
- <a>active document</a>'s <a>relevant agent</a> is <var>parentDocument</var>'s
- <a>relevant agent</a>'s, <a for=navigable>top-level traversable</a> is <var>navigable</var>'s
- <a for=navigable>top-level traversable</a>, and whose <a>active document</a>'s
- <a for=Document>origin</a> is <a>same origin</a> with <var>parentDocument</var>'s [=Document/URL=]'s
- <a for=url>origin</a>.
-
- <li>
-  <p>If <var>topLevelRelatives</var> does not [=list/contain=] <var>parentDocument</var>'s
-  [=node navigable=]'s <a for=navigable>top-level traversable</a>, then set <var>navigable</var>'s
-  [=allotted deferred fetching quota=] to 0 and return.
-
-  <p class=note>Only the top level document and related documents can delegate the
-  <code>deferred-fetch-minimal</code> permission.
-
- <li><p>Let <var>quota</var> be 128 kibibytes.
-
- <li>
-  <p><a for=list>For each</a> <var>navigable</var> that matches the following conditions:
-
-  <ul class=brief>
-   <li><p><var>topLevelRelatives</var> <a for=list>contains</a> <var>navigable</var>
-   <a for=navigable>parent</a>.
-
-   <li><p><var>topLevelRelatives</var> does not <a for=list>contain</a> <var>navigable</var>.
-
-   <li><p><var>navigable</var>'s <a>allotted deferred fetching quota</a> is 8 kibibytes
-  </ul>
-
-  <p>Decrement <var>quota</var> by 8 kibibytes.
-
- <li><p>If <var>quota</var> is zero, then set <var>navigable</var>'s
- [=allotted deferred fetching quota=] to 0; otherwise 8 kibibytes.
-</ol>
+The <dfn>direct relative navigables</dfn> of a <code>Document</code> <var>document</var> are all
+the <a for=/>navigables</a> whose <a>active document</a>'s <a>relevant agent</a> is
+<var>document</var>'s <a>relevant agent</a>'s, <a for=navigable>top-level traversable</a> is
+<var>navigable</var>'s <a for=navigable>top-level traversable</a>, and whose
+<a>active document</a>'s <a for=Document>origin</a> is <a>same origin</a> with <var>document</var>'s
+<a for=Document>URL</a>'s <a for=url>origin</a>.
 </div>
 
 <div algorithm>
