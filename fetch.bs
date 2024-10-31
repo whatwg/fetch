@@ -2735,7 +2735,8 @@ functionality.
 a <a for=/>list</a> of <a for="/" data-lt="fetch record">fetch records</a>.
 
 <p>Each <a>navigable container</a> has an associated <dfn>deferred fetch policy</dfn>
-(<code>disabled</code>, <code>deferred-fetch</code> or <code>deferred-fetch-minimal</code>). Unless
+({{PermissionPolicy/"deferred-fetch"}}, {{PermissionPolicy/"deferred-fetch-minimal"}}, or
+<code>Disabled</code>). Unless
 stated otherwise, it is <code>disabled</code>.
 
 <p>A <a for=fetch>fetch group</a> has an associated
@@ -6841,6 +6842,14 @@ The larger quota ensures that the top-level {{Document}} and its subresources do
 an unlimited amount of bandwidth after being destroyed. The per-origin quota ensures that a single
 reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
 
+This specification defined a <a>policy-controlled feature</a> identified by the string
+<dfn for=PermissionPolicy enum-value>"deferred-fetch"</dfn>. Its
+<a for="policy-controlled feature">default allowlist</a> is `'self'`.
+
+This specification defined a <a>policy-controlled feature</a> identified by the string
+<dfn for=PermissionPolicy enum-value>"deferred-fetch-minimal"</dfn>. Its
+<a for="policy-controlled feature">default allowlist</a> is `*`.
+
 <div algorithm>
 <p>To get the <dfn>available deferred fetching quota</dfn> given a <code>Document</code>
 <var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
@@ -6860,14 +6869,13 @@ reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
      <li><p>Let <var>origin</var> be <var>document</var>'s <a for=Document>URL</a>'s
      <a for=url>origin</a>.
 
-     <li><p>If the result of calling [$Is feature enabled in document for origin?$] given
-     <code>deferred-fetch</code>, <var>document</var> and <var>origin</var> is
-     <code>Disabled</code>, then return 0.
+     <li><p>If  <var>document</var> is not <a>allowed to use</a> the
+     <a>policy-controlled feature</a> {{PermissionPolicy/"deferred-fetch"}}, then return 0.
 
      <li>
-      <p>If the result of calling [$Is feature enabled in document for origin?$] given
-      <code>deferred-fetch-minimal</code>, <var>document</var> and <var>origin</var> is
-      <code>Enabled</code>, then set <var>remainingTotalQuota</var> to 512 kibibytes.
+     <li><p>If  <var>document</var> is <a>allowed to use</a> the
+     <a>policy-controlled feature</a> {{PermissionPolicy/"deferred-fetch-minimal"}}, then set
+     <var>remainingTotalQuota</var> to 512 kibibytes.
 
       <p class=note>When this permission policy is enabled, this document delegates 8KB to each of
       the first 16 cross-origin subframes leaving 512kb for its own quota.
@@ -6947,16 +6955,16 @@ setting an iframe's <a attribute for=HTMLIFrameElement>src</a>.
  <li><p>Set <var>container</var>'s <a>deferred fetch policy</a> to <code>disabled</code>.
 
  <li><p>If the <a data-lt="define an inherited policy for feature in container">inherited policy</a>
- for <code>deferred-fetch</code>, <var>navigable</var>'s <a>navigable container</a> and
+ for {{PermissionPolicy/"deferred-fetch"}}, <var>navigable</var>'s <a>navigable container</a> and
  <var>originToNavigateTo</var> is <code>Enabled</code>, and the
  <a>available deferred fetching quota</a> for <var>container</var>'s <a>container document</a> is
  equal or greater than 64 kibibytes, then set <var>navigable</var>'s
- <a>deferred fetch policy</a> to <code>deferred-fetch</code> and return.
+ <a>deferred fetch policy</a> to {{PermissionPolicy/"deferred-fetch"}} and return.
 
  <li><p>If the <a data-lt="define an inherited policy for feature in container">inherited policy</a>
- for <code>deferred-fetch-minimal</code>, <var>container</var> and <var>originToNavigateTo</var> is
- <code>Disabled</code>, then set <var>container</var>'s <a>deferred fetch policy</a> to
- <code>disabled</code> and return.
+ for {{PermissionPolicy/"deferred-fetch-minimal"}}, <var>container</var> and
+ <var>originToNavigateTo</var> is <code>Disabled</code>, then set <var>container</var>'s
+ <a>deferred fetch policy</a> to <code>disabled</code> and return.
 
 
  <li><p>Let <var>topLevelRelatives</var> be <var>container</var>'s <a>container document</a>'s
@@ -6969,7 +6977,7 @@ setting an iframe's <a attribute for=HTMLIFrameElement>src</a>.
   return.
 
   <p class=note>Only the top level document and related documents can delegate the
-  <code>deferred-fetch-minimal</code> policy.
+  {{PermissionPolicy/"deferred-fetch-minimal"}} policy.
 
  <li><p>Let <var>framesWithMinimalQuotaPolicy</var> be zero.
  <li>
@@ -6984,13 +6992,13 @@ setting an iframe's <a attribute for=HTMLIFrameElement>src</a>.
    <li><p><var>topLevelRelatives</var> does not <a for=list>contain</a> <var>navigable</var>
 
    <li><p><var>navigable</var>'s <a>navigable container</a>'s <a>deferred fetch policy</a> is
-   <code>deferred-fetch-minimal</code>
+   {{PermissionPolicy/"deferred-fetch-minimal"}}
   </ul>
 
   <p>Increment <var>framesWithMinimalQuotaPolicy</var> by 1.
 
  <li><p>If <var>framesWithMinimalQuotaPolicy</var> is less than 16, then set <var>container</var>'s
- <a>deferred fetch policy</a> to <code>deferred-fetch-minimal</code>.
+ <a>deferred fetch policy</a> to {{PermissionPolicy/"deferred-fetch-minimal"}}.
 </ol>
 </div>
 
@@ -7001,10 +7009,10 @@ The <dfn>initial subframe deferred fetch quota</dfn> is determined by the follow
   <th>Policy
   <th>Quota
  <tr>
-  <td><code>deferred-fetch</code>
+  <td>{{PermissionPolicy/"deferred-fetch"}}
   <td>64 kibibytes
  <tr>
-  <td><code>deferred-fetch-minimal</code>
+  <td>{{PermissionPolicy/"deferred-fetch-minimal"}}
   <td>8 kibibytes
  <tr>
   <td><code>disabled</code>
