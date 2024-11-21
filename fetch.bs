@@ -3307,7 +3307,10 @@ retried over the original URL.
    <li><p><var>request</var>'s <a for="request">method</a> is not "<code>GET</code>";
 
    <li><p><var>request</var>'s <a for="request">URL</a>'s <a for="url">scheme</a> is not
-   "<code>http</code>"; or
+   "<code>http</code>";
+
+   <li><p><var>request</var>'s <a for="request">URL</a>'s <a for="url">port</a> is not the default
+   port; or
 
    <li><p><var>request</var>'s <a for="request">URL</a>'s <a for="url">origin</a> is exempted from
    upgrades in an <a>implementation-defined</a> way,
@@ -3390,13 +3393,25 @@ requests, in order to quickly initiate a fallback HTTP fetch.
 request to <code>http://a.com</code> will be upgraded to <code>https://a.com</code>, but the fetch
 will fail. A fallback request will be initiated to <code>http://a.com</code>.
 
-<p id=example-https-upgrade-allowlist class=example><code>site.test</code> serves
-<code>http://site.test</code> but refuses connections on <code>https://site.test</code>. Upon
-first request and fallback to <code>http://site.test</code>, the user agent stores the hostname
-in an allowlist with an expiration time of 7 days. In a future request, if <code>site.test</code>
-is still in this allowlist, the user agent will not upgrade <code>http://site.test</code> to
-<code>https://site.test</code>. The user agent will also set the new expiration time of the
-allowlist entry for <code>site.test</code> to 7 days from now.
+<p id=example-https-upgrade-allowlist class=example><code>a.com</code> serves
+<code>http://a.com</code> but refuses connections on <code>https://a.com</code>. Upon
+first request and fallback to <code>http://a.com</code>, the user agent stores the hostname
+in an allowlist with an expiration time of 7 days. In a future request, if <code>a.com</code>
+is still in this allowlist, the user agent will not upgrade <code>http://a.com</code> to
+<code>https://a.com</code>. The user agent will also set the new expiration time of the
+allowlist entry for <code>a.com</code> to 7 days from now.
+
+<p id=example-https-upgrade-ports class=example><code>a.com</code> serves
+<code>http://a.com:8080</code>. When a site is served from a non-default HTTP port, it's unlikely
+that the corresponding HTTPS URL is served from the default port either. Therefore, the user agent
+doesn't upgrade requests to <code>http://a.com:8080.</code>
+
+<p id=example-https-upgrade-redirect-loop class=example><code>a.com</code> serves
+<code>http://a.com</code> and <code>https://a.com</code>. The latter redirects to the former.
+An eligible request to <code>http://a.com</code> will be upgraded to
+<code>https://a.com</code> and will be redirected back to <code>http://a.com</code>.
+The user agent will detect this as a redirect loop, treat it as a failed upgrade and initiate a
+fallback navigation to <code>http://a.com</code>.
 
 
 
@@ -4586,8 +4601,6 @@ steps:
 
  <li><p><a>Upgrade <var>request</var> to a potentially trustworthy URL, if appropriate</a>.
 
- <li><p>Optionally, run <a>upgrade an HTTP request</a> algorithm on <var>request</var>.
-
  <li><p><a>Upgrade a mixed content <var>request</var> to a potentially trustworthy URL, if appropriate</a>.
 
  <li><p>If <a lt="block bad port">should <var>request</var> be blocked due to a bad port</a>,
@@ -4634,6 +4647,8 @@ steps:
   agents might need to perform DNS operations earlier, consult local DNS caches, or wait until later
   in the fetch algorithm and potentially unwind logic on discovering the need to change
   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a>.
+
+ <li><p>Optionally, run <a>upgrade an HTTP request</a> algorithm on <var>request</var>.
 
  <li><p>If <var>recursive</var> is false, then run the remaining steps <a>in parallel</a>.
 
