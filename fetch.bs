@@ -4978,30 +4978,19 @@ steps:
       <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction serves no useful purpose
       other than being interoperable.
 
-     <li>
-      <p>Let <var>blobStorageKey</var> be the result of running
-      <a>obtain a storage key for non-storage purposes</a> with <var>blobURLEntry</var>'s
-      <a for="blob URL entry">environment</a>.
+     <li><p>Let <var>requestEnvironment</var> be the result of
+     <a for=request>determining the environment</a> given <var>request</var>.
 
-     <li>
-      <p>Let <var>requestStorageKey</var> be the result of
-      <a for=request>determining the storage key</a> given <var>request</var>.
+     <li><p>Let <var>isNavigation</var> be true if <var>request</var>'s <a for=request>mode</a> is
+     not "<code>navigate</code>"; otherwise, false.
 
-     <li>
-      <p>If all of the following conditions are true:
+     <li><p>If <var>isNavigation</var> is false and <var>requestEnvironment</var> is null, then
+     return a <a>network error</a>.
 
-      <ul class=brief>
-       <li><p><var>request</var>'s <a for=request>mode</a> is not "<code>navigate</code>";
+     <li><p>Let <var>blob</var> be the result of <a>obtaining a blob object</a> given
+     <var>blobURLEntry</var>, <var>requestEnvironment</var>, and <var>isNavigation</var>.
 
-       <li><p><var>requestStorageKey</var> is non-null; and
-
-       <li><p><var>requestStorageKey</var> does not <a for="storage key">equal</a>
-       <var>blobStorageKey</var>,
-      </ul>
-
-      <p>then return a <a>network error</a>.
-
-     <li><p>Let <var>blob</var> be <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>.
+     <li><p>If <var>blob</var> is failure, then return a <a>network error</a>.
 
      <li><p>Let <var>response</var> be a new <a for=/>response</a>.
 
@@ -5135,17 +5124,15 @@ steps:
 </div>
 
 <div algorithm>
-<p>To <dfn for=request>determine the storage key</dfn>, given a <a for=/>request</a>
+<p>To <dfn for=request>determine the environment</dfn>, given a <a for=/>request</a>
 <var>request</var>:
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>reserved client</a> is non-null, then return the
- result of running <a for=/>obtain a storage key for non-storage purposes</a> given
+ <li><p>If <var>request</var>'s <a for=request>reserved client</a> is non-null, then return
  <var>request</var>'s <a for=request>reserved client</a>.
 
- <li><p>If <var>request</var>'s <a for=request>client</a> is non-null, then return the result of
- running <a for=/>obtain a storage key for non-storage purposes</a> given <var>request</var>'s
- <a for=request>client</a>.
+ <li><p>If <var>request</var>'s <a for=request>client</a> is non-null, then return
+ <var>request</var>'s <a for=request>client</a>.
 
  <li><p>Return null.
 </ol>
