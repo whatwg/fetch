@@ -6740,30 +6740,7 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
  <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
  <a>potentially trustworthy url</a>, then throw a "{{SecurityError}}" {{DOMException}}.
 
- <li><p>Let <var>totalRequestLength</var> be the [=string/length=] of <var>request</var>'s
- <a for=request>URL</a>, <a lt="URL serializer">serialized</a> with
- [=URL serializer/exclude fragment=] set to true.
-
- <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) in
- <a for=request>header list</a>, increment <var>totalRequestLength</var> by <var>name</var>'s
- [=byte sequence/length=] + <var>value</var>'s [=byte sequence/length=].
-
- <li>
-  <p>If <var>request</var>'s <a for=request>body</a> is non-null then:
-
-  <ol>
-   <li><p>If <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a> is null, then throw a {{TypeError}}.
-
-   <li>
-    <p>If <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is null, then throw a
-    {{TypeError}}.
-
-    <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
-
-   <li><p>Increment <var>totalRequestLength</var> by <var>request</var>'s
-   <a for=request>body</a>'s <a for=body>length</a>.
-  </ol>
+ <li><p>Let <var>totalRequestLength</var> be <var>request</var>'s <a>total request length</a>
 
  <li><p>If the <a>available deferred fetching quota</a> given <var>request</var>'s
  <a for=request>client</a> and <var>request</var>'s <a for=request>URL</a>'s <a for=url>origin</a>
@@ -6800,6 +6777,39 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
 
  <li><p>Return <var>deferredRecord</var>.
 </ol>
+</div>
+
+<div algorithm>
+<p>To compute the <dfn>total request length</dfn> of a <a for=/>request</a> <var>request</var>:
+
+<ol>
+ <li><p>Let <var>totalRequestLength</var> be the  [=string/length=] of <var>request</var>'s
+ <a for=request>URL</a>, <a lt="URL serializer">serialized</a> with
+ [=URL serializer/exclude fragment=] set to true.
+
+ <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) in
+ <a for=request>header list</a>, increment <var>totalRequestLength</var> by <var>name</var>'s
+ [=byte sequence/length=] + <var>value</var>'s [=byte sequence/length=].
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>body</a> is non-null then:
+
+  <ol>
+   <li><p>If <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a> is null, then throw a {{TypeError}}.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>body</a>'s <a for=body>source</a> is null, then throw a
+    {{TypeError}}.
+
+    <p class=note>This disallows sending deferred fetches with a live {{ReadableStream}}.
+
+   <li><p>Increment <var>totalRequestLength</var> by <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a>.
+  </ol>
+
+  <li><ol>Return <var>totalRequestLength</var>.
+ </ol>
 </div>
 
 <div algorithm>
@@ -6905,9 +6915,8 @@ This specification defined a <a>policy-controlled feature</a> identified by the 
     <a for="fetch group">deferred fetch records</a>:</p>
 
     <ol>
-     <li><p>Let <var>length</var> be <var>deferredRecord</var>'s
-     <a for="deferred fetch record">request</a>'s <a for=request>body</a>'s
-     <a for=body>length</a>.
+     <li><p>Let <var>length</var> be the <a>total request length</a> of <var>deferredRecord</var>'s
+     <a for="deferred fetch record">request</a>.
 
      <li><p>Decrement <var>remainingTotalQuota</var> by <var>length</var>.
 
