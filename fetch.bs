@@ -4972,15 +4972,28 @@ steps:
      <a for=url>blob URL entry</a>.
 
      <li>
-      <p>If <var>request</var>'s <a for=request>method</a> is not `<code>GET</code>`,
-      <var>blobURLEntry</var> is null, or <var>blobURLEntry</var>'s
-      <a for="blob URL entry">object</a> is not a {{Blob}} object, then return a
-      <a>network error</a>. [[!FILEAPI]]
+      <p>If <var>request</var>'s <a for=request>method</a> is not `<code>GET</code>` or
+      <var>blobURLEntry</var> is null, then return a <a>network error</a>. [[!FILEAPI]]
 
       <p class=note>The `<code>GET</code>` <a for=/>method</a> restriction serves no useful purpose
       other than being interoperable.
 
-     <li><p>Let <var>blob</var> be <var>blobURLEntry</var>'s <a for="blob URL entry">object</a>.
+     <li><p>Let <var>requestEnvironment</var> be the result of
+     <a for=request>determining the environment</a> given <var>request</var>.
+
+     <li><p>Let <var>isTopLevelNavigation</var> be true if <var>request</var>'s
+     <a for=request>destination</a> is "<code>document</code>"; otherwise, false.
+
+     <li><p>If <var>isTopLevelNavigation</var> is false and <var>requestEnvironment</var> is null,
+     then return a <a>network error</a>.
+
+     <li><p>Let <var>navigationOrEnvironment</var> be the string "<code>navigation</code>" if
+     <var>isTopLevelNavigation</var> is true; otherwise, <var>requestEnvironment</var>.
+
+     <li><p>Let <var>blob</var> be the result of <a>obtaining a blob object</a> given
+     <var>blobURLEntry</var> and <var>navigationOrEnvironment</var>.
+
+     <li><p>If <var>blob</var> is not a {{Blob}} object, then return a <a>network error</a>.
 
      <li><p>Let <var>response</var> be a new <a for=/>response</a>.
 
@@ -5110,6 +5123,21 @@ steps:
   </dl>
 
  <li><p>Return a <a for=/>network error</a>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn for=request>determine the environment</dfn>, given a <a for=/>request</a>
+<var>request</var>:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>reserved client</a> is non-null, then return
+ <var>request</var>'s <a for=request>reserved client</a>.
+
+ <li><p>If <var>request</var>'s <a for=request>client</a> is non-null, then return
+ <var>request</var>'s <a for=request>client</a>.
+
+ <li><p>Return null.
 </ol>
 </div>
 
@@ -9044,6 +9072,7 @@ Alexey Proskuryakov,
 Andreas Kling,
 Andrés Gutiérrez,
 Andrew Sutherland,
+Andrew Williams,<!-- recvfrom; GitHub -->
 Ángel González,
 Anssi Kostiainen,
 Arkadiusz Michalski,
