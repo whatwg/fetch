@@ -6850,11 +6850,73 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
 
 <h4 id=deferred-fetch-quota>Deferred fetching quota</h4>
 
-<p class=note>The quota asserts that this deferred fetch doesn't exceed two quotas: one for the
-document and it's same-origin same-tree relatives, and one for the reporting origin (64 kibibytes).
-The larger quota ensures that the top-level {{Document}} and its subresources don't continue using
-an unlimited amount of bandwidth after being destroyed. The per-origin quota ensures that a single
-reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
+<!-- non-normative -->
+<p>The deferred-fetch quota is allocated to a <a for=/>top-level traversable</a> (a "tab"),
+amounting to 640 kibibytes. The top-level {{Document}} and its same-origin same-agent subframes can
+use this quota to queue deferred fetches, or delegate some of it to cross-origin or cross-agent
+subframes, using permissions policy.
+
+<p>By default, 128 kibibytes out of these 640 kibibytes are allocated to delegating the quota to
+cross-origin or cross-agent subframes, each reserving 8 kibibytes.
+
+<p>The top-level {{Document}}, and subsequently its subframes, can control how much of their quota
+is delegates to cross-origin/cross-agent subframes, by using {{PermissionsPolicy}}.
+By default, {{PermissionPolicy/"deferred-fetch-minimal"}} is enabled for any origin, while
+{{PermissionPolicy/"deferred-fetch"}} is enabled for the top-level document's origin only.
+By relaxing the {{PermissionPolicy/"deferred-fetch"}} policy for particular origins and subframes,
+the top-level document can allocate 64 kibibytes to those subframes. Similarly, by restricting the
+{{PermissionPolicy/"deferred-fetch-minimal"}} policy for a particular origin or subframe, the
+document can prevent the iframe from reserving the 8 kibibytes it would receive by default. By
+disabling {{PermissionPolicy/"deferred-fetch-minimal"}} for the top-level document itself, the
+entire 128 kibibytes delegated quota is collected back into the main pool of 640 kibibytes.
+
+<p>Out of the allocated quota for a {{Document}}, only 64 kibibytes can be used concurrently for the
+same reporting origin (the <a for=/>request</a>'s <a for=request>URL</a>'s <a for=url>origin</a>).
+This prevents a situation where particular 3rd party libraries would reserve quota
+opportunistically, before they have data to send.
+
+<div class=example id=deferred-fetch-quota-examples>
+<p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw due to
+the request itself exceeding the 64 kibibytes quota allocated to a reporting origin. Note that the
+size of the request includes the <a for=request>URL</a> itself, the <a for=request>body</a>, and the
+<a for=request>header list</a>.
+<pre><code class=lang-javascript>
+  fetchLater(a_64_kb_url);
+  fetchLater("https://origin.example.com", {headers: headers_exceeding_64kb});
+  fetchLater(a_32_kb_url, {headers: headers_exceeding_32kb});
+  fetchLater("https://origin.example.com", {method: "POST", body: body_exceeding_64_kb});
+</code></pre>
+
+<p>In the following sequence, the first two requests would succeed, but the third one would throw.
+That's because al overall 640 kibibytes quota was not exceeded in the first to call, however the 3rd
+request exceeds the reporting-origin quota for <code>https://a.example.com</code>, and would throw.
+<pre><code class=lang-javascript>
+  fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
+  fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+  fetchLater("https://a.example.com");
+</code></pre>
+
+<p>Same-origin same-agent subframes share the quota of their parent. However, cross-origin or
+cross-agent iframes only receive 8kb of quota by default. So in the following example, the first 3
+calls would succeed and the last one would throw.
+<pre><code class=lang-javascript>
+  // In main page
+  fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
+
+  // In same-origin iframe
+  fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+
+  // In cross-origin iframe at https://frame.example.com
+  fetchLater("https://a.example.com", {body: a_5kb_body});
+  fetchLater("https://a.example.com", {body: a_12kb_body});
+</code></pre>
+
+<p>To make the previous example not throw, the top-level {{Document}} needs to delegate some of its
+quota to <code>https://frame.example.com</code>, for example by serving the following header:
+<pre><code>Permissions-Policy: deferred-fetch=(self "https://frame.example.com")</code></pre>
+
+</div>
+
 
 <p>This specification defined a <a>policy-controlled feature</a> identified by the string
 <dfn for=PermissionPolicy enum-value>"deferred-fetch"</dfn>. Its
@@ -7049,7 +7111,6 @@ shared.
   </ol>
 
  <li><p>Otherwise, set <var>container</var>'s <a>reserved deferred-fetch quota</a> to zero.
-
 </div>
 
 
@@ -8965,9 +9026,12 @@ method steps are:
  <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
  <a>HTTP(S) scheme</a>, then throw a {{TypeError}}.
 
- <li><p><li><p>If <var>request</var>'s
- <a for=request>body</a> is not null, and <var>request</var>'s
- <a for=request>body</a> <a for=body>source</a> is null, then throw a {{TypeError}}.
+ <li>
+  <p>If <var>request</var>'s
+  <a for=request>body</a> is not null, and <var>request</var>'s <a for=request>body</a>
+  <a for=body>length</a> is null, then throw a {{TypeError}}.
+
+  <p class=note>Requests whose <a for=request>body</a> is a {{ReadableStream}} cannot be deferred.
 
  <li><p>If <var>request</var>'s <a for=request>client</a> is not a <a>fully active</a>
  {{Document}}, then throw an "{{InvalidStateError}}" {{DOMException}}.
@@ -9000,6 +9064,73 @@ method steps are:
  <var>deferredRecord</var>.
 </ol>
 
+<div class=example id=fetch-later-examples>
+ <p>The following call would queue a request to be fetched when the document is terminated:
+ <pre><code class=lang-javascript>fetchLater("https://report.example.com", { method: "POST",
+  body: JSON.stringify(myReport) })</code></pre>
+
+ <p>The following call would also queue this request after 5 seconds, and the returned value would
+ allow callers to observe if it was indeed activated. Note that the request is guaranteed to be
+ invoked, even in cases where the user agent throttles timers.
+
+ <pre><code class=lang-javascript>
+  const result = fetchLater("https://report.example.com", {
+      method: "POST",
+      body: JSON.stringify(myReport),
+      activateAfter: 5000
+  });
+
+  function check_if_fetched() {
+    return result.activated;
+  }
+  </code></pre>
+
+  <p>The {{FetchLaterResult}} object can be used together with an {{AbortSignal}}. For example:
+ <pre><code class=lang-javascript>
+  let accumulated_events = [];
+  let previous_result = null;
+  const abort_signal = new AbortSignal();
+  function accumulate_event(event) {
+    if (previous_result) {
+      if (previous_result.activated) {
+        // The request is already activated, we can start from scratch.
+        accumulated_events = [];
+      } else {
+        // Abort this request, and start a new one with all the events.
+        signal.abort();
+      }
+    }
+
+    accumulated_events.push(event);
+    fetchLater("https://report.example.com", {
+          method: "POST",
+          body: JSON.stringify(accumulated_events),
+          activateAfter: 5000,
+          abort_signal
+      });
+
+    return result.activated;
+  }
+  </code></pre>
+
+
+  <p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw:
+  <pre><code class=lang-javascript>
+    // Only <a>potentially trustworthy url</a>s are supported.
+    fetchLater("http://untrusted.example.com");
+
+    // The length of the deferred request has to be known when.
+    fetchLater("https://origin.example.com", {body: someDynamicStream});
+
+    // Deferred fetching only works on active windows.
+    const detachedWindow = iframe.contentWindow;
+    iframe.remove();
+    detachedWindow.fetchLater("https://origin.example.com");
+  </code></pre>
+
+  See <a href="#deferred-fetch-quota-examples">deferred fetch quota examples</a> for examples
+  portraying how the deferred-fetch quota works.
+</div>
 
 <h3 id=garbage-collection>Garbage collection</h3>
 
