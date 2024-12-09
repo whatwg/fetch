@@ -2753,7 +2753,7 @@ a <a for=/>list</a> of <a data-lt="deferred fetch record">deferred fetch records
 <hr>
 
 <p>A <dfn export>deferred fetch record</dfn> is a <a for=/>struct</a> used to maintain state needed
-to invoke a fetch at a later time, e.g., when a <code>Document</code> object is unloaded or becomes
+to invoke a fetch at a later time, e.g., when a {{Document}} object is unloaded or becomes
 not <a for=Document>fully active</a>. It has the following <a for=struct>items</a>:
 
 <dl>
@@ -2765,7 +2765,7 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
   <p>"<code>deferred</code>", "<code>aborted</code>", or "<code>activated</code>".
 
   <p class=note>This value can be modified <a>in parallel</a>. There could be a race condition where
-  the <code>Document</code> object's <a for=/>event loop</a> might read it as
+  the {{Document}} object's <a for=/>event loop</a> might read it as
   "<code>deferred</code>" at the same time that it is changed to "<code>activated</code>". User
   agents can mitigate this race condition in an <a>implementation-defined</a> manner.
 </dl>
@@ -6758,30 +6758,15 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
 <h3 id=deferred-fetch>Deferred fetching</h3>
 
-<p>Deferred fetches allow callers to request that a fetch is invoked at the latest possible moment,
+<p>Deferred fetching allows callers to request that a fetch is invoked at the latest possible moment,
 i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout.
 
 <div algorithm>
-<p>To <dfn>request a deferred fetch</dfn> given a
+<p>To <dfn>queue a deferred fetch</dfn> given a
 <a for=/>request</a> <var>request</var> and a null or {{DOMHighResTimeStamp}}
 <var>activateAfter</var> (default null):
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>client</a> is not a <a>fully active</a>
- {{Document}}, then throw an "{{InvalidStateError}}" {{DOMException}}.
-
- <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
- <a>HTTP(S) scheme</a>, then throw a {{TypeError}}.
-
- <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
- <a>potentially trustworthy url</a>, then throw a "{{SecurityError}}" {{DOMException}}.
-
- <li><p>Let <var>totalRequestLength</var> be <var>request</var>'s <a>total request length</a>
-
- <li><p>If the <a>available deferred-fetch quota</a> given <var>request</var>'s
- <a for=request>client</a> and <var>request</var>'s <a for=request>URL</a>'s <a for=url>origin</a>
- is less than <var>totalRequestLength</var>, then throw a "{{QuotaExceededError}}" {{DOMException}}.
-
  <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
 
  <li><p>Set <var>request</var>'s <a for=request>keepalive</a> to true.
@@ -6800,7 +6785,7 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
    <li><p>The user agent should wait until <var>activateAfter</var> milliseconds have passed,
    or until the user agent has a reason to believe that it is about to lose the opportunity to
    execute scripts, e.g., when the browser is moved to the background, or when <var>request</var>'s
-   <a for=request>client</a> is a <code>Document</code> that had a "<code>hidden</code>"
+   <a for=request>client</a> is a {{Document}} that had a "<code>hidden</code>"
    <a for=Document>visibility state</a> for a long period of time.
 
    <li><p>The user agent may wait for a further <a>implementation-defined</a> <a>duration</a>, e.g.,
@@ -6823,7 +6808,7 @@ i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after
  <a for=request>URL</a>, <a lt="URL serializer">serialized</a> with
  [=URL serializer/exclude fragment=] set to true.
 
- <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) in <var>request</var>'s
+ <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) of <var>request</var>'s
  <a for=request>header list</a>, increment <var>totalRequestLength</var> by <var>name</var>'s
  <a for="byte sequence">length</a> + <var>value</var>'s <a for="byte sequence">length</a>.
 
@@ -6873,18 +6858,27 @@ reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
 
 <p>This specification defined a <a>policy-controlled feature</a> identified by the string
 <dfn for=PermissionPolicy enum-value>"deferred-fetch"</dfn>. Its
-<a for="policy-controlled feature">default allowlist</a> is `'self'`.
+<a for="policy-controlled feature">default allowlist</a> is "<code>self</code>".
 
 <p>This specification defined a <a>policy-controlled feature</a> identified by the string
 <dfn for=PermissionPolicy enum-value>"deferred-fetch-minimal"</dfn>. Its
-<a for="policy-controlled feature">default allowlist</a> is `*`.
+<a for="policy-controlled feature">default allowlist</a> is "<code>*</code>".
 
 <p>The <dfn>optional subframe deferred-fetch quota</dfn> is 64 kibibytes.
 <p>The <dfn>minimal subframe deferred-fetch quota</dfn> is 8 kibibytes.
 <p>The <dfn>deferred-fetch delegated quota</dfn> is 128 kibibytes.
 
 <div algorithm>
-<p>To get the <dfn>available deferred-fetch quota</dfn> given a <code>Document</code>
+<p>Two {{Document}}s <var>a</var> and <var>b</var> are said to
+<dfn>share deferred-fetch quota</dfn> if <var>a</var>'s
+<a>relevant agent</a> is <var>b</var>'s <a>relevant agent</a>, and <var>a</var>'s
+<a for=Document>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with <var>b</var>'s
+<a for=Document>URL</a>'s <a for=url>origin</a>.
+</div>
+
+
+<div algorithm>
+<p>To get the <dfn>available deferred-fetch quota</dfn> given a {{Document}}
 <var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
 
 <ol>
@@ -6913,6 +6907,9 @@ reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
      <li>
       <p>If <var>otherDocument</var>'s <a>node navigable</a> is a
       <a for=/>top-level traversable</a>, then:
+
+      <p class=note>Initialize the quota from the top-level traversable.
+
       <ol>
        <li><p>Assert: <var>quota</var> is zero.
 
@@ -6930,8 +6927,14 @@ reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
       </ol>
 
      <li>
+      <p>Otherwise,
+
+      <p class=note>This is a subframe, check if it inherits quota from its parent container based
+      on permissions policy. This would only be the case if the subframe and its parent do not share
+      quota, as quota is either shared or delegated.
+
       <ol>
-       <li><p>Let <var>otherContainer</var> be <var>otherDocument</var>'s <a>node navigable</a>'s
+       <li><p>Let <var>otherContainer</var> be <var>otherNavigable</var>'s
        <a>navigable container</a>.
 
        <li>
@@ -6955,19 +6958,18 @@ reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
       </ol>
 
      <li>
-      <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> in
+      <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> of
       <var>otherDocument</var>'s <a for=fetch>fetch group</a>'s
       <a for="fetch group">deferred fetch records</a>:</p>
       <ol>
-       <li><p>Let <var>length</var> be the <a>total request length</a> of
+       <li><p>Let <var>requestLength</var> be the <a>total request length</a> of
        <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
 
-       <li><p>Decrement <var>quota</var> by <var>length</var>.
+       <li><p>Decrement <var>quota</var> by <var>requestLength</var>.
 
-       <li><p>If <var>origin</var> is not null, and <var>deferredRecord</var>'s
-       <a for="deferred fetch record">request</a>'s <a for=request>URL</a>'s <a for=url>origin</a>
-       is <a>same origin</a> with <var>origin</var>, then decrement <var>quotaForOrigin</var> by
-       <var>length</var>.
+       <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
+       <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with <var>origin</var>,
+       then decrement <var>quotaForOrigin</var> by <var>requestLength</var>.
       </ol>
     </ol>
 
@@ -6992,63 +6994,62 @@ reporting sink (e.g. RUM library) doesn't reserve the whole quota to itself.
 
 <div algorithm>
 <p>To <dfn export>reserve deferred-fetch quota</dfn> for a <a>navigable container</a>
-<var>container</var> given an <a for=/>origin</a> <var>originToNavigateTo</var>, set
-<var>container</var>'s <a>reserved deferred-fetch quota</a> to the result of running the steps
-corresponding to the first matching statement:
+<var>container</var> given an <a for=/>origin</a> <var>originToNavigateTo</var>:
 
-<dl class=switch>
- <dt>The <a data-lt="define an inherited policy for feature in container">inherited policy</a>
+<p class=note>This is called when the container document initiates a navigation. It potentially
+reserves either 64kb or 8kb of quota for the frame, if it doesn't <a>share deferred-fetch quota</a>
+with the container and the permissions policy allow. It is not observable to the cotnainer document
+whether the reserved quota was used in practice.
+This algorithm assumes that the container's document might delegate quota to the navigated frame,
+and the reserved quota would only apply in that case, and would be ignored if it ends up being
+shared.
+
+<ol>
+ <li><p>If the <a data-lt="define an inherited policy for feature in container">inherited policy</a>
  for {{PermissionPolicy/"deferred-fetch"}}, <var>container</var> and <var>originToNavigateTo</var>
  is <code>Enabled</code>, and the <a>available deferred-fetch quota</a> for
  <var>container</var>'s <a>container document</a> is equal or greater than
- <a>optional subframe deferred-fetch quota</a>
- <dd><p>Return <a>optional subframe deferred-fetch quota</a>.
+ <a>optional subframe deferred-fetch quota</a>, then set <var>container</var>'s
+ <a>reserved deferred-fetch quota</a> to <a>optional subframe deferred-fetch quota</a>.
 
- <dt><var>container</var>'s <a>node document</a> and <var>container</var>'s <a>node navigable</a>'s
- <a for=navigable>top-level traversable</a>'s <a>active document</a>
- <a>share deferred-fetch quota</a>, and the
- <a data-lt="define an inherited policy for feature in container">inherited policy</a>
- for {{PermissionPolicy/"deferred-fetch-minimal"}}, <var>container</var> and
- <var>originToNavigateTo</var> is <code>Enabled</code>
- <dd>
+ <li>
+  <p>Otherwise, if the
+  <a data-lt="define an inherited policy for feature in container">inherited policy</a> for
+  {{PermissionPolicy/"deferred-fetch-minimal"}}, <var>container</var> and
+  <var>originToNavigateTo</var> is <code>Enabled</code>, then:
   <ol>
    <li><p>Let <var>delegatedQuota</var> be <a>deferred-fetch delegated quota</a>.
 
    <li>
-    <p><a for=list>For each</a> <var>navigable</var> in <var>container</var>'s
+    <p><a for=list>For each</a> <var>navigable</var> of <var>container</var>'s
     <a>node navigable</a>'s <a for=navigable>top-level traversable</a>'s
     <a>inclusive descendant navigables</a> who meets all of the following conditions:
     <ul class=brief>
      <li><p><var>navigable</var> is not <var>container</var>'s <a>content navigable</a>.
 
-     <li><p><var>navigable</var>'s <a>active document</a> and <var>container</var>'s
-     <a>node navigable</a>'s <a for=navigable>top-level traversable</a> do not
+     <li><p><var>navigable</var>'s <a>active document</a> and <var>navigable</var>'s
+     <a for=navigable>top-level traversable</a>'s <a>active document</a> do not
      <a>share deferred-fetch quota</a>.
 
-     <li><p><var>navigable</var>'s <var>container</var>'s <a>reserved deferred-fetch quota</a>
-     is <a>minimal subframe deferred-fetch quota</a>.
-    </ul>,
+     <li><p><var>navigable</var>'s <a>navigable container</a>'s <a>node document</a> and
+     <var>navigable</var>'s <a for=navigable>top-level traversable</a>'s <a>active document</a>
+     <a>share deferred-fetch quota</a>.
 
-   <p>Decrement <var>delegatedQuota</var> by <a>minimal subframe deferred-fetch quota</a>.
+     <li><p><var>navigable</var>'s <a>navigable container</a>'s <a>reserved deferred-fetch quota</a>
+     is <a>minimal subframe deferred-fetch quota</a>.
+    </ul>
+
+    <p>Decrement <var>delegatedQuota</var> by <a>minimal subframe deferred-fetch quota</a>.
 
    <li><p>If <var>delegatedQuota</var> is less than <a>minimal subframe deferred-fetch quota</a>,
-   then return zero.
+   then set <var>container</var>'s <a>reserved deferred-fetch quota</a> to zero.
 
-   <li><p>Return <a>minimal subframe deferred-fetch quota</a>.
+   <li><p>Otherwise, set <var>container</var>'s <a>reserved deferred-fetch quota</a> to
+   <a>minimal subframe deferred-fetch quota</a>.
   </ol>
 
- <dt>Otherwise
- <dd><p>Return zero.
-</dl>
+ <li><p>Otherwise, set <var>container</var>'s <a>reserved deferred-fetch quota</a> to zero.
 
-</div>
-
-<div algorithm>
-<p>Two <code>Documents</code> <var>a</var> and <var>b</var> are said to
-<dfn>share deferred-fetch quota</dfn> if <var>a</var>'s
-<a>relevant agent</a> is <var>b</var>'s <a>relevant agent</a>, and <var>a</var>'s
-<a for=Document>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with var>b</var>'s
-<a for=Document>URL</a>'s <a for=url>origin</a>.
 </div>
 
 
@@ -8961,8 +8962,26 @@ method steps are:
 
  <li><p>If <var>activateAfter</var> is less than 0, then throw a {{RangeError}}.
 
+ <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
+ <a>HTTP(S) scheme</a>, then throw a {{TypeError}}.
+
+ <li><p>If <var>request</var>'s <a for=request>client</a> is not a <a>fully active</a>
+ {{Document}}, then throw an "{{InvalidStateError}}" {{DOMException}}.
+
+ <li><p>If <var>request</var>'s <a for=request>URL</a> is not a
+ <a>potentially trustworthy url</a>, then throw a "{{SecurityError}}" {{DOMException}}.
+
+ <li><p><li><p>If <var>request</var>'s
+ <a for=request>body</a> is not null, and <var>request</var>'s
+ <a for=request>body</a> <a for=body>source</a> is null, then throw a {{TypeError}}.
+
+ <li><p>If the <a>available deferred-fetch quota</a> given <var>request</var>'s
+ <a for=request>client</a> and <var>request</var>'s <a for=request>URL</a>'s <a for=url>origin</a>
+ is less than <var>request</var>'s <a>total request length</a>, then throw a
+ "{{QuotaExceededError}}" {{DOMException}}.
+
  <li><p>Let <var>deferredRecord</var> be the result of calling
- <a>request a deferred fetch</a> given <var>request</var> and <var>activateAfter</var>.
+ <a>queue a deferred fetch</a> given <var>request</var> and <var>activateAfter</var>.
 
  <li>
   <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
