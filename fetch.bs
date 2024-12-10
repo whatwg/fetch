@@ -6861,13 +6861,13 @@ cross-origin or cross-agent subframes, each reserving 8 kibibytes.
 
 <p>The top-level {{Document}}, and subsequently its subframes, can control how much of their quota
 is delegates to cross-origin/cross-agent subframes, by using {{PermissionsPolicy}}.
-By default, {{PermissionPolicy/"deferred-fetch-minimal"}} is enabled for any origin, while
-{{PermissionPolicy/"deferred-fetch"}} is enabled for the top-level document's origin only.
-By relaxing the {{PermissionPolicy/"deferred-fetch"}} policy for particular origins and subframes,
+By default, {{PermissionsPolicy/"deferred-fetch-minimal"}} is enabled for any origin, while
+{{PermissionsPolicy/"deferred-fetch"}} is enabled for the top-level document's origin only.
+By relaxing the {{PermissionsPolicy/"deferred-fetch"}} policy for particular origins and subframes,
 the top-level document can allocate 64 kibibytes to those subframes. Similarly, by restricting the
-{{PermissionPolicy/"deferred-fetch-minimal"}} policy for a particular origin or subframe, the
+{{PermissionsPolicy/"deferred-fetch-minimal"}} policy for a particular origin or subframe, the
 document can prevent the iframe from reserving the 8 kibibytes it would receive by default. By
-disabling {{PermissionPolicy/"deferred-fetch-minimal"}} for the top-level document itself, the
+disabling {{PermissionsPolicy/"deferred-fetch-minimal"}} for the top-level document itself, the
 entire 128 kibibytes delegated quota is collected back into the main pool of 640 kibibytes.
 
 <p>Out of the allocated quota for a {{Document}}, only 64 kibibytes can be used concurrently for the
@@ -6911,19 +6911,126 @@ calls would succeed and the last one would throw.
   fetchLater("https://a.example.com", {body: a_12kb_body});
 </code></pre>
 
-<p>To make the previous example not throw, the top-level {{Document}} needs to delegate some of its
-quota to <code>https://frame.example.com</code>, for example by serving the following header:
-<pre><code>Permissions-Policy: deferred-fetch=(self "https://frame.example.com")</code></pre>
+<p>To make the previous example not throw, the top-level {{Document}} can delegate some of its quota
+to <code>https://frame.example.com</code>, for example by serving the following header:
+<pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://frame.example.com")</code></pre>
+
+<p>The following tables illustrates how quota is distributed to different iframes, each table
+representing a different <a for=/>top-level traversable</a> ("tab").
+
+<p>For a tree with its top-level <code>Permissions-Policy</code> header set to
+<code class=lang-http>deferred-fetch=(self "https://ok.example.com")</code>:
+
+<table>
+ <tr>
+  <th>Window name
+  <th>Parent
+  <th>Initial origin
+  <th>Current origin
+  <th>Quota
+ <tr>
+  <td><code>top</code>
+  <td><code>null</code>
+  <td><code>https://me.example.com</code>
+  <td><code>https://me.example.com</code>
+  <td>384kb (512kb - 64kb - 64kb). <code>d</code> and frame <code>g</code> were granted
+  64kb each, even though for <code>g</code> this quota ended up being unavilable.
+ <tr>
+  <td><code>a</code>
+  <td><code>top</code>
+  <td><code>https://me.example.com</code>
+  <td><code>https://me.example.com</code>
+  <td>Shared with <code>top</code>'s quota.
+ <tr>
+  <td><code>b</code>
+  <td><code>a</code>
+  <td><code>https://x.example.com</code>
+  <td><code>https://x.example.com</code>
+  <td>8kb, due to the default {{PermissionsPolicy/"deferred-fetch-minimal"}} policy.
+ <tr>
+  <td><code>c</code>
+  <td><code>top</code>
+  <td><code>https://x.example.com</code>
+  <td><code>https://x.example.com</code>
+  <td>8kb, due to the default {{PermissionsPolicy/"deferred-fetch-minimal"}} policy.
+ <tr>
+  <td><code>d</code>
+  <td><code>top</code>
+  <td><code>https://ok.example.com</code>
+  <td><code>https://ok.example.com</code>
+  <td>64kb, due to the {{PermissionsPolicy/"deferred-fetch"}} policy.
+ <tr>
+  <td><code>e</code>
+  <td><code>d</code>
+  <td><code>https://x.example.com</code>
+  <td><code>https://x.example.com</code>
+  <td>0, as its parent doesn't share the quota with the top-level document.
+ <tr>
+  <td><code>f</code>
+  <td><code>d</code>
+  <td><code>https://me.example.com</code>
+  <td><code>https://me.example.com</code>
+  <td>Shared with <code>top</code>'s quota.
+ <tr>
+  <td><code>g</code>
+  <td><code>top</code>
+  <td><code>https://ok.example.com</code>
+  <td><code>https://x.example.com</code>
+  <td>0, as the reserved quota when navigating doesn't match the current {{PermissionsPolicy}}.
+ <tr>
+  <td><code>h</code>
+  <td><code>top</code>
+  <td><code>https://ok.example.com</code>
+  <td><code>https://me.example.com</code>
+  <td>Shared with <code>top</code>'s quota.
+</table>
+
+<p>For a tree with its top-level <code>Permissions-Policy</code> header set to
+<code class=lang-http>deferred-fetch-minimal=(); deferred-fetch=(self https://ok.example.com)</code>:
+
+<table>
+ <tr>
+  <th>Window name
+  <th>Parent
+  <th>Initial origin
+  <th>Current origin
+  <th>Quota
+ <tr>
+  <td><code>top</code>
+  <td><code>null</code>
+  <td><code>https://me.example.com</code>
+  <td><code>https://me.example.com</code>
+  <td>576kb (640kb - 64kb). <code>c</code> was granted 64kb. Since {{PermissionsPolicy/"deferred-fetch-minimal"}}
+  was explicitly disabled, the initial top-level quota is 640kb instead of 512kb.
+ <tr>
+  <td><code>a</code>
+  <td><code>top</code>
+  <td><code>https://me.example.com</code>
+  <td><code>https://me.example.com</code>
+  <td>Shared with <code>top</code>'s quota.
+ <tr>
+  <td><code>b</code>
+  <td><code>a</code>
+  <td><code>https://x.example.com</code>
+  <td><code>https://x.example.com</code>
+  <td>0, due to the {{PermissionsPolicy/"deferred-fetch-minimal"}} being explicitly disabled.
+ <tr>
+  <td><code>c</code>
+  <td><code>top</code>
+  <td><code>https://ok.example.com</code>
+  <td><code>https://ok.example.com</code>
+  <td>64kb, due to the {{PermissionsPolicy/"deferred-fetch"}} policy.
+</table>
 
 </div>
 
 
 <p>This specification defined a <a>policy-controlled feature</a> identified by the string
-<dfn for=PermissionPolicy enum-value>"deferred-fetch"</dfn>. Its
+<dfn for=PermissionsPolicy enum-value>"deferred-fetch"</dfn>. Its
 <a for="policy-controlled feature">default allowlist</a> is "<code>self</code>".
 
 <p>This specification defined a <a>policy-controlled feature</a> identified by the string
-<dfn for=PermissionPolicy enum-value>"deferred-fetch-minimal"</dfn>. Its
+<dfn for=PermissionsPolicy enum-value>"deferred-fetch-minimal"</dfn>. Its
 <a for="policy-controlled feature">default allowlist</a> is "<code>*</code>".
 
 <p>The <dfn>optional subframe deferred-fetch quota</dfn> is 64 kibibytes.
@@ -6975,14 +7082,14 @@ quota to <code>https://frame.example.com</code>, for example by serving the foll
 
        <li><p>If <var>otherDocument</var> is not
        <a>allowed to use</a> the <a>policy-controlled feature</a>
-       {{PermissionPolicy/"deferred-fetch"}}, then return 0.
+       {{PermissionsPolicy/"deferred-fetch"}}, then return 0.
 
        <li>
         <p>Set <var>quota</var> be 640 kibibytes.
         <p class="note allow-2119">640kb should be enough for everyone.
 
        <li><p>If <var>otherDocument</var> is <a>allowed to use</a> the
-       <a>policy-controlled feature</a> {{PermissionPolicy/"deferred-fetch-minimal"}}, then
+       <a>policy-controlled feature</a> {{PermissionsPolicy/"deferred-fetch-minimal"}}, then
        decrement <var>quota</var> by <a>deferred-fetch delegated quota</a>.
       </ol>
 
@@ -7005,14 +7112,14 @@ quota to <code>https://frame.example.com</code>, for example by serving the foll
          <li><p>If <var>otherContainer</var>'s <a>subframe reserved deferred-fetch quota</a> is
          <a>optional subframe deferred-fetch quota</a>, and <var>otherDocument</var> is
          <a>allowed to use</a> the <a>policy-controlled feature</a>
-         {{PermissionPolicy/"deferred-fetch"}}, then increment <var>quota</var> by
+         {{PermissionsPolicy/"deferred-fetch"}}, then increment <var>quota</var> by
          <a>optional subframe deferred-fetch quota</a>.
 
          <li><p>Otherwise, if <var>otherContainer</var>'s
          <a>subframe reserved deferred-fetch quota</a> is
          <a>minimal subframe deferred-fetch quota</a> and <var>otherDocument</var>
          is <a>allowed to use</a> the <a>policy-controlled feature</a>
-         {{PermissionPolicy/"deferred-fetch-minimal"}}, then increment <var>quota</var> by
+         {{PermissionsPolicy/"deferred-fetch-minimal"}}, then increment <var>quota</var> by
          <a>minimal subframe deferred-fetch quota</a>.
         </ol>
       </ol>
@@ -7056,7 +7163,7 @@ quota to <code>https://frame.example.com</code>, for example by serving the foll
 <p>To <dfn export>reserve deferred-fetch quota</dfn> for a <a>navigable container</a>
 <var>container</var> given an <a for=/>origin</a> <var>originToNavigateTo</var>:
 
-<p class=note>This is called when the container document and the document that initiated the
+<p class=note>This is called when <var>container</var> and the document that initiated the
 navigation (the "source document") <a>share deferred-fetch quota</a>. It potentially
 reserves either 64kb or 8kb of quota for the frame, if it doesn't <a>share deferred-fetch quota</a>
 with its parent and the permissions policy allow. It is not observable to the cotnainer document
@@ -7067,7 +7174,7 @@ shared.
 
 <ol>
  <li><p>If the <a data-lt="define an inherited policy for feature in container">inherited policy</a>
- for {{PermissionPolicy/"deferred-fetch"}}, <var>container</var> and <var>originToNavigateTo</var>
+ for {{PermissionsPolicy/"deferred-fetch"}}, <var>container</var> and <var>originToNavigateTo</var>
  is <code>Enabled</code>, and the <a>available deferred-fetch quota</a> for
  <var>container</var>'s <a>container document</a> is equal or greater than
  <a>optional subframe deferred-fetch quota</a>, then set <var>container</var>'s
@@ -7076,7 +7183,7 @@ shared.
  <li>
   <p>Otherwise, if the
   <a data-lt="define an inherited policy for feature in container">inherited policy</a> for
-  {{PermissionPolicy/"deferred-fetch-minimal"}}, <var>container</var> and
+  {{PermissionsPolicy/"deferred-fetch-minimal"}}, <var>container</var> and
   <var>originToNavigateTo</var> is <code>Enabled</code>, and <var>container</var>'s
   <a>node document</a> and <var>container</var>'s <a>node navigable</a>'s
   <a for=navigable>top-level traversable</a>'s <a>active document</a>
