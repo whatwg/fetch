@@ -2762,7 +2762,7 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
 </dl>
 
 <p>Each <a>navigable container</a> has an associated number
-<dfn>nested document reserved deferred-fetch quota</dfn>. Unless stated otherwise, it is 0.
+<dfn>reserved deferred-fetch quota</dfn>. Unless stated otherwise, it is 0.
 
 <hr>
 
@@ -7006,7 +7006,7 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
 
 <div algorithm>
 <p>To get the <dfn>available deferred-fetch quota</dfn> given a {{Document}}
-<var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
+<var>requestClientDocument</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
 
 <ol>
  <li><p>Let <var>quota</var> be 0.
@@ -7014,7 +7014,7 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
  <li><p>Let <var>quotaForOrigin</var> be 64 kibibytes.
 
  <li>
-  <p>For each <var>otherNavigable</var> of <var>document</var>'s <a>node navigable</a>'s
+  <p>For each <var>otherNavigable</var> of <var>requestClientDocument</var>'s <a>node navigable</a>'s
   <a for=navigable>top-level traversable</a>'s <a>inclusive descendant navigables</a>:
 
   <p class=note>This algorithm iterates over the entire navigable tree. It accumulates quota from
@@ -7024,14 +7024,14 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
 
   <ol>
    <li><p>Let <var>otherDocument</var> be <var>otherNavigable</var>'s <a>active document</a>.
+   <li><p>Let <var>otherContainer</var> be <var>otherNavigable</var>'s <a>navigable container</a>.
 
    <li>
-    <p>If <var>document</var>'s <a for=Document>origin</a> is <a>same origin</a> with
+    <p>If <var>requestClientDocument</var>'s <a for=Document>origin</a> is <a>same origin</a> with
     <var>otherDocument</var>'s <a for=Document>origin</a>, then:
     <ol>
      <li>
-      <p>If <var>otherDocument</var>'s <a>node navigable</a> is a
-      <a for=/>top-level traversable</a>, then:
+      <p>If <var>otherContainer</var> is null, then:
 
       <p class=note>Initialize the quota from the top-level traversable.
 
@@ -7049,27 +7049,25 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
        <li><p>If <var>otherDocument</var> is <a>allowed to use</a> the
        <a>policy-controlled feature</a> "{{PermissionsPolicy/deferred-fetch-minimal}}", then
        decrement <var>quota</var> by <a>max containers with minimal quota</a>, multiplied by
-       <a>minimal nested document deferred-fetch quota</a>.
+       <a for="reserved deferred-fetch quota">minimal</a>.
       </ol>
 
      <li>
       <p>Otherwise, if any of the following conditions is true:
       <ul class=brief>
-       <li><p><var>otherNavigable</var>'s <a>navigable container</a>'s
-       <a>nested document reserved deferred-fetch quota</a> is
-       <a>optional nested document deferred-fetch quota</a>, and <var>otherDocument</var> is
+       <li><p><var>otherContainer</var>'s <a>reserved deferred-fetch quota</a> is
+       <a for="reserved deferred-fetch quota">normal</a>, and <var>otherDocument</var> is
        <a>allowed to use</a> the <a>policy-controlled feature</a>
        "{{PermissionsPolicy/deferred-fetch}}"
 
-       <li><p><var>otherNavigable</var>'s <a>navigable container</a>'s
-       <a>nested document reserved deferred-fetch quota</a> is
-       <a>minimal nested document deferred-fetch quota</a>, and <var>otherDocument</var> is
+       <li><p><var>otherContainer</var>'s <a>reserved deferred-fetch quota</a> is
+       <a for="reserved deferred-fetch quota">minimal</a>, and <var>otherDocument</var> is
        <a>allowed to use</a> the <a>policy-controlled feature</a>
        "{{PermissionsPolicy/deferred-fetch-minimal}}"
       </ul>
 
-      <p>then increment <var>quota</var> by <var>otherNavigable</var>'s <a>navigable container</a>'s
-      <a>nested document reserved deferred-fetch quota</a>.
+      <p>then increment <var>quota</var> by <var>otherContainer</var>'s
+      <a>reserved deferred-fetch quota</a>.
 
      <li>
       <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> of
@@ -7088,9 +7086,9 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
     </ol>
 
    <li><p>Otherwise, if <var>otherDocument</var>'s <a>container document</a> is a {{Document}} whose
-   <a for=Document>origin</a> is <a>same origin</a> with <var>document</var>'s
+   <a for=Document>origin</a> is <a>same origin</a> with <var>requestClientDocument</var>'s
    <a for=Document>origin</a>, then decrement <var>quota</var> by <var>otherNavigable</var>'s
-   <a>navigable container</a>'s <a>nested document reserved deferred-fetch quota</a>.
+   <a>navigable container</a>'s <a>reserved deferred-fetch quota</a>.
   </ol>
 
  <li><p>If <var>quota</var> is less than 0, than return 0.
@@ -7122,8 +7120,8 @@ shared.
  for "{{PermissionsPolicy/deferred-fetch}}", <var>container</var> and <var>originToNavigateTo</var>
  is <code>Enabled</code>, and the <a>available deferred-fetch quota</a> for
  <var>container</var>'s <a>container document</a> is equal or greater than
- <a>optional nested document deferred-fetch quota</a>, then set <var>container</var>'s
- <a>reserved deferred-fetch quota</a> to <a>optional nested document deferred-fetch quota</a> and
+ <a for="reserved deferred-fetch quota">normal</a>, then set <var>container</var>'s
+ <a>reserved deferred-fetch quota</a> to <a for="reserved deferred-fetch quota">normal</a> and
  return.
 
  <li><p>If the <a data-lt="define an inherited policy for feature in container">inherited policy</a>
@@ -7139,11 +7137,11 @@ shared.
  <a>node navigable</a>'s <a for=navigable>top-level traversable</a>'s
  <a>descendant navigables</a>, <a for=list data-lt=remove>removing</a> any <a for=/>navigable</a>
  whose <a>reserved deferred-fetch quota</a> is not
- <a>minimal nested document deferred-fetch quota</a> .
+ <a for="reserved deferred-fetch quota">minimal</a> .
 
  <li><p>If <var>containersWithReservedMinimalQuota</var>'s <a for=list>size</a> is less
  than <a>max containers with minimal quota</a>, then set <var>container</var>'s
- <a>reserved deferred-fetch quota</a> to <a>minimal nested document deferred-fetch quota</a>.
+ <a>reserved deferred-fetch quota</a> to <a for="reserved deferred-fetch quota">minimal</a>.
 </ol>
 </div>
 
