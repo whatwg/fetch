@@ -2777,7 +2777,7 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
  false, <a for="fetch controller">terminate</a> <var>record</var>'s
  <a for="fetch record">controller</a>.
 
- <li><p><a>Process or propagate deferred fetches</a> for <var>fetchGroup</var>.
+ <li><p><a>Process deferred fetches</a> for <var>fetchGroup</var>.
 </ol>
 
 
@@ -6764,6 +6764,8 @@ sources, specifically task sources that can result in running scripts such as th
 takes no arguments:
 
 <ol>
+ <li><p>Assert: <var>request</var>'s <a for=request>client</a> is a {{Document}}.
+
  <li><p><a>Populate request from client</a> given <var>request</var>.
 
  <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
@@ -6773,9 +6775,22 @@ takes no arguments:
  <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
  <a for="deferred fetch record">request</a> is <var>request</var>.
 
- <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
- <a for=request>client</a>'s <a for=fetch>fetch group</a>'s
- <a for="fetch group">deferred fetch records</a>.
+ <li><p>Let <var>topMostDirectSameOriginAncestor</var> be var>request</var>'s
+ <a for=request>client</a>.
+
+ <li><p>While <var>topMostDirectSameOriginAncestor</var>'s <a>node navigable</a>'s
+ <a>container document</a> is a {{Document}} whose <a for=Document>origin</a> is <a>same origin</a>
+ with <var>request</var>'s <a for=request>client</a>'s <a for=Document>origin</a>, set
+ <var>topMostDirectSameOriginAncestor</var> to <var>topMostDirectSameOriginAncestor</var>'s
+ <a>node navigable</a>'s <a>container document</a>.
+
+ <li>
+  <p><a for=list>Append</a> <var>deferredRecord</var> to
+  <var>topMostDirectSameOriginAncestor</var>'s <a>active document</a>'s
+  <a for=fetch>fetch group</a>'s <a for="fetch group">deferred fetch records</a>.
+
+  <p class=note>This prevents a case where eagerly creating and destroying nested documents would
+  circumvent the keepalive quota.
 
  <li>
   <p>If <var>activateAfter</var> is non-null, then run the following steps <a>in parallel</a>:</p>
@@ -6825,26 +6840,11 @@ takes no arguments:
 </div>
 
 <div algorithm>
-<p>To <dfn>process or propagate deferred fetches</dfn> given a <a>fetch group</a>
+<p>To <dfn>process deferred fetches</dfn> given a <a>fetch group</a>
 <var>fetchGroup</var>, <a for=list>for each</a> <a for="fetch group">deferred fetch record</a>
 <var>deferredRecord</var> of <var>fetchGroup</var>'s
-<a for="fetch group">deferred fetch records</a>:
-
-<ol>
- <li><p>Let <var>document</var> be <var>deferredRecord</var>'s
- <a for="deferred fetch record">request</a>'s <a for=request>client</a>.
-
- <li><p>Let <var>parent</var> be <var>document</var>'s <a>node navigable</a>'s
- <a>container document</a>.
-
- <li><p>If <var>parent</var> is a <a>fully active</a> {{Document}} whose
- <a for=Document>origin</a> is <a>same origin</a> with <var>document</var>'s
- <a for=Document>origin</a>, then set <var>deferredRecord</var>'s
- <a for="deferred fetch record">request</a>'s <a for=request>client</a> to <var>parent</var> and
- <a for=list>append</a> <var>deferredRecord</var> to <var>parent</var>'s
- <a for=fetch>fetch group</a>'s <a for="fetch group">deferred fetch records</a>.
-
- <li><p>Otherwise, .
+<a for="fetch group">deferred fetch records</a> <a>process a deferred fetch</a>
+<var>deferredRecord</var>.
 </ol>
 </div>
 
@@ -6893,13 +6893,14 @@ opportunistically, before they have data to send.
 <div class=example id=deferred-fetch-quota-examples>
 <p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw due to
 the request itself exceeding the 64 kibibytes quota allocated to a reporting origin. Note that the
-size of the request includes the <a for=request>URL</a> itself, the <a for=request>body</a>, and the
-<a for=request>header list</a>.
+size of the request includes the <a for=request>URL</a> itself, the <a for=request>body</a>, the
+<a for=request>header list</a>, and the <a for=request>referrer</a>.
 <pre><code class=lang-javascript>
-  fetchLater(a_64_kb_url);
+  fetchLater(a_72_kb_url);
   fetchLater("https://origin.example.com", {headers: headers_exceeding_64kb});
   fetchLater(a_32_kb_url, {headers: headers_exceeding_32kb});
   fetchLater("https://origin.example.com", {method: "POST", body: body_exceeding_64_kb});
+  fetchLater(a_62_kb_url /* with a 3kb referrer */);
 </code></pre>
 
 <p>In the following sequence, the first two requests would succeed, but the third one would throw.
@@ -6919,125 +6920,69 @@ calls would succeed and the last one would throw.
   // In main page
   fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
 
-  // In same-origin iframe
+  // In same-origin nested document
   fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
 
-  // In cross-origin iframe at https://frame.example.com
+  // In cross-origin nested document at https://frame.example.com
   fetchLater("https://a.example.com", {body: a_5kb_body});
   fetchLater("https://a.example.com", {body: a_12kb_body});
 </code></pre>
+
 
 <p>To make the previous example not throw, the top-level {{Document}} can delegate some of its quota
 to <code>https://frame.example.com</code>, for example by serving the following header:
 <pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://frame.example.com")</code></pre>
 
-<p>The following tables illustrates how quota is distributed to different iframes, each table
-representing a different <a for=/>top-level traversable</a> ("tab").
+<p>Each nested document reserves its own quota, and all the same-origin documents in the tree share
+quota with each other. So the following would work, because each frame reserve 8 kibibytes and they
+share the accumulated 16 kibibytes:
+<pre><code class=lang-javascript>
+  // In cross-origin nested document at https://frame.example.com/frame-1
+  fetchLater("https://a.example.com", {body: a_6kb_body});
 
-<p>For a tree with its top-level <code>Permissions-Policy</code> header set to
-<code class=lang-http>deferred-fetch=(self "https://ok.example.com")</code>:
+  // In cross-origin nested document at https://frame.example.com/frame-2
+  fetchLater("https://a.example.com", {body: a_6kb_body});
+</code></pre>
 
-<table>
- <tr>
-  <th>Window name
-  <th>Parent
-  <th>Initial origin
-  <th>Current origin
-  <th>Quota
- <tr>
-  <td><code>top</code>
-  <td><code>null</code>
-  <td><code>https://me.example.com</code>
-  <td><code>https://me.example.com</code>
-  <td>384 kibibytes (512 - 64 - 64). <code>d</code> and frame <code>g</code> were granted
-  64 kibibytes each, even though for <code>g</code> this quota ended up being unavailable.
- <tr>
-  <td><code>a</code>
-  <td><code>top</code>
-  <td><code>https://me.example.com</code>
-  <td><code>https://me.example.com</code>
-  <td>Shared with <code>top</code>'s quota.
- <tr>
-  <td><code>b</code>
-  <td><code>a</code>
-  <td><code>https://x.example.com</code>
-  <td><code>https://x.example.com</code>
-  <td>8 kibibytes, due to the default "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.
- <tr>
-  <td><code>c</code>
-  <td><code>top</code>
-  <td><code>https://x.example.com</code>
-  <td><code>https://x.example.com</code>
-  <td>8 kibibytes, due to the default "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.
- <tr>
-  <td><code>d</code>
-  <td><code>top</code>
-  <td><code>https://ok.example.com</code>
-  <td><code>https://ok.example.com</code>
-  <td>64 kibibytes, due to the "{{PermissionsPolicy/deferred-fetch}}" policy.
- <tr>
-  <td><code>e</code>
-  <td><code>d</code>
-  <td><code>https://x.example.com</code>
-  <td><code>https://x.example.com</code>
-  <td>0, as its parent doesn't share the quota with the top-level document.
- <tr>
-  <td><code>f</code>
-  <td><code>d</code>
-  <td><code>https://me.example.com</code>
-  <td><code>https://me.example.com</code>
-  <td>Shared with <code>top</code>'s quota.
- <tr>
-  <td><code>g</code>
-  <td><code>top</code>
-  <td><code>https://ok.example.com</code>
-  <td><code>https://x.example.com</code>
-  <td>0, as the reserved quota when navigating doesn't match the current {{PermissionsPolicy}}.
- <tr>
-  <td><code>h</code>
-  <td><code>top</code>
-  <td><code>https://ok.example.com</code>
-  <td><code>https://me.example.com</code>
-  <td>Shared with <code>top</code>'s quota.
-</table>
+<p>The following chart illustrates how quota is distributed to different nested documents in a tree:
 
-<p>For a tree with its top-level <code>Permissions-Policy</code> header set to
-<code class=lang-http>deferred-fetch-minimal=(); deferred-fetch=(self https://ok.example.com)</code>:
+<pre><code>
++ https://me.example.com with Permissions-policy: deferred-fetch=(self "https://ok.example.com")
+|
++ ---- + https://me.example.com
+|      | Shares quota with the <a for=/>top-level traversable</a>, as they're same origin.
+|      |
+|      + ---- + https://x.example.com
+|               Shares 16 kibibytes together with one other cross-origin nested document of the same origin.
+|
+|
++ ---- + https://x.example.com
+|        Shares 16 kibibytes together with one other cross-origin nested document of the same origin.
+|
++ ---- + https://ok.example.com/good
+|      | 64 kibibytes, granted via the "{{PermissionsPolicy/deferred-fetch}}" policy.
+|      |
+|      + ---- + https://x.example.com
+|               0. Only documents with the same originas the <a for=/>top-level traversable</a> can grant
+|               the 8 kibibytes
+|
++ ---- + https://ok.example.com/redirect, navigated to https://x.example.com
+|        0. The reserved 64 kibibytes for https://ok.example.com are not available for https://x.example.com.
+|
++ ---- + https://ok.example.com/back, navigated to https://me.example.com
+         Shares quota with the <a for=/>top-level traversable</a>, as they're same origin.
+</code></pre>
 
-<table>
- <tr>
-  <th>Window name
-  <th>Parent
-  <th>Initial origin
-  <th>Current origin
-  <th>Quota
- <tr>
-  <td><code>top</code>
-  <td><code>null</code>
-  <td><code>https://me.example.com</code>
-  <td><code>https://me.example.com</code>
-  <td>576kb (640kb - 64kb). <code>c</code> was granted 64kb. Since "{{PermissionsPolicy/deferred-fetch-minimal}}"
-  was explicitly disabled, the initial top-level quota is 640kb instead of 512kb.
- <tr>
-  <td><code>a</code>
-  <td><code>top</code>
-  <td><code>https://me.example.com</code>
-  <td><code>https://me.example.com</code>
-  <td>Shared with <code>top</code>'s quota.
- <tr>
-  <td><code>b</code>
-  <td><code>a</code>
-  <td><code>https://x.example.com</code>
-  <td><code>https://x.example.com</code>
-  <td>0, due to the "{{PermissionsPolicy/deferred-fetch-minimal}}" being explicitly disabled.
- <tr>
-  <td><code>c</code>
-  <td><code>top</code>
-  <td><code>https://ok.example.com</code>
-  <td><code>https://ok.example.com</code>
-  <td>64kb, due to the "{{PermissionsPolicy/deferred-fetch}}" policy.
-</table>
-
+<p>In the above example, the <a for=/>top-level traversable</a> and its <a>same origin</a>
+descendants share a quota of 384 kibibytes. That value is computed as such:
+<ul>
+ <li><p>640 kibibytes are initially granted to the <a for=/>top-level traversable</a>.
+ <li><p>128 kibibytes are reserved for the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.
+ <li><p>64 kibibytes are reserved for the container navigating to <code>https://ok.example/good</code>.
+ <li><p>64 kibibytes are reserved for the container navigating to <code>https://ok.example/redirect</code>, and lost when it navigates away.
+ <li><code>https://ok.example.com/back</code> did not reserve 64 kibibytes, because it navigated back to <a for=/>top-level traversable</a>'s origin.
+ <li><p>640 - 128 - 64 - 64 = 384 kibibytes.
+</ul>
 </div>
 
 
