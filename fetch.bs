@@ -1134,7 +1134,6 @@ a <a>byte-case-insensitive</a> match for one of
  <li>`<code>Content-Language</code>`
  <li>`<code>Content-Length</code>`
  <li>`<code>Content-Type</code>`
- <li>`<code>Content-Encoding</code>`
  <li>`<code>Expires</code>`
  <li>`<code>Last-Modified</code>`
  <li>`<code>Pragma</code>`
@@ -1150,7 +1149,6 @@ is a <a>byte-case-insensitive</a> match for one of
  <li>`<code>Accept-Language</code>`
  <li>`<code>Content-Language</code>`
  <li>`<code>Content-Type</code>`
- <li>`<code>Content-Encoding</code>`
 </ul>
 
 <div algorithm>
@@ -1180,6 +1178,7 @@ is a <a>byte-case-insensitive</a> match for one of
    <li>`<a http-header><code>Access-Control-Request-Headers</code></a>`
    <li>`<a http-header><code>Access-Control-Request-Method</code></a>`
    <li>`<code>Connection</code>`
+   <li>`<code>Content-Encoding</code>`
    <li>`<code>Content-Length</code>`
    <li>`<code>Cookie</code>`
    <li>`<code>Cookie2</code>`
@@ -5042,6 +5041,12 @@ steps:
 
      <li><p>Let <var>type</var> be <var>blob</var>'s {{Blob/type}}.
 
+     <li><p>Let <var>accept-coding</var> be the result of <a for="header list">getting</a>
+       `<code>Content-Encoding</code>` from <var>request</var>'s <a for=request>header list</a>.
+        If <var>accept-encoding</var> is not null and the server selects one of the encoding options,
+        let <var>coding</var> be the selected encoding option; otherwise, i.e., let <var>coding</var>
+        be null.
+
      <li>
       <p>If <var>request</var>'s <a for=request>header list</a>
       <a for="header list">does not contain</a> `<code>Range</code>`:
@@ -5058,6 +5063,10 @@ steps:
        <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
        (`<code>Content-Length</code>`, <var>serializedFullLength</var>),
        (`<code>Content-Type</code>`, <var>type</var>) ».
+
+       <li><p>If <var>coding</var> is non-null,<a for="header list"> append</a> (`<code>Content-Encoding</code>`,
+        <var>coding</var>) to <var>response</var>'s <a for=response>header list</a>.
+
       </ol>
 
      <li>
@@ -5127,6 +5136,9 @@ steps:
        (`<code>Content-Length</code>`, <var>serializedSlicedLength</var>),
        (`<code>Content-Type</code>`, <var>type</var>), (`<code>Content-Range</code>`,
        <var>contentRange</var>) ».
+
+       <li><p>If <var>coding</var> is non-null,<a for="header list"> append</a> (`<code>Content-Encoding</code>`,
+        <var>coding</var>) to <var>response</var>'s <a for=response>header list</a>.
       </ol>
 
      <li><p>Return <var>response</var>.
@@ -5143,10 +5155,28 @@ steps:
      <li><p>Let <var>mimeType</var> be <var>dataURLStruct</var>'s
      <a for="data: URL struct">MIME type</a>, <a lt="serialize a MIME type to bytes">serialized</a>.
 
-     <li><p>Return a new <a for=/>response</a> whose <a for=response>status message</a> is
-     `<code>OK</code>`, <a for=response>header list</a> is « (`<code>Content-Type</code>`,
-     <var>mimeType</var>) », and <a for=response>body</a> is <var>dataURLStruct</var>'s
-     <a for="data: URL struct">body</a> <a for="byte sequence">as a body</a>.
+     <li><p>Let <var>accept-coding</var> be the result of <a for="header list">getting</a>
+       `<code>Content-Encoding</code>` from <var>request</var>'s <a for=request>header list</a>.
+        If <var>accept-encoding</var> is not null and the server selects one of the encoding options,
+        let <var>coding</var> be the selected encoding option; otherwise, i.e., let <var>coding</var>
+        be null.
+     <li><p>Let <var>response</var> be a new <a for=/>response</a>.
+
+     <li><p>Set <var>response</var>'s <a for=response>status message</a> to
+     <code>OK</code>`.
+
+     <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
+     (`<code>Content-Type</code>`, <var>mimeType</var>)».
+
+     <li><p>If <var>coding</var> is non-null,<a for="header list"> append</a> 
+     (`<code>Content-Encoding</code>`, <var>coding</var>) to <var>response</var>'s
+     <a for=response>header list</a>.
+
+     <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>dataURLStruct</var>'s
+     <a for="data: URL struct">body</a>
+
+     <li><p>Return <var>response</var>.
+
     </ol>
 
    <dt>"<code>file</code>"
@@ -9165,7 +9195,7 @@ Gavin Carothers,
 Glenn Maynard,
 Graham Klyne,
 Gregory Terzian,
-Guohui Deng,
+Guohui Deng(邓国辉)<!-- guohuideng2024; GitHub -->,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Harris Hancock,
