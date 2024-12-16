@@ -6762,8 +6762,8 @@ sources, specifically task sources that can result in running scripts such as th
 
 <div algorithm>
 <p>To <dfn>queue a deferred fetch</dfn> given a <a for=/>request</a> <var>request</var>, a
-<a for=fetch>fetch group</a> <var>fetchGroup</var> a null or {{DOMHighResTimeStamp}}
-<var>activateAfter</var>, an <var>onActivatedWithoutTermination</var>, which is an algorithm that
+<a for=fetch>fetch group</a> <var>fetchGroup</var>, a null or {{DOMHighResTimeStamp}}
+<var>activateAfter</var>, and <var>onActivatedWithoutTermination</var>, which is
 takes no arguments:
 
 <ol>
@@ -6789,8 +6789,10 @@ takes no arguments:
   <ol>
    <li>
     <p>The user agent should wait until any of the following conditions is met:
+
     <ul class=brief>
      <li><p>At least <var>activateAfter</var> milliseconds have passed.
+
      <li><p>The user agent has a reason to believe that it is about to lose the opportunity to
      execute scripts, e.g., when the browser is moved to the background, or when
      <var>request</var>'s <a for=request>client</a> is a {{Document}} that had a
@@ -6824,19 +6826,18 @@ takes no arguments:
  <a for=request>header list</a>, increment <var>totalRequestLength</var> by <var>name</var>'s
  <a for="byte sequence">length</a> + <var>value</var>'s <a for="byte sequence">length</a>.
 
- <li><p>Increment <var>totalRequestLength</var> by <var>request</var>'s
- <a for=request>body</a>'s <a for=body>length</a>.
+ <li><p>Increment <var>totalRequestLength</var> by <var>request</var>'s <a for=request>body</a>'s
+ <a for=body>length</a>.
 
  <li><p>Return <var>totalRequestLength</var>.
+</ol>
 </div>
 
 <div algorithm>
-<p>To <dfn>process deferred fetches</dfn> given a <a>fetch group</a>
-<var>fetchGroup</var>, <a for=list>for each</a> <a for="fetch group">deferred fetch record</a>
-<var>deferredRecord</var> of <var>fetchGroup</var>'s
-<a for="fetch group">deferred fetch records</a> <a>process a deferred fetch</a>
-<var>deferredRecord</var>.
-</ol>
+<p>To <dfn>process deferred fetches</dfn> given a <a>fetch group</a> <var>fetchGroup</var>,
+<a for=list>for each</a> <a for="fetch group">deferred fetch record</a> <var>deferredRecord</var> of
+<var>fetchGroup</var>'s <a for="fetch group">deferred fetch records</a>
+<a>process a deferred fetch</a> <var>deferredRecord</var>.
 </div>
 
 <div algorithm>
@@ -6847,8 +6848,8 @@ takes no arguments:
 
  <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">done</a> to true.
 
- <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s
- <a for="deferred fetch record">request</a>.
+ <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
+
  <li><p>Return true.
 </ol>
 </div>
@@ -6865,16 +6866,16 @@ documents, using permissions policy.
 cross-origin nested documents, each reserving 8 kibibytes.
 
 <p>The top-level {{Document}}, and subsequently its nested documents, can control how much of their
-quota is delegates to cross-origin/cross-agent nested documents, by using permissions policy.
-By default, "{{PermissionsPolicy/deferred-fetch-minimal}}" is enabled for any origin, while
+quota is delegates to cross-origin child documents, using permissions policy. By default,
+"{{PermissionsPolicy/deferred-fetch-minimal}}" is enabled for any origin, while
 "{{PermissionsPolicy/deferred-fetch}}" is enabled for the top-level document's origin only.
 By relaxing the "{{PermissionsPolicy/deferred-fetch}}" policy for particular origins and nested
 documents, the top-level document can allocate 64 kibibytes to those nested documents. Similarly, by
 restricting the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy for a particular origin or
-nested document, the document can prevent the iframe from reserving the 8 kibibytes it would receive
-by default. By disabling "{{PermissionsPolicy/deferred-fetch-minimal}}" for the top-level document
-itself, the entire 128 kibibytes delegated quota is collected back into the main pool of 640
-kibibytes.
+nested document, the document can prevent the document from reserving the 8 kibibytes it would
+receive by default. By disabling "{{PermissionsPolicy/deferred-fetch-minimal}}" for the top-leve
+document itself, the entire 128 kibibytes delegated quota is collected back into the main pool of
+640 kibibytes.
 
 <p>Out of the allocated quota for a {{Document}}, only 64 kibibytes can be used concurrently for the
 same reporting origin (the <a for=/>request</a>'s <a for=request>URL</a>'s <a for=url>origin</a>).
@@ -6991,7 +6992,7 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
 "<dfn for=PermissionsPolicy enum-value>deferred-fetch-minimal</dfn>". Its
 <a for="policy-controlled feature">default allowlist</a> is "<code>*</code>".
 
-<p>The <dfn>max containers with minimal quota</dfn> is 16.
+<p>The <dfn>quota reserved for <code>deferred-fetch-minimal</code></dfn> is 128 kibibytes.
 
 <div algorithm>
 <p>To get the <dfn>available deferred-fetch quota</dfn> given a {{Document}}
@@ -7016,8 +7017,7 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
 
    <li><p>If <var>controlDocument</var> is <a>allowed to use</a> the
    <a>policy-controlled feature</a> "{{PermissionsPolicy/deferred-fetch-minimal}}", then
-   decrement <var>quota</var> by <a>max containers with minimal quota</a>, multiplied by
-   <a for="reserved deferred-fetch quota">minimal quota</a>.
+   decrement <var>quota</var> by <a>quota reserved for <code>deferred-fetch-minimal</code></a>.
   </ol>
 
   <p>Otherwise:
@@ -7061,7 +7061,9 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
  <var>navigable</var>'s <a>navigable container</a>'s <a>reserved deferred-fetch quota</a>.
 
  <li><p>If <var>quota</var> is less than 0, then return 0.
+
  <li><p>If <var>quota</var> is less than <var>quotaForOrigin</var>, then return <var>quota</var>.
+
  <li><p>Return <var>quotaForOrigin</var>.
 </ol>
 </div>
@@ -7107,7 +7109,8 @@ shared.
    <a>descendant navigables</a>, <a for=list data-lt=remove>removing</a> any <a for=/>navigable</a>
    whose <a>navigable container</a>'s <a>reserved deferred-fetch quota</a> is not
    <a for="reserved deferred-fetch quota">minimal quota</a>, is less than
-   <a>max containers with minimal quota</a>
+   <a>quota reserved for <code>deferred-fetch-minimal</code></a> /
+   <a for="reserved deferred-fetch quota">minimal quota</a>.
   </ul>
 
   <p>then set <var>container</var>'s <a>reserved deferred-fetch quota</a> to
