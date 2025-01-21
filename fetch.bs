@@ -6777,7 +6777,7 @@ which is an algorithm that takes no arguments:
  <li><p>Set <var>request</var>'s <a for=request>keepalive</a> to true.
 
  <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
- <a for="deferred fetch record">request</a> is <var>request</var>,
+ <a for="deferred fetch record">request</a> is <var>request</var>, and whose
  <a for="deferred fetch record">notify invoked</a> is
  <var>onActivatedWithoutTermination</var>.
 
@@ -6788,12 +6788,18 @@ which is an algorithm that takes no arguments:
  <a>deferred-fetch control document</a>.
 
  <li>
-  <p>If <var>controlDocument</var> is not <var>document</var>, then <a for=list>append</a>
-  <var>deferredRecord</var> to <var>controlDocument</var>'s <a>fetch group</a>'s
-  <a for="fetch group">deferred fetch records</a>.
+  <p>If <var>controlDocument</var> is not <var>document</var>, then:</p>
+  <ol>
+   <li><p><a for=list>Append</a>
+   <var>deferredRecord</var> to <var>controlDocument</var>'s <a>fetch group</a>'s
+   <a for="fetch group">deferred fetch records</a>.
+
+   <li><p>Set <var>request</var>'s <a for=request>client</a> to <var>controlDocument</var>.
+  </ol>
 
   <p class=note>This ensures that the deferred fetch is counted towards the control document's
-  quota if its request is still in flight after the <a>fetch group</a> has been terminated.
+  quota if its request is still in flight after the <a>fetch group</a> has been terminated.</p>
+ </li>
 
  <li>
   <p>If <var>activateAfter</var> is non-null, then run the following steps <a>in parallel</a>:</p>
@@ -6867,9 +6873,9 @@ which is an algorithm that takes no arguments:
  "<code>done</code>".
 
  <li><p><a>Queue a global task</a> on the <a>deferred fetch task source</a> with
- <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a> to run <var>deferredRecord</var>'s
- <a for="deferred fetch record">notify invoked</a>.
+ <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
+ <a for=request>client</a>'s <a for="environment settings object">global object</a> to run
+ <var>deferredRecord</var>'s <a for="deferred fetch record">notify invoked</a>.
 </ol>
 </div>
 
@@ -9106,11 +9112,8 @@ method steps are:
 
   <p class=note>Requests whose <a for=request>body</a> is a {{ReadableStream}} cannot be deferred.
 
- <li><p>Let <var>controlDocument</var> be <var>request</var>'s <a for=request>client</var>'s
- <a>deferred-fetch control document</a>.
-
  <li><p>If the <a>available deferred-fetch quota</a> given <var>request</var>'s
- <a for=request>client</var> and <var>request</var>'s <a for=request>URL</a>'s
+ <a for=request>client</a> and <var>request</var>'s <a for=request>URL</a>'s
  <a for=url>origin</a> is less than <var>request</var>'s <a>total request length</a>, then throw a
  "{{QuotaExceededError}}" {{DOMException}}.
 
@@ -9121,7 +9124,7 @@ method steps are:
  true.
 
  <li><p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
- <a for=Request>signal</a>: <li><p>Set <var>deferredRecord</var>'s
+ <a for=Request>signal</a>: Set <var>deferredRecord</var>'s
  <a for="deferred fetch record">invoke state</a> to "<code>aborted</code>".
 
  <li><p>Return a new {{FetchLaterResult}} whose
