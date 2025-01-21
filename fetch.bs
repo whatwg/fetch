@@ -2757,8 +2757,12 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
  <dt><dfn for="deferred fetch record">request</dfn>
  <dd>A <a for=/>request</a>.
 
- <dt><dfn for="deferred fetch record">done</dfn> (default false)
- <dd>A boolean.
+ <dt><dfn for="deferred fetch record">notify invoked</dfn>
+ <dd>An algorithm accepting no arguments.
+
+ <dt><dfn for="deferred fetch record">invoke state</dfn> (default "<code>pending</code>")
+ <dd>"<code>pending</code>", "<code>fetching</code>", "<code>done</code>", or
+ "<code>aborted</code>".
 </dl>
 
 <p>Each <a>navigable container</a> has an associated number
@@ -6761,10 +6765,9 @@ sources, specifically task sources that can result in running scripts such as th
 <a method><code>fetchLater()</code></a> call before running any scripts that might depend on it.
 
 <div algorithm>
-<p>To <dfn>queue a deferred fetch</dfn> given a <a for=/>request</a> <var>request</var>, a
-<a for=fetch>fetch group</a> <var>fetchGroup</var>, a null or {{DOMHighResTimeStamp}}
-<var>activateAfter</var>, and <var>onActivatedWithoutTermination</var>, which is an algorithm that
-takes no arguments:
+<p>To <dfn>queue a deferred fetch</dfn> given a <a for=/>request</a> <var>request</var>, a null or
+{{DOMHighResTimeStamp}} <var>activateAfter</var>, and <var>onActivatedWithoutTermination</var>,
+which is an algorithm that takes no arguments:
 
 <ol>
  <li><p><a>Populate request from client</a> given <var>request</var>.
@@ -6774,11 +6777,23 @@ takes no arguments:
  <li><p>Set <var>request</var>'s <a for=request>keepalive</a> to true.
 
  <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
- <a for="deferred fetch record">request</a> is <var>request</var>.
+ <a for="deferred fetch record">request</a> is <var>request</var>,
+ <a for="deferred fetch record">notify invoked</a> is
+ <var>onActivatedWithoutTermination</var>.
+
+ <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>document</var>'s
+ <a>fetch group</a>'s <a for="fetch group">deferred fetch records</a>.
+
+ <li><p>Let <var>controlDocument</var> be <var>document</var>'s
+ <a>deferred-fetch control document</a>.
 
  <li>
-  <p><a for=list>Append</a> <var>deferredRecord</var> to <var>fetchGroup</var>'s
+  <p>If <var>controlDocument</var> is not <var>document</var>, then <a for=list>append</a>
+  <var>deferredRecord</var> to <var>controlDocument</var>'s <a>deferred-fetch control document</a>'s
   <a for="fetch group">deferred fetch records</a>.
+
+  <p class=note>This ensures that the deferred fetch is counted towards the control document's
+  quota if its request is still in flight after the <a>fetch group</a> has been terminated.
 
  <li>
   <p>If <var>activateAfter</var> is non-null, then run the following steps <a>in parallel</a>:</p>
@@ -6796,11 +6811,7 @@ takes no arguments:
      "<code>hidden</code>" <a for=Document>visibility state</a> for a long period of time.
     </ul>
 
-   <li><p>If the result of calling <a>process a deferred fetch</a> given <var>deferredRecord</var>
-   returns true, then <a>queue a global task</a> on the <a>deferred fetch task source</a> with
-   <var>request</var>'s <a for=request>client</a>'s
-   <a for="environment settings object">global object</a> to run
-   <var>onActivatedWithoutTermination</var>.
+   <li><p><a data-lt="process a deferred fetch">Process</a> <var>deferredRecord</var>.
   </ol>
  </li>
 
@@ -6844,14 +6855,21 @@ takes no arguments:
 <div algorithm>
 <p>To <dfn>process a deferred fetch</dfn> <var>deferredRecord</var>:
 <ol>
- <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">done</a> is true, then
- return false.
+ <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is not
+ "<code>pending</code>", then return.
 
- <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">done</a> to true.
+ <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
+ "<code>fetching</code>".
 
- <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
+ <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>,
+ with <a for=fetch><i>processRequestEndOfBody</i></a> set to the following step: set
+ <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
+ "<code>done</code>".
 
- <li><p>Return true.
+ <li><p><a>Queue a global task</a> on the <a>deferred fetch task source</a> with
+ <var>request</var>'s <a for=request>client</a>'s
+ <a for="environment settings object">global object</a> to run <var>deferredRecord</var>'s
+ <a for="deferred fetch record">notify invoked</a>.
 </ol>
 </div>
 
@@ -7003,9 +7021,12 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
 
 <div algorithm>
 <p>To get the <dfn>available deferred-fetch quota</dfn> given a {{Document}}
-<var>controlDocument</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
+<var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
 
 <ol>
+ <li><p>Let <var>controlDocument</var> be <var>document</var>'s
+ <a>deferred-fetch control document</a>.
+
  <li><p>Let <var>navigable</var> be <var>controlDocument</var>'s <a>node navigable</a>.
 
  <li><p>Let <var>isTopLevel</var> be true if <var>controlDocument</var>'s <a>node navigable</a> is a
@@ -7069,6 +7090,9 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
   <a for="fetch group">deferred fetch records</a>:</p>
 
   <ol>
+   <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is
+   "<code>done</code>" or "<code>aborted</code>", then <a for=iteration>continue</a>.
+
    <li><p>Let <var>requestLength</var> be the <a>total request length</a> of
    <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
 
@@ -9085,27 +9109,20 @@ method steps are:
  <li><p>Let <var>controlDocument</var> be <var>request</var>'s <a for=request>client</var>'s
  <a>deferred-fetch control document</a>.
 
- <li><p>If the <a>available deferred-fetch quota</a> given <var>controlDocument</var> and
- <var>request</var>'s <a for=request>URL</a>'s <a for=url>origin</a> is less than
- <var>request</var>'s <a>total request length</a>, then throw a "{{QuotaExceededError}}"
- {{DOMException}}.
+ <li><p>If the <a>available deferred-fetch quota</a> given <var>request</var>'s
+ <a for=request>client</var> and <var>request</var>'s <a for=request>URL</a>'s
+ <a for=url>origin</a> is less than <var>request</var>'s <a>total request length</a>, then throw a
+ "{{QuotaExceededError}}" {{DOMException}}.
 
  <li><p>Let <var>activated</var> be false.
 
  <li><p>Let <var>deferredRecord</var> be the result of calling <a>queue a deferred fetch</a> given
- <var>request</var>, <var>controlDocument</var>'s <a>fetch group</a>, <var>activateAfter</var>, and
- the following step: set <var>activated</var> to true.
+ <var>request</var>, <var>activateAfter</var>, and the following step: set <var>activated</var> to
+ true.
 
- <li>
-  <p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
-  <a for=Request>signal</a>:
-
-  <ol>
-   <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">done</a> to true.
-
-   <li><p><a for=list>Remove</a> <var>deferredRecord</var> from <var>controlDocument</var>'s
-   <a for=fetch>fetch group</a>'s <a for="fetch group">deferred fetch records</a>.
-  </ol>
+ <li><p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
+ <a for=Request>signal</a>: <li><p>Set <var>deferredRecord</var>'s
+ <a for="deferred fetch record">invoke state</a> to "<code>aborted</code>".
 
  <li><p>Return a new {{FetchLaterResult}} whose
  <a for=FetchLaterResult>activated getter steps</a> are to return <var>activated</var>.
