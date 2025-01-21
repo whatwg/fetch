@@ -1,5 +1,7 @@
 <pre class=metadata>
 Group: WHATWG
+Status: RD
+Date: 2024-12-16
 H1: Fetch
 Shortname: fetch
 Text Macro: TWITTER fetchstandard
@@ -369,8 +371,6 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
  (default 0)
  <dd>A number.
  <dt><dfn export for="response body info">content type</dfn> (default the empty string)
- <dd>An <a for=/>ASCII string</a>.
- <dt><dfn export for="response body info">content encoding</dfn> (default the empty string)
  <dd>An <a for=/>ASCII string</a>.
 </dl>
 
@@ -1178,7 +1178,6 @@ is a <a>byte-case-insensitive</a> match for one of
    <li>`<a http-header><code>Access-Control-Request-Headers</code></a>`
    <li>`<a http-header><code>Access-Control-Request-Method</code></a>`
    <li>`<code>Connection</code>`
-   <li>`<code>Content-Encoding</code>`
    <li>`<code>Content-Length</code>`
    <li>`<code>Cookie</code>`
    <li>`<code>Cookie2</code>`
@@ -2780,6 +2779,7 @@ functionality.
 
   <p>If this operation succeeds, return the <a for=/>set</a> of <a for=/>IP addresses</a> and any
   additional <a>implementation-defined</a> information.
+ </li>
 
  <li><p>Return failure.
 </ol>
@@ -3948,40 +3948,6 @@ Content-Type:
 </div>
 </div>
 
-<h3 id=content-encoding>`<code>Content-Encoding</code>` header</h3>
-
-<p>The `<code>Content-Encoding</code>` header is largely defined in HTTP. Its processing model is
-defined here as the model defined in HTTP is not compatible with web content. [[HTTP]]
-
-<div algorithm>
-<p>To <dfn export for="header list" lt="extract an encoding type|extracting an encoding type">
-extract an encoding type</dfn> from a <a for=/>header list</a> <var>headers</var>, run these steps:
-
-<ol>
- <li><p>Let <var>values</var> be the result of
- <a for="header list">getting, decoding, and splitting</a> `<code>Content-Encoding</code>` from
- <var>headers</var>.
-
- <li><p>If <var>values</var> is null, then return null.
-
- <li><p>Let <var>candidateValue</var> be null.
-
- <li>
-  <p><a for=list>For each</a> <var>value</var> of <var>values</var>:
-
-  <ol>
-   <li><p>If <var>candidateValue</var> is null, then set <var>candidateValue</var> to
-   <var>value</var>.
-
-   <li><p>Otherwise, if <var>value</var> is not <var>candidateValue</var>, return failure.
-  </ol>
-
- <li><p>If <var>candidateValue</var> is the empty string or has a <a for=/>code point</a> that is
- not an <a for=/>ASCII digit</a>, then return null.
-
- <li><p>Return <var>candidateValue</var>, interpreted as a string.
-</ol>
-</div>
 
 <h3 id=x-content-type-options-header>`<code>X-Content-Type-Options</code>` header</h3>
 
@@ -4149,6 +4115,7 @@ true, and it's always for nested navigations. Otherwise, <var>response</var> is 
    <dt>"<a for="embedder policy value"><code>require-corp</code></a>"
    <dd><p>Set <var>policy</var> to `<code>same-origin</code>`.
   </dl>
+ </li>
 
  <li>
   <p>Switch on <var>policy</var>:
@@ -4314,8 +4281,6 @@ the response. [[!HTTP-CACHING]]
 
  <li><p>Let <var>crossOriginIsolatedCapability</var> be false.
 
- <li><p><a>Populate request from client</a> given <var>request</var>.
-
  <li>
   <p>If <var>request</var>'s <a for=request>client</a> is non-null, then:
 
@@ -4361,6 +4326,16 @@ the response. [[!HTTP-CACHING]]
  <var>request</var>'s <a for=request>body</a> to <var>request</var>'s <a for=request>body</a>
  <a for="byte sequence">as a body</a>.
 
+ <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>client</code>", then set
+ <var>request</var>'s <a for=request>window</a> to <var>request</var>'s <a for=request>client</a>,
+ if <var>request</var>'s <a for=request>client</a>'s
+ <a for="environment settings object">global object</a> is a {{Window}} object; otherwise
+ "<code>no-window</code>".
+
+ <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>", then set
+ <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
+ <a for="environment settings object">origin</a>.
+
  <li>
   <p>If all of the following conditions are true:
 
@@ -4400,6 +4375,20 @@ the response. [[!HTTP-CACHING]]
    <li><p>If <var>foundPreloadedResource</var> is true and <var>fetchParams</var>'s
    <a for="fetch params">preloaded response candidate</a> is null, then set <var>fetchParams</var>'s
    <a for="fetch params">preloaded response candidate</a> to "<code>pending</code>".
+  </ol>
+ </li>
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>policy container</a> is "<code>client</code>", then:
+
+  <ol>
+   <li><p>If <var>request</var>'s <a for=request>client</a> is non-null, then set
+   <var>request</var>'s <a for=request>policy container</a> to a
+   <a lt="clone a policy container">clone</a> of <var>request</var>'s <a for=request>client</a>'s
+   <a for="environment settings object">policy container</a>. [[!HTML]]
+
+   <li><p>Otherwise, set <var>request</var>'s <a for=request>policy container</a> to a new
+   <a for=/>policy container</a>.
   </ol>
 
  <li>
@@ -4469,35 +4458,6 @@ the response. [[!HTTP-CACHING]]
  <li><p>Run <a>main fetch</a> given <var>fetchParams</var>.
 
  <li><p>Return <var>fetchParams</var>'s <a for="fetch params">controller</a>.
-</ol>
-</div>
-
-<div algorithm>
-<p>To <dfn>populate request from client</dfn> given a <a for=/>request</a> <var>request</var>:
-
-<ol>
- <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>client</code>", then: set
- <var>request</var>'s <a for=request>window</a> to <var>request</var>'s <a for=request>client</a>
- if <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a> is a {{Window}} object; otherwise
- "<code>no-window</code>".
-
- <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>", then set
- <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">origin</a>.
-
- <li>
-  <p>If <var>request</var>'s <a for=request>policy container</a> is "<code>client</code>":
-
-  <ol>
-   <li><p>If <var>request</var>'s <a for=request>client</a> is non-null, then set
-   <var>request</var>'s <a for=request>policy container</a> to a
-   <a lt="clone a policy container">clone</a> of <var>request</var>'s <a for=request>client</a>'s
-   <a for="environment settings object">policy container</a>. [[!HTML]]
-
-   <li><p>Otherwise, set <var>request</var>'s <a for=request>policy container</a> to a new
-   <a for=/>policy container</a>.
-  </ol>
 </ol>
 </div>
 
@@ -4917,6 +4877,7 @@ steps:
    <li><p><a>Queue a fetch task</a> to run <var>processResponseEndOfBodyTask</var> with
    <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
   </ol>
+ </li>
 
  <li><p>If <var>fetchParams</var>'s <a for="fetch params">process response</a> is non-null, then
  <a>queue a fetch task</a> to run <var>fetchParams</var>'s
@@ -5045,15 +5006,6 @@ steps:
 
      <li><p>Let <var>type</var> be <var>blob</var>'s {{Blob/type}}.
 
-     <li><p>Let <var>coding</var> be the empty string.
-
-     <li><p>Let <var>accept-coding</var> be the result of <a for="header list">getting</a>
-        `<code>Accept-Encoding</code>` from <var>request</var>'s <a for=request>header list</a>.
-        If <var>accept-encoding</var> is not null and the server selects one of the encoding options,
-        set <var>coding</var> to the selected encoding option; otherwise, i.e., no encoding is used,
-        set <var>coding</var> to <a href=https://httpwg.org/specs/rfc9110.html#field.accept-encoding>
-        <code>"identity"</code></a>.
-
      <li>
       <p>If <var>request</var>'s <a for=request>header list</a>
       <a for="header list">does not contain</a> `<code>Range</code>`:
@@ -5069,9 +5021,7 @@ steps:
 
        <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
        (`<code>Content-Length</code>`, <var>serializedFullLength</var>),
-       (`<code>Content-Type</code>`, <var>type</var>),
-       (`<code>Content-Encoding</code>`, <var>coding</var>) ».
-
+       (`<code>Content-Type</code>`, <var>type</var>) ».
       </ol>
 
      <li>
@@ -5140,8 +5090,7 @@ steps:
        <li><p>Set <var>response</var>'s <a for=response>header list</a> to «
        (`<code>Content-Length</code>`, <var>serializedSlicedLength</var>),
        (`<code>Content-Type</code>`, <var>type</var>), (`<code>Content-Range</code>`,
-       <var>contentRange</var>), (`<code>Content-Encoding</code>`, <var>coding</var>) ».
-
+       <var>contentRange</var>) ».
       </ol>
 
      <li><p>Return <var>response</var>.
@@ -5158,21 +5107,10 @@ steps:
      <li><p>Let <var>mimeType</var> be <var>dataURLStruct</var>'s
      <a for="data: URL struct">MIME type</a>, <a lt="serialize a MIME type to bytes">serialized</a>.
 
-     <li><p>Let <var>coding</var> be the empty string.
-
-     <li><p>Let <var>accept-coding</var> be the result of <a for="header list">getting</a>
-        `<code>Accept-Encoding</code>` from <var>request</var>'s <a for=request>header list</a>.
-        If <var>accept-encoding</var> is not null and the server selects one of the encoding options,
-        set <var>coding</var> to the selected encoding option; otherwise, i.e., no encoding is used,
-        set <var>coding</var> to <a href=https://httpwg.org/specs/rfc9110.html#field.accept-encoding>
-        <code>"identity"</code></a>.
-
      <li><p>Return a new <a for=/>response</a> whose <a for=response>status message</a> is
      `<code>OK</code>`, <a for=response>header list</a> is « (`<code>Content-Type</code>`,
-     <var>mimeType</var>), (`<code>Content-Encoding</code>`, <var>coding</var>) », and
-     <a for=response>body</a> is <var>dataURLStruct</var>'s <a for="data: URL struct">
-     body</a> <a for="byte sequence">as a body</a>.
-
+     <var>mimeType</var>) », and <a for=response>body</a> is <var>dataURLStruct</var>'s
+     <a for="data: URL struct">body</a> <a for="byte sequence">as a body</a>.
     </ol>
 
    <dt>"<code>file</code>"
@@ -7474,6 +7412,8 @@ running <a for=Body>consume body</a> with <a>this</a> and the following steps gi
      <li><p>Let <var>entries</var> be the result of  <a lt="urlencoded parser">parsing</a>
      <var>bytes</var>.
 
+     <li><p>If <var>entries</var> is failure, then <a>throw</a> a {{TypeError}}.
+
      <li><p>Return a new {{FormData}} object whose <a for=FormData>entry list</a> is
      <var>entries</var>.
     </ol>
@@ -8041,6 +7981,7 @@ constructor steps are:
    <li><p>Set <a>this</a>'s <a for=Request>headers</a>'s <a for=Headers>guard</a> to
    "<code>request-no-cors</code>".
   </ol>
+ </li>
 
  <li>
   <p>If <var>init</var> <a for=map>is not empty</a>, then:
@@ -8065,6 +8006,7 @@ constructor steps are:
    <li><p>Otherwise, <a for=Headers>fill</a> <a>this</a>'s <a for=Request>headers</a> with
    <var>headers</var>.
   </ol>
+ </li>
 
  <li><p>Let <var>inputBody</var> be <var>input</var>'s <a for=Request>request</a>'s
  <a for=request>body</a> if <var>input</var> is a {{Request}} object; otherwise null.
@@ -8858,7 +8800,7 @@ resource — for non-<a>CORS requests</a> as well as <a>CORS
 requests</a> — and do not use `<code>Vary</code>`.
 
 
-<h3 class=no-num id=websocket-protocol oldids=websocket-connections,websocket-opening-handshake,fail-the-websocket-connection,the-websocket-connection-is-established>WebSockets</h3>
+<h3 class=no-num id=websocket-protocol oldids=websocket-connections,websocket-opening-handshake,fail-the-websocket-connection,the-websocket-connection-is-established>WebSockets</h2>
 
 <p>As part of establishing a connection, the {{WebSocket}} object initiates a special kind of
 <a for=/>fetch</a> (using a <a for=/>request</a> whose <a for=request>mode</a> is
@@ -9022,7 +8964,7 @@ particular at what stage you would like to receive a callback:
       <li><p>Otherwise, parse <var>contents</var> considering the metadata from <var>response</var>,
       and perform your own operations on it.
      </ol>
-   </ol>
+    </li>
   </div>
  </dd>
 
@@ -9072,7 +9014,7 @@ particular at what stage you would like to receive a callback:
       <a for=response>body</a>'s <a for=body>stream</a>, and process in an appropriate way for the
       MIME type identified by <a>extracting a MIME type</a> from <var>response</var>'s <a for=response>headers list</a>.
      </ol>
-   </ol>
+    </li>
   </div>
  </dd>
 
@@ -9188,7 +9130,6 @@ Gavin Carothers,
 Glenn Maynard,
 Graham Klyne,
 Gregory Terzian,
-Guohui Deng(邓国辉)<!-- guohuideng2024; GitHub -->,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Harris Hancock,
