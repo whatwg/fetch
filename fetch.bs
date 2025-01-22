@@ -2761,8 +2761,7 @@ not <a for=Document>fully active</a>. It has the following <a for=struct>items</
  <dd>An algorithm accepting no arguments.
 
  <dt><dfn for="deferred fetch record">invoke state</dfn> (default "<code>pending</code>")
- <dd>"<code>pending</code>", "<code>fetching</code>", "<code>done</code>", or
- "<code>aborted</code>".
+ <dd>"<code>pending</code>", "<code>sent</code>", or "<code>aborted</code>".
 </dl>
 
 <p>Each <a>navigable container</a> has an associated number
@@ -6781,25 +6780,8 @@ which is an algorithm that takes no arguments:
  <a for="deferred fetch record">notify invoked</a> is
  <var>onActivatedWithoutTermination</var>.
 
- <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>document</var>'s
- <a>fetch group</a>'s <a for="fetch group">deferred fetch records</a>.
-
- <li><p>Let <var>controlDocument</var> be <var>document</var>'s
- <a>deferred-fetch control document</a>.
-
- <li>
-  <p>If <var>controlDocument</var> is not <var>document</var>, then:</p>
-  <ol>
-   <li><p><a for=list>Append</a>
-   <var>deferredRecord</var> to <var>controlDocument</var>'s <a>fetch group</a>'s
-   <a for="fetch group">deferred fetch records</a>.
-
-   <li><p>Set <var>request</var>'s <a for=request>client</a> to <var>controlDocument</var>.
-  </ol>
-
-  <p class=note>This ensures that the deferred fetch is counted towards the control document's
-  quota if its request is still in flight after the <a>fetch group</a> has been terminated.</p>
- </li>
+ <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
+ <a for=request>client</a>'s <a>fetch group</a>'s <a for="fetch group">deferred fetch records</a>.
 
  <li>
   <p>If <var>activateAfter</var> is non-null, then run the following steps <a>in parallel</a>:</p>
@@ -6865,12 +6847,9 @@ which is an algorithm that takes no arguments:
  "<code>pending</code>", then return.
 
  <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
- "<code>fetching</code>".
+ "<code>sent</code>".
 
- <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>,
- with <a for=fetch><i>processRequestEndOfBody</i></a> set to the following step: set
- <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
- "<code>done</code>".
+ <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
 
  <li><p><a>Queue a global task</a> on the <a>deferred fetch task source</a> with
  <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
@@ -7091,22 +7070,26 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
  <li><p>Let <var>quotaForRequestOrigin</var> be 64 kibibytes.
 
  <li>
-  <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> of
-  <var>controlDocument</var>'s <a>fetch group</a>'s
-  <a for="fetch group">deferred fetch records</a>:</p>
+  <p><a for=list>For each</a> <var>navigable</var> in <var>controlDocument</var>'s
+  <a>node navigable</a>'s <a>descendant navigables</a> whose <a for=navigable>active document</a>'s
+  <a>deferred-fetch control document</a> is <var>controlDocument</var>:
 
   <ol>
-   <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is
-   "<code>done</code>" or "<code>aborted</code>", then <a for=iteration>continue</a>.
+   <li>
+    <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> of
+    <var>controlDocument</var>'s <a>fetch group</a>'s
+    <a for="fetch group">deferred fetch records</a>:</p>
 
-   <li><p>Let <var>requestLength</var> be the <a>total request length</a> of
-   <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
+    <ol>
+     <li><p>Let <var>requestLength</var> be the <a>total request length</a> of
+     <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
 
-   <li><p>Decrement <var>quota</var> by <var>requestLength</var>.
+     <li><p>Decrement <var>quota</var> by <var>requestLength</var>.
 
-   <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
-   <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with <var>origin</var>,
-   then decrement <var>quotaForRequestOrigin</var> by <var>requestLength</var>.
+     <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
+     <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with <var>origin</var>,
+     then decrement <var>quotaForRequestOrigin</var> by <var>requestLength</var>.
+    </ol>
   </ol>
 
  <li><p>If <var>quota</var> is equal or less than 0, then return 0.
