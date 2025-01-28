@@ -9062,6 +9062,106 @@ done only by navigations). The <a>fetch controller</a> is also used to
 <a for=request>redirect mode</a> set to "<code>manual</code>".
 
 
+<h3 id=fetch-elsewhere-security>Same-origin policy when using fetch</h3>
+
+<p>The Fetch standard enforces some of the mechanisms that constitute the Same Origin Policy (SOP),
+which is a critical aspect of web security. Specifically, Fetch imposes SOP restrictions on network
+access.
+
+<p>In a nutshell, when a user accesses a certain origin using their browser or other user agent,
+they don't expect that the user agent implicitly grants that <a for=/>origin</a> full access to
+their network, which could, for example, be an intranet, despite the user agent itself having that
+access.
+
+<p>In addition, the user agent may include footprint that identifies the user to the origin,
+explicitly using cookies or client certificates, or implicitly using, for example, the user-agent's
+IP address.
+
+<p>To keep this information from leaking, SOP restricts requests that come from the visited
+<a for=/>origin</a> to only target that same-origin, while allowing a few mechanisms for an origin
+to access cross-origin data safely.
+
+<h4 id=fetch-elsewhere-cors>Cross-origin resource sharing (CORS)</h4>
+
+<p>The main way to access cross-origin data is via the <a>cors protocol</a>, described in detail in
+this standard. CORS (Cross Origin Resource Sharing) is built on the principle that origins that want
+to access data from other origins need to identify themselves, and get explicit approval from the
+server to access that data, thus not relying on any implict trust given to the user agent or to the
+machine the user agent is installed on.
+
+<p>This is done by sending the `<a http-header><code>Origin</code></a>` header with CORS-enabled
+requests, and expecting a matching `<a http-header><code>Access-Control-Allow-Origin</code></a>`
+response header in return.
+
+<p>The <a>CORS-preflight fetch</a> mechanism extends this further, by sending that identification
+handshake as a separate request, prior to sending the payload of the request itself.
+
+<p>For any new spec invoking <a for=/>fetch</a> to access cross-origin rersources, CORS should be
+the only option. This has been implemented in multiple newer standards such as web fonts and module
+scripts.
+
+<h4 id=fetch-elsewhere-no-cors>No-CORS requests</h4>
+
+<p>Embedding cross-origin resources, without the ability to read them, existed prior to CORS.
+Cross-origin images, scripts, stylesheets & media are embeddable in a <a for=/>document</a> without
+the embedding <a for=/>origin</a> identifying themselves and receive explicit confirmation.
+
+<p>To maintain backwards compatibility, this form of fetching is still supported. Instead of
+restricting the network access, the embedder is restricted in what they are allowed to do with the
+<a for=/>response</a>. They can embed it in their document and present it to the user, but this has
+to be done in a way that's opaque to the embedding origin. Only the user should have access to the
+resource, not the embedder.
+
+<p>This mechanism of fetching should not be used in new specs. However, specs should be written with
+the notion that no-CORS resources exists, and the new spec should not grant origins the ability to
+read their contents.
+
+<h4 id=fetch-elsewhere-cross-origin-isolation>CORP & Cross-origin isolation</h4>
+
+<p>Due to the leaky nature of no-CORS requests, resources can further protect themselves by
+providing a `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` header (CORP). By
+supplying the appropriate CORP header, a resource can opt out from being embedded by a different
+site or origin. For example, this can be used to protect an image's <a>natural dimensions</a> from
+being read by an embedded.
+
+<p>This protection is especially important when exposing powerful features to the web platform, that
+gain enough access to the underlying platform to read cross-origin resources using attacks like
+Spectre. This category of features, e.g. 	{{SharedArrayBuffer}} or high-resolution timestamps,
+cannot be used together with the default policy that allows cross-origin content to be embedded.
+
+<p>Instead, the embedder must use
+<a data-lt="cross-origin isolated capability">cross-origin isolation</a>, using the
+`<a http-header><code>Cross-Origin-Embedder-Policy</code></a>` header to restrict embedding of
+cross-origin resources only to resources that explicitly allow this.
+
+<p>Note that CORP and cross-origin isolation are not designed to be a "lighter version of CORS".
+Their purpose is to restrict embedding of existing resources that are normally embeddable without
+CORS, in order to enable safe usage of powerful platform features.
+
+<p>Other specifications should consider requiring CORP if they expose a powerful platform feature,
+regardless of whether they themselves invoke <a for=/>fetch</a>.
+
+<h4 id=fetch-elsewhere-TAO>Accessing timing information (TAO)</h4>
+
+<p>Beside the protections for the resource's data itself, the Fetch standard enforces restrictions
+on accessing timing information associated with the <a for=/>fetch</a>. This timing information
+includes multiple milestones in the fetch process, such as receiving the first redirect or beginning
+the DNS lookup, as described in the <cite>Resource Timing</cite> spec. [[RESOURCE-TIMING]]
+
+<p>This information, like any other information, is protected by the Same-Origin Policy, and
+is available by default for same-origin resources only. A server delivering a cross-origin resource
+can relax this restriction by including the `<code>Timing-Allow-Origin</code>` header in the
+response.
+
+<p>The `<code>Timing-Allow-Origin</code>` (TAO) header is orthogonal to CORS, as CORS allows sharing
+information about the resource, while TAO allows sharing information about the particular fetch,
+and in particular only timing information.
+
+<p>Note that the TAO status does not persist with a <a for=/>response</a> when it enters the cache
+or forwarded using a Service Worker. TAO is valid for a single <a for=/>Fetch</a>, and only enables
+sharing information about the fetch that is clearly timing related.
+
+
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
 
 <p>Thanks to
