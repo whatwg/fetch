@@ -9073,13 +9073,13 @@ they don't expect that the user agent implicitly grants that <a for=/>origin</a>
 their network, which could, for example, be an intranet, despite the user agent itself having that
 access.
 
-<p>In addition, the user agent may include footprint that identifies the user to the origin,
-explicitly using cookies or client certificates, or implicitly using, for example, the user-agent's
-IP address.
-
 <p>To keep this information from leaking, SOP restricts requests that come from the visited
 <a for=/>origin</a> to only target that same origin, while allowing a few mechanisms for an origin
 to access cross-origin data safely.
+
+<p>When invoking <a for=/>fetch</a>, it's important for an author of a spec to understand whether
+the spec requires access cross-origin data, and to setup the requests appropriately as described
+here.
 
 <h4 id=fetch-elsewhere-cors>Cross-origin resource sharing (CORS)</h4>
 
@@ -9098,7 +9098,9 @@ handshake as a separate request, prior to sending the payload of the request its
 
 <p>For any new spec invoking <a for=/>fetch</a> to access cross-origin rersources, CORS should be
 the only option. This has been implemented in multiple newer standards such as web fonts and module
-scripts.
+scripts. To apply the <a>cors protocol</a>, set the <a for=/>request</a>'s <a for=request>mode</a>
+to "<code>cors</code>", as described in the
+<a href="#fetch-elsewhere-request">Setting up a request</a> section.
 
 <h4 id=fetch-elsewhere-no-cors>No-CORS requests</h4>
 
@@ -9115,6 +9117,11 @@ resource, not the embedder.
 <p>This mechanism of fetching should not be used in new specs. However, specs should be written with
 the notion that no-CORS resources exists, and the new spec should not grant origins the ability to
 read their contents.
+
+<p>Note that this is the default request mode, so new specs should be deliberate about setting the
+request's <a for=request>mode</a> to "<code>cors</code>" or to "<code>same origin</code>", as
+described in the <a href="#fetch-elsewhere-request">Setting up a request</a> section, and also make
+sure that this is aligned and communicated with servers that deliver this type of resource.
 
 <h4 id=fetch-elsewhere-cross-origin-isolation>CORP & Cross-origin isolation</h4>
 
@@ -9140,7 +9147,8 @@ Their purpose is to restrict embedding of existing resources that are normally e
 CORS, in order to enable safe usage of powerful platform features.
 
 <p>Other specifications should consider requiring CORP if they expose a powerful platform feature,
-regardless of whether they themselves invoke <a for=/>fetch</a>.
+regardless of whether they themselves invoke <a for=/>fetch</a>. To guard a feature based on this
+protection, check the <code>Document</code>'s <a>cross-origin isolated capability</a>.
 
 <h4 id=fetch-elsewhere-TAO>Accessing timing information (TAO)</h4>
 
@@ -9161,6 +9169,12 @@ and in particular only timing information.
 <p>Note that the TAO status does not persist with a <a for=/>response</a> when it enters the cache
 or forwarded using a Service Worker. TAO is valid for a single <a for=/>Fetch</a>, and only enables
 sharing information about the fetch that is clearly timing related.
+
+<p>Specifications invoking <a for=/>fetch</a> should generally not worry about timing information,
+however, specs that expose new timing information (e.g., new additions to
+<cite>Resource Timing</cite>) need to consult these guidelines to see if the new information needs
+to be protected by `<code>Timing-Allow-Origin</code>`. This kind of addition would likely require
+additions to the Fetch standard itself.
 
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
