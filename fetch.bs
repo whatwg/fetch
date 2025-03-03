@@ -54,10 +54,29 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     url:realm;text:realm
     url:sec-list-and-record-specification-type;text:Record
     url:current-realm;text:current realm
+
+urlPrefix:https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cookies#;type:dfn;spec:cookies
+    url:name-cookie-store-and-limits;text:cookie store
+    url:name-parse-and-store-a-cookie;text:parse and store a cookie
+    url:name-parse-a-cookie;text:parse a cookie
+    url:name-store-a-cookie;text:store a cookie
+    url:name-retrieve-cookies;text:retrieve cookies
+    url:name-serialize-cookies;text:serialize cookies
+    url:name-garbage-collect-cookies;text:garbage collect cookies
+
+<!-- TODO: pending HTML changes- ancestor enum (https://github.com/whatwg/html/pull/10559), has storage access bit, initiator origin plumbing -->
+urlPrefix:https://html.spec.whatwg.org#;type:dfn;spec:html
+    url:TODO;text:has cross-site ancestor;for:environment
+    url:TODO;text:has storage access;for:environment
 </pre>
 
 <pre class=biblio>
 {
+    "COOKIES": {
+        "authors": ["Johann Hofmann", "Anne van Kesteren"],
+        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cookies",
+        "title": "Cookies: HTTP State Management Mechanism"
+    },
     "HTTP": {
         "aliasOf": "RFC9110"
     },
@@ -1961,6 +1980,10 @@ not always relevant and might require different behavior.
 "<code>client</code>" or an <a for=/>origin</a>. Unless stated otherwise it is
 "<code>client</code>".
 
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request>top-level navigation initiator origin</dfn>,
+which is an <a for=/>origin</a> or null. Unless stated otherwise it is null.
+
 <p class=note>"<code>client</code>" is changed to an <a for=/>origin</a> during
 <a lt=fetch for=/>fetching</a>. It provides a convenient way for standards to not have to set
 <a for=/>request</a>'s <a for=request>origin</a>.
@@ -2249,15 +2272,17 @@ or "<code>object</code>".
 <hr>
 
 <div algorithm>
-<p>A <a for=/>request</a> <var>request</var> has a
-<dfn for=request id=concept-request-tainted-origin>redirect-tainted origin</dfn> if these steps
-return true:
+<p>To compute the <dfn for=request id=concept-request-tainted-origin>redirect-taint</dfn> of a
+<a for=/>request</a> <var>request</var>, perform the following steps. They return
+"<code>same-origin</code>", "<code>same-site</code>", or "<code>cross-site</code>".
 
 <ol>
  <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>origin</a> is not
  "<code>client</code>".
 
  <li><p>Let <var>lastURL</var> be null.
+
+ <li><p>Let <var>computedTaint</var> be "<code>same-origin</code>".
 
  <li>
   <p><a for=list>For each</a> <var>url</var> of <var>request</var>'s <a for=request>URL list</a>:
@@ -2266,14 +2291,20 @@ return true:
    <li><p>If <var>lastURL</var> is null, then set <var>lastURL</var> to <var>url</var> and
    <a for=iteration>continue</a>.
 
+   <li><p>If <var>url</var>'s <a for=url>origin</a> is not <a for=/>same site</a> with
+   <var>lastURL</var>'s <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is
+   not <a for=/>same site</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return
+   "<code>cross-site</code>".
+
    <li><p>If <var>url</var>'s <a for=url>origin</a> is not <a>same origin</a> with
    <var>lastURL</var>'s <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is
-   not <a>same origin</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return true.
+   not <a>same origin</a> with <var>lastURL</var>'s <a for=url>origin</a>, then set
+   <var>computedTaint</var> to "<code>same-site</code>".
 
    <li>Set <var>lastURL</var> to <var>url</var>.
   </ol>
 
- <li>Return false.
+ <li><p>Return <var>computedTaint</var>.
 </ol>
 </div>
 
@@ -2285,8 +2316,8 @@ run these steps:
  <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>origin</a> is not
  "<code>client</code>".
 
- <li><p>If <var>request</var> has a <a for=request>redirect-tainted origin</a>, then return
- "<code>null</code>".
+ <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is not "<code>same-origin</code>",
+ then return "<code>null</code>".
 
  <li><p>Return <var>request</var>'s <a for=request>origin</a>,
  <a lt="ASCII serialization of an origin">serialized</a>.
@@ -2385,20 +2416,20 @@ source of security bugs. Please seek security review for features that deal with
  "<code>client</code>".
 
  <li><p>If <var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>", then return
- true.</p>
+ true.
 
- <li><p>If <var>request</var>'s <a for=request>client</a> is null, then return true.</p>
+ <li><p>If <var>request</var>'s <a for=request>client</a> is null, then return true.
 
  <li><p>If <var>request</var>'s <a for=request>client</a>'s
  <a for="environment settings object">policy container</a>'s
  <a for="policy container">embedder policy</a>'s <a for="embedder policy">value</a> is not
- "<a for="embedder policy value"><code>credentialless</code></a>", then return true.</p>
+ "<a for="embedder policy value"><code>credentialless</code></a>", then return true.
 
  <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
- <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and <var>request</var>
- does not have a <a for=request>redirect-tainted origin</a>, then return true.</p>
+ <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and <var>request</var>'s
+ <a for=request>redirect-taint</a> is not "<code>same-origin</code>", then return true.
 
- <li><p>Return false.</p>
+ <li><p>Return false.
 </ol>
 </div>
 
@@ -2509,8 +2540,9 @@ this is also tracked internally using the request's <a for=request>timing allow 
 <dfn export for=response>service worker timing info</dfn> (null or a
 <a for=/>service worker timing info</a>), which is initially null.
 
-<p>A <a for=/>response</a> has an associated <dfn for=response>has-cross-origin-redirects</dfn>
-(a boolean), which is initially false.
+<p>A <a for=/>response</a> has an associated <dfn for=response>redirect taint</dfn>
+("<code>same-origin</code>", "<code>same-site</code>", or "<code>cross-site</code>"), which is
+initially "<code>same-origin</code>".
 
 <hr>
 
@@ -4252,6 +4284,125 @@ prefetch, or to treat it differently when counting page visits.
 
 
 
+<h2 id=cookies>Cookies</h2>
+
+<h3 id=cookie-header>`<code>Cookie</code>` header</h3>
+
+<p>The `<code>Cookie</code>` header is largely defined in its own specification. We define
+additional infrastructure to be able to use them conveniently here. [[COOKIES]].
+
+<div algorithm>
+<p>To <dfn>append a request `<code>Cookie</code>` header</dfn>,
+given a <a for=/>request</a> <var>request</var>:
+
+<ol>
+ <li><p>If the user agent is configured to disable cookies for <var>request</var>, then it should
+ return.
+
+ <li><p>Let |sameSite| be the result of [=determining the same-site mode=] for <var>request</var>.
+
+ <li><p>Let |isSecure| be false.
+
+ <li><p>If <var>request</var>'s <a for=request>client</a> is a <a>secure context</a>, then set
+ |isSecure| to true.
+
+ <li>
+  <p>Let |httpOnlyAllowed| be true.
+
+  <p class=note>True follows from this being invoked from <a>fetch</a>, as opposed to the
+  <code>document.cookie</code> getter steps for instance.
+
+ <li>
+  <p>Let |cookies| be the result of running <a>retrieve cookies</a> given |isSecure|,
+  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>, <var>request</var>'s
+  <a for=request>current URL</a>'s <a for=url>path</a>, |httpOnlyAllowed|, and |sameSite|.
+
+  <p class=note>The cookie store returns an ordered list of cookies
+
+ <li><p>If |cookies| <a for="list">is empty</a>, then return.
+
+ <li><p>Let |value| be the result of running <a>serialize cookies</a> given |cookies|.
+
+ <li><p><a for="header list">Append</a> (`<code>Cookie</code>`, <var>value</var>) to
+ <var>request</var>'s <a for=request>header list</a>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To
+<dfn>parse and store response `<code>Set-Cookie</code>` headers</dfn>,
+given a <a for=/>request</a> <var>request</var> and a <a for=/>response</a> <var>response</var>:
+
+<ol>
+ <li><p>If the user agent is configured to disable cookies for <var>request</var>,
+ then it should return.
+
+ <li><p>Let |allowNonHostOnlyCookieForPublicSuffix| be false.
+
+ <li><p>Let |isSecure| be false.
+
+ <li><p>If <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
+ "<code>https</code>", then set |isSecure| to true.
+
+ <li>
+  <p>Let |httpOnlyAllowed| be true.
+
+  <p class=note>True follows from this being invoked from <a>fetch</a>, as opposed to the
+  <code>document.cookie</code> getter steps for instance.
+
+ <li><p>Let |sameSiteStrictOrLaxAllowed| be true if the result of [=determine the same-site mode=]
+ for |request| is "<code>StrictOrLess</code>", and false otherwise.
+
+ <li><p><a for=list>For each</a> <var>header</var> of <var>response</var>'s
+ <a for=response>header list</a>:
+
+ <ol>
+  <li><p>If <var>header</var>'s <a for=header>name</a> is not a <a>byte-case-insensitive</a> match
+  for `<code>Set-Cookie</code>`, <a for=iteration>continue</a>.
+
+  <li><p><a>Parse and store a cookie</a> given <var>header</var>'s <a for=header>value</a>,
+  |isSecure|, <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>,
+  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>path</a>, |httpOnlyAllowed|,
+  |allowNonHostOnlyCookieForPublicSuffix|, and |sameSiteStrictOrLaxAllowed|.
+
+  <li><p><a>Garbage collect cookies</a> given <var>request</var>'s
+  <a for=request>current URL</a>'s <a for=url>host</a>.
+ </ol>
+</ol>
+</div>
+
+<h3 id=cookie-infrastructure>Cookie infrastructure</h3>
+
+<p>These algorithms are not only for use with the `<code>Cookie</code>` header, and are used in
+other specifications.
+
+<div algorithm>
+<p>To <dfn>determine the same-site mode</dfn> for a given <a for=/>request</a> <var>request</var>:
+
+<ol>
+ <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>method</a> is "<code>GET</code>"
+ or "<code>POST</code>".
+
+ <li><p>If <var>request</var>'s <a for=request>top-level navigation initiator origin</a> is not
+ null and is not <a for=/>same site</a> to <var>request</var>'s <a for=request>URL</a>'s
+ <a for=url>origin</a>, then return "<code>UnsetOrLess</code>".
+
+ <li><p>If <var>request</var>'s <a for=request>method</a> is "<code>GET</code>" and
+ <var>request</var>'s <a for=request>destination</a> is "document", then return
+ "<code>LaxOrLess</code>".
+
+ <li><p>If <var>request</var>'s <a for=request>client</a>'s
+ <a for=environment>has cross-site ancestor</a> is true then return "<code>UnsetOrLess</code>".
+
+ <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is "<code>cross-site</code>",
+ then return "<code>UnsetOrLess</code>".
+
+ <li><p>Return "<code>StrictOrLess</code>".
+</ol>
+</div>
+
+
+
 <h2 id=fetching>Fetching</h2>
 
 <p class=note>The algorithm below defines <a lt=fetch for=/>fetching</a>. In broad strokes, it takes
@@ -4729,8 +4880,8 @@ steps:
  <!-- If you are ever tempted to move this around, carefully consider responses from about URLs,
       blob URLs, service workers, HTTP cache, HTTP network, etc. -->
 
- <li><p>If <var>request</var> has a <a for=request>redirect-tainted origin</a>, then set
- <var>internalResponse</var>'s <a for=response>has-cross-origin-redirects</a> to true.
+ <li><p>Set <var>internalResponse</var>'s <a for=response>redirect taint</a> to <var>request</var>'s
+ <a for=request>redirect-taint</a>.
 
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set
  <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
@@ -4883,7 +5034,7 @@ steps:
      <li>
       <p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>mode</a> is
       not "<code>navigate</code>" or <var>response</var>'s
-      <a for=response>has-cross-origin-redirects</a> is false:
+      <a for=response>redirect taint</a> is "<code>same-origin</code>":
 
       <ol>
        <li><p>Set <var>responseStatus</var> to <var>response</var>'s <a for=response>status</a>.
@@ -5766,21 +5917,7 @@ run these steps:
     <p>If <var>includeCredentials</var> is true, then:
 
     <ol>
-     <li>
-      <p>If the user agent is not configured to block cookies for <var>httpRequest</var> (see
-      <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
-      [[!COOKIES]]), then:
-
-      <ol>
-       <li><p>Let <var>cookies</var> be the result of running the "cookie-string" algorithm (see
-       <a href=https://httpwg.org/specs/rfc6265.html#cookie>section 5.4</a> of
-       [[!COOKIES]]) with the user agent's cookie store and <var>httpRequest</var>'s
-       <a for=request>current URL</a>.
-
-       <li>If <var>cookies</var> is not the empty string, then <a for="header list">append</a>
-       (`<code>Cookie</code>`, <var>cookies</var>) to <var>httpRequest</var>'s
-       <a for=request>header list</a>.
-      </ol>
+     <li><p><a>Append a request `<code>Cookie</code>` header</a> for <var>httpRequest</var>.
 
      <li>
       <p>If <var>httpRequest</var>'s <a for=request>header list</a>
@@ -6343,14 +6480,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Set <var>response</var>'s <a for=response>body</a> to a new <a for=/>body</a> whose
  <a for=body>stream</a> is <var>stream</var>.
 
- <li><p tracking-vector>If <var>includeCredentials</var> is true and the user agent is not
- configured to block cookies for <var>request</var> (see
- <a href=https://httpwg.org/specs/rfc6265.html#privacy-considerations>section 7</a> of
- [[!COOKIES]]), then run the "set-cookie-string" parsing algorithm (see
- <a href=https://httpwg.org/specs/rfc6265.html#set-cookie>section 5.2</a> of [[!COOKIES]]) on the
- <a for=header>value</a> of each <a for=/>header</a> whose <a for=header>name</a> is a
- <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>` in <var>response</var>'s
- <a for=response>header list</a>, if any, and <var>request</var>'s <a for=request>current URL</a>.
+ <li><p tracking-vector>If <var>includeCredentials</var> is true, then the user agent should
+ <a>parse and store response `<code>Set-Cookie</code>` headers</a> given <var>request</var> and
+ <var>response</var>.
 
  <li>
   <p>Run these steps <a>in parallel</a>:
