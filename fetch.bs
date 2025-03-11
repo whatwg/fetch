@@ -1957,8 +1957,8 @@ not always relevant and might require different behavior.
 "<code>client</code>".
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-navigation-initiator-origin>top-level navigation initiator origin</dfn>, which is
-an <a for=/>origin</a> or null. Unless stated otherwise it is null.
+<dfn export for=request id=concept-request-navigation-initiator-origin>top-level navigation
+initiator origin</dfn>, which is an <a for=/>origin</a> or null. Unless stated otherwise it is null.
 
 <p class=note>"<code>client</code>" is changed to an <a for=/>origin</a> during
 <a lt=fetch for=/>fetching</a>. It provides a convenient way for standards to not have to set
@@ -2269,12 +2269,13 @@ which is "<code>same-origin</code>", "<code>same-site</code>", or "<code>cross-s
 
    <li><p>If <var>url</var>'s <a for=url>origin</a> is not <a for=/>same site</a> with
    <var>lastURL</var>'s <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is
-   not <a for=/>same site</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return "<code>cross-site</code>".
+   not <a for=/>same site</a> with <var>lastURL</var>'s <a for=url>origin</a>, then return
+   "<code>cross-site</code>".
 
    <li><p>If <var>url</var>'s <a for=url>origin</a> is not <a>same origin</a> with
    <var>lastURL</var>'s <a for=url>origin</a> and <var>request</var>'s <a for=request>origin</a> is
-   not <a>same origin</a> with <var>lastURL</var>'s <a for=url>origin</a>,
-   then set <var>computedTaint</var> to "<code>same-site</code>".
+   not <a>same origin</a> with <var>lastURL</var>'s <a for=url>origin</a>, then set
+   <var>computedTaint</var> to "<code>same-site</code>".
 
    <li>Set <var>lastURL</var> to <var>url</var>.
   </ol>
@@ -2515,8 +2516,9 @@ this is also tracked internally using the request's <a for=request>timing allow 
 <dfn export for=response>service worker timing info</dfn> (null or a
 <a for=/>service worker timing info</a>), which is initially null.
 
-<p>A <a for=/>response</a> has an associated <dfn for=response>redirect taint</dfn> ("<code>same-origin</code>",
-"<code>same-site</code>", or "<code>cross-site</code>", which is initially "<code>same-origin</code>".
+<p>A <a for=/>response</a> has an associated <dfn for=response>redirect taint</dfn>
+("<code>same-origin</code>", "<code>same-site</code>", or "<code>cross-site</code>", which is
+initially "<code>same-origin</code>".
 
 <hr>
 
@@ -4259,69 +4261,102 @@ prefetch, or to treat it differently when counting page visits.
 <h3 id=cookie-header>`<code>Cookie</code>` header</h3>
 
 <p>The `<code>Cookie</code>` header is largely defined in its own specification. [[COOKIES]].
-We define infrastructure to be able to use conveniently here.
+We define infrastructure to be able to use them conveniently here.
 
 <div algorithm>
 <p>To <dfn id=append-a-request-cookie-header>append a request `<code>Cookie</code>` header</dfn>,
 given a <a for=/>request</a> <var>request</var>, run these steps:
-  <ol>
-     <li><p>If the user-agent is configured to disable cookies for <var>request</var>, it should return.
-     <li><p>Let |sameSite| be the result of [=determining the same-site mode=] for <var>request</var>.
-     <li><p>Let |isSecure| be false.
-     <li><p>If <var>request</var>'s <a for=request>client</a> is a <a>secure context</a>, then set |isSecure| to true.
-     <li><p>Let |httpOnlyAllowed| be true.
-     <p class=note>Fetch implies that the request is http-only, as opposed to document.cookie
-     <li><p>Let |cookies| be the result of running <a>retrieve cookies</a> given
-      |isSecure|,
-      <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>,
-      <var>request</var>'s <a for=request>current URL</a>'s <a for=url>path</a>,
-      |httpOnlyAllowed|, and
-      |sameSite|
 
-     <p class=note>It is expected that the cookie store returns an ordered list of cookies
-     <li>If |cookies| <a for="list">is empty</a>, then return.
-     <li>Let |value| be the result of running <a>serialize cookies</a> given |cookies|.
-     <li><a for="header list">Append</a> (`<code>Cookie</code>`, <var>value</var>) to <var>request</var>'s <a for=request>header list</a>.
-  </ol>
+<ol>
+  <li><p>If the user-agent is configured to disable cookies for <var>request</var>, it should
+  return.
+
+  <li><p>Let |sameSite| be the result of [=determining the same-site mode=] for <var>request</var>.
+
+  <li><p>Let |isSecure| be false.
+
+  <li><p>If <var>request</var>'s <a for=request>client</a> is a <a>secure context</a>, then set
+  |isSecure| to true.
+
+  <li><p>Let |httpOnlyAllowed| be true.
+
+  <p class=note>Fetch implies that the request is http-only, as opposed to document.cookie
+
+  <li><p>Let |cookies| be the result of running <a>retrieve cookies</a> given |isSecure|,
+  <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>, <var>request</var>'s
+  <a for=request>current URL</a>'s <a for=url>path</a>, |httpOnlyAllowed|, and |sameSite|
+
+  <p class=note>It is expected that the cookie store returns an ordered list of cookies
+
+  <li>If |cookies| <a for="list">is empty</a>, then return.
+
+  <li>Let |value| be the result of running <a>serialize cookies</a> given |cookies|.
+
+  <li><a for="header list">Append</a> (`<code>Cookie</code>`, <var>value</var>) to
+  <var>request</var>'s <a for=request>header list</a>.
+</ol>
 </div>
 
 <div algorithm>
-<p>To <dfn id=parse-and-store-response-cookie-headers>parse and store response `<code>Set-Cookie</code>` headers</dfn>,
-given a <a for=/>request</a> <var>request</var> and a <a for=/>response</a> <var>response</var>, run these steps:
+<p>To <dfn id=parse-and-store-response-cookie-headers>parse and store response
+`<code>Set-Cookie</code>` headers</dfn>, given a <a for=/>request</a> <var>request</var> and a <a
+for=/>response</a> <var>response</var>, run these steps:
+
+<ol>
+  <li><p>If the user-agent is configured to disable cookies for <var>request</var>, it should
+  return.
+
+  <li><p>Let |allowNonHostOnlyCookieForPublicSuffix| be false.
+
+  <li><p>Let |isSecure| be false.
+
+  <li><p>If <var>request</var>'s <a for=request>client</a> is a <a>secure context</a>, set
+  |isSecure| to true.
+
+  <li><p>Let |httpOnlyAllowed| be true.
+
+  <p class=note>Fetch implies that the request is http-only, as opposed to document.cookie
+
+  <li><p>Let |sameSiteStrictOrLaxAllowed| be true if the result of [=determine the same-site mode=]
+  for |request| is "<code>StrictOrLess</code>", and false otherwise.
+
+  <li><p><a for=list>For each</a> <var>header</var> of <var>response</var>'s <a for=response>header
+  list</a>:
+
   <ol>
-     <li><p>If the user-agent is configured to disable cookies for <var>request</var>, it should return.
-     <li><p>Let |allowNonHostOnlyCookieForPublicSuffix| be false.
-     <li><p>Let |isSecure| be false.
-     <li><p>If <var>request</var>'s <a for=request>client</a> is a <a>secure context</a>, then set |isSecure| to true.
-     <li><p>Let |httpOnlyAllowed| be true.
-     <p class=note>Fetch implies that the request is http-only, as opposed to document.cookie
-     <li><p>Let |sameSiteStrictOrLaxAllowed| be true if the result of [=determine the same-site mode=] for |request| is "<code>StrictOrLess</code>", and false otherwise.
-     <li><p><a for=list>For each</a> <var>header</var> of <var>response</var>'s <a for=response>header list</a>:
-     <ol>
-      <li><p>If <var>header</var>'s <a for=header>name</a> is not a <a>byte-case-insensitive</a> match for `<code>Set-Cookie</code>`, then <a for=iteration>continue</a>.
-      <li><p><a>Parse and store a cookie</a> given
-      <var>header</var>'s <a for=header>value</a>,
-      |isSecure|,
-      <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>,
-      <var>request</var>'s <a for=request>current URL</a>'s <a for=url>path</a>,
-      |httpOnlyAllowed|,
-      |allowNonHostOnlyCookieForPublicSuffix|, and
-      |sameSiteStrictOrLaxAllowed|
-     </ol>
+    <li><p>If <var>header</var>'s <a for=header>name</a> is not a <a>byte-case-insensitive</a> match
+    for `<code>Set-Cookie</code>`, <a for=iteration>continue</a>.
+
+    <li><p><a>Parse and store a cookie</a> given <var>header</var>'s <a for=header>value</a>,
+    |isSecure|, <var>request</var>'s <a for=request>current URL</a>'s <a for=url>host</a>,
+    <var>request</var>'s <a for=request>current URL</a>'s <a for=url>path</a>, |httpOnlyAllowed|,
+    |allowNonHostOnlyCookieForPublicSuffix|, and |sameSiteStrictOrLaxAllowed|
   </ol>
+</ol>
 </div>
 
 <div algorithm>
-<p>To <dfn>determine the same-site mode</dfn> for a given <a for=/>request</a> <var>request</var>, run these steps:
-  <ol>
-   <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>method</a> is "GET" or "POST".
-   <li><p>If <var>request</var>'s <a for=request>top-level navigation initiator origin</a> is not null and is not <a for=/>same site</a> to <var>request</var>'s <a for=request>URL</a>'s <a for=url>origin</a>, return "<code>UnsetOrLess</code>".
-   <li><p>If <var>request</var>'s <a for=request>method</a> is "GET" and
-    <var>request</var>'s <a for=request>destination</a> is "document", return "<code>LaxOrLess</code>".
-   <li><p>If <var>request</var>'s <a for=request>client</a>'s <a for=environment>ancestry</a> is "<code>cross-site</code>", return "<code>UnsetOrLess</code>".
-   <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is "<code>cross-site</code>", return "<code>UnsetOrLess</code>".
-   <li><p>Return "StrictOrLess".
-  </ol>
+<p>To <dfn>determine the same-site mode</dfn> for a given <a for=/>request</a> <var>request</var>,
+run these steps:
+
+<ol>
+  <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>method</a> is "GET" or "POST".
+
+  <li><p>If <var>request</var>'s <a for=request>top-level navigation initiator origin</a> is not
+  null and is not <a for=/>same site</a> to <var>request</var>'s <a for=request>URL</a>'s
+  <a for=url>origin</a>, return "<code>UnsetOrLess</code>".
+
+  <li><p>If <var>request</var>'s <a for=request>method</a> is "GET" and <var>request</var>'s <a
+  for=request>destination</a> is "document", return "<code>LaxOrLess</code>".
+
+  <li><p>If <var>request</var>'s <a for=request>client</a>'s <a for=environment>ancestry</a> is
+  "<code>cross-site</code>", return "<code>UnsetOrLess</code>".
+
+  <li><p>If <var>request</var>'s <a for=request>redirect-taint</a> is "<code>cross-site</code>",
+  return "<code>UnsetOrLess</code>".
+
+  <li><p>Return "StrictOrLess".
+</ol>
 </div>
 
 <h2 id=fetching>Fetching</h2>
@@ -6371,7 +6406,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Set <var>response</var>'s <a for=response>body</a> to a new <a for=/>body</a> whose
  <a for=body>stream</a> is <var>stream</var>.
 
- <li><p tracking-vector>If <var>includeCredentials</var> is true, the user agent should <a>parse and store response `<code>Set-Cookie</code>` headers</a> given <var>request</var> and <var>response</var>.
+ <li><p tracking-vector>If <var>includeCredentials</var> is true, the user agent should <a>parse and
+ store response `<code>Set-Cookie</code>` headers</a> given <var>request</var> and
+ <var>response</var>.
 
  <li>
   <p>Run these steps <a>in parallel</a>:
