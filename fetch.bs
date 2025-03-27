@@ -370,6 +370,8 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
  <dd>A number.
  <dt><dfn export for="response body info">content type</dfn> (default the empty string)
  <dd>An <a for=/>ASCII string</a>.
+ <dt><dfn export for="response body info">content encoding</dfn> (default the empty string)
+ <dd>An <a for=/>ASCII string</a>.
 </dl>
 
 <div algorithm>
@@ -6319,6 +6321,24 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
          `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
 
+         <li><p>Let <var>filteredCoding</var> be "<code>unknown</code>".
+
+         <li><p>If <var>codings</var> is null, set <var>filteredCoding</var> to the empty string.
+
+         <li><p>Otherwise, if <var>codings</var> contains two strings or more, set <var>filteredCoding</var> to
+         "<code>multiple</code>".
+
+         <li><p>Otherwise, if <var>codings[0]</var> is the empty string, or it is supported by the user agent,
+         and is listed in the <a href="https://www.iana.org/assignments/http-parameters/http-parameters.xhtml#content-coding">
+         content encoding registry on IANA</a>, set <var>filteredCoding</var> to <var>codings[0]</var>.
+
+         <p class='note'>
+         "<code>identity</code>" is never supported as a coding. See details
+         <a href="https://www.rfc-editor.org/rfc/rfc9110.html#name-content-encoding"> here</a>.
+
+         <li><p>Set <var>response</var>'s <a for=response>body info</a>'s
+         <a for="response body info">content encoding</a> to <var>filteredCoding</var>.
+
          <li><p>Increase <var>response</var>'s <a for=response>body info</a>'s
          <a for="response body info">encoded size</a> by <var>bytes</var>'s
          <a for="byte sequence">length</a>.
@@ -9128,6 +9148,7 @@ Gavin Carothers,
 Glenn Maynard,
 Graham Klyne,
 Gregory Terzian,
+Guohui Deng(邓国辉)<!-- guohuideng2024; GitHub -->,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Harris Hancock,
