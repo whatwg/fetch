@@ -2751,7 +2751,7 @@ a <a for=/>list</a> of <a data-lt="deferred fetch record">deferred fetch records
 <hr>
 
 <p>A <dfn>deferred fetch record</dfn> is a <a for=/>struct</a> used to maintain state needed
-to invoke a fetch at a later time, e.g., when a {{Document}} object is unloaded or becomes
+to invoke a fetch at a later time, e.g., when a document is unloaded or becomes
 not <a for=Document>fully active</a>. It has the following <a for=struct>items</a>:
 
 <dl>
@@ -6755,8 +6755,8 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 
 <h3 id=deferred-fetch>Deferred fetching</h3>
 
-<p>Deferred fetching allows callers to request that a fetch is invoked at the latest possible moment,
-i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout.
+<p>Deferred fetching allows callers to request that a fetch is invoked at the latest possible
+moment, i.e., when a <a>fetch group</a> is <a for="fetch group">terminated</a>, or after a timeout.
 
 <p>The <dfn>deferred fetch task source</dfn> is a <a>task source</a> used to update the result of a
 deferred fetch. User agents must prioritize tasks in this <a>task source</a> before other task
@@ -6796,7 +6796,7 @@ which is an algorithm that takes no arguments:
 
      <li><p>The user agent has a reason to believe that it is about to lose the opportunity to
      execute scripts, e.g., when the browser is moved to the background, or when
-     <var>request</var>'s <a for=request>client</a> is a {{Document}} that had a
+     <var>request</var>'s <a for=request>client</a> is a <a for=/>document</a> that had a
      "<code>hidden</code>" <a for=Document>visibility state</a> for a long period of time.
     </ul>
 
@@ -6864,18 +6864,18 @@ which is an algorithm that takes no arguments:
 <p><em>This section is non-normative.</em>
 
 <p>The deferred-fetch quota is allocated to a <a for=/>top-level traversable</a> (a "tab"),
-amounting to 640 kibibytes. The top-level document and its same-origin directly nested documents
-can use this quota to queue deferred fetches, or delegate some of it to cross-origin nested
-documents, using permissions policy.
+amounting to 640 kibibytes. The top-level document and its same-origin directly nested documents can
+use this quota to queue deferred fetches, or delegate some of it to cross-origin nested documents,
+using permissions policy.
 
 <p>By default, 128 kibibytes out of these 640 kibibytes are allocated to delegating the quota to
 cross-origin nested documents, each reserving 8 kibibytes.
 
-<p>The top-level {{Document}}, and subsequently its nested documents, can control how much of their
-quota is delegates to cross-origin child documents, using permissions policy. By default,
+<p>The top-level <a for=/>document</a>, and subsequently its nested documents, can control how much
+of their quota is delegates to cross-origin child documents, using permissions policy. By default,
 the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy is enabled for any origin, while
-"{{PermissionsPolicy/deferred-fetch}}" is enabled for the top-level document's origin only.
-By relaxing the "{{PermissionsPolicy/deferred-fetch}}" policy for particular origins and nested
+"{{PermissionsPolicy/deferred-fetch}}" is enabled for the top-level document's origin only. By
+relaxing the "{{PermissionsPolicy/deferred-fetch}}" policy for particular origins and nested
 documents, the top-level document can allocate 64 kibibytes to those nested documents. Similarly, by
 restricting the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy for a particular origin or
 nested document, the document can prevent the document from reserving the 8 kibibytes it would
@@ -6883,10 +6883,10 @@ receive by default. By disabling the "{{PermissionsPolicy/deferred-fetch-minimal
 top-level document itself, the entire 128 kibibytes delegated quota is collected back into the main
 pool of 640 kibibytes.
 
-<p>Out of the allocated quota for a {{Document}}, only 64 kibibytes can be used concurrently for the
-same reporting origin (the <a for=/>request</a>'s <a for=request>URL</a>'s <a for=url>origin</a>).
-This prevents a situation where particular 3rd party libraries would reserve quota
-opportunistically, before they have data to send.
+<p>Out of the allocated quota for a <a for=/>document</a>, only 64 kibibytes can be used
+concurrently for the same reporting origin (the <a for=/>request</a>'s <a for=request>URL</a>'
+<a for=url>origin</a>). This prevents a situation where particular 3rd party libraries would reserve
+quota opportunistically, before they have data to send.
 
 <div class=example id=deferred-fetch-quota-examples>
 <p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw due to
@@ -6927,7 +6927,7 @@ calls would succeed and the last one would throw.
 </code></pre>
 
 
-<p>To make the previous example not throw, the top-level {{Document}} can delegate some of its quota
+<p>To make the previous example not throw, the top-level document can delegate some of its quota
 to <code>https://frame.example.com</code>, for example by serving the following header:
 <pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://frame.example.com")</code></pre>
 
@@ -6991,7 +6991,7 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
  <li><code>https://ok.example.com/back</code> did not reserve 64 kibibytes, because it navigated
  back to <a for=/>top-level traversable</a>'s origin.
 
- <li><p>640 - 128 - 64 - 64 = 384 kibibytes.
+ <li><p>640 &minus; 128 &minus; 64 &minus; 64 = 384 kibibytes.
 </ul>
 </div>
 
@@ -7007,7 +7007,7 @@ descendants share a quota of 384 kibibytes. That value is computed as such:
 <p>The <dfn>quota reserved for <code>deferred-fetch-minimal</code></dfn> is 128 kibibytes.
 
 <div algorithm>
-<p>To get the <dfn>available deferred-fetch quota</dfn> given a {{Document}}
+<p>To get the <dfn>available deferred-fetch quota</dfn> given a <a for=/>document</a>
 <var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
 
 <ol>
@@ -7150,26 +7150,28 @@ the document ends up being <a>same origin</a> with its parent, the quota would b
 </div>
 
 <div algorithm>
-<p>To <dfn export>potentially free deferred-fetch quota</dfn> for a {{Document}}
+<p>To <dfn export>potentially free deferred-fetch quota</dfn> for a <a for=/>document</a>
 <var>document</var>, if <var>document</var>'s <a>node navigable</a>'s <a>container document</a> is
 not null, and its <a for=Document>origin</a> is <a>same origin</a> with <var>document</var>, then
 set <var>document</var>'s <a>node navigable</a>'s <a>navigable container</a>'s
 <a>reserved deferred-fetch quota</a> to 0.
 
-<p class=note>This is called when a {{Document}} is created. It ensures that same-origin nested
+<p class=note>This is called when a  is created. It ensures that same-origin nested
 documents don't reserve quota, as they anyway share their parent quota. It can only be called upon
-document creation, as the <a for=Document>origin</a> of the {{Document}} is only known after
-redirects are handled.
+document creation, as the <a for=Document>origin</a> of the <a for=/>document</a> is only known
+after redirects are handled.
 </div>
 
 <div algorithm>
-<p>To get the <dfn>deferred-fetch control document</dfn> of a {{Document}} <var>document</var>:
+<p>To get the <dfn>deferred-fetch control document</dfn> of a <a for=/>document</a>
+<var>document</var>:
 
 <ol>
  <li><p>If <var>document</var>' <a>node navigable</a>'s <a>container document</a> is null or a
- {{Document}} whose <a for=Document>origin</a> is not <a>same origin</a> with <var>document</var>,
- return <var>document</var>; Otherwise return the <a>deferred-fetch control document</a> given
- <var>document</var>' <a>node navigable</a>'s <a>container document</a>.
+ <a for=/>document</a> whose <a for=Document>origin</a> is not <a>same origin</a> with
+ <var>document</var>, return <var>document</var>; Otherwise return the
+ <a>deferred-fetch control document</a> given <var>document</var>' <a>node navigable</a>'s
+ <a>container document</a>.
 </ol>
 </div>
 
@@ -9052,8 +9054,8 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
 which is an algorithm returning a boolean.
 
 <div algorithm>
-<p>The <dfn attribute for=FetchLaterResult><code>activated</code></dfn> getter steps are to return the result of running
-<a>this</a>'s <a for=FetchLaterResult>activated getter steps</a>.
+<p>The <dfn attribute for=FetchLaterResult><code>activated</code></dfn> getter steps are to return
+the result of running <a>this</a>'s <a for=FetchLaterResult>activated getter steps</a>.
 </div>
 
 <div algorithm="dom-fetch-later">
@@ -9079,7 +9081,7 @@ method steps are:
  <li><p>If <var>activateAfter</var> is less than 0, then throw a {{RangeError}}.
 
  <li><p>If <var>request</var>'s <a for=request>client</a> is not a <a>fully active</a>
- {{Document}}, then throw a {{TypeError}}.
+ <a for=/>document</a>, then throw a {{TypeError}}.
 
  <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
  <a>HTTP(S) scheme</a>, then throw a {{TypeError}}.
