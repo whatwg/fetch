@@ -42,6 +42,7 @@ urlPrefix:https://httpwg.org/specs/rfc9112.html#;type:dfn;spec:http1
     url:status.line;text:reason-phrase
 
 url:https://w3c.github.io/resource-timing/#dfn-mark-resource-timing;text:mark resource timing;type:dfn;spec:resource-timing
+url:https://w3c.github.io/webappsec-permissions-policy/#algo-define-inherited-policy-in-container;text:define an inherited policy for feature in container;type:dfn
 
 urlPrefix:https://w3c.github.io/hr-time/#;spec:hr-time
     type:dfn
@@ -1855,7 +1856,8 @@ not always relevant and might require different behavior.
    <td><code>connect-src</code>
    <td><code>navigator.sendBeacon()</code>, {{EventSource}},
    HTML's <code>&lt;a ping=""></code> and <code>&lt;area ping=""></code>,
-   <a method><code>fetch()</code></a>, {{XMLHttpRequest}}, {{WebSocket}}, Cache API
+   <a method><code>fetch()</code></a>, <a method><code>fetchLater()</code></a>, {{XMLHttpRequest}},
+   {{WebSocket}}, Cache API
   <tr>
    <td>"<code>object</code>"
    <td><code>object-src</code>
@@ -2776,28 +2778,63 @@ functionality.
 <h3 id=fetch-groups>Fetch groups</h3>
 
 <p>Each <a>environment settings object</a> has an associated
-<dfn export id=concept-fetch-group for=fetch>fetch group</dfn>.
+<dfn for="environment settings object">fetch group</dfn>, which holds a <a for=/>fetch group</a>.
 
-<p>A <a for=fetch>fetch group</a> holds an ordered list of
-<dfn lt="fetch record" export for="fetch group" id=concept-fetch-record>fetch records</dfn>.
+<p>A <dfn id=concept-fetch-group>fetch group</dfn> holds information about fetches.
 
-<p>A <a for="fetch group">fetch record</a> has an associated
-<dfn export for="fetch record" id=concept-fetch-record-request>request</dfn> (a
-<a for=/>request</a>).
+<p>A <a for=/>fetch group</a> has associated:
 
-<p>A <a for="fetch group">fetch record</a> has an associated
-<dfn export for="fetch record" id=concept-fetch-record-fetch>controller</dfn> (a
-<a for=/>fetch controller</a> or null).
+<dl>
+ <dt><dfn for="fetch group" id=concept-fetch-record>fetch records</dfn>
+ <dd>A <a for=/>list</a> of <a for=/>fetch records</a>.
+
+ <dt><dfn for="fetch group">deferred fetch records</dfn>
+ <dd>A <a for=/>list</a> of <a for=/>deferred fetch records</a>.
+</dl>
+
+<p>A <dfn export>fetch record</dfn> is a <a for=/>struct</a> with the following
+<a for=struct>items</a>:
+
+<dl>
+ <dt><dfn export for="fetch record" id=concept-fetch-record-request>request</dfn>
+ <dd>A <a for=/>request</a>.
+
+ <dt><dfn export for="fetch record" id=concept-fetch-record-fetch>controller</dfn>
+ <dd>A <a for=/>fetch controller</a> or null.
+</dl>
+<hr>
+
+<p>A <dfn>deferred fetch record</dfn> is a <a for=/>struct</a> used to maintain state needed to
+invoke a fetch at a later time, e.g., when a document is unloaded or becomes not
+<a for=Document>fully active</a>. It has the following <a for=struct>items</a>:
+
+<dl>
+ <dt><dfn for="deferred fetch record">request</dfn>
+ <dd>A <a for=/>request</a>.
+
+ <dt><dfn for="deferred fetch record">notify invoked</dfn>
+ <dd>An algorithm accepting no arguments.
+
+ <dt><dfn for="deferred fetch record">invoke state</dfn> (default "<code>pending</code>")
+ <dd>"<code>pending</code>", "<code>sent</code>", or "<code>aborted</code>".
+</dl>
 
 <hr>
 
-<p>When a <a for=fetch>fetch group</a> is
-<dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>, for each associated
-<a for="fetch group">fetch record</a> whose <a for="fetch group">fetch record</a>'s
-<a for="fetch record">controller</a> is non-null, and whose <a for="fetch record">request</a>'s
-<a>done flag</a> is unset or <a for=request>keepalive</a> is false,
-<a for="fetch controller">terminate</a> the <a for="fetch group">fetch record</a>'s
-<a for="fetch record">controller</a>.
+<p>When a <a for=fetch>fetch group</a> <var>fetchGroup</var> is
+<dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>:
+
+<ol>
+ <li><p><a for=list>For each</a> <a for="fetch group">fetch record</a> <var>record</var> of
+ <var>fetchGroup</var>'s <a for="fetch group">fetch records</a>, if <var>record</var>'s
+ <a for="fetch record">controller</a> is non-null and <var>record</var>'s
+ <a for="fetch record">request</a>'s <a>done flag</a> is unset and <a for=request>keepalive</a> is
+ false, <a for="fetch controller">terminate</a> <var>record</var>'s
+ <a for="fetch record">controller</a>.
+
+ <li><p><a>Process deferred fetches</a> for <var>fetchGroup</var>.
+</ol>
+
 
 
 <h3 id=resolving-domains>Resolving domains</h3>
@@ -4593,15 +4630,16 @@ the response. [[!HTTP-CACHING]]
   dispatch and processing of HTTP/1 fetches. [[!RFC9218]]
 
  <li>
-  <p>If <var>request</var> is a <a>subresource request</a>, then:
+  <p>If <var>request</var> is a <a>subresource request</a>:
 
   <ol>
    <li><p>Let <var>record</var> be a new <a for="fetch group">fetch record</a> whose
    <a for="fetch record">request</a> is <var>request</var> and <a for="fetch record">controller</a>
    is <var>fetchParams</var>'s <a for="fetch params">controller</a>.
 
-   <li><p>Append <var>record</var> to <var>request</var>'s <a for=request>client</a>'s
-   <a for=fetch>fetch group</a> list of <a for="fetch group">fetch records</a>.
+   <li><p><a for=list>Append</a> <var>record</var> to <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">fetch group</a>'s
+   <a for="fetch group">fetch records</a>.
   </ol>
 
  <li><p>Run <a>main fetch</a> given <var>fetchParams</var>.
@@ -5788,7 +5826,7 @@ run these steps:
      <li><p>Let <var>inflightKeepaliveBytes</var> be 0.
 
      <li><p>Let <var>group</var> be <var>httpRequest</var>'s <a for=request>client</a>'s
-     <a>fetch group</a>.
+     <a for="environment settings object">fetch group</a>.
 
      <li><p>Let <var>inflightRecords</var> be the set of <a for="fetch group">fetch records</a> in
      <var>group</var> whose <a for="fetch record">request</a>'s <a for=request>keepalive</a> is true
@@ -6914,6 +6952,444 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 </ol>
 </div>
 
+<h3 id=deferred-fetch>Deferred fetching</h3>
+
+<p>Deferred fetching allows callers to request that a fetch is invoked at the latest possible
+moment, i.e., when a <a for=/>fetch group</a> is <a for="fetch group">terminated</a>, or after a
+timeout.
+
+<p>The <dfn>deferred fetch task source</dfn> is a <a>task source</a> used to update the result of a
+deferred fetch. User agents must prioritize tasks in this <a>task source</a> before other task
+sources, specifically task sources that can result in running scripts such as the
+<a>DOM manipulation task source</a>, to reflect the most recent state of a
+<a method><code>fetchLater()</code></a> call before running any scripts that might depend on it.
+
+<div algorithm>
+<p>To <dfn>queue a deferred fetch</dfn> given a <a for=/>request</a> <var>request</var>, a null or
+{{DOMHighResTimeStamp}} <var>activateAfter</var>, and <var>onActivatedWithoutTermination</var>,
+which is an algorithm that takes no arguments:
+
+<ol>
+ <li><p><a>Populate request from client</a> given <var>request</var>.
+
+ <li><p>Set <var>request</var>'s <a for=request>service-workers mode</a> to "<code>none</code>".
+
+ <li><p>Set <var>request</var>'s <a for=request>keepalive</a> to true.
+
+ <li><p>Let <var>deferredRecord</var> be a new <a>deferred fetch record</a> whose
+ <a for="deferred fetch record">request</a> is <var>request</var>, and whose
+ <a for="deferred fetch record">notify invoked</a> is
+ <var>onActivatedWithoutTermination</var>.
+
+ <li><p><a for=list>Append</a> <var>deferredRecord</var> to <var>request</var>'s
+ <a for=request>client</a>'s <a for="environment settings object">fetch group</a>'s
+ <a for="fetch group">deferred fetch records</a>.
+
+ <li>
+  <p>If <var>activateAfter</var> is non-null, then run the following steps <a>in parallel</a>:
+
+  <ol>
+   <li>
+    <p>The user agent should wait until any of the following conditions is met:
+
+    <ul class=brief>
+     <li><p>At least <var>activateAfter</var> milliseconds have passed.
+
+     <li><p>The user agent has a reason to believe that it is about to lose the opportunity to
+     execute scripts, e.g., when the browser is moved to the background, or when
+     <var>request</var>'s <a for=request>client</a>'s
+     <a for="environment settings object">global object</a> is a {{Window}} object whose
+     <a>associated document</a> had a "<code>hidden</code>" <a for=Document>visibility state</a> for
+     a long period of time.
+    </ul>
+
+   <li><p><a data-lt="process a deferred fetch">Process</a> <var>deferredRecord</var>.
+  </ol>
+
+ <li><p>Return <var>deferredRecord</var>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To compute the <dfn>total request length</dfn> of a <a for=/>request</a> <var>request</var>:
+
+<ol>
+ <li><p>Let <var>totalRequestLength</var> be the <a for=string>length</a> of <var>request</var>'s
+ <a for=request>URL</a>, <a lt="URL serializer">serialized</a> with
+ <a for="URL serializer"><i>exclude fragment</i></a> set to true.
+
+ <li><p>Increment <var>totalRequestLength</var> by the <a for=string>length</a> of
+ <var>request</var>'s <a for=request>referrer</a>, <a lt="URL serializer">serialized</a>.
+
+ <li><p><a for=list>For each</a> (<var>name</var>, <var>value</var>) of <var>request</var>'s
+ <a for=request>header list</a>, increment <var>totalRequestLength</var> by <var>name</var>'s
+ <a for="byte sequence">length</a> + <var>value</var>'s <a for="byte sequence">length</a>.
+
+ <li><p>Increment <var>totalRequestLength</var> by <var>request</var>'s <a for=request>body</a>'s
+ <a for=body>length</a>.
+
+ <li><p>Return <var>totalRequestLength</var>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>process deferred fetches</dfn> given a <a for=/>fetch group</a> <var>fetchGroup</var>:
+
+<ol>
+ <li><p><a for=list>For each</a> <a for="fetch group">deferred fetch record</a>
+ <var>deferredRecord</var> of <var>fetchGroup</var>'s
+ <a for="fetch group">deferred fetch records</a>, <a>process a deferred fetch</a>
+ <var>deferredRecord</var>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>process a deferred fetch</dfn> <var>deferredRecord</var>:
+<ol>
+ <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> is not
+ "<code>pending</code>", then return.
+
+ <li><p>Set <var>deferredRecord</var>'s <a for="deferred fetch record">invoke state</a> to
+ "<code>sent</code>".
+
+ <li><p><a for=/>Fetch</a> <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
+
+ <li><p><a>Queue a global task</a> on the <a>deferred fetch task source</a> with
+ <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
+ <a for=request>client</a>'s <a for="environment settings object">global object</a> to run
+ <var>deferredRecord</var>'s <a for="deferred fetch record">notify invoked</a>.
+</ol>
+</div>
+
+<h4 id=deferred-fetch-quota>Deferred fetching quota</h4>
+
+<p><em>This section is non-normative.</em>
+
+<p>The deferred-fetch quota is allocated to a <a for=/>top-level traversable</a> (a "tab"),
+amounting to 640 kibibytes. The top-level document and its same-origin directly nested documents can
+use this quota to queue deferred fetches, or delegate some of it to cross-origin nested documents,
+using permissions policy.
+
+<p>By default, 128 kibibytes out of these 640 kibibytes are allocated to delegating the quota to
+cross-origin nested documents, each reserving 8 kibibytes.
+
+<p>The top-level <a for=/>document</a>, and subsequently its nested documents, can control how much
+of their quota is delegates to cross-origin child documents, using permissions policy. By default,
+the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy is enabled for any origin, while
+"{{PermissionsPolicy/deferred-fetch}}" is enabled for the top-level document's origin only. By
+relaxing the "{{PermissionsPolicy/deferred-fetch}}" policy for particular origins and nested
+documents, the top-level document can allocate 64 kibibytes to those nested documents. Similarly, by
+restricting the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy for a particular origin or
+nested document, the document can prevent the document from reserving the 8 kibibytes it would
+receive by default. By disabling the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy for the
+top-level document itself, the entire 128 kibibytes delegated quota is collected back into the main
+pool of 640 kibibytes.
+
+<p>Out of the allocated quota for a <a for=/>document</a>, only 64 kibibytes can be used
+concurrently for the same reporting origin (the <a for=/>request</a>'s <a for=request>URL</a>'s
+<a for=url>origin</a>). This prevents a situation where particular third-party libraries would reserve
+quota opportunistically, before they have data to send.
+
+<div class=example id=deferred-fetch-quota-examples>
+ <p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw due to
+ the request itself exceeding the 64 kibibytes quota allocated to a reporting origin. Note that the
+ size of the request includes the <a for=request>URL</a> itself, the <a for=request>body</a>, the
+ <a for=request>header list</a>, and the <a for=request>referrer</a>.
+
+ <pre><code class=lang-javascript>
+fetchLater(a_72_kb_url);
+fetchLater("https://origin.example.com", {headers: headers_exceeding_64kb});
+fetchLater(a_32_kb_url, {headers: headers_exceeding_32kb});
+fetchLater("https://origin.example.com", {method: "POST", body: body_exceeding_64_kb});
+fetchLater(a_62_kb_url /* with a 3kb referrer */);
+</code></pre>
+
+ <p>In the following sequence, the first two requests would succeed, but the third one would throw.
+ That's because the overall 640 kibibytes quota was not exceeded in the first two calls, however the
+ 3rd request exceeds the reporting-origin quota for <code>https://a.example.com</code>, and would
+ throw.
+
+ <pre><code class=lang-javascript>
+fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
+fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+fetchLater("https://a.example.com");
+</code></pre>
+
+ <p>Same-origin nested documents share the quota of their parent. However, cross-origin or
+ cross-agent iframes only receive 8kb of quota by default. So in the following example, the first
+ three calls would succeed and the last one would throw.
+
+ <pre><code class=lang-javascript>
+// In main page
+fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
+
+// In same-origin nested document
+fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+
+// In cross-origin nested document at https://fratop.example.com
+fetchLater("https://a.example.com", {body: a_5kb_body});
+fetchLater("https://a.example.com", {body: a_12kb_body});
+</code></pre>
+
+ <p>To make the previous example not throw, the top-level document can delegate some of its quota
+ to <code>https://fratop.example.com</code>, for example by serving the following header:
+
+ <pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://fratop.example.com")</code></pre>
+
+ <p>Each nested document reserves its own quota. So the following would work, because each frame
+ reserve 8 kibibytes:
+
+ <pre><code class=lang-javascript>
+// In cross-origin nested document at https://fratop.example.com/frame-1
+fetchLater("https://a.example.com", {body: a_6kb_body});
+
+// In cross-origin nested document at https://fratop.example.com/frame-2
+fetchLater("https://a.example.com", {body: a_6kb_body});
+</code></pre>
+
+ <p>The following tree illustrates how quota is distributed to different nested documents in a tree:
+
+ <ul>
+  <li>
+   <p><code>https://top.example.com</code>, with permissions policy set to
+   <code>Permissions-policy: deferred-fetch=(self "https://ok.example.com")</code>
+   <ul>
+    <li>
+     <p><code>https://top.example.com/frame</code>: shares quota with the top-level traversable, as
+     they are same origin.
+
+     <ul><li><p><code>https://x.example.com</code>: receives 8 kibibytes.</ul>
+
+    <li>
+     <p><code>https://x.example.com</code>: receives 8 kibibytes.
+     <ul><li><p><code>https://top.example.com</code>: 0. Even though it's same origin with the
+     top-level traversable, it does not automatically share its quota as they are separated by a
+     cross-origin intermediary.</ul>
+
+    <li>
+     <p><code>https://ok.example.com/good</code>: receives 64 kibibytes, granted via the
+     "{{PermissionsPolicy/deferred-fetch}}" policy.
+
+     <ul><li><p><code>https://x.example.com</code>: receives no quota. Only documents with the same
+     origin as the top-level traversable can grant the 8 kibibytes based on the
+     "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.</ul>
+
+    <li><p><code>https://ok.example.com/redirect</code>, navigated to
+    <code>https://x.example.com</code>: receives no quota. The reserved 64 kibibytes for
+    <code>https://ok.example.com</code> are not available for
+    <code>https://x.example.com</code>.
+
+    <li><p><code>https://ok.example.com/back</code>, navigated to
+    <code>https://top.example.com</code>: shares quota with the top-level traversable, as they're
+    same origin.
+   </ul>
+ </ul>
+
+ <p>In the above example, the <a for=/>top-level traversable</a> and its <a>same origin</a>
+ descendants share a quota of 384 kibibytes. That value is computed as such:
+ <ul>
+  <li><p>640 kibibytes are initially granted to the <a for=/>top-level traversable</a>.
+
+  <li><p>128 kibibytes are reserved for the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.
+
+  <li><p>64 kibibytes are reserved for the container navigating to
+  <code>https://ok.example/good</code>.
+
+  <li><p>64 kibibytes are reserved for the container navigating to
+  <code>https://ok.example/redirect</code>, and lost when it navigates away.
+
+  <li><code>https://ok.example.com/back</code> did not reserve 64 kibibytes, because it navigated
+  back to <a for=/>top-level traversable</a>'s origin.
+
+  <li><p>640 &minus; 128 &minus; 64 &minus; 64 = 384 kibibytes.
+ </ul>
+</div>
+
+<p>This specification defines a <a>policy-controlled feature</a> identified by the string
+"<dfn for=PermissionsPolicy enum-value>deferred-fetch</dfn>". Its
+<a for="policy-controlled feature">default allowlist</a> is "<code>self</code>".
+
+<p>This specification defines a <a>policy-controlled feature</a> identified by the string
+"<dfn for=PermissionsPolicy enum-value>deferred-fetch-minimal</dfn>". Its
+<a for="policy-controlled feature">default allowlist</a> is "<code>*</code>".
+
+<p>The <dfn>quota reserved for <code>deferred-fetch-minimal</code></dfn> is 128 kibibytes.
+
+<p>Each <a>navigable container</a> has an associated number
+<dfn>reserved deferred-fetch quota</dfn>. Its possible values are
+<dfn for="reserved deferred-fetch quota">minimal quota</dfn>, which is 8 kibibytes,
+<dfn for="reserved deferred-fetch quota">normal quota</dfn>, which is 64 kibibytes, or 0. Unless
+stated otherwise, it is 0.
+
+<div algorithm>
+<p>To get the <dfn>available deferred-fetch quota</dfn> given a <a for=/>document</a>
+<var>document</var> and an <a for=/>origin</a>-or-null <var>origin</var>:
+
+<ol>
+ <li><p>Let <var>controlDocument</var> be <var>document</var>'s
+ <a>deferred-fetch control document</a>.
+
+ <li><p>Let <var>navigable</var> be <var>controlDocument</var>'s <a>node navigable</a>.
+
+ <li><p>Let <var>isTopLevel</var> be true if <var>controlDocument</var>'s <a>node navigable</a> is a
+ <a for=/>top-level traversable</a>; otherwise false.
+
+ <li><p>Let <var>deferredFetchAllowed</var> be true if <var>controlDocument</var> is
+ <a for=/>allowed to use</a> the <a>policy-controlled feature</a>
+ "{{PermissionsPolicy/deferred-fetch}}"; otherwise false.
+
+ <li><p>Let <var>deferredFetchMinimalAllowed</var> be true if <var>controlDocument</var> is
+ <a for=/>allowed to use</a> the <a>policy-controlled feature</a>
+ "{{PermissionsPolicy/deferred-fetch-minimal}}"; otherwise false.
+
+ <li>
+  <p>Let <var>quota</var> be the result of the first matching statement:
+
+  <dl class=switch>
+   <dt><var>isTopLevel</var> is true and <var>deferredFetchAllowed</var> is false
+   <dd>0
+
+   <dt><var>isTopLevel</var> is true and <var>deferredFetchMinimalAllowed</var> is false
+   <dd>
+    <p>640 kibibytes
+    <p class="note allow-2119">640kb should be enough for everyone.
+
+   <dt><var>isTopLevel</var> is true
+   <dd>
+    <p>512 kibibytes
+    <p class=note>The default of 640 kibibytes, decremented By
+    <a>quota reserved for <code>deferred-fetch-minimal</code></a>)
+
+   <dt><var>deferredFetchAllowed</var> is true, and <var>navigable</var>'s
+   <a>navigable container</a>'s <a>reserved deferred-fetch quota</a> is
+   <a for="reserved deferred-fetch quota">normal quota</a>
+   <dd><a for="reserved deferred-fetch quota">normal quota</a>
+
+   <dt><var>deferredFetchMinimalAllowed</var> is true, and <var>navigable</var>'s
+   <a>navigable container</a>'s <a>reserved deferred-fetch quota</a> is
+   <a for="reserved deferred-fetch quota">minimal quota</a>
+   <dd><a for="reserved deferred-fetch quota">minimal quota</a>
+
+   <dt>Otherwise
+   <dd>0
+  </dl>
+
+ <li><p>Let <var>quotaForRequestOrigin</var> be 64 kibibytes.
+
+ <li>
+  <p><a for=list>For each</a> <var>navigable</var> in <var>controlDocument</var>'s
+  <a>node navigable</a>'s <a>inclusive descendant navigables</a> whose
+  <a for=navigable>active document</a>'s <a>deferred-fetch control document</a> is
+  <var>controlDocument</var>:
+
+  <ol>
+   <li><p><a for=list>For each</a> <var>container</var> in <var>navigable</var>'s
+   <a for=navigable>active document</a>'s <a>shadow-including inclusive descendants</a> which is a
+   <a>navigable container</a>, decrement <var>quota</var> by <var>container</var>'s
+   <a>reserved deferred-fetch quota</a>.
+
+   <li>
+    <p><a for=list>For each</a> <a>deferred fetch record</a> <var>deferredRecord</var> of
+    <var>navigable</var>'s <a for=navigable>active document</a>'s <a>relevant settings object</a>'s
+    <a for="environment settings object">fetch group</a>'s
+    <a for="fetch group">deferred fetch records</a>:
+
+    <ol>
+     <li><p>Let <var>requestLength</var> be the <a>total request length</a> of
+     <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>.
+
+     <li><p>Decrement <var>quota</var> by <var>requestLength</var>.
+
+     <li><p>If <var>deferredRecord</var>'s <a for="deferred fetch record">request</a>'s
+     <a for=request>URL</a>'s <a for=url>origin</a> is <a>same origin</a> with <var>origin</var>,
+     then decrement <var>quotaForRequestOrigin</var> by <var>requestLength</var>.
+    </ol>
+  </ol>
+
+ <li><p>If <var>quota</var> is equal or less than 0, then return 0.
+
+ <li><p>If <var>quota</var> is less than <var>quotaForRequestOrigin</var>, then return
+ <var>quota</var>.
+
+ <li><p>Return <var>quotaForRequestOrigin</var>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn export>reserve deferred-fetch quota</dfn> for a <a>navigable container</a>
+<var>container</var> given an <a for=/>origin</a> <var>originToNavigateTo</var>:
+
+<p class=note>This is called on navigation, when the source document of the navigation is the
+<a for=/>navigable</a>'s parent document. It potentially reserves either 64kb or 8kb of quota for
+the container and its navigable, if allowed by permissions policy. It is not observable to the
+cotnainer document whether the reserved quota was used in practice. This algorithm assumes that the
+container's document might delegate quota to the navigated container, and the reserved quota would
+only apply in that case, and would be ignored if it ends up being shared. If quota was reserved and
+the document ends up being <a>same origin</a> with its parent, the quota would be
+<a data-lt="potentially free deferred-fetch quota">freed</a>.
+
+<ol>
+ <li><p>Set <var>container</var>'s <a>reserved deferred-fetch quota</a> to 0.
+
+ <li><p>Let <var>controlDocument</var> be <var>container</var>'s <a>node document</a>'s
+ <a>deferred-fetch control document</a>.
+
+ <li><p>If the <a data-lt="define an inherited policy for feature in container">inherited policy</a>
+ for "{{PermissionsPolicy/deferred-fetch}}", <var>container</var> and <var>originToNavigateTo</var>
+ is <code>"Enabled"</code>, and the <a>available deferred-fetch quota</a> for
+ <var>controlDocument</var> is equal or greater than
+ <a for="reserved deferred-fetch quota">normal quota</a>, then set <var>container</var>'s
+ <a>reserved deferred-fetch quota</a> to <a for="reserved deferred-fetch quota">normal quota</a> and
+ return.
+
+ <li>
+  <p>If all of the following conditions are true:
+
+  <ul class=brief>
+   <li><p><var>controlDocument</var>'s <a>node navigable</a> is a <a for=/>top-level traversable</a>;
+
+   <li><p>the <a data-lt="define an inherited policy for feature in container">inherited policy</a>
+   for "{{PermissionsPolicy/deferred-fetch-minimal}}", <var>container</var> and
+   <var>originToNavigateTo</var> is <code>"Enabled"</code>; and
+
+   <li><p>the <a for=list>size</a> of <var>controlDocument</var>'s <a>node navigable</a>'s
+   <a>descendant navigables</a>, <a for=list data-lt=remove>removing</a> any <a for=/>navigable</a>
+   whose <a>navigable container</a>'s <a>reserved deferred-fetch quota</a> is not
+   <a for="reserved deferred-fetch quota">minimal quota</a>, is less than
+   <a>quota reserved for <code>deferred-fetch-minimal</code></a> /
+   <a for="reserved deferred-fetch quota">minimal quota</a>,
+  </ul>
+
+  <p>then set <var>container</var>'s <a>reserved deferred-fetch quota</a> to
+  <a for="reserved deferred-fetch quota">minimal quota</a>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn export>potentially free deferred-fetch quota</dfn> for a <a for=/>document</a>
+<var>document</var>, if <var>document</var>'s <a>node navigable</a>'s <a>container document</a> is
+not null, and its <a for=Document>origin</a> is <a>same origin</a> with <var>document</var>, then
+set <var>document</var>'s <a>node navigable</a>'s <a>navigable container</a>'s
+<a>reserved deferred-fetch quota</a> to 0.
+
+<p class=note>This is called when a <a for=/>document</a> is created. It ensures that same-origin
+nested documents don't reserve quota, as they anyway share their parent quota. It can only be called
+upon document creation, as the <a for=Document>origin</a> of the <a for=/>document</a> is only known
+after redirects are handled.
+</div>
+
+<div algorithm>
+<p>To get the <dfn>deferred-fetch control document</dfn> of a <a for=/>document</a>
+<var>document</var>:
+
+<ol>
+ <li><p>If <var>document</var>' <a>node navigable</a>'s <a>container document</a> is null or a
+ <a for=/>document</a> whose <a for=Document>origin</a> is not <a>same origin</a> with
+ <var>document</var>, then return <var>document</var>; otherwise, return the
+ <a>deferred-fetch control document</a> given <var>document</var>'s <a>node navigable</a>'s
+ <a>container document</a>.
+</ol>
+</div>
 
 
 <h2 id=fetch-api>Fetch API</h2>
@@ -8637,11 +9113,24 @@ otherwise false.
 </div>
 
 
-<h3 id=fetch-method>Fetch method</h3>
+<h3 id=fetch-method>Fetch methods</h3>
 
 <pre class=idl>
 partial interface mixin WindowOrWorkerGlobalScope {
   [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional RequestInit init = {});
+};
+
+dictionary DeferredRequestInit : RequestInit {
+  DOMHighResTimeStamp activateAfter;
+};
+
+[Exposed=Window]
+interface FetchLaterResult {
+  readonly attribute boolean activated;
+};
+
+partial interface Window {
+  [NewObject] FetchLaterResult fetchLater(RequestInfo input, optional DeferredRequestInit init = {});
 };
 </pre>
 
@@ -8774,6 +9263,146 @@ with a <var>promise</var>, <var>request</var>, <var>responseObject</var>, and an
  <a for=ReadableStream>readable</a>, then <a for=ReadableStream>error</a> <var>response</var>'s
  <a for=response>body</a> with <var>error</var>.
 </ol>
+</div>
+
+<p>A {{FetchLaterResult}} has an associated <dfn for=FetchLaterResult>activated getter steps</dfn>,
+which is an algorithm returning a boolean.
+
+<div algorithm>
+<p>The <dfn attribute for=FetchLaterResult><code>activated</code></dfn> getter steps are to return
+the result of running <a>this</a>'s <a for=FetchLaterResult>activated getter steps</a>.
+</div>
+
+<div algorithm>
+<p>The <dfn method for=Window><code>fetchLater(<var>input</var>, <var>init</var>)</code></dfn>
+method steps are:
+
+<ol>
+ <li><p>Let <var>requestObject</var> be the result of invoking the initial value of {{Request}} as
+ constructor with <var>input</var> and <var>init</var> as arguments.
+
+ <li><p>If <var>requestObject</var>'s <a for=Request>signal</a> is <a for=AbortSignal>aborted</a>,
+ then throw <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
+
+ <li><p>Let <var>request</var> be <var>requestObject</var>'s <a for=Request>request</a>.
+
+ <li><p>Let <var>activateAfter</var> be null.
+
+ <li><p>If <var>init</var> is given and <var>init</var>["{{DeferredRequestInit/activateAfter}}"]
+ <a for=map>exists</a>, then set <var>activateAfter</var> to
+ <var>init</var>["{{DeferredRequestInit/activateAfter}}"].
+
+ <li><p>If <var>activateAfter</var> is less than 0, then throw a {{RangeError}}.
+
+ <li><p>If <a>this</a>'s <a>relevant global object</a>'s <a>associated document</a> is not
+ <a>fully active</a>, then throw a {{TypeError}}.
+
+ <li><p>If <var>request</var>'s <a for=request>URL</a>'s <a for=url>scheme</a> is not an
+ <a>HTTP(S) scheme</a>, then throw a {{TypeError}}.
+
+ <li><p>If <var>request</var>'s <a for=request>URL</a> is not a <a>potentially trustworthy URL</a>,
+ then throw a {{TypeError}}.
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>body</a> is not null, and <var>request</var>'s
+  <a for=request>body</a> <a for=body>length</a> is null, then throw a {{TypeError}}.
+
+  <p class=note>Requests whose <a for=request>body</a> is a {{ReadableStream}} object cannot be
+  deferred.
+
+ <li><p>If the <a>available deferred-fetch quota</a> given <var>request</var>'s
+ <a for=request>client</a> and <var>request</var>'s <a for=request>URL</a>'s
+ <a for=url>origin</a> is less than <var>request</var>'s <a>total request length</a>, then throw a
+ "{{QuotaExceededError}}" {{DOMException}}.
+
+ <li><p>Let <var>activated</var> be false.
+
+ <li><p>Let <var>deferredRecord</var> be the result of calling <a>queue a deferred fetch</a> given
+ <var>request</var>, <var>activateAfter</var>, and the following step: set <var>activated</var> to
+ true.
+
+ <li><p><a for=AbortSignal lt=add>Add the following abort steps</a> to <var>requestObject</var>'s
+ <a for=Request>signal</a>: Set <var>deferredRecord</var>'s
+ <a for="deferred fetch record">invoke state</a> to "<code>aborted</code>".
+
+ <li><p>Return a new {{FetchLaterResult}} whose
+ <a for=FetchLaterResult>activated getter steps</a> are to return <var>activated</var>.
+</ol>
+</div>
+
+<div class=example id=fetch-later-examples>
+ <p>The following call would queue a request to be fetched when the document is terminated:
+
+ <pre><code class=lang-javascript>
+fetchLater("https://report.example.com", {
+  method: "POST",
+  body: JSON.stringify(myReport),
+  headers: { "Content-Type": "application/json" }
+})
+</code></pre>
+
+ <p>The following call would also queue this request after 5 seconds, and the returned value would
+ allow callers to observe if it was indeed activated. Note that the request is guaranteed to be
+ invoked, even in cases where the user agent throttles timers.
+
+ <pre><code class=lang-javascript>
+const result = fetchLater("https://report.example.com", {
+  method: "POST",
+  body: JSON.stringify(myReport),
+  headers: { "Content-Type": "application/json" },
+  activateAfter: 5000
+});
+
+function check_if_fetched() {
+  return result.activated;
+}
+</code></pre>
+
+ <p>The {{FetchLaterResult}} object can be used together with an {{AbortSignal}}. For example:
+
+ <pre><code class=lang-javascript>
+let accumulated_events = [];
+let previous_result = null;
+const abort_signal = new AbortSignal();
+function accumulate_event(event) {
+  if (previous_result) {
+    if (previous_result.activated) {
+      // The request is already activated, we can start from scratch.
+      accumulated_events = [];
+    } else {
+      // Abort this request, and start a new one with all the events.
+      signal.abort();
+    }
+  }
+
+  accumulated_events.push(event);
+  result = fetchLater("https://report.example.com", {
+    method: "POST",
+    body: JSON.stringify(accumulated_events),
+    headers: { "Content-Type": "application/json" },
+    activateAfter: 5000,
+    abort_signal
+  });
+}
+</code></pre>
+
+ <p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw:
+
+ <pre><code class=lang-javascript>
+// Only <a>potentially trustworthy URL</a>s are supported.
+fetchLater("http://untrusted.example.com");
+
+// The length of the deferred request has to be known when.
+fetchLater("https://origin.example.com", {body: someDynamicStream});
+
+// Deferred fetching only works on active windows.
+const detachedWindow = iframe.contentWindow;
+iframe.remove();
+detachedWindow.fetchLater("https://origin.example.com");
+</code></pre>
+
+ <p>See <a href="#deferred-fetch-quota-examples">deferred fetch quota examples</a> for examples
+ portraying how the deferred-fetch quota works.
 </div>
 
 
