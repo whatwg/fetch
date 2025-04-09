@@ -6922,59 +6922,66 @@ calls would succeed and the last one would throw.
   // In same-origin nested document
   fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
 
-  // In cross-origin nested document at https://frame.example.com
+  // In cross-origin nested document at https://fratop.example.com
   fetchLater("https://a.example.com", {body: a_5kb_body});
   fetchLater("https://a.example.com", {body: a_12kb_body});
 </code></pre>
 
 
 <p>To make the previous example not throw, the top-level document can delegate some of its quota
-to <code>https://frame.example.com</code>, for example by serving the following header:
-<pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://frame.example.com")</code></pre>
+to <code>https://fratop.example.com</code>, for example by serving the following header:
+<pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://fratop.example.com")</code></pre>
 
 <p>Each nested document reserves its own quota. So the following would work, because each frame
 reserve 8 kibibytes:
 <pre><code class=lang-javascript>
-  // In cross-origin nested document at https://frame.example.com/frame-1
+  // In cross-origin nested document at https://fratop.example.com/frame-1
   fetchLater("https://a.example.com", {body: a_6kb_body});
 
-  // In cross-origin nested document at https://frame.example.com/frame-2
+  // In cross-origin nested document at https://fratop.example.com/frame-2
   fetchLater("https://a.example.com", {body: a_6kb_body});
 </code></pre>
 
-<p>The following chart illustrates how quota is distributed to different nested documents in a tree:
+<p>The following tree illustrates how quota is distributed to different nested documents in a tree:
 
-<pre><code>
-+ https://me.example.com with Permissions-policy: deferred-fetch=(self "https://ok.example.com")
-| (See below for quota)
-|
-+ ---- + https://me.example.com
-|      | Shares quota with the <a for=/>top-level traversable</a>, as they're same origin.
-|      |
-|      + ---- + https://x.example.com
-|               8 kibibytes.
-|
-|
-+ ---- + https://x.example.com
-|        8 kibibytes.
-|        |
-|        + https://me.example.com
-|          0. Even though it's same origin with the <a for=/>top-level traversable</a>, it does not
-|          automatically share its quota as they are separated by a cross-origin intermediary.
-|
-+ ---- + https://ok.example.com/good
-|      | 64 kibibytes, granted via the "{{PermissionsPolicy/deferred-fetch}}" policy.
-|      |
-|      + ---- + https://x.example.com
-|               0. Only documents with the same origin as the <a for=/>top-level traversable</a> can
-|               grant the 8 kibibytes based on the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.
-|
-+ ---- + https://ok.example.com/redirect, navigated to https://x.example.com
-|        0. The reserved 64 kibibytes for https://ok.example.com are not available for https://x.example.com.
-|
-+ ---- + https://ok.example.com/back, navigated to https://me.example.com
-         Shares quota with the <a for=/>top-level traversable</a>, as they're same origin.
-</code></pre>
+<ul>
+ <li>
+  <p><code>https://top.example.com</code>, with permissions policy set to
+  <code>Permissions-policy: deferred-fetch=(self "https://ok.example.com")</code></p>
+  <ul>
+   <li>
+    <p><code>https://top.example.com/frame</code>: shares quota with the top-level traversable, as
+    they are same origin.</p>
+
+    <ul><li><p><code>https://x.example.com</code>: receives 8 kibibytes.</p></li></ul>
+   </li>
+
+   <li>
+    <p><code>https://x.example.com</code>: receives 8 kibibytes.</p>
+    <ul><li><p><code>https://top.example.com</code>: 0. Even though it's same origin with the
+    top-level traversable, it does not automatically share its quota as they are separated by a
+    cross-origin intermediary.</p></ul>
+   </li>
+
+   <li>
+    <p><code>https://ok.example.com/good</code>: receives 64 kibibytes, granted via the
+    "{{PermissionsPolicy/deferred-fetch}}" policy.</p>
+
+    <ul><li><p><code>https://x.example.com</code>: receives no quota. Only documents with the same
+    origin as the top-level traversable can grant the 8 kibibytes based on the
+    "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.</p></li></ul>
+
+   <li><p><code>https://ok.example.com/redirect</code>, navigated to
+   <code>https://x.example.com</code>: receives no quota. The reserved 64 kibibytes for
+   <code>https://ok.example.com</code> are not available for
+   <code>https://x.example.com</code>.</p></li>
+
+   <li><p><code>https://ok.example.com/back</code>, navigated to
+   <code>https://top.example.com</code>: shares quota with the top-level traversable, as they're
+   same origin.</p></li>
+  </ul>
+ </li>
+</ul>
 
 <p>In the above example, the <a for=/>top-level traversable</a> and its <a>same origin</a>
 descendants share a quota of 384 kibibytes. That value is computed as such:
