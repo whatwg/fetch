@@ -1666,17 +1666,48 @@ of the <a for="environment">target browsing context</a>'s <a>active document</a>
 <a>environment settings object</a>.
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-window>window</dfn>
-("<code>no-window</code>", "<code>client</code>", or an
-<a>environment settings object</a> whose
-<a for="environment settings object">global object</a> is a
-{{Window}} object). Unless stated otherwise it is
-"<code>client</code>".
+<dfn export for=request id=concept-request-window>window</dfn>, that is "<code>no-window</code>",
+"<code>from-browser-ui</code>", "<code>client</code>", or an <a>environment settings object</a>
+whose <a for="environment settings object">global object</a> is a {{Window}} object. Unless stated
+otherwise it is "<code>client</code>".
 
-<p class=note>The "<code>client</code>" value is changed to "<code>no-window</code>" or
-<a for=/>request</a>'s <a for=request>client</a> during <a lt=fetch for=/>fetching</a>. It provides
-a convenient way for standards to not have to explicitly set <a for=/>request</a>'s
-<a for=request>window</a>.
+<div class=note>
+ <p>This is used to determine whether and where to show necessary UI for the request, such as
+ authentication prompts or client certificate dialogs.
+
+ <dl>
+  <dt>"<code>no-window</code>"
+  <dd>No UI is shown; usually the request fails with a <a>network error</a>.
+
+  <dt>"<code>from-browser-ui</code>"
+  <dd>This request was initiated by browser UI, and so any UI shown will not be associated to a
+  specific window.
+
+  <dt>"<code>client</code>"
+  <dd>This value will automatically be changed to either "<code>no-window</code>" or the request's
+  <a for=request>client</a> during <a lt=fetch for=/>fetching</a>. This provides a convenient way
+  for standards to not have to explicitly set a request's <a for=request>window</a>.
+
+  <dt>an <a>environment settings object</a>
+  <dd>The UI shown will be associated with the specified {{Window}} object.
+ </dl>
+</div>
+
+<p>The <dfn for=request>appropriate user prompt context</dfn> for a <a for=/>request</a>
+<var>request</var> is determined as follows:
+
+<ol>
+ <li><p><a>Assert</a>: <var>request</var>'s <a for=request>window</a> is not "<code>client</code>".
+
+ <li><p>If the request's <a for=request>window</a> is an <a>environment settings object</a>, then
+ the prompt should occur in a way attributable to <var>request</var>'s <a for=request>window</a>.
+
+ <li><p>Otherwise, if <var>request</var>'s <a for=request>window</a> is
+ "<code>from-browser-ui</code>", then the prompt should occur in a neutral context, e.g., on top of
+ a blank page.
+
+ <li><p>Otherwise, there is no appropriate user prompt context.
+</ol>
 
 <p id=keep-alive-flag>A <a for=/>request</a> has an associated boolean
 <dfn for=request export id=request-keepalive-flag>keepalive</dfn>. Unless stated otherwise it is
@@ -5919,8 +5950,8 @@ run these steps:
  <li>
   <p>If <var>response</var>'s <a for=response>status</a> is 401, <var>httpRequest</var>'s
   <a for=request>response tainting</a> is not "<code>cors</code>", <var>includeCredentials</var> is
-  true, and <var>request</var>'s <a for=request>window</a> is an <a>environment settings object</a>,
-  then:
+  true, and <var>request</var>'s <a for=request>window</a> is either an
+  <a>environment settings object</a> or "<code>from-browser-ui</code>":
 
   <ol>
    <li class=XXX><p>Needs testing: multiple `<code>WWW-Authenticate</code>` headers, missing,
@@ -5947,8 +5978,8 @@ run these steps:
      <a for=/>appropriate network error</a> for <var>fetchParams</var>.
 
      <li><p>Let <var>username</var> and <var>password</var> be the result of prompting the end user
-     for a username and password, respectively, in <var>request</var>'s
-     <a for=request>window</a>.
+     for a username and password, respectively, in the <a>appropriate user prompt context</a> for
+     <var>request</var>.
 
      <li><p><a>Set the username</a> given <var>request</var>'s <a for=request>current URL</a> and
      <var>username</var>.
@@ -5975,9 +6006,8 @@ run these steps:
    <a for=/>appropriate network error</a> for <var>fetchParams</var>.
 
    <li>
-    <p>Prompt the end user as appropriate in <var>request</var>'s
-    <a for=request>window</a> and store the result as a
-    <a>proxy-authentication entry</a>. [[!HTTP]]
+    <p>Prompt the end user as appropriate, in the <a>appropriate user prompt context</a> for
+    <var>request</var>, and store the result as a <a>proxy-authentication entry</a>. [[!HTTP]]
 
     <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
 
@@ -6156,10 +6186,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <p>If the HTTP request results in a TLS client certificate dialog, then:
 
     <ol>
-     <li><p>If <var>request</var>'s <a for=request>window</a>
-     is an <a>environment settings object</a>, make the dialog
-     available in <var>request</var>'s
-     <a for=request>window</a>.
+     <li><p>If <var>request</var> has an <a>appropriate user prompt context</a>, then make the
+     dialog available in <var>request</var>'s <a>appropriate user prompt context</a>.
 
      <li><p>Otherwise, return a <a>network error</a>.
     </ol>
