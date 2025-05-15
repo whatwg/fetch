@@ -1666,17 +1666,38 @@ of the <a for="environment">target browsing context</a>'s <a>active document</a>
 <a>environment settings object</a>.
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request id=concept-request-window>window</dfn>
-("<code>no-window</code>", "<code>client</code>", or an
-<a>environment settings object</a> whose
-<a for="environment settings object">global object</a> is a
-{{Window}} object). Unless stated otherwise it is
-"<code>client</code>".
+<dfn export for=request id=concept-request-window>traversable for user prompts</dfn>, that is
+"<code>no-traversable</code>", "<code>client</code>", or a <a for=/>traversable navigable</a>.
+Unless stated otherwise it is "<code>client</code>".
 
-<p class=note>The "<code>client</code>" value is changed to "<code>no-window</code>" or
-<a for=/>request</a>'s <a for=request>client</a> during <a lt=fetch for=/>fetching</a>. It provides
-a convenient way for standards to not have to explicitly set <a for=/>request</a>'s
-<a for=request>window</a>.
+<div class=note>
+ <p>This is used to determine whether and where to show necessary UI for the request, such as
+ authentication prompts or client certificate dialogs.
+
+ <dl>
+  <dt>"<code>no-traversable</code>"
+  <dd>No UI is shown; usually the request fails with a <a>network error</a>.
+
+  <dt>"<code>client</code>"
+  <dd>This value will automatically be changed to either "<code>no-traversable</code>" or to a
+  <a for=/>traversable navigable</a> derived from the request's <a for=request>client</a> during
+  <a lt=fetch for=/>fetching</a>. This provides a convenient way for standards to not have to
+  explicitly set a request's <a for=request>traversable for user prompts</a>.
+
+  <dt>a <a for=/>traversable navigable</a>
+  <dd>The UI shown will be associated with the browser interface elements that are displaying that
+  <a for=/>traversable navigable</a>.
+ </dl>
+</div>
+
+<p>When displaying a user interface associated with a request in that request's
+<a for=request>traversable for user prompts</a>, the user agent should update the address bar to
+display something derived from the request's <a for=request>current URL</a> (and not, e.g., leave
+it at its previous value, derived from the URL of the request's initiator). Additionally, the user
+agent should avoid displaying content from the request's initiator in the
+<a for=request>traversable for user prompts</a>, especially in the case of cross-origin requests.
+Displaying a blank page behind such prompts is a good way to fulfill these requirements. Failing to
+follow these guidelines can confuse users as to which origin is responsible for the prompt.
 
 <p id=keep-alive-flag>A <a for=/>request</a> has an associated boolean
 <dfn for=request export id=request-keepalive-flag>keepalive</dfn>. Unless stated otherwise it is
@@ -4334,7 +4355,9 @@ the response. [[!HTTP-CACHING]]
    <li><p><var>request</var>'s <a for=request>mode</a> is "<code>same-origin</code>",
    "<code>cors</code>", or "<code>no-cors</code>"
 
-   <li><p><var>request</var>'s <a for=request>window</a> is an <a>environment settings object</a>
+   <li><p><var>request</var>'s <a for=request>client</a> is not null, and <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">global object</a> is a
+   {{Window}} object
 
    <li><p><var>request</var>'s <a for=request>method</a> is `<code>GET</code>`
 
@@ -4354,7 +4377,7 @@ the response. [[!HTTP-CACHING]]
    <a for="fetch params">preloaded response candidate</a> to <var>response</var>.
 
    <li><p>Let <var>foundPreloadedResource</var> be the result of invoking
-   <a>consume a preloaded resource</a> for <var>request</var>'s <a for=request>window</a>, given
+   <a>consume a preloaded resource</a> for <var>request</var>'s <a for=request>client</a>, given
    <var>request</var>'s <a for=request>URL</a>, <var>request</var>'s <a for=request>destination</a>,
    <var>request</var>'s <a for=request>mode</a>, <var>request</var>'s
    <a for=request>credentials mode</a>, <var>request</var>'s <a for=request>integrity metadata</a>,
@@ -4439,15 +4462,36 @@ the response. [[!HTTP-CACHING]]
 <p>To <dfn>populate request from client</dfn> given a <a for=/>request</a> <var>request</var>:
 
 <ol>
- <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>client</code>", then: set
- <var>request</var>'s <a for=request>window</a> to <var>request</var>'s <a for=request>client</a>
- if <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">global object</a> is a {{Window}} object; otherwise
- "<code>no-window</code>".
+ <li>
+  <p>If <var>request</var>'s <a for=request>traversable for user prompts</a> is "<code>client</code>":
 
- <li><p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>", then set
- <var>request</var>'s <a for=request>origin</a> to  <var>request</var>'s <a for=request>client</a>'s
- <a for="environment settings object">origin</a>.
+  <ol>
+   <li><p>Set <var>request</var>'s <a for=request>traversable for user prompts</a> to
+   "<code>no-traversable</code>".
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>client</a> is non-null:
+
+    <ol>
+     <li><p>Let <var>global</var> be <var>request</var>'s <a for=request>client</a>'s
+     <a for="environment settings object">global object</a>.
+
+     <li><p>If <var>global</var> is a {{Window}} object and <var>global</var>'s
+     <a for=Window>navigable</a> is not null, then set <var>request</var>'s
+     <a for=request>traversable for user prompts</a> to <var>global</var>'s
+     <a for=Window>navigable</a>'s <a for=navigable>traversable navigable</a>.
+    </ol>
+  </ol>
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>origin</a> is "<code>client</code>":
+
+  <ol>
+   <li><p><a>Assert</a>: <var>request</var>'s <a for=request>client</a> is non-null.
+
+   <li><p>Set <var>request</var>'s <a for=request>origin</a> to <var>request</var>'s
+   <a for=request>client</a>'s <a for="environment settings object">origin</a>.
+  </ol>
 
  <li>
   <p>If <var>request</var>'s <a for=request>policy container</a> is "<code>client</code>":
@@ -5517,10 +5561,11 @@ run these steps:
   <a for="fetch params">canceled</a>:
 
   <ol>
-   <li><p>If <var>request</var>'s <a for=request>window</a> is "<code>no-window</code>" and
-   <var>request</var>'s <a for=request>redirect mode</a> is "<code>error</code>", then set
-   <var>httpFetchParams</var> to <var>fetchParams</var> and <var>httpRequest</var> to
-   <var>request</var>.
+   <li>
+    <p>If <var>request</var>'s <a for=request>traversable for user prompts</a> is
+    "<code>no-traversable</code>" and <var>request</var>'s <a for=request>redirect mode</a> is
+    "<code>error</code>", then set <var>httpFetchParams</var> to <var>fetchParams</var> and
+    <var>httpRequest</var> to <var>request</var>.
 
    <li>
     <p>Otherwise:
@@ -5540,6 +5585,12 @@ run these steps:
      <li><p>Set <var>httpFetchParams</var>'s <a for="fetch params">request</a> to
      <var>httpRequest</var>.
     </ol>
+
+    <p class=note>If user prompts or redirects are possible, then the user agent might need to
+    re-send the request with a new set of headers after the user answers the prompt or the redirect
+    location is determined. At that time, the original request body might have been partially sent
+    already, so we need to clone the request (including the body) beforehand so that we have a
+    spare copy available.
 
    <li>
     <p>Let <var>includeCredentials</var> be true if one of
@@ -5919,8 +5970,8 @@ run these steps:
  <li>
   <p>If <var>response</var>'s <a for=response>status</a> is 401, <var>httpRequest</var>'s
   <a for=request>response tainting</a> is not "<code>cors</code>", <var>includeCredentials</var> is
-  true, and <var>request</var>'s <a for=request>window</a> is an <a>environment settings object</a>,
-  then:
+  true, and <var>request</var>'s <a for=request>traversable for user prompts</a> is a
+  <a for=/>traversable navigable</a>:
 
   <ol>
    <li class=XXX><p>Needs testing: multiple `<code>WWW-Authenticate</code>` headers, missing,
@@ -5948,7 +5999,7 @@ run these steps:
 
      <li><p>Let <var>username</var> and <var>password</var> be the result of prompting the end user
      for a username and password, respectively, in <var>request</var>'s
-     <a for=request>window</a>.
+     <a for=request>traversable for user prompts</a>.
 
      <li><p><a>Set the username</a> given <var>request</var>'s <a for=request>current URL</a> and
      <var>username</var>.
@@ -5965,8 +6016,8 @@ run these steps:
   <p>If <var>response</var>'s <a for=response>status</a> is 407, then:
 
   <ol>
-   <li><p>If <var>request</var>'s <a for=request>window</a> is
-   "<code>no-window</code>", then return a <a>network error</a>.
+   <li><p>If <var>request</var>'s <a for=request>traversable for user prompts</a> is
+   "<code>no-traversable</code>", then return a <a>network error</a>.
 
    <li class=XXX><p>Needs testing: multiple `<code>Proxy-Authenticate</code>` headers, missing,
    parsing issues.
@@ -5976,7 +6027,7 @@ run these steps:
 
    <li>
     <p>Prompt the end user as appropriate in <var>request</var>'s
-    <a for=request>window</a> and store the result as a
+    <a for=request>traversable for user prompts</a> and store the result as a
     <a>proxy-authentication entry</a>. [[!HTTP]]
 
     <p class=note>Remaining details surrounding proxy authentication are defined by HTTP.
@@ -6156,10 +6207,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
     <p>If the HTTP request results in a TLS client certificate dialog, then:
 
     <ol>
-     <li><p>If <var>request</var>'s <a for=request>window</a>
-     is an <a>environment settings object</a>, make the dialog
-     available in <var>request</var>'s
-     <a for=request>window</a>.
+     <li><p>If <var>request</var>'s <a for=request>traversable for user prompts</a> is a
+     <a for=/>traversable navigable</a>, then make the dialog available in <var>request</var>'s
+     <a for=request>traversable for user prompts</a>.
 
      <li><p>Otherwise, return a <a>network error</a>.
     </ol>
@@ -7741,19 +7791,19 @@ constructor steps are:
  <li><p>Let <var>origin</var> be <a>this</a>'s <a>relevant settings object</a>'s
  <a for="environment settings object">origin</a>.
 
- <li><p>Let <var>window</var> be "<code>client</code>".
+ <li><p>Let <var>traversableForUserPrompts</var> be "<code>client</code>".
 
- <li><p>If <var>request</var>'s <a for=request>window</a> is
- an <a>environment settings object</a> and its
+ <li><p>If <var>request</var>'s <a for=request>traversable for user prompts</a>
+ is an <a>environment settings object</a> and its
  <a for="environment settings object">origin</a> is <a>same origin</a> with
- <var>origin</var>, then set <var>window</var> to <var>request</var>'s
- <a for=request>window</a>.
+ <var>origin</var>, then set <var>traversableForUserPrompts</var> to
+ <var>request</var>'s <a for=request>traversable for user prompts</a>.
 
  <li><p>If <var>init</var>["{{RequestInit/window}}"] <a for=map>exists</a> and is non-null, then
  <a>throw</a> a {{TypeError}}.
 
  <li><p>If <var>init</var>["{{RequestInit/window}}"] <a for=map>exists</a>, then set
- <var>window</var> to "<code>no-window</code>".
+ <var>traversableForUserPrompts</var> to "<code>no-traversable</code>".
 
  <li>
   <p>Set <var>request</var> to a new <a for=/>request</a> with the following properties:
@@ -7774,8 +7824,8 @@ constructor steps are:
    <dt><a for=request>client</a>
    <dd><a>This</a>'s <a>relevant settings object</a>.
 
-   <dt><a for=request>window</a>
-   <dd><var>window</var>.
+   <dt><a for=request>traversable for user prompts</a>
+   <dd><var>traversableForUserPrompts</var>.
 
    <dt><a for=request>internal priority</a>
    <dd><var>request</var>'s <a for=request>internal priority</a>.
