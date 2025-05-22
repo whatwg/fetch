@@ -6940,116 +6940,119 @@ concurrently for the same reporting origin (the <a for=/>request</a>'s <a for=re
 quota opportunistically, before they have data to send.
 
 <div class=example id=deferred-fetch-quota-examples>
-<p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw due to
-the request itself exceeding the 64 kibibytes quota allocated to a reporting origin. Note that the
-size of the request includes the <a for=request>URL</a> itself, the <a for=request>body</a>, the
-<a for=request>header list</a>, and the <a for=request>referrer</a>.
-<pre><code class=lang-javascript>
-  fetchLater(a_72_kb_url);
-  fetchLater("https://origin.example.com", {headers: headers_exceeding_64kb});
-  fetchLater(a_32_kb_url, {headers: headers_exceeding_32kb});
-  fetchLater("https://origin.example.com", {method: "POST", body: body_exceeding_64_kb});
-  fetchLater(a_62_kb_url /* with a 3kb referrer */);
+ <p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw due to
+ the request itself exceeding the 64 kibibytes quota allocated to a reporting origin. Note that the
+ size of the request includes the <a for=request>URL</a> itself, the <a for=request>body</a>, the
+ <a for=request>header list</a>, and the <a for=request>referrer</a>.
+
+ <pre><code class=lang-javascript>
+fetchLater(a_72_kb_url);
+fetchLater("https://origin.example.com", {headers: headers_exceeding_64kb});
+fetchLater(a_32_kb_url, {headers: headers_exceeding_32kb});
+fetchLater("https://origin.example.com", {method: "POST", body: body_exceeding_64_kb});
+fetchLater(a_62_kb_url /* with a 3kb referrer */);
 </code></pre>
 
-<p>In the following sequence, the first two requests would succeed, but the third one would throw.
-That's because the overall 640 kibibytes quota was not exceeded in the first two calls, however the
-3rd request exceeds the reporting-origin quota for <code>https://a.example.com</code>, and would
-throw.
-<pre><code class=lang-javascript>
-  fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
-  fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
-  fetchLater("https://a.example.com");
+ <p>In the following sequence, the first two requests would succeed, but the third one would throw.
+ That's because the overall 640 kibibytes quota was not exceeded in the first two calls, however the
+ 3rd request exceeds the reporting-origin quota for <code>https://a.example.com</code>, and would
+ throw.
+
+ <pre><code class=lang-javascript>
+fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
+fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+fetchLater("https://a.example.com");
 </code></pre>
 
-<p>Same-origin nested documents share the quota of their parent. However, cross-origin or
-cross-agent iframes only receive 8kb of quota by default. So in the following example, the first three
-calls would succeed and the last one would throw.
-<pre><code class=lang-javascript>
-  // In main page
-  fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
+ <p>Same-origin nested documents share the quota of their parent. However, cross-origin or
+ cross-agent iframes only receive 8kb of quota by default. So in the following example, the first
+ three calls would succeed and the last one would throw.
 
-  // In same-origin nested document
-  fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+ <pre><code class=lang-javascript>
+// In main page
+fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
 
-  // In cross-origin nested document at https://fratop.example.com
-  fetchLater("https://a.example.com", {body: a_5kb_body});
-  fetchLater("https://a.example.com", {body: a_12kb_body});
+// In same-origin nested document
+fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+
+// In cross-origin nested document at https://fratop.example.com
+fetchLater("https://a.example.com", {body: a_5kb_body});
+fetchLater("https://a.example.com", {body: a_12kb_body});
 </code></pre>
 
+ <p>To make the previous example not throw, the top-level document can delegate some of its quota
+ to <code>https://fratop.example.com</code>, for example by serving the following header:
 
-<p>To make the previous example not throw, the top-level document can delegate some of its quota
-to <code>https://fratop.example.com</code>, for example by serving the following header:
-<pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://fratop.example.com")</code></pre>
+ <pre><code class=lang-http>Permissions-Policy: deferred-fetch=(self "https://fratop.example.com")</code></pre>
 
-<p>Each nested document reserves its own quota. So the following would work, because each frame
-reserve 8 kibibytes:
-<pre><code class=lang-javascript>
-  // In cross-origin nested document at https://fratop.example.com/frame-1
-  fetchLater("https://a.example.com", {body: a_6kb_body});
+ <p>Each nested document reserves its own quota. So the following would work, because each frame
+ reserve 8 kibibytes:
 
-  // In cross-origin nested document at https://fratop.example.com/frame-2
-  fetchLater("https://a.example.com", {body: a_6kb_body});
+ <pre><code class=lang-javascript>
+// In cross-origin nested document at https://fratop.example.com/frame-1
+fetchLater("https://a.example.com", {body: a_6kb_body});
+
+// In cross-origin nested document at https://fratop.example.com/frame-2
+fetchLater("https://a.example.com", {body: a_6kb_body});
 </code></pre>
 
-<p>The following tree illustrates how quota is distributed to different nested documents in a tree:
+ <p>The following tree illustrates how quota is distributed to different nested documents in a tree:
 
-<ul>
- <li>
-  <p><code>https://top.example.com</code>, with permissions policy set to
-  <code>Permissions-policy: deferred-fetch=(self "https://ok.example.com")</code>
-  <ul>
-   <li>
-    <p><code>https://top.example.com/frame</code>: shares quota with the top-level traversable, as
-    they are same origin.
+ <ul>
+  <li>
+   <p><code>https://top.example.com</code>, with permissions policy set to
+   <code>Permissions-policy: deferred-fetch=(self "https://ok.example.com")</code>
+   <ul>
+    <li>
+     <p><code>https://top.example.com/frame</code>: shares quota with the top-level traversable, as
+     they are same origin.
 
-    <ul><li><p><code>https://x.example.com</code>: receives 8 kibibytes.</ul>
+     <ul><li><p><code>https://x.example.com</code>: receives 8 kibibytes.</ul>
 
-   <li>
-    <p><code>https://x.example.com</code>: receives 8 kibibytes.
-    <ul><li><p><code>https://top.example.com</code>: 0. Even though it's same origin with the
-    top-level traversable, it does not automatically share its quota as they are separated by a
-    cross-origin intermediary.</ul>
+    <li>
+     <p><code>https://x.example.com</code>: receives 8 kibibytes.
+     <ul><li><p><code>https://top.example.com</code>: 0. Even though it's same origin with the
+     top-level traversable, it does not automatically share its quota as they are separated by a
+     cross-origin intermediary.</ul>
 
-   <li>
-    <p><code>https://ok.example.com/good</code>: receives 64 kibibytes, granted via the
-    "{{PermissionsPolicy/deferred-fetch}}" policy.
+    <li>
+     <p><code>https://ok.example.com/good</code>: receives 64 kibibytes, granted via the
+     "{{PermissionsPolicy/deferred-fetch}}" policy.
 
-    <ul><li><p><code>https://x.example.com</code>: receives no quota. Only documents with the same
-    origin as the top-level traversable can grant the 8 kibibytes based on the
-    "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.</ul>
+     <ul><li><p><code>https://x.example.com</code>: receives no quota. Only documents with the same
+     origin as the top-level traversable can grant the 8 kibibytes based on the
+     "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.</ul>
 
-   <li><p><code>https://ok.example.com/redirect</code>, navigated to
-   <code>https://x.example.com</code>: receives no quota. The reserved 64 kibibytes for
-   <code>https://ok.example.com</code> are not available for
-   <code>https://x.example.com</code>.
+    <li><p><code>https://ok.example.com/redirect</code>, navigated to
+    <code>https://x.example.com</code>: receives no quota. The reserved 64 kibibytes for
+    <code>https://ok.example.com</code> are not available for
+    <code>https://x.example.com</code>.
 
-   <li><p><code>https://ok.example.com/back</code>, navigated to
-   <code>https://top.example.com</code>: shares quota with the top-level traversable, as they're
-   same origin.
-  </ul>
-</ul>
+    <li><p><code>https://ok.example.com/back</code>, navigated to
+    <code>https://top.example.com</code>: shares quota with the top-level traversable, as they're
+    same origin.
+   </ul>
+ </ul>
 
-<p>In the above example, the <a for=/>top-level traversable</a> and its <a>same origin</a>
-descendants share a quota of 384 kibibytes. That value is computed as such:
-<ul>
- <li><p>640 kibibytes are initially granted to the <a for=/>top-level traversable</a>.
+ <p>In the above example, the <a for=/>top-level traversable</a> and its <a>same origin</a>
+ descendants share a quota of 384 kibibytes. That value is computed as such:
+ <ul>
+  <li><p>640 kibibytes are initially granted to the <a for=/>top-level traversable</a>.
 
- <li><p>128 kibibytes are reserved for the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.
+  <li><p>128 kibibytes are reserved for the "{{PermissionsPolicy/deferred-fetch-minimal}}" policy.
 
- <li><p>64 kibibytes are reserved for the container navigating to
- <code>https://ok.example/good</code>.
+  <li><p>64 kibibytes are reserved for the container navigating to
+  <code>https://ok.example/good</code>.
 
- <li><p>64 kibibytes are reserved for the container navigating to
- <code>https://ok.example/redirect</code>, and lost when it navigates away.
+  <li><p>64 kibibytes are reserved for the container navigating to
+  <code>https://ok.example/redirect</code>, and lost when it navigates away.
 
- <li><code>https://ok.example.com/back</code> did not reserve 64 kibibytes, because it navigated
- back to <a for=/>top-level traversable</a>'s origin.
+  <li><code>https://ok.example.com/back</code> did not reserve 64 kibibytes, because it navigated
+  back to <a for=/>top-level traversable</a>'s origin.
 
- <li><p>640 &minus; 128 &minus; 64 &minus; 64 = 384 kibibytes.
-</ul>
+  <li><p>640 &minus; 128 &minus; 64 &minus; 64 = 384 kibibytes.
+ </ul>
 </div>
-
 
 <p>This specification defines a <a>policy-controlled feature</a> identified by the string
 "<dfn for=PermissionsPolicy enum-value>deferred-fetch</dfn>". Its
@@ -9146,7 +9149,8 @@ method steps are:
   <p>If <var>request</var>'s <a for=request>body</a> is not null, and <var>request</var>'s
   <a for=request>body</a> <a for=body>length</a> is null, then throw a {{TypeError}}.
 
-  <p class=note>Requests whose <a for=request>body</a> is a {{ReadableStream}} cannot be deferred.
+  <p class=note>Requests whose <a for=request>body</a> is a {{ReadableStream}} object cannot be
+  deferred.
 
  <li><p>If the <a>available deferred-fetch quota</a> given <var>request</var>'s
  <a for=request>client</a> and <var>request</var>'s <a for=request>URL</a>'s
@@ -9172,68 +9176,72 @@ method steps are:
  <p>The following call would queue a request to be fetched when the document is terminated:
 
  <pre><code class=lang-javascript>
-  fetchLater("https://report.example.com", {
-    method: "POST",
-    body: JSON.stringify(myReport),
-    headers: { "Content-Type": "application/json" }
-  })</code></pre>
+fetchLater("https://report.example.com", {
+  method: "POST",
+  body: JSON.stringify(myReport),
+  headers: { "Content-Type": "application/json" }
+})
+</code></pre>
 
  <p>The following call would also queue this request after 5 seconds, and the returned value would
  allow callers to observe if it was indeed activated. Note that the request is guaranteed to be
  invoked, even in cases where the user agent throttles timers.
 
  <pre><code class=lang-javascript>
-  const result = fetchLater("https://report.example.com", {
-      method: "POST",
-      body: JSON.stringify(myReport),
-      headers: { "Content-Type": "application/json" },
-      activateAfter: 5000
-  });
+const result = fetchLater("https://report.example.com", {
+  method: "POST",
+  body: JSON.stringify(myReport),
+  headers: { "Content-Type": "application/json" },
+  activateAfter: 5000
+});
 
-  function check_if_fetched() {
-    return result.activated;
-  }</code></pre>
+function check_if_fetched() {
+  return result.activated;
+}
+</code></pre>
 
  <p>The {{FetchLaterResult}} object can be used together with an {{AbortSignal}}. For example:
 
  <pre><code class=lang-javascript>
-  let accumulated_events = [];
-  let previous_result = null;
-  const abort_signal = new AbortSignal();
-  function accumulate_event(event) {
-    if (previous_result) {
-      if (previous_result.activated) {
-        // The request is already activated, we can start from scratch.
-        accumulated_events = [];
-      } else {
-        // Abort this request, and start a new one with all the events.
-        signal.abort();
-      }
+let accumulated_events = [];
+let previous_result = null;
+const abort_signal = new AbortSignal();
+function accumulate_event(event) {
+  if (previous_result) {
+    if (previous_result.activated) {
+      // The request is already activated, we can start from scratch.
+      accumulated_events = [];
+    } else {
+      // Abort this request, and start a new one with all the events.
+      signal.abort();
     }
+  }
 
-    accumulated_events.push(event);
-    result = fetchLater("https://report.example.com", {
-          method: "POST",
-          body: JSON.stringify(accumulated_events),
-          headers: { "Content-Type": "application/json" },
-          activateAfter: 5000,
-          abort_signal
-      });
-  }</code></pre>
+  accumulated_events.push(event);
+  result = fetchLater("https://report.example.com", {
+    method: "POST",
+    body: JSON.stringify(accumulated_events),
+    headers: { "Content-Type": "application/json" },
+    activateAfter: 5000,
+    abort_signal
+  });
+}
+</code></pre>
 
  <p>Any of the following calls to <a method><code>fetchLater()</code></a> would throw:
 
  <pre><code class=lang-javascript>
-  // Only <a>potentially trustworthy URL</a>s are supported.
-  fetchLater("http://untrusted.example.com");
+// Only <a>potentially trustworthy URL</a>s are supported.
+fetchLater("http://untrusted.example.com");
 
-  // The length of the deferred request has to be known when.
-  fetchLater("https://origin.example.com", {body: someDynamicStream});
+// The length of the deferred request has to be known when.
+fetchLater("https://origin.example.com", {body: someDynamicStream});
 
-  // Deferred fetching only works on active windows.
-  const detachedWindow = iframe.contentWindow;
-  iframe.remove();
-  detachedWindow.fetchLater("https://origin.example.com");</code></pre>
+// Deferred fetching only works on active windows.
+const detachedWindow = iframe.contentWindow;
+iframe.remove();
+detachedWindow.fetchLater("https://origin.example.com");
+</code></pre>
 
  <p>See <a href="#deferred-fetch-quota-examples">deferred fetch quota examples</a> for examples
  portraying how the deferred-fetch quota works.
