@@ -370,6 +370,8 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
  <dd>A number.
  <dt><dfn export for="response body info">content type</dfn> (default the empty string)
  <dd>An <a for=/>ASCII string</a>.
+ <dt><dfn export for="response body info">content encoding</dfn> (default the empty string)
+ <dd>An <a for=/>ASCII string</a>.
 </dl>
 
 <div algorithm>
@@ -6371,6 +6373,22 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
          <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
          `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
 
+         <li><p>Let <var>filteredCoding</var> be "<code>@unknown</code>".
+
+         <li><p>If <var>codings</var> is null or failure, then set <var>filteredCoding</var> to
+         the empty string.
+
+         <li><p>Otherwise, if <var>codings</var>'s <a for=list>size</a> is greater than 1, then set
+         <var>filteredCoding</var> to "<code>multiple</code>".
+
+         <li><p>Otherwise, if <var>codings</var>[0] is the empty string, or it is supported by the
+         user agent, and is a <a>byte-case-insensitive</a> match for an entry listed in the
+         <cite>HTTP Content Coding Registry</cite>, then set <var>filteredCoding</var> to the result
+         of <a lt=byte-lowercased>byte-lowercasing</a> <var>codings</var>[0]. [[!IANA-HTTP-PARAMS]]
+
+         <li><p>Set <var>response</var>'s <a for=response>body info</a>'s
+         <a for="response body info">content encoding</a> to <var>filteredCoding</var>.
+
          <li><p>Increase <var>response</var>'s <a for=response>body info</a>'s
          <a for="response body info">encoded size</a> by <var>bytes</var>'s
          <a for="byte sequence">length</a>.
@@ -9180,6 +9198,7 @@ Gavin Carothers,
 Glenn Maynard,
 Graham Klyne,
 Gregory Terzian,
+Guohui Deng(邓国辉)<!-- guohuideng2024; GitHub -->,
 Hal Lockhart,
 Hallvord R. M. Steen,
 Harris Hancock,
