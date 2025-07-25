@@ -114,6 +114,7 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
 
 <pre class=link-defaults>
 spec:dom; type:dfn; text:element
+spec:dom; type:dfn; text:event;
 spec:infra; type:dfn; text:implementation-defined
 </pre>
 
@@ -8512,7 +8513,18 @@ otherwise false.
 
 <pre class=idl>
 partial interface mixin WindowOrWorkerGlobalScope {
-  [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional RequestInit init = {});
+  [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional FetchInit init = {});
+};
+
+dictionary FetchInit : RequestInit {
+  FetchMonitorCallback monitor;
+};
+
+callback FetchMonitorCallback = undefined (FetchMonitor requestMonitor, FetchMonitor responseMonitor);
+
+[Exposed=(Window,Worker)]
+interface FetchMonitor : EventTarget {
+  attribute EventHandler onprogress;
 };
 </pre>
 
@@ -8584,10 +8596,65 @@ method steps are:
         https://github.com/whatwg/dom/issues/1031#issuecomment-1233206400 -->
   </ol>
 
+ <li><p>Let <var>hasUploadListeners</var> be false.
+
+ <li><p>Let <var>requestMonitor</var> be null.
+
+ <li><p>Let <var>responseMonitor</var> be null.
+
  <li>
-  <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
-  <var>request</var> and <a for=fetch><i>processResponse</i></a> given <var>response</var> being
-  these steps:
+  <p>If <var>init</var>["{{FetchInit/monitor}}"] <a for=map>exists</a>, then:
+
+  <ol>
+   <li><p>Let <var>monitorCallback</var> be <var>init</var>["{{FetchInit/monitor}}"].
+
+   <li><p>Set <var>requestMonitor</var> to a {{FetchMonitor}}.
+
+   <li><p>Set <var>responseMonitor</var> to a {{FetchMonitor}}.
+
+   <li><p>Let <var>args</var> be « <var>requestMonitor</var>, <var>responseMonitor</var> ».
+
+   <li><p>[=invoke|Invoke=] <var>monitorCallback</var> with <var>args</var>
+   and <code>"rethrow"</code>. If this throws an exception, <a for=/>reject</a> <var>p</var> with it
+   and return <var>p</var>.
+
+   <li><p>If one or more <a event><code>progress</code></a> event listeners were added to
+   <var>requestMonitor</var>, then set <var>hasUploadListeners</var> to true.
+  </ol>
+
+ <li><p>Let <var>requestBodyTransmitted</var> be 0.
+
+ <li><p>Let <var>requestBodyLength</var> be <var>request</var>'s <a for=request>body</a>'s
+ <a for=body>length</a>, if <var>request</var>'s <a for=request>body</a> is non-null;
+ otherwise 0.
+
+ <li><p>Assert: <var>requestBodyLength</var> is an integer.
+
+ <li>
+  <p>Let <var>processRequestBodyChunkLength</var>, given a <var>bytesLength</var>, be these steps:
+
+  <ol>
+   <li><p>Increase <var>requestBodyTransmitted</var> by <var>bytesLength</var>.
+
+   <li><p>If not roughly 50ms has passed since these steps were last invoked, then return.
+
+   <li><p>If <var>hasUploadListeners</var> is true, then <a>fire a progress event</a> named
+   <a event><code>progress</code></a> at <var>requestMonitor</var> with <var>requestBodyTransmitted</var>
+   and <var>requestBodyLength</var>.
+  </ol>
+
+ <li>
+  <p>Let <var>processRequestEndOfBody</var> be these steps:
+
+  <ol>
+   <li><p>If <var>hasUploadListeners</var> is false, then return.
+
+   <li><p><a>Fire a progress event</a> named <a event><code>progress</code></a> at <var>requestMonitor</var>
+   with <var>requestBodyTransmitted</var> and <var>requestBodyLength</var>.
+  </ol>
+
+ <li>
+  <p>Let <var>processResponse</var> given a <var>response</var> be these steps:
 
   <ol>
    <li><p>If <var>locallyAborted</var> is true, then abort these steps.
@@ -8615,9 +8682,16 @@ method steps are:
    <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
 
+ <li><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
+ <var>request</var> with <a for=fetch><i>processResponse</i></a> set to <var>processResponse</var>,
+ <a for=fetch><i>processRequestBodyChunkLength</i></a> set to <var>processRequestBodyChunkLength</var>,
+ and <a for=fetch><i>processRequestEndOfBody</i></a> set to <var>processRequestEndOfBody</var>.
+
  <li><p>Return <var>p</var>.
 </ol>
 </div>
+
+TEMPORARY <dfn id=event-fetchmonitor-progress event for=FetchMonitor><code>progress</code></dfn>
 
 <div algorithm>
 <p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn>
@@ -9131,6 +9205,119 @@ if this was not done automatically by passing the <a for=request>initiator type<
 done only by navigations). The <a>fetch controller</a> is also used to
 <a for="fetch controller">process the next manual redirect</a> for <a for=/>requests</a> with
 <a for=request>redirect mode</a> set to "<code>manual</code>".
+
+<h2 id=interface-progressevent>Interface {{ProgressEvent}}</h2>
+
+<pre class=idl>
+[Exposed=(Window,Worker)]
+interface ProgressEvent : Event {
+  constructor(DOMString type, optional ProgressEventInit eventInitDict = {});
+
+  readonly attribute boolean lengthComputable;
+  readonly attribute double loaded;
+  readonly attribute double total;
+};
+
+dictionary ProgressEventInit : EventInit {
+  boolean lengthComputable = false;
+  double loaded = 0;
+  double total = 0;
+};
+</pre>
+
+<p><a>Events</a> using the {{ProgressEvent}} interface indicate some kind of progression.
+
+<p>The
+<dfn attribute for=ProgressEvent><code>lengthComputable</code></dfn>,
+<dfn attribute for=ProgressEvent><code>loaded</code></dfn>, and
+<dfn attribute for=ProgressEvent><code>total</code></dfn>
+getter steps are to return the value they were initialized to.
+
+
+<h3 id=firing-events-using-the-progressevent-interface>Firing events using the {{ProgressEvent}} interface</h3>
+
+<p>To <dfn id=concept-event-fire-progress>fire a progress event</dfn> named <var>e</var> at
+<var>target</var>, given <var>transmitted</var> and <var>length</var>, means to <a>fire an event</a>
+named <var>e</var> at <var>target</var>, using {{ProgressEvent}}, with the {{ProgressEvent/loaded}}
+attribute initialized to <var>transmitted</var>, and if <var>length</var> is not 0, with the
+{{ProgressEvent/lengthComputable}} attribute initialized to true and the {{ProgressEvent/total}}
+attribute initialized to <var>length</var>.
+
+
+<h3 id=suggested-names-for-events-using-the-progressevent-interface>Suggested names for events using the {{ProgressEvent}} interface</h3>
+
+<p><em>This section is non-normative.</em>
+
+<p>The suggested {{Event/type}}
+attribute values for use with
+<a>events</a> using the
+{{ProgressEvent}} interface are summarized in the table below.
+Specification editors are free to tune the details to their specific
+scenarios, though are strongly encouraged to discuss their usage with the
+WHATWG community to ensure input from people familiar with the subject.
+
+<table>
+ <tbody>
+  <tr>
+   <th>{{Event/type}} attribute value
+   <th>Description
+   <th>Times
+   <th>When
+  <tr>
+   <th><code>loadstart</code>
+   <td>Progress has begun.
+   <td>Once.
+   <td>First.
+  <tr>
+   <th><a event><code>progress</code></a>
+   <td>In progress.
+   <td>Once or more.
+   <td>After <code>loadstart</code> has been
+    <a>dispatched</a>.
+  <tr>
+   <th><code>error</code>
+   <td>Progression failed.
+   <td rowspan=4>Zero or once (mutually exclusive).
+   <td rowspan=4>After the last <a event><code>progress</code></a> has
+    been
+    <a>dispatched</a>.
+  <tr>
+   <th><code>abort</code>
+   <td>Progression is terminated.
+  <tr>
+   <th><code>timeout</code>
+   <td>Progression is terminated due to preset time expiring.
+  <tr>
+   <th><code>load</code>
+   <td>Progression is successful.
+  <tr>
+   <th><code>loadend</code>
+   <td>Progress has stopped.
+   <td>Once.
+   <td>After one of <code>error</code>, <code>abort</code>,
+    <code>timeout</code> or <code>load</code> has been
+    <a>dispatched</a>.
+</table>
+
+<p>The <code>error</code>, <code>abort</code>, <code>timeout</code>, and
+<code>load</code> event types are mutually exclusive.
+
+<p>Throughout the web platform the <code>error</code>, <code>abort</code>,
+<code>timeout</code> and <code>load</code> event types have
+their {{Event/bubbles}} and {{Event/cancelable}}
+attributes initialized to false, so it is suggested that for consistency all
+<a>events</a> using the
+{{ProgressEvent}} interface do the same.
+
+
+<h3 id=security-considerations>Security considerations</h3>
+
+<p>For cross-origin requests some kind of opt-in, e.g., the
+<a>CORS protocol</a>, has to be used before <a>events</a> using the
+{{ProgressEvent}} interface are
+<a>dispatched</a>
+as information (e.g., size) would be revealed that cannot be obtained
+otherwise.
 
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
