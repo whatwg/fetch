@@ -4030,6 +4030,53 @@ X-Content-Type-Options           = "nosniff" ; case-insensitive
 <p class=note>Only <a for=/>request</a> <a for=request>destinations</a> that are
 <a for=request/destination>script-like</a> or "<code>style</code>" are considered as any exploits
 pertain to them. Also, considering "<code>image</code>" was not compatible with deployed content.
+
+<div class=example>
+<p>The following examples illustrate how the algorithm works:
+
+<ul>
+ <li><p>A <a for=/>request</a> for a JavaScript file with <a for=request>destination</a>
+ "<code>script</code>" to a <a for=/>response</a> that has
+ `<a http-header><code>X-Content-Type-Options</code></a>: <code>nosniff</code>` and
+ `<code>Content-Type</code>: <code>application/javascript</code>` will return <b>allowed</b>
+ (JavaScript MIME type matches script-like destination).
+
+ <li><p>A <a for=/>request</a> for a JavaScript file with <a for=request>destination</a>
+ "<code>script</code>" to a <a for=/>response</a> that has
+ `<a http-header><code>X-Content-Type-Options</code></a>: <code>nosniff</code>` and
+ `<code>Content-Type</code>: <code>text/html</code>` will return <b>blocked</b>
+ (MIME type mismatch: HTML is not a JavaScript MIME type).
+
+ <li><p>A <a for=/>request</a> for a JavaScript file with <a for=request>destination</a>
+ "<code>script</code>" to a <a for=/>response</a> that has
+ `<a http-header><code>X-Content-Type-Options</code></a>: <code>nosniff</code>` and no
+ `<code>Content-Type</code>` header will return <b>blocked</b>
+ (no MIME type provided, so <var>mimeType</var> is failure).
+
+ <li><p>A <a for=/>request</a> for a CSS file with <a for=request>destination</a>
+ "<code>style</code>" to a <a for=/>response</a> that has
+ `<a http-header><code>X-Content-Type-Options</code></a>: <code>nosniff</code>` and
+ `<code>Content-Type</code>: <code>text/css</code>` will return <b>allowed</b>
+ (CSS MIME type matches style destination).
+
+ <li><p>A <a for=/>request</a> for a CSS file with <a for=request>destination</a>
+ "<code>style</code>" to a <a for=/>response</a> that has
+ `<a http-header><code>X-Content-Type-Options</code></a>: <code>nosniff</code>` and
+ `<code>Content-Type</code>: <code>application/javascript</code>` will return <b>blocked</b>
+ (MIME type mismatch: JavaScript is not text/css).
+
+ <li><p>A <a for=/>request</a> for an image with <a for=request>destination</a>
+ "<code>image</code>" to a <a for=/>response</a> that has
+ `<a http-header><code>X-Content-Type-Options</code></a>: <code>nosniff</code>` and
+ `<code>Content-Type</code>: <code>text/html</code>` will return <b>allowed</b>
+ (image destinations are not checked by this algorithm).
+
+ <li><p>A <a for=/>request</a> for a JavaScript file with <a for=request>destination</a>
+ "<code>script</code>" to a <a for=/>response</a> that does not have an
+ `<a http-header><code>X-Content-Type-Options</code></a>` header will return <b>allowed</b>
+ (no nosniff directive present).
+</ul>
+</div>
 </div>
 
 
