@@ -4817,7 +4817,8 @@ steps:
      <li><p>Set <var>request</var>'s
      <a for=request>response tainting</a> to "<code>basic</code>".
 
-     <li><p>Return the result of running <a>scheme fetch</a> given <var>fetchParams</var>.
+     <li><p>Return the result of running <a>override fetch</a> given "<code>scheme-fetch</code>"
+     and <var>fetchParams</var>.
     </ol>
 
     <p class=note>HTML assigns any documents and workers created from <a for=/>URLs</a> whose
@@ -4836,7 +4837,8 @@ steps:
 
      <li><p>Set <var>request</var>'s <a for=request>response tainting</a> to "<code>opaque</code>".
 
-     <li><p>Return the result of running <a>scheme fetch</a> given <var>fetchParams</var>.
+     <li><p>Return the result of running <a>override fetch</a> given "<code>scheme-fetch</code>" and
+     <var>fetchParams</var>.
      <!-- file URLs end up here as they are not same-origin typically. -->
     </ol>
 
@@ -4855,8 +4857,8 @@ steps:
      <a for=request>response tainting</a> to
      "<code>cors</code>".
 
-     <li><p>Let <var>corsWithPreflightResponse</var> be the result of running <a>HTTP fetch</a>
-     given <var>fetchParams</var> and true.
+     <li><p>Let <var>corsWithPreflightResponse</var> be the result of running <a>override fetch</a>
+     given "<code>http-fetch</code>", <var>fetchParams</var>, and true.
 
      <li><p>If <var>corsWithPreflightResponse</var> is a <a>network error</a>, then
      <a>clear cache entries</a> using <var>request</var>.
@@ -4871,7 +4873,8 @@ steps:
      <a for=request>response tainting</a> to
      "<code>cors</code>".
 
-     <li><p>Return the result of running <a>HTTP fetch</a> given <var>fetchParams</var>.
+     <li><p>Return the result of running <a>override fetch</a> given "<code>http-fetch</code>" and
+     <var>fetchParams</var>.
     </ol>
   </dl>
 
@@ -5189,6 +5192,96 @@ steps:
    <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
   </ol>
 </ol>
+</div>
+
+
+<h3 id=override-fetch>Override fetch</h3>
+
+<div algorithm>
+<p>To <dfn id=concept-override-fetch>override fetch</dfn>, given "<code>scheme-fetch</code>" or
+"<code>http-fetch</code>" <var>type</var>, a <a for=/>fetch params</a> <var>fetchParams</var>, and
+an optional boolean <var>makeCORSPreflight</var> (default false):
+
+<ol>
+ <li><p>Let <var>request</var> be <var>fetchParams</var>' <a for="fetch params">request</a>.
+
+ <li><p>Let <var>response</var> be the result of executing
+ <a>potentially override response for a request</a> on <var>request</var>.
+
+ <li><p>If <var>response</var> is non-null, then return <var>response</var>.
+
+ <li>
+  <p>Switch on <var>type</var> and run the associated step:
+
+  <dl class=switch>
+   <dt>"<code>scheme fetch</code>"
+   <dd><p>Set <var>response</var> be the result of running <a>scheme fetch</a> given
+   <var>fetchParams</var>.
+
+   <dt>"<code>HTTP fetch</code>"
+   <dd><p>Set <var>response</var> be the result of running <a>HTTP fetch</a> given
+   <var>fetchParams</var> and <var>makeCORSPreflight</var>.
+  </dl>
+
+ <li><p>Return <var>response</var>.
+</ol>
+</div>
+
+<div algorithm>
+<p>The <dfn>potentially override response for a request</dfn> algorithm takes a <a for=/>request</a>
+<var>request</var>, and returns either a <a for=/>response</a> or null. Its behavior is
+<a>implementation-defined</a>, allowing user agents to intervene on the <a for=/>request</a> by
+returning a response directly, or allowing the request to proceed by returning null.
+
+<p>By default, the algorithm has the following trivial implementation:
+
+<ol>
+ <li><p>Return null.
+</ol>
+
+<div class=note>
+ <p>User agents will generally override this default implementation with a somewhat more complex
+ set of behaviors. For example, a user agent might decide that its users' safety is best preserved
+ by generally blocking requests to `https://unsafe.example/`, while synthesizing a shim for the
+ widely-used resource `https://unsafe.example/widget.js` to avoid breakage. That implementation
+ might look like the following:
+
+ <ol>
+  <li><p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>host</a>'s
+  <a for=host>registrable domain</a> is "<code>unsafe.example</code>":
+
+  <ol>
+   <li><p>If <var>request</var>'s <a for=request>current url</a>'s <a for=url>path</a> is
+   « "<code>widget.js</code>" »:
+
+    <ol>
+     <li><p>Let <var>body</var> be [<em>insert a byte sequence representing the shimmed
+      content here</em>].
+
+     <li><p>Return a new <a for=/>response</a> with the following properties:
+
+      <dl>
+       <dt><a for=response>type</a>
+       <dd>"<code>cors</code>"
+
+       <dt><a for=response>status</a>
+       <dd>200</dd>
+
+       <dt>...
+       <dd>...
+
+       <dt><a for=response>body</a>
+       <dd>The result of getting <var>body</var> <a>as a body</a>.
+      </dl>
+     </ol>
+
+    <li><p>Return a <a>network error</a>.
+   </ol>
+
+  <li><p>Return null.
+ </ol>
+</div>
+
 </div>
 
 
