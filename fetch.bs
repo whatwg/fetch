@@ -8032,6 +8032,7 @@ interface mixin Body {
   [NewObject] Promise&lt;FormData> formData();
   [NewObject] Promise&lt;any> json();
   [NewObject] Promise&lt;USVString> text();
+  [NewObject] ReadableStream textStream();
 };</pre>
 
 <p class=note>Formats you would not want a network layer to be dependent upon, such as
@@ -8073,6 +8074,9 @@ due course.
 
  <dt><code><var>requestOrResponse</var> . <a method for=Body>text</a>()</code>
  <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as string.
+
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>textStream</a>()</code>
+ <dd><p>Returns a {{ReadableStream}} with <var>requestOrResponse</var>'s body as string chunks.
 </dl>
 
 <hr>
@@ -8244,6 +8248,20 @@ of running <a for=Body>consume body</a> with <a>this</a> and <a>parse JSON from 
 <div algorithm>
 <p>The <dfn method for=Body><code>text()</code></dfn> method steps are to return the result
 of running <a for=Body>consume body</a> with <a>this</a> and <a>UTF-8 decode</a>.
+</div>
+
+<div algorithm>
+<p>The <dfn method for=Body><code>textStream()</code></dfn> method steps are:</p>
+
+<ol>
+ <li><p>If <span>this</span>'s <a for=Body>body</a> is null, throw a {{TypeError}}.
+
+ <li><p>Let <var>stream</var> be <a>this</a>'s <a for=Body>body</a>'s <a for=body>stream</a>.
+
+ <li><p>Let <var>decoder</var> be a new {{TextDecoderStream}} object.
+
+ <li><p>Return the result of piping <var>stream</var> through <var>decoder</var>.
+</ol>
 </div>
 
 
