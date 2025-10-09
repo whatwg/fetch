@@ -115,6 +115,7 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
 <pre class=link-defaults>
 spec:dom; type:dfn; text:element
 spec:dom; type:dfn; text:event;
+spec:xhr; type:event; text:progress;
 spec:infra; type:dfn; text:implementation-defined
 </pre>
 
@@ -8524,6 +8525,11 @@ callback FetchMonitorCallback = undefined (FetchMonitor monitor);
 
 [Exposed=(Window,Worker)]
 interface FetchMonitor : EventTarget {
+  readonly attribute double requestLoaded;
+  readonly attribute double responseLoaded;
+  readonly attribute double requestTotal;
+  readonly attribute double responseTotal;
+
   attribute EventHandler onrequestprogress;
   attribute EventHandler onresponseprogress;
 };
@@ -8607,6 +8613,10 @@ method steps are:
 
    <li><p>Set <var>monitor</var> to a {{FetchMonitor}}.
 
+   <li><p>Set <var>monitor</var>'s requestTotal to <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a>, if <var>request</var>'s <a for=request>body</a>
+   is non-null; otherwise 0.
+
    <li><p>Let <var>args</var> be « <var>monitor</var> ».
 
    <li><p>[=invoke|Invoke=] <var>monitorCallback</var> with <var>args</var>
@@ -8614,25 +8624,19 @@ method steps are:
    and return <var>p</var>.
   </ol>
 
- <li><p>Let <var>requestBodyTransmitted</var> be 0.
-
- <li><p>Let <var>requestBodyLength</var> be <var>request</var>'s <a for=request>body</a>'s
- <a for=body>length</a>, if <var>request</var>'s <a for=request>body</a> is non-null;
- otherwise 0.
-
- <li><p>Assert: <var>requestBodyLength</var> is an integer.
-
  <li>
   <p>Let <var>processRequestBodyChunkLength</var>, given a <var>bytesLength</var>, be these steps:
 
   <ol>
-   <li><p>Increase <var>requestBodyTransmitted</var> by <var>bytesLength</var>.
+   <li><p>If <var>monitor</var> is null, then return.
+
+   <li><p>Increase <var>monitor</var>'s requestLoaded by <var>bytesLength</var>.
 
    <li><p>If not roughly 50ms has passed since these steps were last invoked, then return.
 
-   <li><p>If <var>monitor</var> is not null, then <a>fire a progress event</a> named
-   <a event><code>requestprogress</code></a> at <var>monitor</var> with <var>requestBodyTransmitted</var>
-   and <var>requestBodyLength</var>.
+   <li><p><a>Fire a progress event</a> named
+   <a event><code>requestprogress</code></a> at <var>monitor</var> with
+   <var>monitor</var>'s requestLoaded and <var>monitor</var>'s requestTotal.
   </ol>
 
  <li>
@@ -8641,8 +8645,9 @@ method steps are:
   <ol>
    <li><p>If <var>monitor</var> is null, then return.
 
-   <li><p><a>Fire a progress event</a> named <a event><code>requestprogress</code></a> at <var>monitor</var>
-   with <var>requestBodyTransmitted</var> and <var>requestBodyLength</var>.
+   <li><p><a>Fire a progress event</a> named <a event><code>requestprogress</code></a> at
+   <var>monitor</var> with <var>monitor</var>'s requestLoaded and
+   <var>monitor</var>'s requestTotal.
   </ol>
 
  <li>
@@ -9260,6 +9265,12 @@ WHATWG community to ensure input from people familiar with the subject.
    <td>Progress has begun.
    <td>Once.
    <td>First.
+  <tr>
+   <th><a event><code>progress</code></a>
+   <td>In progress.
+   <td>Once or more.
+   <td>After <code>loadstart</code> has been
+    <a>dispatched</a>.
   <tr>
    <th><a event><code>requestprogress</code></a>
    <td>In progress request.
