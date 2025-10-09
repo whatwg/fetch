@@ -8520,11 +8520,12 @@ dictionary FetchInit : RequestInit {
   FetchMonitorCallback monitor;
 };
 
-callback FetchMonitorCallback = undefined (FetchMonitor requestMonitor, FetchMonitor responseMonitor);
+callback FetchMonitorCallback = undefined (FetchMonitor monitor);
 
 [Exposed=(Window,Worker)]
 interface FetchMonitor : EventTarget {
-  attribute EventHandler onprogress;
+  attribute EventHandler onrequestprogress;
+  attribute EventHandler onresponseprogress;
 };
 </pre>
 
@@ -8598,9 +8599,7 @@ method steps are:
 
  <li><p>Let <var>hasUploadListeners</var> be false.
 
- <li><p>Let <var>requestMonitor</var> be null.
-
- <li><p>Let <var>responseMonitor</var> be null.
+ <li><p>Let <var>monitor</var> be null.
 
  <li>
   <p>If <var>init</var>["{{FetchInit/monitor}}"] <a for=map>exists</a>, then:
@@ -8608,18 +8607,16 @@ method steps are:
   <ol>
    <li><p>Let <var>monitorCallback</var> be <var>init</var>["{{FetchInit/monitor}}"].
 
-   <li><p>Set <var>requestMonitor</var> to a {{FetchMonitor}}.
+   <li><p>Set <var>monitor</var> to a {{FetchMonitor}}.
 
-   <li><p>Set <var>responseMonitor</var> to a {{FetchMonitor}}.
-
-   <li><p>Let <var>args</var> be « <var>requestMonitor</var>, <var>responseMonitor</var> ».
+   <li><p>Let <var>args</var> be « <var>monitor</var> ».
 
    <li><p>[=invoke|Invoke=] <var>monitorCallback</var> with <var>args</var>
    and <code>"rethrow"</code>. If this throws an exception, <a for=/>reject</a> <var>p</var> with it
    and return <var>p</var>.
 
-   <li><p>If one or more <a event><code>progress</code></a> event listeners were added to
-   <var>requestMonitor</var>, then set <var>hasUploadListeners</var> to true.
+   <li><p>If one or more <a event><code>requestprogress</code></a> event listeners were added to
+   <var>monitor</var>, then set <var>hasUploadListeners</var> to true.
   </ol>
 
  <li><p>Let <var>requestBodyTransmitted</var> be 0.
@@ -8639,7 +8636,7 @@ method steps are:
    <li><p>If not roughly 50ms has passed since these steps were last invoked, then return.
 
    <li><p>If <var>hasUploadListeners</var> is true, then <a>fire a progress event</a> named
-   <a event><code>progress</code></a> at <var>requestMonitor</var> with <var>requestBodyTransmitted</var>
+   <a event><code>requestprogress</code></a> at <var>monitor</var> with <var>requestBodyTransmitted</var>
    and <var>requestBodyLength</var>.
   </ol>
 
@@ -8649,7 +8646,7 @@ method steps are:
   <ol>
    <li><p>If <var>hasUploadListeners</var> is false, then return.
 
-   <li><p><a>Fire a progress event</a> named <a event><code>progress</code></a> at <var>requestMonitor</var>
+   <li><p><a>Fire a progress event</a> named <a event><code>requestprogress</code></a> at <var>monitor</var>
    with <var>requestBodyTransmitted</var> and <var>requestBodyLength</var>.
   </ol>
 
@@ -8691,7 +8688,7 @@ method steps are:
 </ol>
 </div>
 
-TEMPORARY <dfn id=event-fetchmonitor-progress event for=FetchMonitor><code>progress</code></dfn>
+TEMPORARY <dfn id=event-fetchmonitor-requestprogress event for=FetchMonitor><code>requestprogress</code></dfn>
 
 <div algorithm>
 <p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn>
@@ -9269,8 +9266,8 @@ WHATWG community to ensure input from people familiar with the subject.
    <td>Once.
    <td>First.
   <tr>
-   <th><a event><code>progress</code></a>
-   <td>In progress.
+   <th><a event><code>requestprogress</code></a>
+   <td>In progress request.
    <td>Once or more.
    <td>After <code>loadstart</code> has been
     <a>dispatched</a>.
