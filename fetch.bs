@@ -183,7 +183,7 @@ exposes most of the networking functionality at a fairly low level of abstractio
 
 <p>This specification uses terminology from <cite>ABNF</cite>, <cite>Encoding</cite>,
 <cite>HTML</cite>, <cite>HTTP</cite>, <cite>MIME Sniffing</cite>, <cite>Streams</cite>,
-<cite>URL</cite>, <cite>Web IDL</cite>, and <cite>WebSockets</cite>.
+<cite>URL</cite>, <cite>Web IDL</cite>, <cite>WebSockets</cite>, and <cite>WebTransport</cite>.
 [[!ABNF]]
 [[!ENCODING]]
 [[!HTML]]
@@ -193,6 +193,7 @@ exposes most of the networking functionality at a fairly low level of abstractio
 [[!URL]]
 [[!WEBIDL]]
 [[!WEBSOCKETS]]
+[[!WEBTRANSPORT]]
 
 <p><dfn>ABNF</dfn> means ABNF as augmented by HTTP (in particular the addition of <code>#</code>)
 and RFC 7405. [[!RFC7405]]
@@ -1889,7 +1890,7 @@ not always relevant and might require different behavior.
    <td><code>navigator.sendBeacon()</code>, {{EventSource}},
    HTML's <code>&lt;a ping=""></code> and <code>&lt;area ping=""></code>,
    <a method><code>fetch()</code></a>, <a method><code>fetchLater()</code></a>, {{XMLHttpRequest}},
-   {{WebSocket}}, Cache API
+   {{WebSocket}}, {{WebTransport}}, Cache API
   <tr>
    <td>"<code>object</code>"
    <td><code>object-src</code>
@@ -2045,8 +2046,8 @@ during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standard
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-mode>mode</dfn>, which is
 "<code>same-origin</code>", "<code>cors</code>", "<code>no-cors</code>",
-"<code>navigate</code>", or "<code>websocket</code>". Unless stated otherwise, it is
-"<code>no-cors</code>".
+"<code>navigate</code>", "<code>websocket</code>", or "<code>webtransport</code>".
+Unless stated otherwise, it is "<code>no-cors</code>".
 
 <div class=note>
  <dl>
@@ -2071,6 +2072,9 @@ during <a lt=fetch for=/>fetching</a>. It provides a convenient way for standard
   <dt>"<code>websocket</code>"
   <dd>This is a special mode used only when
   <a spec=websockets lt="establish a WebSocket connection">establishing a WebSocket connection</a>.
+
+  <dt>"<code>webtransport</code>"
+  <dd>This is a special mode used only by {{WebTransport/WebTransport(url, options)}}.
  </dl>
 
  <p>Even though the default <a for=/>request</a> <a for=request>mode</a> is "<code>no-cors</code>",
@@ -3581,7 +3585,7 @@ given a <a for=/>request</a> <var>request</var>, run these steps:
  with <var>request</var>.
 
  <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" or
- <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>", then
+ <var>request</var>'s <a for=request>mode</a> is either "<code>websocket</code>" or "<code>webtransport</code>", then
  <a for="header list">append</a> (`<code>Origin</code>`, <var>serializedOrigin</var>) to
  <var>request</var>'s <a for=request>header list</a>.
 
@@ -4841,7 +4845,7 @@ steps:
    <dt><var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a> is
    "<code>data</code>"
    <dt><var>request</var>'s <a for=request>mode</a> is
-   "<code>navigate</code>" or "<code>websocket</code>"
+   "<code>navigate</code>", "<code>websocket</code>" or "<code>webtransport</code>"
    <dd>
     <ol>
      <li><p>Set <var>request</var>'s
@@ -6423,6 +6427,11 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
    <dd><p>Let <var>connection</var> be the result of
    <a lt="obtain a WebSocket connection">obtaining a WebSocket connection</a>, given
    <var>request</var>'s <a for=request>current URL</a>.
+
+   <dt>"<code>webtransport</code>"
+   <dd><p>Let <var>connection</var> be the result of
+   obtaining a WebTransport connection, given
+   <var>networkPartitionKey</var>, and <var>request</var>.
 
    <dt>Otherwise
    <dd><p>Let <var>connection</var> be the result of
@@ -8325,8 +8334,9 @@ enum RequestPriority { "high", "low", "auto" };
 
 <p class=note>"<code>serviceworker</code>" is omitted from
 <a enum><code>RequestDestination</code></a> as it cannot be observed from JavaScript. Implementations
-will still need to support it as a <a for=request>destination</a>. "<code>websocket</code>" is
-omitted from <a enum><code>RequestMode</code></a> as it cannot be used nor observed from JavaScript.
+will still need to support it as a <a for=request>destination</a>. "<code>websocket</code>" and
+"<code>webtransport</code>" are omitted from <a enum><code>RequestMode</code></a> as they cannot be
+used or observed from JavaScript.
 
 <p>A {{Request}} object has an associated
 <dfn id=concept-request-request for=Request export>request</dfn> (a <a for=/>request</a>).
@@ -9794,6 +9804,18 @@ requests</a> — and do not use `<code>Vary</code>`.
 <a spec=websockets id=concept-websocket-establish>establish a WebSocket connection</a> directly, but
 both are now defined in <cite>WebSockets</cite>. [[WEBSOCKETS]]
 
+<h3 class=no-num id=webtransport-protocol>WebTransport</h3>
+
+<p>As part of establishing a connection, the {{WebTransport}} object initiates a special kind of
+<a for=/>fetch</a> (using a <a for=/>request</a> whose <a for=request>mode</a> is
+"<code>webtransport</code>") which allows it to share in many fetch policy decisions, such
+<cite>HTTP Strict Transport Security (HSTS)</cite>. Ultimately this results in fetch calling into
+<cite>WebTransport</cite> which in turn <a lt="obtain a connection">obtains a connection</a>.
+[[WEBTRANSPORT]][[HSTS]]
+
+<p class=note><cite>WebTransport</cite> needs to wrap the <a>obtain a connection</a>
+algorithm to add features unique to WebTransport, like
+{{WebTransportOptions/serverCertificateHashes}}. [[WEBTRANSPORT]]
 
 
 <h2 id=fetch-elsewhere class=no-num>Using fetch in other standards</h2>
