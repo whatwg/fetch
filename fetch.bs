@@ -5388,17 +5388,48 @@ returning a response directly, or allowing the request to proceed by returning n
      <li><p>Let <var>requestEnvironment</var> be the result of
      <a for=request>determining the environment</a> given <var>request</var>.
 
-     <li><p>Let <var>isTopLevelNavigation</var> be true if <var>request</var>'s
-     <a for=request>destination</a> is "<code>document</code>"; otherwise, false.
+     <li><p>Let <var>isTopLevelSelfFetch</var> be false.
 
-     <li><p>If <var>isTopLevelNavigation</var> is false and <var>requestEnvironment</var> is null,
-     then return a <a>network error</a>.
+     <li>
+      <p>If <var>request</var>'s <a for=request>client</a> is non-null:
 
-     <li><p>Let <var>navigationOrEnvironment</var> be the string "<code>navigation</code>" if
-     <var>isTopLevelNavigation</var> is true; otherwise, <var>requestEnvironment</var>.
+      <ol>
+       <li><p>Let <var>global</var> be <var>request</var>'s <a for=request>client</a>'s
+       <a for="environment settings object">global object</a>.
+
+       <li>
+        <p>If all of the following conditions are true:
+
+        <ul class=brief>
+         <li><p><var>global</var> is a {{Window}} object;
+
+         <li><p><var>global</var>'s <a for=Window>navigable</a> is not null;
+
+         <li><p><var>global</var>'s <a for=Window>navigable</a>'s <a for=navigable>parent</a>
+         is null; and
+
+         <li><p><var>requestEnvironment</var>'s <a for="environment">creation URL</a>
+         <a for=url>equals</a> <var>request</var>'s <a for=request>current URL</a>,
+        </ul>
+
+        <p>then set <var>isTopLevelSelfFetch</var> to true.
+      </ol>
+
+     <li>
+      <p>Let <var>stringOrEnvironment</var> be the result of these steps:
+
+      <ol>
+       <li><p>If <var>request</var>'s <a for=request>destination</a> is "<code>document</code>",
+       then return "<code>top-level-navigation</code>".
+
+       <li><p>If <var>isTopLevelSelfFetch</var> is true, then return
+       "<code>top-level-self-fetch</code>".
+
+       <li><p>Return <var>requestEnvironment</var>.
+      </ol>
 
      <li><p>Let <var>blob</var> be the result of <a>obtaining a blob object</a> given
-     <var>blobURLEntry</var> and <var>navigationOrEnvironment</var>.
+     <var>blobURLEntry</var> and <var>stringOrEnvironment</var>.
 
      <li><p>If <var>blob</var> is not a {{Blob}} object, then return a <a>network error</a>.
 
