@@ -6560,8 +6560,34 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
  <li><p><a>Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcz</code>`) in <var>request</var>'s <a for=request>header list</a>.
 
- <li><p>Return the result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
- <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+ <li><p>Let <var>response</var> be the result of running <a>HTTP-network fetch</a> given
+ <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+
+ <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
+ `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>codings</var> is null or does not contain `<code>dcb</code>` or `<code>dcz</code>`, then
+ return <var>response</var>.
+
+ <li><p>If <var>response</var>'s <a for=response>type</a> is "<code>opaque</code>", then return a
+ <a>network error</a>.
+
+ <li><p>Let <var>availableDictionaryHash</var> be the result of <a>getting a structured field value</a>
+ given `<code>Available-Dictionary</code>`, "<code>bytestring</code>", and <var>request</var>'s
+ <a for=request>header list</a>.
+
+ <li><p>Let <var>newBody</var> be a new <a for=/>body</a> whose <a for=body>stream</a> is the result
+ of transforming <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> with an
+ algorithm that verifies that the dictionary hash in the stream matches
+ <var>availableDictionaryHash</var> and decodes the rest of the stream with the applicable
+ algorithm as defined in [[!HTTP-COMPRESSION-DICTIONARIES]]. If verification or decoding fails,
+ the transformed stream must error.
+
+ <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>newBody</var>.
+
+ <li><p><a>Delete</a> `<code>Content-Encoding</code>` from <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>Return <var>response</var>.
 </ol>
 </div>
 
