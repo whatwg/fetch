@@ -6332,8 +6332,9 @@ run these steps:
    <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
    "<code>only-if-cached</code>", then return a <a>network error</a>.
 
-   <li><p>Let <var>forwardResponse</var> be the result of running <a>HTTP-network fetch</a> given
-   <var>httpFetchParams</var>, <var>includeCredentials</var>, and <var>isNewConnectionFetch</var>.
+   <li><p>Let <var>forwardResponse</var> be the result of running
+   <a>HTTP-network compression-dictionary fetch</a> given <var>httpFetchParams</var>,
+   <var>includeCredentials</var>, and <var>isNewConnectionFetch</var>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is <a>unsafe</a> and
    <var>forwardResponse</var>'s <a for=response>status</a> is in the range 200 to 399, inclusive,
@@ -6522,6 +6523,47 @@ run these steps:
 </ol>
 </div>
 
+<h3 id=http-network-compression-dictionary-fetch>HTTP-network compression-dictionary fetch</h3>
+
+<div algorithm>
+<p>To <dfn>HTTP-network compression-dictionary fetch</dfn>, given a <a for=/>fetch params</a>
+<var>fetchParams</var>, an optional boolean <var>includeCredentials</var> (default false), and an
+optional boolean <var>forceNewConnection</var> (default false), run these steps:
+
+<ol>
+ <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
+
+ <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>no-cors</code>", then return the result of
+ running <a>HTTP-network fetch</a> given <var>fetchParams</var>, <var>includeCredentials</var>, and
+ <var>forceNewConnection</var>.
+
+ <li><p>If the user agent is configured to block cookies for <var>request</var>, then return the
+ result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
+ <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+
+ <li><p>Let <var>compressionDictionaryCache</var> be the result of
+ <a>determining the compression-dictionary cache partition</a> given <var>request</var>.
+
+ <li><p>If <var>compressionDictionaryCache</var> is null, then return the result of running
+ <a>HTTP-network fetch</a> given <var>fetchParams</var>, <var>includeCredentials</var>, and
+ <var>forceNewConnection</var>.
+
+ <li><p>Let <var>bestMatch</var> be the result of finding the best matching dictionary in
+ <var>compressionDictionaryCache</var> for <var>request</var> as defined in [[!HTTP-COMPRESSION-DICTIONARIES]].
+
+ <li><p>If <var>bestMatch</var> is null, then return the result of running <a>HTTP-network fetch</a>
+ given <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+
+ <li><p>Add the `<code>Available-Dictionary</code>` and `<code>Dictionary-ID</code>` (if applicable) headers to <var>request</var> using <var>bestMatch</var> as defined in [[!HTTP-COMPRESSION-DICTIONARIES]].
+
+ <li><p><a>Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcb</code>`) in <var>request</var>'s <a for=request>header list</a>.
+
+ <li><p><a>Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcz</code>`) in <var>request</var>'s <a for=request>header list</a>.
+
+ <li><p>Return the result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
+ <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+</ol>
+</div>
 
 <h3 id=http-network-fetch>HTTP-network fetch</h3>
 
