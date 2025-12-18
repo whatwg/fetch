@@ -3025,16 +3025,7 @@ steps:
    <var>connections</var>, e.g., HTTP/3, then return that <a>connection</a>.
   </ol>
 
- <li>
-  <p>Let <var>proxies</var> be the result of finding proxies for <var>url</var> in an
-  <a>implementation-defined</a> manner. If there are no proxies, let <var>proxies</var> be
-  « "<code>DIRECT</code>" ».
-
-  <p class=note>This is where non-standard technology such as
-  <a href="https://en.wikipedia.org/wiki/Web_Proxy_Auto-Discovery_Protocol">Web Proxy Auto-Discovery Protocol (WPAD)</a>
-  and <a href="https://en.wikipedia.org/wiki/Proxy_auto-config">proxy auto-config (PAC)</a> come
-  into play. The "<code>DIRECT</code>" value means to not use a proxy for this particular
-  <var>url</var>.
+ <li><p>Let <var>proxies</var> be the result of calling <a>resolve proxies</a> given <var>url</var>.
 
  <li><p>Let <var>timingInfo</var> be a new <a for=/>connection timing info</a>.
 
@@ -3087,6 +3078,20 @@ management that are best left to the discretion of implementers. Describing this
 keyed on <a for=/>credentials</a>. The latter clarifies that, e.g., TLS session identifiers are not
 reused across <a>connections</a> whose <a for=connection>credentials</a> are false with
 <a>connections</a> whose <a for=connection>credentials</a> are true.
+</div>
+
+<hr>
+
+<div algorithm>
+<p>To <dfn>resolve proxies</dfn> given a <a for=/>URL</a> <var>url</var>, return the result of
+finding proxies for <var>url</var> in an <a>implementation-defined</a> manner. If there are no
+proxies, return « "<code>DIRECT</code>" ».
+
+<p class=note>This is where non-standard technology such as
+<a href="https://en.wikipedia.org/wiki/Web_Proxy_Auto-Discovery_Protocol">Web Proxy Auto-Discovery Protocol (WPAD)</a>
+and <a href="https://en.wikipedia.org/wiki/Proxy_auto-config">proxy auto-config (PAC)</a> come
+into play. The "<code>DIRECT</code>" value means to not use a proxy for this particular
+<var>url</var>.
 </div>
 
 <hr>
@@ -3206,6 +3211,76 @@ boolean <var>requireUnreliable</var>, run these steps:
 
 <p class=note>The <a for=/>clamp and coarsen connection timing info</a> algorithm ensures that
 details of reused connections are not exposed and time values are coarsened.
+</div>
+
+
+<h3 id=preemptive-connections>Preemptive connections</h3>
+
+<div algorithm>
+<p>To <dfn export>preemptively obtain a connection</dfn>, given an
+<a>environment settings object</a> <var>environment</var>, a <a for=/>URL</a> <var>url</var>, and a
+boolean <var>credentials</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>key</var> be the result of <a for=/>determining the network partition key</a> given
+ <var>environment</var>.
+
+ <li>
+  <p>Run <a>determine if Content Security Policy allows connection</a> with
+  <var>environment</var> and <var>url</var>. If that returns true,
+  <a>obtain a connection</a> with <var>key</var>, <var>url</var>, and <var>credentials</var>.
+
+  <p class=note>This connection is obtained but not used directly. It will remain in the
+  <a>connection pool</a> for subsequent use.
+
+  <p class=note>The user agent can attempt to initiate a preconnect and perform the full
+  connection handshake (DNS+TCP for HTTP, and DNS+TCP+TLS for HTTPS origins) whenever possible, but
+  is allowed to elect to perform a partial handshake (DNS only for HTTP, and DNS or DNS+TCP for
+  HTTPS origins), or skip it entirely, due to resource constraints or other reasons.</p>
+
+  <p class=note>The optimal number of connections per origin is dependent on the negotiated
+  protocol, users current connectivity profile, available device resources, global connection
+  limits, and other context specific variables. As a result, the decision for how many connections
+  should be opened is deferred to the user agent.</p>
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn export>preemptively resolve an origin</dfn>, given an
+<a>environment settings object</a> <var>environment</var> and a <a for=/>URL</a> <var>url</var>, run
+these steps:
+
+<ol>
+ <li><p>Let <var>key</var> be the result of <a for=/>determining the network partition key</a> given
+ <var>environment</var>.
+
+ <li>Run <p><a>determine if Content Security Policy allows connection</a> with
+ <var>environment</var> and <var>url</var>. If that returns false, then return.
+
+ <li><p>Let <var>proxies</var> be the result of calling <a>resolve proxies</a>.
+
+ <li>
+  <p>If <var>proxies</var> <a for=list>contains</a> "<code>DIRECT</code>", then
+  <a>resolve an origin</a> given <var>key</var> and <var>url</var>'s <a for=url>origin</a>.
+
+  <p class=note>As the results of this algorithm can be cached, future fetches could be faster.
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>determine if Content Security Policy allows connection</dfn>, given an
+<a>environment settings object</a> <var>environment</var>, and a <a for=/>URL</a> <var>url</var>:
+
+<ol>
+ <li><p>Let <var>request</var> be a <a for=/>request</a> whose <a for=request>URL</a> is
+ <var>url</var>, <a for=request>initiator</a> is "<code>prefetch</code>", and whose
+ <a for=request>client</a> is <var>environment</var>.
+
+ <li><p>Let <var>result</var> be the result of running
+ <a>should request be blocked by Content Security Policy?</a> given <var>request</var>.
+
+ <li><p>Return true if <var>result</var> is <b>allowed</b>; otherwise false.
+</ol>
 </div>
 
 
