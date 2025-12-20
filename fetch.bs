@@ -81,6 +81,9 @@ urlPrefix:https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cooki
     "HTTP-CACHING": {
         "aliasOf": "RFC9111"
     },
+    "HTTP-COMPRESSION-DICTIONARIES": {
+        "aliasOf": "RFC9842"
+    },
     "HTTP1": {
         "aliasOf": "RFC9112"
     },
@@ -1802,6 +1805,7 @@ is "<code>all</code>" or "<code>none</code>". Unless stated otherwise it is "<co
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-initiator>initiator</dfn>, which is
 the empty string,
+"<code>compression-dictionary</code>",
 "<code>download</code>",
 "<code>imageset</code>",
 "<code>manifest</code>",
@@ -1816,6 +1820,7 @@ device to assist defining CSP and Mixed Content. It is not exposed to JavaScript
 <p>A <dfn export>destination type</dfn> is one of:
 the empty string,
 "<code>audio</code>",
+"<code>compression-dictionary</code>",
 "<code>audioworklet</code>",
 "<code>document</code>",
 "<code>embed</code>",
@@ -1960,6 +1965,11 @@ not always relevant and might require different behavior.
    <td>"<code>video</code>"
    <td><code>media-src</code>
    <td>HTML's <code>&lt;video></code> element
+  <tr>
+   <td>"<code>compression-dictionary</code>"
+   <td>"<code>compression-dictionary</code>"
+   <td><code>default-src</code>
+   <td>HTML's <code>&lt;link rel=compression-dictionary&gt;</code>
   <tr>
    <td>"<code>download</code>"
    <td>""
@@ -3270,6 +3280,22 @@ or an <a>implementation-defined</a> value.
  <li><p>If <var>key</var> is null, then return null.
 
  <li><p>Return the unique HTTP cache associated with <var>key</var>. [[!HTTP-CACHING]]
+</ol>
+</div>
+
+
+<h3 id=compression-dictionary-cache-partitions>Compression-dictionary cache partitions</h3>
+
+<div algorithm>
+<p>To <dfn>determine the compression-dictionary cache partition</dfn>, given a <a for=/>request</a> <var>request</var>:
+
+<ol>
+ <li><p>Let <var>key</var> be the result of <a for=request>determining the network partition key</a>
+ given <var>request</var>.
+
+ <li><p>If <var>key</var> is null, then return null.
+
+ <li><p>Return the unique compression-dictionary cache associated with <var>key</var>. [[!HTTP-COMPRESSION-DICTIONARIES]]
 </ol>
 </div>
 
@@ -6304,8 +6330,9 @@ run these steps:
    <li><p>If <var>httpRequest</var>'s <a for=request>cache mode</a> is
    "<code>only-if-cached</code>", then return a <a>network error</a>.
 
-   <li><p>Let <var>forwardResponse</var> be the result of running <a>HTTP-network fetch</a> given
-   <var>httpFetchParams</var>, <var>includeCredentials</var>, and <var>isNewConnectionFetch</var>.
+   <li><p>Let <var>forwardResponse</var> be the result of running
+   <a>HTTP-network compression-dictionary fetch</a> given <var>httpFetchParams</var>,
+   <var>includeCredentials</var>, and <var>isNewConnectionFetch</var>.
 
    <li><p>If <var>httpRequest</var>'s <a for=request>method</a> is <a>unsafe</a> and
    <var>forwardResponse</var>'s <a for=response>status</a> is in the range 200 to 399, inclusive,
@@ -6454,12 +6481,131 @@ run these steps:
  <li><p>If <var>isAuthenticationFetch</var> is true, then create an <a>authentication entry</a> for
  <var>request</var> and the given realm.
 
+ <li>
+  <p>If <var>response</var>'s <a for=response>header list</a>
+  <a for="header list">contains</a> `<code>Use-As-Dictionary</code>`, then:
+  <!-- This is defined in [[!HTTP-COMPRESSION-DICTIONARIES]] -->
+
+  <ol>
+   <li><p>Let <var>dictionaryValue</var> be the result of
+   <a for="header list">getting a structured field value</a> given `<code>Use-As-Dictionary</code>`,
+   "<code>dictionary</code>", and <var>response</var>'s <a for=response>header list</a>.
+
+   <li><p>If <var>dictionaryValue</var> is null or <var>dictionaryValue</var>["<code>match</code>"]
+   does not <a for=map>exist</a>, then return <var>response</var>.
+
+   <li><p>Let <var>pattern</var> be the result of creating a URL pattern from
+   <var>dictionaryValue</var>["<code>match</code>"] and <var>request</var>'s
+   <a for=request>current URL</a>.
+
+   <li><p>If <var>pattern</var> is failure or <var>pattern</var> has regexp groups, then return
+   <var>response</var>.
+
+   <li><p>Let <var>compressionDictionaryCache</var> be the result of
+   <a>determining the compression-dictionary cache partition</a> given <var>request</var>.
+
+   <li><p>If <var>compressionDictionaryCache</var> is null, then return <var>response</var>.
+
+   <li><p>Let <var>corpPolicy</var> be the result of <a for="header list">getting</a>
+   `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` from <var>response</var>'s
+   <a for=response>header list</a>.
+
+   <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>opaque</code>" and
+   <var>corpPolicy</var> is not `<code>cross-origin</code>`, then return <var>response</var>.
+
+   <li><p>Let <var>expirationTime</var> be the time at which the <var>response</var> becomes stale.
+
+   <li><p>If <var>expirationTime</var> is not in the future, then return <var>response</var>.
+
+   <li><p>Store <var>response</var> in <var>compressionDictionaryCache</var> with its associated
+   <var>dictionaryValue</var> and <var>expirationTime</var>.
+  </ol>
+
  <li><p>Return <var>response</var>. <span class=note>Typically <var>response</var>'s
  <a for=response>body</a>'s <a for=body>stream</a> is still being enqueued to after
  returning.</span>
 </ol>
 </div>
 
+<h3 id=http-network-compression-dictionary-fetch>HTTP-network compression-dictionary fetch</h3>
+
+<div algorithm>
+<p>To <dfn id=concept-http-network-compression-dictionary-fetch>HTTP-network compression-dictionary fetch</dfn>,
+given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
+<var>includeCredentials</var> (default false), and an optional boolean <var>forceNewConnection</var>
+(default false), run these steps:
+
+<ol>
+ <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
+
+ <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>no-cors</code>", then return the
+ result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
+ <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+
+ <li><p>If the user agent is configured to block cookies for <var>request</var>, then return the
+ result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
+ <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+
+ <li><p>Let <var>compressionDictionaryCache</var> be the result of
+ <a>determining the compression-dictionary cache partition</a> given <var>request</var>.
+
+ <li><p>If <var>compressionDictionaryCache</var> is null, then return the result of running
+ <a>HTTP-network fetch</a> given <var>fetchParams</var>, <var>includeCredentials</var>, and
+ <var>forceNewConnection</var>.
+
+ <li><p>Let <var>bestMatch</var> be the result of finding the best matching dictionary in
+ <var>compressionDictionaryCache</var> for <var>request</var> as defined in
+ [[!HTTP-COMPRESSION-DICTIONARIES]].
+
+ <li><p>If <var>bestMatch</var> is null, then return the result of running <a>HTTP-network fetch</a>
+ given <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+
+ <li><p>Add the `<code>Available-Dictionary</code>` and `<code>Dictionary-ID</code>`
+ (if applicable) headers to <var>request</var> using <var>bestMatch</var> as defined in
+ [[!HTTP-COMPRESSION-DICTIONARIES]].
+
+ <li><p><a for="header list">Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcb</code>`)
+ in <var>request</var>'s <a for=request>header list</a>.
+
+ <li><p><a for="header list">Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcz</code>`)
+ in <var>request</var>'s <a for=request>header list</a>.
+
+ <li><p>Let <var>response</var> be the result of running <a>HTTP-network fetch</a> given
+ <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+
+ <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
+ `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>codings</var> is null or does not contain `<code>dcb</code>` or `<code>dcz</code>`,
+ then return <var>response</var>.
+
+ <li><p>Let <var>corpPolicy</var> be the result of <a for="header list">getting</a>
+ `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` from <var>response</var>'s
+ <a for=response>header list</a>.
+
+ <li><p>If <var>response</var>'s <a for=response>type</a> is "<code>opaque</code>" and
+ <var>corpPolicy</var> is not `<code>cross-origin</code>`, then return a
+ <a>network error</a>.
+
+ <li><p>Let <var>availableDictionaryHash</var> be the result of
+ <a>getting a structured field value</a> given `<code>Available-Dictionary</code>`,
+ "<code>bytestring</code>", and <var>request</var>'s <a for=request>header list</a>.
+
+ <li><p>Let <var>newBody</var> be a new <a for=/>body</a> whose <a for=body>stream</a> is the
+ result of transforming <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a>
+ with an algorithm that verifies that the dictionary hash in the stream matches
+ <var>availableDictionaryHash</var> and decodes the rest of the stream with the applicable
+ algorithm as defined in [[!HTTP-COMPRESSION-DICTIONARIES]]. If verification or decoding fails,
+ the transformed stream must error.
+
+ <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>newBody</var>.
+
+ <li><p><a>Delete</a> `<code>Content-Encoding</code>` from <var>response</var>'s
+ <a for=response>header list</a>.
+
+ <li><p>Return <var>response</var>.
+</ol>
+</div>
 
 <h3 id=http-network-fetch>HTTP-network fetch</h3>
 
@@ -6531,6 +6677,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
     <ul>
      <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-CACHING]]
+     [[!HTTP-COMPRESSION-DICTIONARIES]]
 
      <li>
       <p>If <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
@@ -8387,7 +8534,7 @@ dictionary RequestInit {
   any window; // can only be set to null
 };
 
-enum RequestDestination { "", "audio", "audioworklet", "document", "embed", "font", "frame", "iframe", "image", "json", "manifest", "object", "paintworklet", "report", "script", "sharedworker", "style",  "track", "video", "worker", "xslt" };
+enum RequestDestination { "", "audio", "audioworklet", "compression-dictionary", "document", "embed", "font", "frame", "iframe", "image", "json", "manifest", "object", "paintworklet", "report", "script", "sharedworker", "style",  "track", "video", "worker", "xslt" };
 enum RequestMode { "navigate", "same-origin", "no-cors", "cors" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
