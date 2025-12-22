@@ -2248,6 +2248,19 @@ Unless stated otherwise, it is false.
 
 <p class=note>This flag is for exclusive use by HTML's render-blocking mechanism. [[!HTML]]
 
+<p>A <a for=/>request</a> has an associated <dfn export for=request>webtransport-hash list</dfn> (a
+<a for=/>webtransport-hash list</a>). Unless stated otherwise it is « ».
+
+<p>A <dfn export>webtransport-hash list</dfn> is a <a for=/>list</a> of zero or more
+<a for=/>webtransport-hashes</a>. It is initially « ».
+
+<p>A <dfn export id=concept-webtransport-hash>webtransport-hash</dfn> is a <a for=/>tuple</a>
+consisting of an <dfn export for=webtransport-hash>algorithm</dfn> (a <a for=/>string</a>) and a
+<dfn export for=webtransport-hash>value</dfn> (a <a for=/>byte sequence</a>).
+
+<p class=note>This list is for exclusive use by {{WebTransport/WebTransport(url, options)}} when
+<var ignore>options</var> contains {{WebTransportOptions/serverCertificateHashes}}.
+
 <hr>
 
 <p>A <a for=/>request</a> has an associated
@@ -3003,16 +3016,19 @@ steps:
 <p>To <dfn export id=concept-connection-obtain>obtain a connection</dfn>, given a
 <a>network partition key</a> <var>key</var>, <a for=/>URL</a> <var>url</var>, boolean
 <var>credentials</var>, an optional <a>new connection setting</a> <var>new</var> (default
-"<code>no</code>"), and an optional boolean
-<dfn export for="obtain a connection"><var>requireUnreliable</var></dfn> (default false), run these
-steps:
-<!-- new's "yes-and-dedicated" and requireUnreliable have been added for WebTransport -->
+"<code>no</code>"), an optional boolean
+<dfn export for="obtain a connection"><var>requireUnreliable</var></dfn> (default false), and an
+optional <a for=/>webtransport-hash list</a>
+<dfn export for="obtain a connection"><var>webTransportHashes</var></dfn> (default « »):
+<!-- new's "yes-and-dedicated", requireUnreliable and webTransportHashes have been added for WebTransport -->
 
 <ol>
  <li>
-  <p>If <var>new</var> is "<code>no</code>", then:
+  <p>If <var>new</var> is "<code>no</code>":
 
   <ol>
+   <li><p><a for=/>Assert</a>: <var>webTransportHashes</var> <a for=list>is empty</a>.
+
    <li><p>Let <var>connections</var> be a set of <a>connections</a> in the user agent's
    <a>connection pool</a> whose <a for=connection>key</a> is <var>key</var>,
    <a for=connection>origin</a> is <var>url</var>'s <a for=url>origin</a>, and
@@ -3060,10 +3076,11 @@ steps:
     <p>Let <var>connection</var> be the result of running this step: run <a>create a connection</a>
     given <var>key</var>, <var>url</var>'s <a for=url>origin</a>, <var>credentials</var>,
     <var>proxy</var>, an <a>implementation-defined</a> <a for=/>host</a> from <var>hosts</var>,
-    <var>timingInfo</var>, and <var>requireUnreliable</var> an <a>implementation-defined</a> number
-    of times, <a>in parallel</a> from each other, and wait for at least 1 to return a value. In an
-    <a>implementation-defined</a> manner, select a value to return from the returned values and
-    return it. Any other returned values that are <a>connections</a> may be closed.
+    <var>timingInfo</var>, <var>requireUnreliable</var>, and <var>webTransportHashes</var> an
+    <a>implementation-defined</a> number of times, <a>in parallel</a> from each other, and wait for
+    at least 1 to return a value. In an <a>implementation-defined</a> manner, select a value to
+    return from the returned values and return it. Any other returned values that are
+    <a>connections</a> may be closed.
 
     <p class=note>Essentially this allows an implementation to pick one or more
     <a for=/>IP addresses</a> from the return value of <a>resolve an origin</a> (assuming
@@ -3094,8 +3111,9 @@ reused across <a>connections</a> whose <a for=connection>credentials</a> are fal
 <div algorithm>
 <p>To <dfn>create a connection</dfn>, given a <a for=/>network partition key</a> <var>key</var>,
 <a for=/>origin</a> <var>origin</var>, boolean <var>credentials</var>, string <var>proxy</var>,
-<a for=/>host</a> <var>host</var>, <a for=/>connection timing info</a> <var>timingInfo</var>, and
-boolean <var>requireUnreliable</var>, run these steps:
+<a for=/>host</a> <var>host</var>, <a for=/>connection timing info</a> <var>timingInfo</var>,
+boolean <var>requireUnreliable</var>, and a <a for=/>webtransport-hash list</a>
+<var>webTransportHashes</var>:
 
 <ol>
  <li><p>Set <var>timingInfo</var>'s <a for="connection timing info">connection start time</a> to the
@@ -3121,6 +3139,12 @@ boolean <var>requireUnreliable</var>, run these steps:
    frame. [[!WEBTRANSPORT-HTTP3]] [[!HTTP3-DATAGRAM]]
 
    <li><p>If <var>credentials</var> is false, then do not send a TLS client certificate.
+
+   <li><p>If <var>webTransportHashes</var> [=set/is not empty=], instead of using the default
+   certificate verification algorithm, consider the server certificate valid if it meets the
+   [=custom certificate requirements=] and if
+   [=verify a certificate hash|verifying the certificate hash=] against |webTransportHashes| returns
+   true. If either condition is not met, then return failure.
 
    <li><p>If establishing a connection does not succeed (e.g., a UDP, TCP, or TLS error), then
    return failure.
