@@ -2248,6 +2248,17 @@ Unless stated otherwise, it is false.
 
 <p class=note>This flag is for exclusive use by HTML's render-blocking mechanism. [[!HTML]]
 
+<p>A <a for=/>request</a> has an associated boolean <dfn export for=request>is HTTPS upgrade</dfn>.
+Unless stated otherwise, it is false.
+
+<p class=note>This is for exclusive use by HTTPS upgrading.
+
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request>HTTPS upgrade fallback URL</dfn>, which is null or a <a for=/>URL</a>.
+Unless otherwise stated, it is null.
+
+<p class=note>This is for exclusive use by HTTPS upgrading.
+
 <hr>
 
 <p>A <a for=/>request</a> has an associated
@@ -3414,6 +3425,139 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
  <li><p>Return <b>allowed</b>.
 </ol>
 </div>
+
+
+<h3 id=https-upgrading>HTTPS upgrading</h3>
+
+<p>User agents may optionally upgrade requests with URLs that are not
+<a>potentially trustworthy URLs</a> to attempt to fetch them over
+<a>potentially trustworthy URLs</a>. If an upgraded request fails with a network error, it is
+retried over the original URL.
+
+<p>The HTTPS upgrading algorithm consists of <a>upgrade an HTTP request</a> and
+<a>HTTPS upgrade fallback</a> algorithms.
+
+
+<h4 id=https-upgrading-upgrade>HTTPS upgrade algorithm</h4>
+
+<div algorithm>
+<p>To <dfn>upgrade an HTTP request</dfn> given a <a for=/>request</a> <var>request</var>:
+
+<ol>
+ <li>
+  <p>If any of the following are true:
+
+  <ul>
+   <li><p><var>request</var>'s <a for="request">destination</a> is not "<code>document</code>";
+
+   <li><p><var>request</var>'s <a for="request">method</a> is not "<code>GET</code>";
+
+   <li><p><var>request</var>'s <a for="request">URL</a>'s <a for="url">scheme</a> is not
+   "<code>http</code>";
+
+   <li><p><var>request</var>'s <a for="request">URL</a>'s <a for="url">port</a> is not the default
+   port; or
+
+   <li><p><var>request</var>'s <a for="request">URL</a>'s <a for="url">origin</a> is exempted from
+   upgrades in an <a>implementation-defined</a> way,
+  </ul>
+
+  <p>then return.
+ </li>
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>HTTPS upgrade fallback URL</a> is non-null, then set
+  <a for=request>is HTTPS upgrade</a> to false and <a for=request>HTTPS upgrade fallback URL</a> to
+  null and return.
+
+  <p class=note>This is a fallback request that cannot be upgraded again.
+
+ <li>
+  <p>Otherwise:
+
+  <ol>
+   <li><p>Set <a for=request>HTTPS upgrade fallback URL</a> to <var>request</var>'s
+   <a for="request">URL</a>.
+
+   <li><p>Set <var>request</var>'s <a for="request">URL</a>'s <a for="url">scheme</a> to
+   "<code>https</code>".
+
+   <li><p>Set <a for=request>is HTTPS upgrade</a> to true.
+  </ol>
+ </li>
+</ol>
+</div>
+
+
+<h4 id=https-upgrading-fallback>Fallback algorithm</h4>
+
+<div algorithm>
+<p>To run <dfn>HTTPS upgrade fallback</dfn> given a <a for=/>request</a> <var>request</var> and
+<a for=/>response</a> <var>response</var>:
+
+<ol>
+ <li><p>If <var>request</var>'s <a for=request>is HTTPS upgrade</a> is false, then return
+ <var>response</var>.
+
+ <li>
+  <p>If <var>response</var> is a <a>network error</a>:
+
+  <p class=note>This means that the upgrade failed and initiates a fallback load.
+
+  <ol>
+   <li><p>Let <var>serializedFallbackURL</var> be the <var>request</var>'s
+   <a for=request>HTTPS upgrade fallback URL</a>, <a lt="URL serializer">serialized</a> and
+   <a>isomorphic encoded</a>.
+
+   <li><p>Let <var>fallbackResponse</var> be a new <a for=/>response</a> whose
+   <a for=response>header list</a> is «
+   (`<code>Location</code>`, <var>serializedFallbackURL</var>) » and
+   <a for="response">status</a> is 307.
+
+   <li><p>Return <var>fallbackResponse</var>.
+  </ol>
+
+ <li>
+  <p>Return <var>response</var>.
+
+  <p class=note>This means the upgrade was successful.
+</ol>
+
+<p class=note>User agents can implement a fast-fallback path by canceling slow fetches on upgraded
+requests, in order to quickly initiate a fallback HTTP fetch.
+</div>
+
+
+<h4 id=http-upgrades-examples>Examples</h4>
+
+<p id=example-https-upgrade-good-https class=example><code>a.com</code> serves both
+<code>http://a.com</code> and <code>https://a.com</code>. An eligible request to
+<code>http://a.com</code> will be upgraded to <code>https://a.com</code>.
+
+<p id=example-https-upgrade-bad-https class=example><code>a.com</code> serves
+<code>http://a.com</code> but refuses connections on <code>https://a.com</code>. An eligible
+request to <code>http://a.com</code> will be upgraded to <code>https://a.com</code>, but the fetch
+will fail. A fallback request will be initiated to <code>http://a.com</code>.
+
+<p id=example-https-upgrade-allowlist class=example><code>a.com</code> serves
+<code>http://a.com</code> but refuses connections on <code>https://a.com</code>. Upon
+first request and fallback to <code>http://a.com</code>, the user agent stores the hostname
+in an allowlist with an expiration time of 7 days. In a future request, if <code>a.com</code>
+is still in this allowlist, the user agent will not upgrade <code>http://a.com</code> to
+<code>https://a.com</code>. The user agent will also set the new expiration time of the
+allowlist entry for <code>a.com</code> to 7 days from now.
+
+<p id=example-https-upgrade-ports class=example><code>a.com</code> serves
+<code>http://a.com:8080</code>. When a site is served from a non-default HTTP port, it's unlikely
+that the corresponding HTTPS URL is served from the default port either. Therefore, the user agent
+doesn't upgrade requests to <code>http://a.com:8080.</code>
+
+<p id=example-https-upgrade-redirect-loop class=example><code>a.com</code> serves
+<code>http://a.com</code> and <code>https://a.com</code>. The latter redirects to the former.
+An eligible request to <code>http://a.com</code> will be upgraded to
+<code>https://a.com</code> and will be redirected back to <code>http://a.com</code>.
+The user agent will detect this as a redirect loop, treat it as a failed upgrade and initiate a
+fallback navigation to <code>http://a.com</code>.
 
 
 
@@ -4843,6 +4987,8 @@ steps:
   agents might need to perform DNS operations earlier, consult local DNS caches, or wait until later
   in the fetch algorithm and potentially unwind logic on discovering the need to change
   <var>request</var>'s <a for=request>current URL</a>'s <a for=url>scheme</a>.
+
+ <li><p>Optionally, run <a>upgrade an HTTP request</a> algorithm on <var>request</var>.
 
  <li><p>If <var>recursive</var> is false, then run the remaining steps <a>in parallel</a>.
 
@@ -6509,7 +6655,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   <a for="fetch params">canceled</a>:
 
   <ol>
-   <li><p>If <var>connection</var> is failure, then return a <a>network error</a>.
+   <li><p>If <var>connection</var> is failure, then return the result of running
+   <a>HTTPS upgrade fallback</a> given <var>request</var> and a <a>network error</a>.
 
    <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">final connection timing info</a> to
    the result of calling <a>clamp and coarsen connection timing info</a> with
@@ -10116,6 +10263,7 @@ if this was not done automatically by passing the <a for=request>initiator type<
 done only by navigations). The <a>fetch controller</a> is also used to
 <a for="fetch controller">process the next manual redirect</a> for <a for=/>requests</a> with
 <a for=request>redirect mode</a> set to "<code>manual</code>".
+
 
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
