@@ -22,6 +22,8 @@ urlPrefix:https://httpwg.org/specs/rfc9651.html#;type:dfn;spec:rfc9651
     url:text-parse;text:parsing structured fields
     url:;text:structured header
     url:token;text:structured field token
+    url:binary;text:structured field byte sequence
+    url:dictionary;text:structured field dictionary
 
 urlPrefix:https://httpwg.org/specs/rfc9110.html#;type:dfn;spec:http
     url:method.overview;text:method
@@ -66,6 +68,10 @@ urlPrefix:https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cooki
     url:name-retrieve-cookies;text:retrieve cookies
     url:name-serialize-cookies;text:serialize cookies
     url:name-garbage-collect-cookies;text:garbage collect cookies
+
+urlPrefix:https://httpwg.org/http-extensions/draft-ietf-httpbis-unencoded-digest.html#;spec:unencoded-digest
+    type:http-header
+        url:name-the-unencoded-digest-field;text:unencoded-digest
 </pre>
 
 <pre class=biblio>
@@ -116,6 +122,11 @@ urlPrefix:https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cooki
         "publisher": "US-CERT",
         "href": "https://www.kb.cert.org/vuls/id/150227",
         "title": "HTTP proxy default configurations allow arbitrary TCP connections."
+    },
+    "UNENCODED-DIGEST": {
+        "authors": ["Lucas Pardue", "Mike West"],
+        "href": "https://httpwg.org/http-extensions/draft-ietf-httpbis-unencoded-digest.html",
+        "title": "HTTP Unencoded Digest"
     },
     "WEBTRANSPORT-HTTP3": {
         "authors": ["V. Vasiliev"],
@@ -4490,6 +4501,71 @@ indicates the request’s purpose is to fetch a resource that is anticipated to 
 prefetch, or to treat it differently when counting page visits.
 
 
+<h3 id=unencoded-digest-header>`<code>Unencoded-Digest</code>` header</h3>
+
+<p>The `<a http-header><code>Unencoded-Digest</code></a>` header field represents a server's
+assertions about the integrity of a response's content. It is a <a>structured header</a> whose value
+must be a <a data-lt="structured field dictionary">dictionary</a> whose keys specify hashing
+algorithms, and whose values are <a data-lt="structured field byte sequence">byte sequences</a>
+represent a digest of the response produced via the specified algorithm. [[!UNENCODED-DIGEST]]
+
+
+<div algorithm>
+<p>To <dfn export>verify `<code>Unencoded-Digest</code>` assertions</dfn>, given a
+<a>byte sequence</a> <var>bytes</var> and a <a for=/>header list</a> <var>list</var>:
+
+<ol>
+ <li><p>Let <var>value</var> be the result of
+ <a for="header list" lt="get a structured field value">getting</a> the
+ `<a http-header><code>Unencoded-Digest</code></a>` header as a "<code>dictionary</code>" from
+ <var>list</var>.
+
+ <li><p>If <var>value</var> is null, then return <b>verified</b>.
+
+ <li>
+  <p><a for="list">For each</a> <var>algorithm</var> → <var>digest</var> of <var>value</var>:
+
+  <ol>
+   <li>
+    <p>Switch on <var>algorithm</var>:
+
+    <dl class=switch>
+     <dt>"<code>sha-256</code>"
+     <dd>
+      <ol>
+       <li><p>Let <var>body digest</var> be the result of executing the SHA-256 algorithm on
+       <var>bytes</var>. [[!FIPS-180-4]]
+
+       <li><p>If <var>body digest</var> is <var>digest</var>, <a for="iteration">continue</a>.
+      </ol>
+
+     <dt>"<code>sha-512</code>"
+     <dd>
+      <ol>
+       <li><p>Let <var>body digest</var> be the result of executing the SHA-512 algorithm on
+       <var>bytes</var>. [[!FIPS-180-4]]
+
+       <li><p>If <var>body digest</var> is <var>digest</var>, <a for="iteration">continue</a>.
+      </ol>
+
+     <dt><b>Otherwise</b>
+     <dd><p><a for="iteration">Continue</a>.
+    </dl>
+
+   <li><p>Return <b>failed</b>.
+  </ol>
+
+ <li><p>Return <b>verified</b>.
+</ol>
+
+<p class="note">This algorithm requires all valid digests delivered via
+`<a http-header><code>Unencoded-Digest</code></a>` to match the response’s decoded body, while
+ignoring unknown algorithms. Since the server controls both the body and the headers, it seems
+unnecessary to allow the flexibility of allowing the asserted digests to match more than one
+resource (as we do in client-initiated checks via [[SRI]], which need to support servers'
+content negotiation).
+</div>
+
 
 <h2 id=fetching>Fetching</h2>
 
@@ -5050,7 +5126,9 @@ steps:
   <p class=note>This standardizes the error handling for servers that violate HTTP.
 
  <li>
-  <p>If <var>request</var>'s <a for=request>integrity metadata</a> is not the empty string, then:
+  <p>If <var>request</var>'s <a for=request>integrity metadata</a> is not the empty string, or if
+  <var>internalResponse</var>'s <a for="response">header list</a> <a for="header list">contains</a>
+  `<a http-header><code>Unencoded-Digest</code></a>`, then:
 
   <ol>
    <li><p>Let <var>processBodyError</var> be this step: run <a>fetch response handover</a> given
@@ -5063,6 +5141,10 @@ steps:
     <p>Let <var>processBody</var> given <var>bytes</var> be these steps:
 
     <ol>
+     <li><p><a>Verify `<code>Unencoded-Digest</code>` assertions</a> given <var>bytes</var> and
+     <var>internalResponse</var>'s <a for="response">header list</a>. If the result is not
+     <b>verified</b>, then run <var>processBodyError</var> and abort these steps.
+
      <li><p>If <var>bytes</var> do not <a lt="Do bytes match metadataList?">match</a>
      <var>request</var>'s <a for=request>integrity metadata</a>, then run
      <var>processBodyError</var> and abort these steps. [[!SRI]]
