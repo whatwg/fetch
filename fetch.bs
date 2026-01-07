@@ -2243,6 +2243,11 @@ Unless stated otherwise, it is false.
 
 <p class=note>This is for exclusive use by HTML's navigate algorithm. [[!HTML]]
 
+<p>A <a for=/>request</a> has an associated <dfn export for=request>WebDriver navigation id</dfn>
+(null or a string). Unless stated otherwise, it is null.
+
+<p class=note>This is for exclusive use by HTML's navigate algorithm. [[!HTML]]
+
 <p>A <a for=/>request</a> has an associated boolean <dfn export for=request>render-blocking</dfn>.
 Unless stated otherwise, it is false.
 
@@ -2283,6 +2288,15 @@ otherwise, it is unset.
 <a for=request>redirect count</a>, <a for=request>response tainting</a>,
 <a for=request>done flag</a>, and <a for=request>timing allow failed flag</a> are used as
 bookkeeping details by the <a for=/>fetch</a> algorithm.
+
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=concept-webdriver-id>WebDriver id</dfn>
+which is a unique string automatically set when the <a for=/>request</a> is created.
+
+<p class=note>The [=request/WebDriver id=] is used by WebDriver-BiDi. It remains constant
+across redirects, authentication attempts, and CORS-preflight fetches of an initial request.
+When a request is [=request/cloned=], the created request gets a unique
+[=request/WebDriver id=]. [[!WEBDRIVER-BIDI]]
 
 <hr>
 
@@ -2374,7 +2388,9 @@ is to return the result of <a>serializing a request origin</a> with <var>request
 
 <ol>
  <li><p>Let <var>newRequest</var> be a copy of <var>request</var>, except for its
- <a for=request>body</a>.
+ <a for=request>body</a> and <a for=request>WebDriver id</a>.
+
+ <li><p>Set <var>newRequest</var>'s <a for=request>WebDriver id</a> to a new unique string.
 
  <li><p>If <var>request</var>'s <a for=request>body</a> is non-null, set <var>newRequest</var>'s
  <a for=request>body</a> to the result of <a lt=clone for=body>cloning</a> <var>request</var>'s
@@ -4588,6 +4604,8 @@ the response. [[!HTTP-CACHING]]
  <var>request</var>'s <a for=request>body</a> to <var>request</var>'s <a for=request>body</a>
  <a for="byte sequence">as a body</a>.
 
+ <li><p>Run the <a>WebDriver BiDi clone network request body</a> steps with <var>request</var>.
+
  <li>
   <p>If all of the following conditions are true:
 
@@ -5203,6 +5221,11 @@ steps:
  <a>network error</a>; otherwise <var>response</var>'s
  <a for="filtered response">internal response</a>.
 
+ <li><p>If <var>response</var> is a <a>network error</a>, run
+ the <a>WebDriver BiDi fetch error</a> steps with <var>request</var>. Otherwise
+ run the <a>WebDriver BiDi response completed</a> steps with
+ <var>request</var> and <var>response</var>.
+
  <li><p>If <var>internalResponse</var>'s <a for=response>body</a> is null, then run
  <var>processResponseEndOfBody</var>.
 
@@ -5662,6 +5685,13 @@ these steps:
      <a>filtered response</a>; otherwise to <var>response</var>'s
      <a for="filtered response">internal response</a>.
 
+     <li><p>Run the <a>WebDriver BiDi response started</a> steps with
+     <var>request</var> and <var>response</var>.
+     <!-- Service Workers are responsible for emitting the WebDriver BiDi
+          request events in this case. That's necessary to ensure that the events are
+          only generated if the service worker will handle the fetch, and to get the
+          correct event ordering in the case of network fallback -->
+
      <li>
       <p>If one of the following is true
 
@@ -5793,8 +5823,12 @@ these steps:
 
      <dt>"<code>follow</code>"
      <dd>
-      <ol><li><p>Set <var>response</var> to the result of running <a>HTTP-redirect fetch</a> given
-      <var>fetchParams</var> and <var>response</var>.</ol>
+      <ol>
+       <li>Run the <a>WebDriver BiDi response completed</a> steps with <var>request</var> and
+       <var>response</var>.
+       <li><p>Set <var>response</var> to the result of running <a>HTTP-redirect fetch</a> given
+       <var>fetchParams</var> and <var>response</var>.
+      </ol>
     </dl>
     <!-- not resetting internalResponse since it's no longer used anyway -->
   </ol>
@@ -6200,6 +6234,10 @@ run these steps:
     <p class=note>This intentionally does not depend on <var>httpRequest</var>'s
     <a for=request>credentials mode</a>.
 
+   <!-- After this point the request is not further modified before being either
+        retrieved from the cache or sent -->
+   <li><p>Run the <a>WebDriver BiDi before request sent</a> steps with <var>request</var>.
+
    <li><p>Set <var>httpCache</var> to the result of <a>determining the HTTP cache partition</a>,
    given <var>httpRequest</var>.
 
@@ -6295,6 +6333,8 @@ run these steps:
  <li><p><a>If aborted</a>, then return the <a for=/>appropriate network error</a> for
  <var>fetchParams</var>.
 
+ <li><p>If <var>response</var> is not null, run the <a>WebDriver BiDi response
+ started</a> steps with <var>request</var> and <var>response</var>.
 
  <!-- If response is still null, we require a forwarded request. -->
  <li>
@@ -6565,6 +6605,9 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
        <li><p>Wait until all the HTTP response headers are transmitted.
 
+       <li><p>Run the <a>WebDriver BiDi response started</a> steps with
+       <var>request</var> and <var>response</var>.
+
        <li><p>Let <var>status</var> be the HTTP response's status code.
 
        <li>
@@ -6737,6 +6780,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Set <var>response</var>'s <a for=response>body</a> to a new <a for=/>body</a> whose
  <a for=body>stream</a> is <var>stream</var>.
 
+ <li><p>Run the <a>WebDriver BiDi clone network response body</a> steps with <var>request</var> and <var>response</var>.
+
  <li><p tracking-vector>If <var>includeCredentials</var> is true, then the user agent should
  <a>parse and store response `<code>Set-Cookie</code>` headers</a> given <var>request</var> and
  <var>response</var>.
@@ -6877,8 +6922,9 @@ populates the <a>CORS-preflight cache</a> to minimize the number of these
   <a for=request>origin</a> is <var>request</var>'s <a for=request>origin</a>,
   <a for=request>referrer</a> is <var>request</var>'s <a for=request>referrer</a>,
   <a for=request>referrer policy</a> is <var>request</var>'s <a for=request>referrer policy</a>,
-  <a for=request>mode</a> is "<code>cors</code>", and
-  <a for=request>response tainting</a> is "<code>cors</code>".
+  <a for=request>mode</a> is "<code>cors</code>",
+  <a for=request>response tainting</a> is "<code>cors</code>", and
+  <a for=request>WebDriver id</a> is <var>request</var>'s <a for=request>WebDriver id</a>.
 
   <p class=note>The <a for=request>service-workers mode</a> of <var>preflight</var> does not matter
   as this algorithm uses <a>HTTP-network-or-cache fetch</a> rather than <a>HTTP fetch</a>.
