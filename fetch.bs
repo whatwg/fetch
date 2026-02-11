@@ -81,9 +81,6 @@ urlPrefix:https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cooki
     "HTTP-CACHING": {
         "aliasOf": "RFC9111"
     },
-    "HTTP-COMPRESSION-DICTIONARIES": {
-        "aliasOf": "RFC9842"
-    },
     "HTTP1": {
         "aliasOf": "RFC9112"
     },
@@ -3345,7 +3342,7 @@ or an <a>implementation-defined</a> value.
 
  <li><p>If <var>key</var> is null, then return null.
 
- <li><p>Return the unique compression-dictionary cache associated with <var>key</var>. [[!HTTP-COMPRESSION-DICTIONARIES]]
+ <li><p>Return the unique compression-dictionary cache associated with <var>key</var>. [[!RFC9842]]
 </ol>
 </div>
 
@@ -6561,8 +6558,8 @@ run these steps:
 
  <li>
   <p>If <var>response</var>'s <a for=response>header list</a>
-  <a for="header list">contains</a> `<code>Use-As-Dictionary</code>`, then:
-  <!-- This is defined in [[!HTTP-COMPRESSION-DICTIONARIES]] -->
+  <a for="header list">contains</a> `<code>Use-As-Dictionary</code>`:
+  <!-- This is defined in [[!RFC9842]] -->
 
   <ol>
    <li><p>Let <var>dictionaryValue</var> be the result of
@@ -6596,7 +6593,7 @@ run these steps:
    <li><p>If <var>expirationTime</var> is not in the future, then return <var>response</var>.
 
    <li><p>Store <var>response</var> in <var>compressionDictionaryCache</var> with its associated
-   <var>dictionaryValue</var> and <var>expirationTime</var>.
+   <var>pattern</var>, <var>dictionaryValue</var> and <var>expirationTime</var>.
   </ol>
 
  <li><p>Return <var>response</var>. <span class=note>Typically <var>response</var>'s
@@ -6633,14 +6630,14 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
 
  <li><p>Let <var>bestMatch</var> be the result of finding the best matching dictionary in
  <var>compressionDictionaryCache</var> for <var>request</var> as defined in
- [[!HTTP-COMPRESSION-DICTIONARIES]].
+ [[!RFC9842]].
 
  <li><p>If <var>bestMatch</var> is null, then return the result of running <a>HTTP-network fetch</a>
  given <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
 
  <li><p>Add the `<code>Available-Dictionary</code>` and `<code>Dictionary-ID</code>`
  (if applicable) headers to <var>request</var> using <var>bestMatch</var> as defined in
- [[!HTTP-COMPRESSION-DICTIONARIES]].
+ [[!RFC9842]].
 
  <li><p><a for="header list">Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcb</code>`)
  in <var>request</var>'s <a for=request>header list</a>.
@@ -6673,7 +6670,7 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
  result of transforming <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a>
  with an algorithm that verifies that the dictionary hash in the stream matches
  <var>availableDictionaryHash</var> and decodes the rest of the stream with the applicable
- algorithm as defined in [[!HTTP-COMPRESSION-DICTIONARIES]]. If verification or decoding fails,
+ algorithm as defined in [[!RFC9842]]. If verification or decoding fails,
  the transformed stream must error.
 
  <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>newBody</var>.
@@ -6755,7 +6752,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
     <ul>
      <li><p>Follow the relevant requirements from HTTP. [[!HTTP]] [[!HTTP-CACHING]]
-     [[!HTTP-COMPRESSION-DICTIONARIES]]
+     [[!RFC9842]]
 
      <li>
       <p>If <var>request</var>'s <a for=request>body</a> is non-null, and <var>request</var>'s
