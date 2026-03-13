@@ -2,13 +2,15 @@ SHELL=/bin/bash -o pipefail
 .PHONY: local remote deploy
 
 remote: fetch.bs
-	@ (HTTP_STATUS=$$(curl https://api.csswg.org/bikeshed/ \
+	@ (HTTP_STATUS=$$(curl https://www.w3.org/publications/spec-generator/ \
 	                       --output fetch.html \
 	                       --write-out "%{http_code}" \
 	                       --header "Accept: text/plain, text/html" \
 	                       -F die-on=warning \
 	                       -F md-Text-Macro="COMMIT-SHA LOCAL COPY" \
-	                       -F file=@fetch.bs) && \
+	                       -F file=@fetch.bs \
+	                       -F type=bikeshed-spec \
+	                       -F output=html) && \
 	[[ "$$HTTP_STATUS" -eq "200" ]]) || ( \
 		echo ""; cat fetch.html; echo ""; \
 		rm -f fetch.html; \
