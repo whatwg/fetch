@@ -5088,7 +5088,7 @@ steps:
   <p>If <var>request</var>'s <a for=request>integrity metadata</a> is not the empty string, then:
 
   <ol>
-   <li><p>Let <var>processBodyError</var> be this step: run <a>fetch response handover</a> given
+   <li><p>Let <var>processBodyError</var> be this step: <a>retry or process response</a> given
    <var>fetchParams</var> and a <a>network error</a>.
 
    <li><p>If <var>response</var>'s <a for=response>body</a> is null, then run
@@ -5105,16 +5105,78 @@ steps:
      <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>bytes</var>
      <a for="byte sequence">as a body</a>.
 
-     <li><p>Run <a>fetch response handover</a> given <var>fetchParams</var> and <var>response</var>.
+     <li><p><a>Retry or process response</a> given <var>fetchParams</var> and <var>response</var>.
     </ol>
 
    <li><p><a for=body>Fully read</a> <var>response</var>'s <a for=response>body</a> given
    <var>processBody</var> and <var>processBodyError</var>.
   </ol>
 
- <li><p>Otherwise, run <a>fetch response handover</a> given <var>fetchParams</var> and
- <var>response</var>.
+ <li><p><a>Retry or process response</a> given <var>fetchParams</var> and <var>response</var>.
 </ol>
+</div>
+
+<hr>
+
+<div algorithm>
+<p>To <dfn>retry or process response</a> given <var>fetchParams</var> and <var>response</var>, run 
+the steps corresponding to the first matching statement:
+
+<dl class="switch">
+ <dt><var>response</var> is not a <a>network error</a>
+ <dt><var>fetchParams</var>'s <a for="fetch params">retry params</a> is null
+
+ <dd>Run <a>fetch response handover</a> given <var>fetchParams</var> and <var>response</var>.
+
+ <dt><var>fetchParams</var>'s <a for="fetch params">retry params</a>'s <a for="fetch retry
+ params">expiry time</a> is before the <a for=/>coarsened shared current time</a> given
+ <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>
+
+ <dt><var>fetchParams</var>'s <a for="fetch params">retry params</a>'s <a for="fetch retry
+ params">remaining attempts</a> is 0
+ <dt><var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>method</a> is
+ `<code>POST</code>`, `<code>PUT</code>`, `<code>PATCH</code>`, or `<code>DELETE</code>`, and
+ <var>retryParams</var>'s <a for="fetch retry params">allow non-idempotent methods</a> is false
+
+ <dt><var>response's</var> <a for=reponse>potentially transient error</a> is false
+
+ <dd>
+  <ol>
+   <li><p>Wait until the <a for=/>coarsened shared current time</a> given
+   <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a> is <a
+   for="fetch params">retry params</a>'s <a for="fetch retry params">expiry time</a>.
+
+   <li><p>Run <a>fetch response handover</a> given <var>fetchParams</var> and <var>response</var>.
+  </ol>
+
+ <dt>Otherwise
+ <dd>
+  <ol>
+   <li><p>Let <var>retryParams</var> be <var>fetchParams</var>'s <a for="fetch params">retry
+   params</a>.
+
+   <li><p>Let <var>errorTime</var> be the <a for=/>coarsened shared current time</a>given
+   <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
+
+   <li><p>Let <var>expiryTime</var> be <var>errorTime</var> + <var>retryParams</var>'s <a
+   for="fetch retry params">retry delay</a>. 
+
+   <li><p>Decrement <var>retryParams</var>'s <a for="fetch retry params">remaining attempts</a> by
+   1.
+
+   <li><p>Multiply <var>retryParams</var>'s <a for="fetch retry
+   params">retry delay</a> by <var>retryParams</var>'s <a for="fetch retry
+   params">backoff factor</a>.
+
+   <li><p>Wait until the <a for=/>coarsened shared current time</a> given
+   <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a> is
+   <var>expiryTime</var>.
+
+   <li><p>Run <a>main fetch</a> given <var>fetchParams</var>.
+  </ol>
+</dl>
+   
+
 </div>
 
 <hr>
