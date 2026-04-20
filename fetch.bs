@@ -2262,6 +2262,10 @@ Unless stated otherwise, it is unset.
 
 <p class=note>This flag is for exclusive use by HTML's navigate algorithm. [[!HTML]]
 
+<p>A <a for=/>request</a> has an associated
+<dfn for=request>retry params</dfn> (null or a <a>fetch retry params</a>). Unless stated otherwise,
+it is null.
+
 <p>A <a for=/>request</a> has an associated boolean <dfn export for=request>user-activation</dfn>.
 Unless stated otherwise, it is false.
 
@@ -2617,7 +2621,7 @@ this is also tracked internally using the request's <a for=request>timing allow 
 ("<code>same-origin</code>", "<code>same-site</code>", or "<code>cross-site</code>"), which is
 initially "<code>same-origin</code>".
 
-<p>A <a for=/>response</>a has an associated boolean <dfn for=response>potentially transient</dfn>,
+<p>A <a for=/>response</a> has an associated boolean <dfn for=response>potentially transient</dfn>,
 which is initially false.
 
 <hr>
@@ -2630,11 +2634,6 @@ which is initially false.
 
 <p>An <dfn export id=concept-aborted-network-error>aborted network error</dfn> is a
 <a>network error</a> whose <a for=response>aborted flag</a> is set.
-
-<p>A <dfn>potentially transient network error</dfn> is a <a>network error</a> whose <a
-for=response>potentially transient</a> is true.
-
-<p>A <dfn export>
 
 <div algorithm>
 <p>To create the <dfn>appropriate network error</dfn> given <a for=/>fetch params</a>
@@ -2921,9 +2920,9 @@ invoke a fetch at a later time, e.g., when a document is unloaded or becomes not
 
     <p><a>terminate</a> <var>record</var>'s <a for="fetch record">controller</a>.
 
-   <li><p>If <var>record</var>'s <a for="fetch record">retry params</a> is non-null and its
-   <a for="fetch retry params">allow after unload</a> is false, set <var>record</var>'s <a
-   for="fetch record">retry params</a>'s <a for="fetch retry params">remaining attempts</a> to 0.
+   <li><p>If <var>record</var>'s <a for="fetch record">request</a>'s <a for=request>retry params</a>
+   is non-null and its <a for="fetch retry params">allow after unload</a> is false, set
+   <var>record</var>'s <a for="fetch record">request</a>'s <a for=request>retry params</a> to null.
   </ol>
 
  <li><p><a>Process deferred fetches</a> for <var>fetchGroup</var>.
@@ -5154,32 +5153,34 @@ steps:
 <hr>
 
 <div algorithm>
-<p>To <dfn>retry or process response</a> given <var>fetchParams</var> and <var>response</var>, run 
+<p>To <dfn>retry or process response</dfn> given <var>fetchParams</var> and <var>response</var>, run 
 the steps corresponding to the first matching statement:
 
 <dl class="switch">
  <dt><var>response</var> is not a <a>network error</a>
- <dt><var>fetchParams</var>'s <a for="fetch params">retry params</a> is null
+ <dt><var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>retry params</a> is
+ null
 
  <dd>Run <a>fetch response handover</a> given <var>fetchParams</var> and <var>response</var>.
 
- <dt><var>fetchParams</var>'s <a for="fetch params">retry params</a>'s <a for="fetch retry
- params">expiry time</a> is before the <a for=/>coarsened shared current time</a> given
- <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>
+ <dt><var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>retry params</a>'s
+ <a for="fetch retry params">expiry time</a> is before the <a for=/>coarsened shared current
+ time</a> given <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>
 
- <dt><var>fetchParams</var>'s <a for="fetch params">retry params</a>'s <a for="fetch retry
- params">remaining attempts</a> is 0
+ <dt><var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>retry
+ params</a>'s <a for="fetch retry params">remaining attempts</a> is 0
  <dt><var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>method</a> is
  `<code>POST</code>`, `<code>PUT</code>`, `<code>PATCH</code>`, or `<code>DELETE</code>`, and
  <var>retryParams</var>'s <a for="fetch retry params">allow non-idempotent methods</a> is false
 
- <dt><var>response</var> is not a <a for="response">potentially transient network error</a>
+ <dt><var>response</var> is not <a for="response">potentially transient</a>
 
  <dd>
   <ol>
    <li><p>Wait until the <a for=/>coarsened shared current time</a> given
-   <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a> is <a
-   for="fetch params">retry params</a>'s <a for="fetch retry params">expiry time</a>.
+   <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a> is
+   <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>retry params</a>'s
+   <a for="fetch retry params">expiry time</a>.
 
    <li><p>Run <a>fetch response handover</a> given <var>fetchParams</var> and <var>response</var>.
   </ol>
@@ -5187,8 +5188,8 @@ the steps corresponding to the first matching statement:
  <dt>Otherwise
  <dd>
   <ol>
-   <li><p>Let <var>retryParams</var> be <var>fetchParams</var>'s <a for="fetch params">retry
-   params</a>.
+   <li><p>Let <var>retryParams</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>'s
+   <a for=request>retry params</a>.
 
    <li><p>Let <var>errorTime</var> be the <a for=/>coarsened shared current time</a>given
    <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
@@ -6603,7 +6604,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
 
  <li><p>If <var>request</var>'s <a for=request>client</a> <a>is offline</a>, then return a
- <a>potentially transient network error</a>.
+ <a>network error</a> whose <a for=response>potentially transient</a> is true.
 
  <li><p>Let <var>response</var> be null.
 
@@ -6640,8 +6641,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   <a for="fetch params">canceled</a>:
 
   <ol>
-   <li><p>If <var>connection</var> is failure, then return a <a>potentially transient network
-   error</a>.
+   <li><p>If <var>connection</var> is failure, then return a <a>network error</a> whose <a
+   for=response>potentially transient</a> is true.
 
    <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">final connection timing info</a> to
    the result of calling <a>clamp and coarsen connection timing info</a> with
@@ -6695,14 +6696,14 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
        agent's HTTP parser receives the first byte of the response (e.g., frame header bytes for
        HTTP/2 or response status line for HTTP/1.x).
 
-       <li><p>If <var>fetchParams</var> <a for="fetch params">retry params</a> is non-null and its
-       <a for="fetch retry params">allow post-connection errors</a> is false, then set
-       <var>fetchParams</var> <a for="fetch params">retry params</a> to null.
+       <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>retry
+       params</a> is non-null and its <a for="fetch retry params">allow post-connection errors</a>
+       is false, then set <a for="fetch params">request</a>'s <a for=request>retry params</a> to null.
 
        <li><p>Wait until all the HTTP response headers are transmitted.
 
        <li><p>If the connection was lost, reset, or timed out, then return a
-       <a>potentially transient network error</a>.
+       <a>network error</a> whose <a for=response>potentially transient</a> is true.
 
        <li><p>Let <var>status</var> be the HTTP response's status code.
 
@@ -8508,6 +8509,16 @@ interface Request {
 };
 Request includes Body;
 
+dictionary RetryOptions {
+  [EnforceRange] required unsigned short maxAttempts;
+  [EnforceRange] unsigned long long initialDelay;
+  double backoffFactor;
+  [EnforceRange] unsigned long long maxAge;
+  boolean retryAfterUnload;
+  boolean retryNonIdempotent;
+  boolean retryOnlyIfServerUnreached;
+};
+
 dictionary RequestInit {
   ByteString method;
   HeadersInit headers;
@@ -8524,6 +8535,7 @@ dictionary RequestInit {
   RequestDuplex duplex;
   RequestPriority priority;
   any window; // can only be set to null
+  [SecureContext] RetryOptions retryOptions;
 };
 
 enum RequestDestination { "", "audio", "audioworklet", "document", "embed", "font", "frame", "iframe", "image", "json", "manifest", "object", "paintworklet", "report", "script", "sharedworker", "style", "text", "track", "video", "worker", "xslt" };
@@ -8961,6 +8973,24 @@ constructor steps are:
 
  <li><p>If <var>init</var>["{{RequestInit/keepalive}}"] <a for=map>exists</a>, then set
  <var>request</var>'s <a for=request>keepalive</a> to it.
+
+ <li>
+  <p>If <var>init</var>["{{RequestInit/retryOptions}}"] <a for=map>exists</a>, then:
+
+  <ol>
+   <li><p>Let <var>options</var> be <var>init</var>["{{RequestInit/retryOptions}}"].
+
+   <li><p>Set <var>request</var>'s <a for=request>retry params</a> to a new <a>fetch retry params</a> whose
+   <a for="fetch retry params">remaining attempts</a> is <var>options</var>["{{RetryOptions/maxAttempts}}"],
+   <a for="fetch retry params">backoff factor</a> is <var>options</var>["{{RetryOptions/backoffFactor}}"] if it <a for=map>exists</a> and 1.0 otherwise,
+   <a for="fetch retry params">next delay</a> is <var>options</var>["{{RetryOptions/initialDelay}}"] if it <a for=map>exists</a> and 0 otherwise,
+   <a for="fetch retry params">allow after unload</a> is <var>options</var>["{{RetryOptions/retryAfterUnload}}"] if it <a for=map>exists</a> and false otherwise,
+   <a for="fetch retry params">allow non-idempotent methods</a> is <var>options</var>["{{RetryOptions/retryNonIdempotent}}"] if it <a for=map>exists</a> and false otherwise, and
+   <a for="fetch retry params">allow post-connection errors</a> is the negation of <var>options</var>["{{RetryOptions/retryOnlyIfServerUnreached}}"] if it <a for=map>exists</a> and true otherwise.
+
+   <li><p>If <var>options</var>["{{RetryOptions/maxAge}}"] <a for=map>exists</a>, then set
+   <var>request</var>'s <a for=request>retry params</a>'s <a for="fetch retry params">expiry time</a> to the result of adding <var>options</var>["{{RetryOptions/maxAge}}"] to the current time.
+  </ol>
 
  <li>
   <p>If <var>init</var>["{{RequestInit/method}}"] <a for=map>exists</a>, then:
@@ -9570,7 +9600,7 @@ method steps are:
 
  <li>
   <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
-  <var>request</var> and <a for=fetch><i>processResponse</i></a> given <var>response</var> being
+  <var>request</var>, and <a for=fetch><i>processResponse</i></a> given <var>response</var> being
   these steps:
 
   <ol>
