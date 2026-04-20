@@ -392,6 +392,23 @@ following <a for=struct>items</a>: [[RESOURCE-TIMING]] [[NAVIGATION-TIMING]]
  <dd>An <a for=/>ASCII string</a>.
 </dl>
 
+<p>A <dfn>fetch retry params</dfn> is a <a for=/>struct</a> used to maintain bookkeeping details for
+retrying <a method><code>fetch()</code></a> calls. It has the following <a for=struct>items</a>: 
+<dl>
+ <dt><dfn for="fetch retry params">expiry time</dfn>
+ <dd>A {{DOMHighResTimeStamp}}.
+
+ <dt><dfn for="fetch retry params">remaining attempts</dfn>
+ <dt><dfn for="fetch retry params">backoff factor</dfn>
+ <dt><dfn for="fetch retry params">next delay</dfn>
+ <dd>A number.
+
+ <dt><dfn for="fetch retry params">allow after unload</dfn>
+ <dt><dfn for="fetch retry params">allow non-idempotent methods</dfn>
+ <dt><dfn for="fetch retry params">allow post-connection errors</dfn>
+ <dd>A boolean.
+</dl>
+
 <div algorithm>
 <p>To
 <dfn export lt="create an opaque timing info|creating an opaque timing info">create an opaque timing info</dfn>,
@@ -2600,6 +2617,9 @@ this is also tracked internally using the request's <a for=request>timing allow 
 ("<code>same-origin</code>", "<code>same-site</code>", or "<code>cross-site</code>"), which is
 initially "<code>same-origin</code>".
 
+<p>A <a for=/>response</>a has an associated boolean <dfn for=response>potentially transient</dfn>,
+which is initially false.
+
 <hr>
 
 <p>A <dfn export id=concept-network-error>network error</dfn> is a <a for=/>response</a> whose
@@ -2610,6 +2630,11 @@ initially "<code>same-origin</code>".
 
 <p>An <dfn export id=concept-aborted-network-error>aborted network error</dfn> is a
 <a>network error</a> whose <a for=response>aborted flag</a> is set.
+
+<p>A <dfn>potentially transient network error</dfn> is a <a>network error</a> whose <a
+for=response>potentially transient</a> is true.
+
+<p>A <dfn export>
 
 <div algorithm>
 <p>To create the <dfn>appropriate network error</dfn> given <a for=/>fetch params</a>
@@ -2884,12 +2909,22 @@ invoke a fetch at a later time, e.g., when a document is unloaded or becomes not
 <dfn export for="fetch group" id=concept-fetch-group-terminate>terminated</dfn>:
 
 <ol>
- <li><p><a for=list>For each</a> <a for="fetch group">fetch record</a> <var>record</var> of
- <var>fetchGroup</var>'s <a for="fetch group">fetch records</a>, if <var>record</var>'s
- <a for="fetch record">controller</a> is non-null and <var>record</var>'s
- <a for="fetch record">request</a>'s <a>done flag</a> is unset and <a for=request>keepalive</a> is
- false, <a for="fetch controller">terminate</a> <var>record</var>'s
- <a for="fetch record">controller</a>.
+ <li>
+  <p><a for=list>For each</a> <a for="fetch group">fetch record</a> <var>record</var> of
+  <var>fetchGroup</var>'s <a for="fetch group">fetch records</a>:
+
+  <ol>
+   <li>
+    <p>If <var>record</var>'s <a for="fetch record">controller</a> is non-null and
+    <var>record</var>'s <a for="fetch record">request</a>'s <a>done flag</a> is unset and <a
+    for=request>keepalive</a> is false,
+
+    <p><a>terminate</a> <var>record</var>'s <a for="fetch record">controller</a>.
+
+   <li><p>If <var>record</var>'s <a for="fetch record">retry params</a> is non-null and its
+   <a for="fetch retry params">allow after unload</a> is false, set <var>record</var>'s <a
+   for="fetch record">retry params</a>'s <a for="fetch retry params">remaining attempts</a> to 0.
+  </ol>
 
  <li><p><a>Process deferred fetches</a> for <var>fetchGroup</var>.
 </ol>
@@ -5138,7 +5173,7 @@ the steps corresponding to the first matching statement:
  `<code>POST</code>`, `<code>PUT</code>`, `<code>PATCH</code>`, or `<code>DELETE</code>`, and
  <var>retryParams</var>'s <a for="fetch retry params">allow non-idempotent methods</a> is false
 
- <dt><var>response's</var> <a for=reponse>potentially transient error</a> is false
+ <dt><var>response</var> is not a <a for="response">potentially transient network error</a>
 
  <dd>
   <ol>
@@ -5159,14 +5194,13 @@ the steps corresponding to the first matching statement:
    <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a>.
 
    <li><p>Let <var>expiryTime</var> be <var>errorTime</var> + <var>retryParams</var>'s <a
-   for="fetch retry params">retry delay</a>. 
+   for="fetch retry params">next delay</a>. 
 
    <li><p>Decrement <var>retryParams</var>'s <a for="fetch retry params">remaining attempts</a> by
    1.
 
-   <li><p>Multiply <var>retryParams</var>'s <a for="fetch retry
-   params">retry delay</a> by <var>retryParams</var>'s <a for="fetch retry
-   params">backoff factor</a>.
+   <li><p>Multiply <var>retryParams</var>'s <a for="fetch retry params">next delay</a> by
+   <var>retryParams</var>'s <a for="fetch retry params">backoff factor</a>.
 
    <li><p>Wait until the <a for=/>coarsened shared current time</a> given
    <var>fetchParams</var>'s <a for="fetch params">cross-origin isolated capability</a> is
@@ -6569,7 +6603,7 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
 
  <li><p>If <var>request</var>'s <a for=request>client</a> <a>is offline</a>, then return a
- <a>network error</a>.
+ <a>potentially transient network error</a>.
 
  <li><p>Let <var>response</var> be null.
 
@@ -6606,7 +6640,8 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
   <a for="fetch params">canceled</a>:
 
   <ol>
-   <li><p>If <var>connection</var> is failure, then return a <a>network error</a>.
+   <li><p>If <var>connection</var> is failure, then return a <a>potentially transient network
+   error</a>.
 
    <li><p>Set <var>timingInfo</var>'s <a for="fetch timing info">final connection timing info</a> to
    the result of calling <a>clamp and coarsen connection timing info</a> with
@@ -6660,7 +6695,14 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
        agent's HTTP parser receives the first byte of the response (e.g., frame header bytes for
        HTTP/2 or response status line for HTTP/1.x).
 
+       <li><p>If <var>fetchParams</var> <a for="fetch params">retry params</a> is non-null and its
+       <a for="fetch retry params">allow post-connection errors</a> is false, then set
+       <var>fetchParams</var> <a for="fetch params">retry params</a> to null.
+
        <li><p>Wait until all the HTTP response headers are transmitted.
+
+       <li><p>If the connection was lost, reset, or timed out, then return a
+       <a>potentially transient network error</a>.
 
        <li><p>Let <var>status</var> be the HTTP response's status code.
 
