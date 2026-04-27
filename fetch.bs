@@ -3604,9 +3604,57 @@ request <a for=/>header</a> indicates where a
 <!-- Ian Hickson told me Adam Barth researched that -->
 
 <p>Its possible <a for=header>values</a> are all the return values of
-<a>byte-serializing a request origin</a>, given a <a for=/>request</a>.
+<a>byte-serializing a request origin</a>, given a <a for=/>request</a>. These are represented by
+the following <a>ABNF</a>:
 
-<p class=note>This supplants the definition in <cite>The Web Origin Concept</cite>. [[ORIGIN]]
+<pre><code class=lang-abnf>
+<dfn export>serialized-ipv4</dfn> = <a>dec-octet</a> "." <a>dec-octet</a> "." <a>dec-octet</a> "." <a>dec-octet</a>
+<dfn export>dec-octet</dfn>       = DIGIT                 ; 0-9
+                / %x31-39 DIGIT         ; 10-99
+                / "1" 2DIGIT            ; 100-199
+                / "2" %x30-34 DIGIT     ; 200-249
+                / "25" %x30-35          ; 250-255
+
+<dfn export>serialized-ipv6</dfn> =                       7( h16 ":" ) h16
+                /                       "::" 5( h16 ":" ) h16
+                / [               h16 ] "::" 4( h16 ":" ) h16
+                / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) h16
+                / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) h16
+                / [ *3( h16 ":" ) h16 ] "::"    h16 ":"   h16
+                / [ *4( h16 ":" ) h16 ] "::"              h16
+                / [ *5( h16 ":" ) h16 ] "::"
+<dfn export>h16</dfn>             = "0" / ( non-zero-hex 0*3hex )
+<dfn export>non-zero-hex</dfn>    = %x31-39 / %x61-66 ; '1'-'9' or lowercase 'a'-'f'
+<dfn export>hex</dfn>             = %x30-39 / %x61-66 ; '0'-'9' or lowercase 'a'-'f
+
+<dfn export>lower-ascii</dfn>       = %x61-7A
+<dfn export>serialized-domain</dfn> = 1*( <a>lower-ascii</a> / DIGIT / "-" / "." / "_" )
+
+<dfn export>serialized-scheme</dfn> = lower-ascii *( lower-ascii / DIGIT / "+" / "-" / "." )
+<dfn export>serialized-host</dfn>   = <a>serialized-ipv4</a> / <a>serialized-ipv6</a> / <a>serialized-domain</a>
+<dfn export>serialized-port</dfn>   = *DIGIT
+
+<dfn export>serialized-origin</dfn> = <a>serialized-scheme</a> "://" <a>serialized-host</a> [ ":" <a>serialized-port</a> ]
+<dfn export>origin-or-null</dfn>    = <a>serialized-origin</a> / %s"null" ; case-sensitive
+
+Origin = <a>origin-or-null</a>
+</code></pre>
+
+<div class=note>
+<p>This supplants the definition in <cite>The Web Origin Concept</cite>. [[ORIGIN]]
+
+<p>The origin serialization defined here is more constrained than [[RFC3986]]'s grammar in two
+substantial ways. First, scheme and domains serializations are all lower case ASCII, without
+percent encoding. Second, following the recommendations of [[URL#host-serializing]] and [[RFC5952]],
+IPv6 addresses are limited as follows:
+
+<ul class=brief>
+  <li>The least-significant digits cannot be represented as an IPv4 address.
+  <li>Leading zeros are forbidden.
+  <li>All hex characters are lowercase.
+  <li>"::" can't elide only a single "0" block, so we allow at most 6 blocks when "::" is present.
+</ul>
+</div>
 
 <hr>
 
@@ -3819,7 +3867,6 @@ tactics can differ between the response to the <a>CORS-preflight request</a> and
 Access-Control-Request-Method    = <a spec=http>method</a>
 Access-Control-Request-Headers   = 1#<a spec=http>field-name</a>
 
-<dfn export>origin-or-null</dfn>                   = <a spec=rfc6454>serialized-origin</a> / %s"null" ; case-sensitive
 <dfn export>wildcard</dfn>                         = "*"
 Access-Control-Allow-Origin      = <a>origin-or-null</a> / <a>wildcard</a>
 
