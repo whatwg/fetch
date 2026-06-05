@@ -8259,6 +8259,7 @@ interface mixin Body {
   [NewObject] Promise&lt;FormData> formData();
   [NewObject] Promise&lt;any> json();
   [NewObject] Promise&lt;USVString> text();
+  [NewObject] ReadableStream textStream();
 };</pre>
 
 <p class=note>Formats you would not want a network layer to be dependent upon, such as
@@ -8300,6 +8301,9 @@ due course.
 
  <dt><code><var>requestOrResponse</var> . <a method for=Body>text</a>()</code>
  <dd><p>Returns a promise fulfilled with <var>requestOrResponse</var>'s body as string.
+
+ <dt><code><var>requestOrResponse</var> . <a method for=Body>textStream</a>()</code>
+ <dd><p>Returns a {{ReadableStream}} object with <var>requestOrResponse</var>'s body as string chunks.
 </dl>
 
 <hr>
@@ -8471,6 +8475,43 @@ of running <a for=Body>consume body</a> with <a>this</a> and <a>parse JSON from 
 <div algorithm>
 <p>The <dfn method for=Body><code>text()</code></dfn> method steps are to return the result
 of running <a for=Body>consume body</a> with <a>this</a> and <a>UTF-8 decode</a>.
+</div>
+
+<div algorithm>
+<p>The <dfn method for=Body><code>textStream()</code></dfn> method steps are:</p>
+
+<ol>
+ <li><p>If <span>this</span> is <a for=Body>unusable</a>, then throw a {{TypeError}}.
+
+ <li>
+  <p>If <span>this</span>'s <a for=Body>body</a> is null:
+
+  <ol>
+   <li><p>Let <var>emptyStream</var> be a new {{ReadableStream}} in <a>this</a>'s
+   <a>relevant realm</a>.
+
+   <li><p><a for="ReadableStream">Set up</a> <var>emptyStream</var>.
+
+   <li><p><a for="ReadableStream">Close</a> <var>emptyStream</var>.
+
+   <li><p>Return <var>emptyStream</var>.
+  </ol>
+
+ <li><p>Let <var>stream</var> be <a>this</a>'s <a for=Body>body</a>'s <a for=body>stream</a>.
+
+ <li><p>Let <var>decoder</var> be a new {{TextDecoderStream}} object in <a>this</a>'s
+ <a>relevant realm</a>.
+
+ <li>
+  <p><a data-lt="set up a text decoder stream">Set up</a> <var>decoder</var> with
+  <a for=/>UTF-8</a>.
+
+  <p class=note>This is done regardless of the presence or the value of a
+  `<code>Content-Type</code>` header and regardless of the presence or the value of a
+  `<code>charset</code>` parameter.</p>
+
+ <li><p>Return the result of <var>stream</var>, <a>piped through</a> <var>decoder</var>.
+</ol>
 </div>
 
 
