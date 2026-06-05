@@ -2307,10 +2307,15 @@ Unless stated otherwise, it is unset.
 <dfn export for=request id=timing-allow-failed>timing allow failed flag</dfn>. Unless stated
 otherwise, it is unset.
 
+<p>A <a for=/>request</a> has an associated
+<dfn for=request>timing allow check set</dfn> (a <a for=/>list</a> of zero or more
+<a for=/>strings</a>). Unless stated otherwise, it is « "<code>*</code>" ».
+
 <p class=note>A <a for=/>request</a>'s <a for=request>URL list</a>, <a for=request>current URL</a>,
 <a for=request>redirect count</a>, <a for=request>response tainting</a>,
-<a for=request>done flag</a>, and <a for=request>timing allow failed flag</a> are used as
-bookkeeping details by the <a for=/>fetch</a> algorithm.
+<a for=request>done flag</a>, <a for=request>timing allow failed flag</a>, and
+<a for=request>timing allow check set</a> are used as bookkeeping details by the
+<a for=/>fetch</a> algorithm.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-webdriver-id>WebDriver id</dfn>
@@ -2607,6 +2612,14 @@ initially unset.
 allowed on the resource fetched by looking at the flag of the response returned. Because the flag on
 the response of a redirect has to be set if it was set for previous responses in the redirect chain,
 this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
+
+<p>A <a for=/>response</a> has an associated
+<dfn export for=response>timing allow check set</dfn> (a <a for=/>list</a> of zero or more
+<a for=/>strings</a>). Unless stated otherwise, it is « "<code>*</code>" ».
+
+<p class=note>This is used by <a for=/>responses</a> to <a>navigation requests</a> so that
+callers can determine, once the navigation's destination origin is known, whether that origin is
+allowed by every redirect in the redirect chain.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-body-info>body info</dfn>
@@ -5104,6 +5117,10 @@ steps:
  <li><p>Set <var>internalResponse</var>'s <a for=response>redirect taint</a> to <var>request</var>'s
  <a for=request>redirect-taint</a>.
 
+ <li><p>If <var>request</var> is a <a>navigation request</a>, then set
+ <var>internalResponse</var>'s <a for=response>timing allow check set</a> to a <a for=list>clone</a>
+ of <var>request</var>'s <a for=request>timing allow check set</a>.
+
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set
  <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
 
@@ -5884,6 +5901,10 @@ these steps:
   <p>If <var>internalResponse</var>'s <a for=response>status</a> is a <a>redirect status</a>:
 
   <ol>
+   <li><p>If <var>request</var> is a <a>navigation request</a>, then
+   <a>update a request's timing allow check set</a> given <var>request</var> and
+   <var>internalResponse</var>.
+
    <li>
     <p>If <var>internalResponse</var>'s <a for=response>status</a> is not 303, <var>request</var>'s
     <a for=request>body</a> is non-null, and the <a>connection</a> uses HTTP/2, then user agents
@@ -7308,6 +7329,66 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
  return success.
 
  <li><p>Return failure.
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>update a request's timing allow check set</dfn>, given a <a for=/>request</a>
+<var>request</var> and a <a for=/>response</a> <var>response</var>, run these steps:
+
+<ol>
+ <li><p><a for=/>Assert</a>: <var>request</var> is a <a>navigation request</a>.
+
+ <li><p>Let <var>values</var> be the result of
+ <a for="header list">getting, decoding, and splitting</a> `<code>Timing-Allow-Origin</code>` from
+ <var>response</var>'s <a for=response>header list</a>.
+
+ <li><p>If <var>values</var> is null, then set <var>values</var> to « ».
+
+ <li><p>Let <var>newSet</var> be « ».
+
+ <li>
+  <p><a for=list>For each</a> <var>value</var> of <var>request</var>'s
+  <a for=request>timing allow check set</a>:
+
+  <ol>
+   <li><p>If <var>values</var> <a for=list>contains</a> <var>value</var>, or
+   <var>values</var> <a for=list>contains</a> "<code>*</code>", then <a for=list>append</a>
+   <var>value</var> to <var>newSet</var>.
+  </ol>
+
+ <li>
+  <p>If <var>request</var>'s <a for=request>timing allow check set</a> <a for=list>contains</a>
+  "<code>*</code>", then <a for=list>for each</a> <var>value</var> of <var>values</var>:
+
+  <ol>
+   <li><p>If <var>newSet</var> <a for=list>contains</a> <var>value</var>, then
+   <a for=iteration>continue</a>.
+
+   <li><p><a for=list>Append</a> <var>value</var> to <var>newSet</var>.
+  </ol>
+
+ <li><p>If <var>values</var> <a for=list>contains</a> "<code>*</code>" is false, then
+ <a for=list>remove</a> "<code>*</code>" from <var>newSet</var>.
+
+ <li><p>Set <var>request</var>'s <a for=request>timing allow check set</a> to <var>newSet</var>.
+</ol>
+</div>
+
+<div algorithm>
+<p>To perform a <dfn export id=concept-navigation-tao-check>navigation TAO check</dfn> for a
+<a for=/>response</a> <var>response</var> and an <a for=/>origin</a>
+<var>destinationOrigin</var>, run these steps. They return a boolean.
+
+<ol>
+ <li><p>If <var>response</var>'s <a for=response>timing allow check set</a> <a for=list>contains</a>
+ "<code>*</code>", then return true.
+
+ <li><p>If <var>response</var>'s <a for=response>timing allow check set</a> <a for=list>contains</a>
+ <var>destinationOrigin</var>, <a lt="ASCII serialization of an origin">serialized</a>, then return
+ true.
+
+ <li><p>Return false.
 </ol>
 </div>
 
