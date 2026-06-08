@@ -22,6 +22,7 @@ urlPrefix:https://httpwg.org/specs/rfc9651.html#;type:dfn;spec:rfc9651
     url:text-parse;text:parsing structured fields
     url:;text:structured header
     url:token;text:structured field token
+    url:parse-bare-item;text:bare item
 
 urlPrefix:https://httpwg.org/specs/rfc9110.html#;type:dfn;spec:http
     url:method.overview;text:method
@@ -6633,7 +6634,7 @@ run these steps:
    <li><p>If <var>compressionDictionaryCache</var> is null, then return <var>response</var>.
 
    <li><p>Let <var>pattern</var> be the result of
-   <a for=/>creating a URL pattern</a> given the bare item of <var>dictionaryValue</var>["<code>match</code>"],
+   <a for=/>creating a URL pattern</a> given the <a>bare item</a> of <var>dictionaryValue</var>["<code>match</code>"],
    the <a lt="URL serializer">serialization</a> of <var>request</var>'s <a for=request>current URL</a>,
    and an empty map.
 
@@ -6666,31 +6667,34 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
 <ol>
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
 
+ <li>
+  <p>Let <var>fallback</var> be the following steps:
+
+  <ol>
+   <li><p>Return the result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
+   <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+  </ol>
+
  <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>no-cors</code>", then return the
- result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
- <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+ result of running <var>fallback</var>.
 
  <li><p>If the user agent is configured to block cookies for <var>request</var>, then return the
- result of running <a>HTTP-network fetch</a> given <var>fetchParams</var>,
- <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+ result of running <var>fallback</var>.
 
  <li><p>Let <var>compressionDictionaryCache</var> be the result of
  <a>determining the compression-dictionary cache partition</a> given <var>request</var>.
 
  <li><p>If <var>compressionDictionaryCache</var> is null, then return the result of running
- <a>HTTP-network fetch</a> given <var>fetchParams</var>, <var>includeCredentials</var>, and
- <var>forceNewConnection</var>.
+ <var>fallback</var>.
 
  <li><p>Let <var>bestMatch</var> be the result of finding the best matching dictionary in
  <var>compressionDictionaryCache</var> for <var>request</var> as defined in
- [[!RFC9842]].
+ [[!RFC9842]] section 2.2.
 
- <li><p>If <var>bestMatch</var> is null, then return the result of running <a>HTTP-network fetch</a>
- given <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+ <li><p>If <var>bestMatch</var> is null, then return the result of running <var>fallback</var>.
 
- <li><p>Add the `<code>Available-Dictionary</code>` and `<code>Dictionary-ID</code>`
- (if applicable) headers to <var>request</var> using <var>bestMatch</var> as defined in
- [[!RFC9842]].
+ <li><p>Add the `<code>Available-Dictionary</code>` ([[!RFC9842]] section 2.2) and `<code>Dictionary-ID</code>`
+ ([[!RFC9842]] section 2.3) (if applicable) headers to <var>request</var> using <var>bestMatch</var>.
 
  <li><p><a for="header list">append</a> (`<code>Accept-Encoding</code>`, `<code>dcb</code>`)
  to <var>request</var>'s <a for=request>header list</a>.
@@ -6698,8 +6702,7 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
  <li><p><a for="header list">append</a> (`<code>Accept-Encoding</code>`, `<code>dcz</code>`)
  to <var>request</var>'s <a for=request>header list</a>.
 
- <li><p>Let <var>response</var> be the result of running <a>HTTP-network fetch</a> given
- <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
+ <li><p>Let <var>response</var> be the result of running <var>fallback</var>.
 
  <li><p>Let <var>codings</var> be the result of <a>extracting header list values</a> given
  `<code>Content-Encoding</code>` and <var>response</var>'s <a for=response>header list</a>.
@@ -6716,7 +6719,7 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
 
  <li><p>If <var>availableDictionaryItem</var> is null, then return a <a>network error</a>.
 
- <li><p>Let <var>availableDictionaryHash</var> be the bare item of <var>availableDictionaryItem</var>.
+ <li><p>Let <var>availableDictionaryHash</var> be the <a>bare item</a> of <var>availableDictionaryItem</var>.
 
  <li><p>Let <var>newBody</var> be a new <a for=/>body</a> whose <a for=body>stream</a> is the
  result of transforming <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a>
