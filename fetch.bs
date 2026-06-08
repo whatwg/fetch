@@ -1826,8 +1826,8 @@ device to assist defining CSP and Mixed Content. It is not exposed to JavaScript
 <p>A <dfn export>destination type</dfn> is one of:
 the empty string,
 "<code>audio</code>",
-"<code>compression-dictionary</code>",
 "<code>audioworklet</code>",
+"<code>compression-dictionary</code>",
 "<code>document</code>",
 "<code>embed</code>",
 "<code>font</code>",
@@ -1979,7 +1979,7 @@ not always relevant and might require different behavior.
   <tr>
    <td>"<code>compression-dictionary</code>"
    <td><code>connect-src</code>
-   <td>HTML's <code>&lt;link rel=compression-dictionary&gt;</code>
+   <td>HTML's <code>&lt;link rel=compression-dictionary></code>
   <tr>
    <td>"<code>download</code>"
    <td>""
@@ -6646,7 +6646,7 @@ run these steps:
    <li><p>If <var>expirationTime</var> is not in the future, then return <var>response</var>.
 
    <li><p>Store <var>response</var> in <var>compressionDictionaryCache</var> with its associated
-   <var>pattern</var>, <var>dictionaryValue</var> and <var>expirationTime</var>.
+   <var>pattern</var>, <var>dictionaryValue</var>, and <var>expirationTime</var>.
   </ol>
 
  <li><p>Return <var>response</var>. <span class=note>Typically <var>response</var>'s
@@ -6661,7 +6661,7 @@ run these steps:
 <p>To <dfn id=concept-http-network-compression-dictionary-fetch>HTTP-network compression-dictionary fetch</dfn>,
 given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
 <var>includeCredentials</var> (default false), and an optional boolean <var>forceNewConnection</var>
-(default false), run these steps:
+(default false):
 
 <ol>
  <li><p>Let <var>request</var> be <var>fetchParams</var>'s <a for="fetch params">request</a>.
@@ -6692,11 +6692,11 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
  (if applicable) headers to <var>request</var> using <var>bestMatch</var> as defined in
  [[!RFC9842]].
 
- <li><p><a for="header list">Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcb</code>`)
- in <var>request</var>'s <a for=request>header list</a>.
+ <li><p><a for="header list">append</a> (`<code>Accept-Encoding</code>`, `<code>dcb</code>`)
+ to <var>request</var>'s <a for=request>header list</a>.
 
- <li><p><a for="header list">Combine</a> (`<code>Accept-Encoding</code>`, `<code>dcz</code>`)
- in <var>request</var>'s <a for=request>header list</a>.
+ <li><p><a for="header list">append</a> (`<code>Accept-Encoding</code>`, `<code>dcz</code>`)
+ to <var>request</var>'s <a for=request>header list</a>.
 
  <li><p>Let <var>response</var> be the result of running <a>HTTP-network fetch</a> given
  <var>fetchParams</var>, <var>includeCredentials</var>, and <var>forceNewConnection</var>.
@@ -6711,7 +6711,7 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
  then return a <a>network error</a>.
 
  <li><p>Let <var>availableDictionaryItem</var> be the result of
- <a>getting a structured field value</a> given `<code>Available-Dictionary</code>`,
+ <a for="header list">getting a structured field value</a> given `<code>Available-Dictionary</code>`,
  "<code>item</code>", and <var>request</var>'s <a for=request>header list</a>.
 
  <li><p>If <var>availableDictionaryItem</var> is null, then return a <a>network error</a>.
@@ -6723,11 +6723,11 @@ given a <a for=/>fetch params</a> <var>fetchParams</var>, an optional boolean
  with an algorithm that verifies that the dictionary hash in the stream matches
  <var>availableDictionaryHash</var> and decodes the rest of the stream with the applicable
  algorithm as defined in [[!RFC9842]]. If verification or decoding fails,
- the transformed stream must error.
+ error the transformed stream.
 
  <li><p>Set <var>response</var>'s <a for=response>body</a> to <var>newBody</var>.
 
- <li><p><a>Delete</a> `<code>Content-Encoding</code>` from <var>response</var>'s
+ <li><p><a for="header list">delete</a> `<code>Content-Encoding</code>` from <var>response</var>'s
  <a for=response>header list</a>.
 
  <li><p>Return <var>response</var>.
