@@ -2308,13 +2308,17 @@ Unless stated otherwise, it is unset.
 otherwise, it is unset.
 
 <p>A <a for=/>request</a> has an associated
-<dfn for=request>navigation timing allow check set</dfn> (an <a for=/>ordered set</a> of zero
-or more <a for=/>strings</a>). Unless stated otherwise, it is « "<code>*</code>" ».
+<dfn for=request>navigation timing allow check list</dfn> (a <a for=/>list</a> of
+<a for=/>lists</a> of <a for=/>strings</a>). Unless stated otherwise, it is « ».
+
+<p class=note>Each <a for=list>item</a> in the <a for=request>navigation timing allow check list</a>
+holds the `<code>Timing-Allow-Origin</code>` values of one redirect <a for=/>response</a> in a
+navigation's redirect chain.
 
 <p class=note>A <a for=/>request</a>'s <a for=request>URL list</a>, <a for=request>current URL</a>,
 <a for=request>redirect count</a>, <a for=request>response tainting</a>,
 <a for=request>done flag</a>, <a for=request>timing allow failed flag</a>, and
-<a for=request>navigation timing allow check set</a> are used as bookkeeping details by the
+<a for=request>navigation timing allow check list</a> are used as bookkeeping details by the
 <a for=/>fetch</a> algorithm.
 
 <p>A <a for=/>request</a> has an associated
@@ -2614,12 +2618,13 @@ the response of a redirect has to be set if it was set for previous responses in
 this is also tracked internally using the request's <a for=request>timing allow failed flag</a>.
 
 <p>A <a for=/>response</a> has an associated
-<dfn export for=response>navigation timing allow check set</dfn> (an <a for=/>ordered set</a> of
-zero or more <a for=/>strings</a>). Unless stated otherwise, it is « "<code>*</code>" ».
+<dfn export for=response>navigation timing allow check list</dfn> (a <a for=/>list</a> of
+<a for=/>lists</a> of <a for=/>strings</a>). Unless stated otherwise, it is « ».
 
-<p class=note>This is used by <a for=/>responses</a> to <a>navigation requests</a> so that
-callers can determine, once the navigation's destination origin is known, whether that origin is
-allowed by every redirect in the redirect chain.
+<p class=note>This holds the `<code>Timing-Allow-Origin</code>` values of each redirect
+<a for=/>response</a> in a navigation's redirect chain. It is used so that callers can determine,
+once the navigation's destination origin is known, whether that origin is allowed by every redirect
+in the redirect chain.
 
 <p>A <a for=/>response</a> has an associated
 <dfn export for=response id=concept-response-body-info>body info</dfn>
@@ -5118,9 +5123,9 @@ steps:
  <a for=request>redirect-taint</a>.
 
  <li><p>If <var>request</var> is a <a>navigation request</a>, then set
- <var>internalResponse</var>'s <a for=response>navigation timing allow check set</a> to a
- <a for=set>clone</a> of <var>request</var>'s
- <a for=request>navigation timing allow check set</a>.
+ <var>internalResponse</var>'s <a for=response>navigation timing allow check list</a> to a
+ <a for=list>clone</a> of <var>request</var>'s
+ <a for=request>navigation timing allow check list</a>.
 
  <li><p>If <var>request</var>'s <a for=request>timing allow failed flag</a> is unset, then set
  <var>internalResponse</var>'s <a for=response>timing allow passed flag</a>.
@@ -5903,7 +5908,7 @@ these steps:
 
   <ol>
    <li><p>If <var>request</var> is a <a>navigation request</a>, then
-   <a>restrict a request's navigation timing allow check set</a> given <var>request</var> and
+   <a>append to a request's navigation timing allow check list</a> given <var>request</var> and
    <var>internalResponse</var>.
 
    <li>
@@ -7334,7 +7339,7 @@ agent's <a>CORS-preflight cache</a> for which there is a <a>cache entry match</a
 </div>
 
 <div algorithm>
-<p>To <dfn>restrict a request's navigation timing allow check set</dfn>, given a
+<p>To <dfn>append to a request's navigation timing allow check list</dfn>, given a
 <a for=/>request</a> <var>request</var> and a <a for=/>response</a> <var>response</var>, run these
 steps:
 
@@ -7347,40 +7352,8 @@ steps:
 
  <li><p>If <var>taoValues</var> is null, then set <var>taoValues</var> to « ».
 
- <li><p>If <var>taoValues</var> <a for=list>contains</a> "<code>*</code>", then return.
- <p class="note">If the current response contains "*", it does not further restrict the chain.
-
- <li><p>Let <var>currentSet</var> be <var>request</var>'s
- <a for=request>navigation timing allow check set</a>.
-
- <li><p>Let <var>newSet</var> be a new <a for=/>ordered set</a>.
-
- <li>
-  <p>If <var>currentSet</var> <a for=set>contains</a> "<code>*</code>", then:
-
-  <p class=note>If all previous responses in the chain contained "<code>*</code>", the current
-  response's values can be taken as is.
-
-  <ol>
-   <li><p><a for=list>For each</a> <var>taoValue</var> of <var>taoValues</var>,
-   <a for=set>append</a> <var>taoValue</var> to <var>newSet</var>.
-
-   <li><p>Set <var>request</var>'s <a for=request>navigation timing allow check set</a> to
-   <var>newSet</var>.
-
-   <li><p>Return.
-  </ol>
-
- <li>
-  <p><a for=set>For each</a> <var>allowedOrigin</var> of <var>currentSet</var>:
-
-  <ol>
-   <li><p>If <var>taoValues</var> <a for=list>contains</a> <var>allowedOrigin</var>, then
-   <a for=set>append</a> <var>allowedOrigin</var> to <var>newSet</var>.
-  </ol>
-
- <li><p>Set <var>request</var>'s <a for=request>navigation timing allow check set</a> to
- <var>newSet</var>.
+ <li><p><a for=list>Append</a> <var>taoValues</var> to <var>request</var>'s
+ <a for=request>navigation timing allow check list</a>.
 </ol>
 </div>
 
@@ -7390,14 +7363,21 @@ steps:
 <var>destinationOrigin</var>, run these steps:
 
 <ol>
- <li><p>If <var>response</var>'s <a for=response>navigation timing allow check set</a>
- <a for=set>contains</a> "<code>*</code>", then return success.
+ <li>
+  <p><a for=list>For each</a> <var>taoValues</var> of <var>response</var>'s
+  <a for=response>navigation timing allow check list</a>:
 
- <li><p>If <var>response</var>'s <a for=response>navigation timing allow check set</a>
- <a for=set>contains</a> <var>destinationOrigin</var>,
- <a lt="ASCII serialization of an origin">serialized</a>, then return success.
+  <ol>
+   <li><p>If <var>taoValues</var> <a for=list>contains</a> "<code>*</code>", then
+   <a for=iteration>continue</a>.
 
- <li><p>Return failure.
+   <li><p>If <var>taoValues</var> <a for=list>contains</a> <var>destinationOrigin</var>,
+   <a lt="ASCII serialization of an origin">serialized</a>, then <a for=iteration>continue</a>.
+
+   <li><p>Return failure.
+  </ol>
+
+ <li><p>Return success.
 </ol>
 </div>
 
