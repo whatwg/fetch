@@ -622,9 +622,17 @@ efficient representation, as long as they also support an associated data struct
 <dfn export for="header list" id=concept-header-list-hidden-range-value>hidden range value</dfn>
 (null or a <a for=/>header value</a>). It is initially null.
 
-<p class=note>This is for cases where a "<code>no-cors</code>" <a for=/>request</a> needs to include a
-`<code>Range</code>` header, but it can not be exposed via {{Headers}}. See <a for=request>add a range
-header</a>.
+<div class=note>
+ <p>This is for cases where a "<code>no-cors</code>" <a for=/>request</a> needs to include a
+ `<code>Range</code>` header, but it can not be exposed via {{Headers}}. It can be set by privileged
+ APIs, and will be preserved if its associated request object is copied, but will be removed if the
+ request is modified by unprivileged APIs.
+
+ <p>`<code>Range</code>` headers are commonly used by <a lt="download the hyperlink">downloads</a>
+ and <a lt="resource fetch algorithm">media fetches</a>.
+
+ <p>A helper is provided to <a for=request>add a range header</a> to a particular request.
+</div>
 
 <div algorithm>
 <p>To <dfn export for="header list" id=concept-header-list-get-range-value>get the range value</dfn>
@@ -1160,23 +1168,6 @@ following is true:
 
 <p>A <dfn export>CORS non-wildcard request-header name</dfn> is a <a for=/>header name</a> that is a
 <a>byte-case-insensitive</a> match for `<code>Authorization</code>`.
-
-<p>A <dfn export>privileged no-CORS request-header name</dfn> is a <a for=/>header name</a> that is
-a <a>byte-case-insensitive</a> match for one of
-
-<ul class=brief>
- <li>`<code>Range</code>`.
-</ul>
-
-<div class=note>
- <p>These are headers that can be set by privileged APIs, and will be preserved if their associated
- request object is copied, but will be removed if the request is modified by unprivileged APIs.
-
- <p>`<code>Range</code>` headers are commonly used by <a lt="download the hyperlink">downloads</a>
- and <a lt="resource fetch algorithm">media fetches</a>.
-
- <p>A helper is provided to <a for=request>add a range header</a> to a particular request.
-</div>
 
 <p>A <dfn export>CORS-safelisted response-header name</dfn>, given a <a for=/>list</a> of
 <a for=/>header names</a> <var>list</var>, is a <a for=/>header name</a> that is a
@@ -8015,20 +8006,8 @@ value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted requ
 <div algorithm>
 <p>To
 <dfn for=Headers id=concept-headers-remove-privileged-no-cors-request-headers>remove privileged no-CORS request-headers</dfn>
-from a {{Headers}} object (<var>headers</var>), run these steps:
-
-<ol>
- <li><p><a for="list">For each</a> <var>headerName</var> of
- <a>privileged no-CORS request-header names</a>:
-
- <ol>
-  <li><p><a for="header list">Delete</a> <var>headerName</var> from <var>headers</var>'s
-  <a for=Headers>header list</a>.
- </ol>
-
- <li><p>Set <var>headers</var>'s <a for=Headers>header list</a>'s
- <a for="header list">hidden range value</a> to null.
-</ol>
+from a {{Headers}} object (<var>headers</var>), set <var>headers</var>'s
+<a for=Headers>header list</a>'s <a for="header list">hidden range value</a> to null.
 
 <p class=note>This is called when headers are modified by unprivileged code.
 </div>
@@ -8074,7 +8053,7 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
 
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", <var>name</var>
  is not a <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not a
- <a>privileged no-CORS request-header name</a>, then return.
+ <a>byte-case-insensitive</a> match for `<code>Range</code>`, then return.
 
  <li><p>If <a>this</a>'s <a for=Headers>header list</a> <a for="header list">does not contain</a>
  <var>name</var>, then return.
