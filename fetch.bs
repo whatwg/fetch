@@ -619,6 +619,35 @@ are always combined when exposed to client-side JavaScript, implementations coul
 efficient representation, as long as they also support an associated data structure for
 `<code>Set-Cookie</code>` headers.
 
+<p>A <a for=/>header list</a> has an associated
+<dfn export for="header list" id=concept-header-list-hidden-range-value>hidden range value</dfn>
+(null or a <a for=/>header value</a>). It is initially null.
+
+<div class=note>
+ <p>This is for cases where a "<code>no-cors</code>" <a for=/>request</a> needs to include a
+ `<code>Range</code>` header, but it can not be exposed via {{Headers}}. It can be set by privileged
+ APIs, and will be preserved if its associated request object is copied, but will be removed if the
+ request is modified by unprivileged APIs.
+
+ <p>`<code>Range</code>` headers are commonly used by <a lt="download the hyperlink">downloads</a>
+ and <a lt="resource fetch algorithm">media fetches</a>.
+
+ <p>A helper is provided to <a for=request>add a range header</a> to a particular request.
+</div>
+
+<div algorithm>
+<p>To <dfn export for="header list" id=concept-header-list-get-range-value>get the range value</dfn>
+from a <a for=/>header list</a> <var>list</var>, run these steps. They return null or a
+<a for=/>header value</a>.
+
+<ol>
+ <li><p>If <var>list</var> <a for="header list">contains</a> `<code>Range</code>`, then return the
+ result of <a for="header list">getting</a> `<code>Range</code>` from <var>list</var>.
+
+ <li><p>Return <var>list</var>'s <a for="header list">hidden range value</a>.
+</ol>
+</div>
+
 <div algorithm>
 <p>To
 <dfn export for="header list" id=concept-header-list-get-structured-header>get a structured field value</dfn>
@@ -883,6 +912,22 @@ directly. Use <a for="header list">get, decode, and split</a> instead.
 </div>
 
 <div algorithm>
+<p>To <dfn export for="header list" id=concept-header-list-empty>empty</dfn> a
+<a for=/>header list</a> <var>list</var>:
+
+<ol>
+ <li><p><a for=list>Empty</a> <var>list</var>.
+
+ <li><p>Set <var>list</var>'s <a for="header list">hidden range value</a> to null.
+</ol>
+</div>
+
+<p>A <a for=/>header list</a> <var>list</var>
+<dfn export for="header list" lt="is empty|is not empty" id=concept-header-list-is-empty>is empty</dfn>
+if <var>list</var> <a for=list>is empty</a> and <var>list</var>'s
+<a for="header list">hidden range value</a> is null.
+
+<div algorithm>
 <p>To <dfn export for="header list" id=concept-header-list-set>set</dfn> a <a for=/>header</a>
 (<var>name</var>, <var>value</var>) in a <a for=/>header list</a> <var>list</var>:
 
@@ -1140,23 +1185,6 @@ following is true:
 
 <p>A <dfn export>CORS non-wildcard request-header name</dfn> is a <a for=/>header name</a> that is a
 <a>byte-case-insensitive</a> match for `<code>Authorization</code>`.
-
-<p>A <dfn export>privileged no-CORS request-header name</dfn> is a <a for=/>header name</a> that is
-a <a>byte-case-insensitive</a> match for one of
-
-<ul class=brief>
- <li>`<code>Range</code>`.
-</ul>
-
-<div class=note>
- <p>These are headers that can be set by privileged APIs, and will be preserved if their associated
- request object is copied, but will be removed if the request is modified by unprivileged APIs.
-
- <p>`<code>Range</code>` headers are commonly used by <a lt="download the hyperlink">downloads</a>
- and <a lt="resource fetch algorithm">media fetches</a>.
-
- <p>A helper is provided to <a for=request>add a range header</a> to a particular request.
-</div>
 
 <p>A <dfn export>CORS-safelisted response-header name</dfn>, given a <a for=/>list</a> of
 <a for=/>header names</a> <var>list</var>, is a <a for=/>header name</a> that is a
@@ -2456,8 +2484,8 @@ is to return the result of <a>serializing a request origin</a> with <var>request
  <li><p>If <var>last</var> is given, then <a lt="serialize an integer">serialize</a> and
  <a>isomorphic encode</a> it, and append the result to <var>rangeValue</var>.
 
- <li><p><a for="header list">Append</a> (`<code>Range</code>`, <var>rangeValue</var>) to
- <var>request</var>'s <a for=request>header list</a>.
+ <li><p>Set <var>request</var>'s <a for=request>header list</a>'s
+ <a for="header list">hidden range value</a> to <var>rangeValue</var>.
 </ol>
 
 <p class=note>A range header denotes an inclusive byte range. There a range header where
@@ -4729,7 +4757,7 @@ the response. [[!HTTP-CACHING]]
    <li><p><var>request</var>'s <a for=request>method</a> is `<code>GET</code>`
 
    <li><p><var>request</var>'s <a for=request>unsafe-request flag</a> is not set or
-   <var>request</var>'s <a for=request>header list</a> <a for="list">is empty</a>
+   <var>request</var>'s <a for=request>header list</a> <a for="header list">is empty</a>
   </ul>
 
   <p>then:
@@ -5150,10 +5178,10 @@ steps:
  <li>
   <p>If <var>response</var>'s <a for=response>type</a> is "<code>opaque</code>",
   <var>internalResponse</var>'s <a for=response>status</a> is a <a>range status</a>,
-  <var>internalResponse</var>'s <a for=response>range-requested flag</a> is set, and
-  <var>request</var>'s <a for=request>header list</a> <a for="header list">does not contain</a>
-  `<code>Range</code>`, then set <var>response</var> and <var>internalResponse</var> to a
-  <a>network error</a>.
+  <var>internalResponse</var>'s <a for=response>range-requested flag</a> is set, and the result of
+  <a for="header list">getting the range value</a> from <var>request</var>'s
+  <a for=request>header list</a> is null, then set <var>response</var> and
+  <var>internalResponse</var> to a <a>network error</a>.
 
   <div class=note>
    <p>Traditionally, APIs accept a ranged response even if a range was not requested. This prevents
@@ -5580,9 +5608,13 @@ returning a response directly, or allowing the request to proceed by returning n
 
      <li><p>Let <var>type</var> be <var>blob</var>'s {{Blob/type}}.
 
+     <li><p>Let <var>rangeHeader</var> be the result of <a for="header list">getting the range
+     value</a> from <var>request</var>'s <a for=request>header list</a>.
+     <!-- Range should be added to the headers defined in HTTP extensions. See
+          https://github.com/whatwg/fetch/issues/1553 for future work -->
+
      <li>
-      <p>If <var>request</var>'s <a for=request>header list</a>
-      <a for="header list">does not contain</a> `<code>Range</code>`:
+      <p>If <var>rangeHeader</var> is null:
 
       <ol>
        <li><p>Let <var>bodyWithType</var> be the result of <a for=BodyInit>safely extracting</a>
@@ -5603,11 +5635,6 @@ returning a response directly, or allowing the request to proceed by returning n
 
       <ol>
        <li><p>Set <var>response</var>'s <a for=response>range-requested flag</a>.
-
-       <li><p>Let <var>rangeHeader</var> be the result of <a for="header list">getting</a>
-       `<code>Range</code>` from <var>request</var>'s <a for=request>header list</a>.
-       <!-- Range should be added to the headers defined in HTTP extensions. See
-            https://github.com/whatwg/fetch/issues/1553 for future work -->
 
        <li><p>Let <var>rangeValue</var> be the result of <a>parsing a single range header value</a>
        given <var>rangeHeader</var> and true.
@@ -6278,6 +6305,12 @@ run these steps:
      <var>httpRequest</var>'s <a for=request>header list</a>.
      <!-- Technically this only applies to HTTP/1.1 and up -->
     </ol>
+
+   <li><p>If <var>httpRequest</var>'s <a for=request>header list</a>'s
+   <a for="header list">hidden range value</a> is non-null, then <a for="header list">append</a>
+   (`<code>Range</code>`, <var>httpRequest</var>'s <a for=request>header list</a>'s
+   <a for="header list">hidden range value</a>) to <var>httpRequest</var>'s
+   <a for=request>header list</a>.
 
    <li>
     <p>If <var>httpRequest</var>'s <a for=request>header list</a> <a for="header list">contains</a>
@@ -8059,17 +8092,8 @@ value (for {{Headers/delete()}}) that always succeeds in <a>CORS-safelisted requ
 <div algorithm>
 <p>To
 <dfn for=Headers id=concept-headers-remove-privileged-no-cors-request-headers>remove privileged no-CORS request-headers</dfn>
-from a {{Headers}} object (<var>headers</var>), run these steps:
-
-<ol>
- <li><p><a for="list">For each</a> <var>headerName</var> of
- <a>privileged no-CORS request-header names</a>:
-
- <ol>
-  <li><p><a for="header list">Delete</a> <var>headerName</var> from <var>headers</var>'s
-  <a for=Headers>header list</a>.
- </ol>
-</ol>
+from a {{Headers}} object (<var>headers</var>), set <var>headers</var>'s
+<a for=Headers>header list</a>'s <a for="header list">hidden range value</a> to null.
 
 <p class=note>This is called when headers are modified by unprivileged code.
 </div>
@@ -8102,8 +8126,7 @@ method steps are to <a for=Headers>append</a> (<var>name</var>, <var>value</var>
   <p class=note>Passing a dummy <a>header value</a> ought not to have any negative repercussions.
 
  <li><p>If <a>this</a>'s <a for=Headers>guard</a> is "<code>request-no-cors</code>", <var>name</var>
- is not a <a>no-CORS-safelisted request-header name</a>, and <var>name</var> is not a
- <a>privileged no-CORS request-header name</a>, then return.
+ is not a <a>no-CORS-safelisted request-header name</a>, then return.
 
  <li><p>If <a>this</a>'s <a for=Headers>header list</a> <a for="header list">does not contain</a>
  <var>name</var>, then return.
@@ -9146,7 +9169,8 @@ constructor steps are:
    <li><p>If <var>init</var>["{{RequestInit/headers}}"] <a for=map>exists</a>, then set
    <var>headers</var> to <var>init</var>["{{RequestInit/headers}}"].
 
-   <li><p>Empty <a>this</a>'s <a for=Request>headers</a>'s <a for=Headers>header list</a>.
+   <li><p><a for="header list">Empty</a> <a>this</a>'s <a for=Request>headers</a>'s
+   <a for=Headers>header list</a>.
 
    <li><p>If <var>headers</var> is a {{Headers}} object, then <a for=list>for each</a>
    <var>header</var> of its <a for=Headers>header list</a>, <a for=Headers>append</a>
