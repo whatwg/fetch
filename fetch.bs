@@ -1654,8 +1654,9 @@ these steps:
 <h4 id=trailer-states>Trailer state</h4>
 
 <p>A <dfn export>trailer state</dfn> is a <a for=/>struct</a> used to represent
-HTTP trailer fields received after a response body
-([[HTTP]], <a href="https://httpwg.org/specs/rfc9110.html#trailers">Section 6.5</a>).
+HTTP trailer fields
+([[HTTP]], <a href="https://httpwg.org/specs/rfc9110.html#trailers">Section 6.5</a>)
+associated with a request or response.
 It has:
 
 <ul>
@@ -1673,7 +1674,8 @@ It has:
 </ul>
 
 <p class=note>A <a>trailer state</a> is shared by reference between a
-<a for=/>response</a> and its <a for=response lt=clone>clones</a>.
+<a for=/>request</a> or <a for=/>response</a> and its
+<a for=request lt=clone>clones</a>.
 
 <div algorithm>
 <p>To <dfn>complete a trailer state</dfn> given a <a>trailer state</a>
@@ -1716,6 +1718,92 @@ It has:
  <li><p><a for=list>Empty</a> <var>trailerState</var>'s
  <a for="trailer state">observers</a>.
 </ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>process a trailers init</dfn> given a <a>trailer state</a>
+<var>trailerState</var>, a {{Promise}} <var>trailersPromise</var>, a
+<a for=/>headers guard</a> <var>guard</var>, and a <a for=/>header list</a>
+<var>headerList</var>:
+
+<ol>
+ <li>
+  <p><a for=/>Upon fulfillment</a> of <var>trailersPromise</var> with
+  <var>init</var>:
+
+  <ol>
+   <li><p>Let <var>trailerHeaders</var> be a new {{Headers}} object whose
+   <a for=Headers>guard</a> is <var>guard</var>.
+
+   <li><p><a for=Headers>Fill</a> <var>trailerHeaders</var> with <var>init</var>.
+
+   <li><p>Let <var>declaredNames</var> be the result of
+    <a for="header list">getting, decoding, and splitting</a>
+    `<code>Trailer</code>` from <var>headerList</var>.
+
+    <li><p>If <var>declaredNames</var> is null, then set <var>declaredNames</var>
+    to « ».
+
+    <li><p>Let <var>lowercasedDeclaredNames</var> be a new <a for=/>list</a>.
+
+    <li><p><a for=list>For each</a> <var>name</var> of <var>declaredNames</var>,
+    <a for=list>append</a> <var>name</var>, <a>byte-lowercased</a>, to
+    <var>lowercasedDeclaredNames</var>.
+
+    <li><p>Let <var>namesToRemove</var> be a new <a for=/>list</a>.
+
+    <li>
+     <p><a for=list>For each</a> <var>header</var> of <var>trailerHeaders</var>'s
+     <a for=Headers>header list</a>:
+
+     <ol>
+      <li><p>If <var>lowercasedDeclaredNames</var> does not <a for=list>contain</a>
+      <var>header</var>'s <a for=header>name</a>, then
+      <a for=list>append</a> <var>header</var>'s <a for=header>name</a> to
+      <var>namesToRemove</var>.
+     </ol>
+
+    <li><p><a for=list>For each</a> <var>name</var> of <var>namesToRemove</var>,
+    <a for="header list">delete</a> <var>name</var> from
+    <var>trailerHeaders</var>'s <a for=Headers>header list</a>.
+
+   <li><p>Set <var>trailerState</var>'s <a for="trailer state">header list</a>
+   to <var>trailerHeaders</var>'s <a for=Headers>header list</a>.
+
+   <li><p><a>Complete a trailer state</a> given <var>trailerState</var>.
+  </ol>
+
+ <li>
+  <p><a for=/>Upon rejection</a> of <var>trailersPromise</var> with
+  <var>reason</var>:
+
+  <ol>
+   <li><p><a>Error a trailer state</a> given <var>trailerState</var> and
+   <var>reason</var>.
+  </ol>
+</ol>
+
+<p class=note>The <a for=Headers>guard</a> applied to <var>trailerHeaders</var>
+ensures that <a>forbidden request-header</a> names (for requests) or
+<a>forbidden response-header name</a>s (for responses) are excluded via the
+standard {{Headers}} filtering before the `<code>Trailer</code>` declaration
+filter is applied. Trailer field names present in the resolved {{HeadersInit}}
+but not pre-declared in the `<code>Trailer</code>` header are silently dropped.
+</div>
+
+<div algorithm>
+<p>To <dfn>ignore a trailers init</dfn> given a {{Promise}}
+<var>trailersPromise</var>:
+
+<ol>
+ <li><p><a>Mark as handled</a> <var>trailersPromise</var>.
+</ol>
+
+<p class=note>This algorithm is provided for use by specifications that extend
+Fetch and need to discard a user-provided {{RequestInit/trailers}} or
+{{ResponseInit/trailers}} promise without triggering unhandled rejection
+warnings. Within this specification, <a>process a trailers init</a> handles
+promise rejection directly.
 </div>
 
 
@@ -2372,6 +2460,17 @@ Unless stated otherwise, it is unset.
 
 <p>A <a for=/>request</a> has an associated <dfn export for=request id=done-flag>done flag</dfn>.
 Unless stated otherwise, it is unset.
+
+<p>A <a for=/>request</a> has an associated
+<dfn export for=request id=concept-request-trailer-state>trailer state</dfn>
+(a <a>trailer state</a>). Unless stated otherwise it is a new <a>trailer state</a>
+whose <a for="trailer state">state</a> is "<code>complete</code>".
+
+<p class=note>A <a for=/>request</a>'s <a for=request>trailer state</a> defaults to
+"<code>complete</code>" with an empty <a for="trailer state">header list</a>,
+representing a request with no trailer fields to send. When the
+{{RequestInit/trailers}} option is provided, the <a for=request>trailer state</a>
+starts as "<code>pending</code>" and is completed when the promise resolves.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=timing-allow-failed>timing allow failed flag</dfn>. Unless stated
@@ -6885,6 +6984,29 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
       </ol>
 
      <li>
+      <p>If <var>request</var>'s <a for=request>trailer state</a>'s
+      <a for="trailer state">state</a> is "<code>pending</code>", the
+      implementation MAY, after the request body has been fully transmitted,
+      observe <var>request</var>'s <a for=request>trailer state</a> and send
+      trailer fields from its <a for="trailer state">header list</a> once it
+      is <a lt="complete a trailer state">completed</a>. Implementations that
+      do not support sending trailer fields MAY ignore the trailer state
+      entirely.
+
+      <p class=note>Sending trailer fields is entirely optional.
+      Implementations that do not support sending trailer fields are fully
+      compliant with this specification. The {{RequestInit/trailers}} option
+      exists to provide a standardized interface for implementations that do
+      support sending trailer fields. Promise rejection is handled by the
+      <a>process a trailers init</a> algorithm (which is called during
+      request construction), so implementations that ignore the trailer state
+      do not cause unhandled promise rejections.
+      Whether or not to actually forward trailer fields is an implementation
+      decision, consistent with how HTTP intermediaries may forward, discard,
+      or store trailer fields
+      ([[HTTP]], <a href="https://httpwg.org/specs/rfc9110.html#trailers">Section 6.5</a>).
+
+     <li>
       <p>If the HTTP response includes trailer fields
       ([[HTTP]], <a href="https://httpwg.org/specs/rfc9110.html#trailers">Section 6.5</a>),
       then, after the response body has been fully transmitted, set
@@ -8775,6 +8897,7 @@ dictionary RequestInit {
   AbortSignal? signal;
   RequestDuplex duplex;
   RequestPriority priority;
+  Promise&lt;HeadersInit> trailers;
   any window; // can only be set to null
 };
 
@@ -8884,6 +9007,12 @@ object), initially null.
 
    <dt>{{RequestInit/priority}}
    <dd>A string to set <var>request</var>'s <a for=request>priority</a>.
+
+   <dt>{{RequestInit/trailers}}
+   <dd>A promise that resolves to {{HeadersInit}} providing trailer fields to send after the
+   request body. Trailer field names must be pre-declared in the `<code>Trailer</code>` header;
+   undeclared trailer fields are silently dropped. Implementations are not required to send
+   trailer fields and may ignore this option entirely.
   </dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
@@ -8958,8 +9087,21 @@ object), initially null.
  defining "<code>full</code>".</span>
 
  <dt><code><var>request</var> . <a attribute for=Request>trailers</a></code>
- <dd><p>Returns a promise that resolves to an empty immutable {{Headers}} object. Client-side
- requests do not support sending trailer fields.
+ <dd>
+  <p>Returns a promise that resolves to immutable {{Headers}} containing the request's
+  trailer fields.
+
+  <p>If the {{RequestInit/trailers}} option was provided, the promise resolves when
+  the provided promise fulfills, with trailer fields filtered by the `<code>Trailer</code>`
+  header declaration. If no {{RequestInit/trailers}} option was provided, the
+  promise resolves immediately to empty immutable {{Headers}}.
+
+  <p class=note>The resolution timing of this promise reflects the timing of the
+  user-provided {{RequestInit/trailers}} promise, not the timing of body
+  transmission. This may indirectly reveal when payload processing completes if
+  the caller ties the promise to body consumption (e.g., computing a digest over
+  the body stream), but this timing is controlled by the caller, not the
+  implementation.
 
  <dt><code><var>request</var> . <a method for=Request>clone</a>()</code>
  <dd><p>Returns a clone of <var>request</var>.
@@ -9364,6 +9506,21 @@ constructor steps are:
 
  <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>body</a> to
  <var>finalBody</var>.
+
+ <li>
+  <p>If <var>init</var>["{{RequestInit/trailers}}"] <a for=map>exists</a>, then:
+
+  <ol>
+   <li><p>Let <var>trailerState</var> be a new <a>trailer state</a>.
+
+   <li><p>Set <a>this</a>'s <a for=Request>request</a>'s <a for=request>trailer state</a>
+   to <var>trailerState</var>.
+
+   <li><p><a>Process a trailers init</a> given <var>trailerState</var>,
+   <var>init</var>["{{RequestInit/trailers}}"],
+   <a>this</a>'s <a for=Request>headers</a>'s <a for=Headers>guard</a>, and
+   <a>this</a>'s <a for=Request>request</a>'s <a for=request>header list</a>.
+  </ol>
 </ol>
 </div>
 
@@ -9437,27 +9594,72 @@ set; otherwise false.
 <p>The <dfn attribute for=Request><code>trailers</code></dfn> getter steps are:
 
 <ol>
- <li>
-  <p>If <a>this</a>'s <a for=Request>trailers promise</a> is null, then:
+ <li><p>If <a>this</a>'s <a for=Request>trailers promise</a> is null, then:
 
-  <ol>
-   <li><p>Let <var>promise</var> be <a>a new promise</a>.
+ <ol>
+  <li><p>Let <var>trailerState</var> be <a>this</a>'s <a for=Request>request</a>'s
+  <a for=request>trailer state</a>.
 
-   <li><p><a for=/>Resolve</a> <var>promise</var> with a new {{Headers}} object
-   whose <a for=Headers>header list</a> is « » and whose <a for=Headers>guard</a> is
-   "<code>immutable</code>".
+  <li><p>Let <var>promise</var> be <a>a new promise</a>.
 
-   <li><p>Set <a>this</a>'s <a for=Request>trailers promise</a> to <var>promise</var>.
-  </ol>
+  <li>
+   <p>If <var>trailerState</var>'s <a for="trailer state">state</a> is
+   "<code>complete</code>", then:
+
+   <ol>
+    <li><p>Let <var>headers</var> be a new {{Headers}} object whose
+    <a for=Headers>header list</a> is <var>trailerState</var>'s
+    <a for="trailer state">header list</a> and whose <a for=Headers>guard</a> is
+    "<code>immutable</code>".
+
+    <li><p><a for=/>Resolve</a> <var>promise</var> with <var>headers</var>.
+   </ol>
+
+  <li>
+   <p>Otherwise, if <var>trailerState</var>'s <a for="trailer state">state</a> is
+   "<code>errored</code>", then <a for=/>reject</a> <var>promise</var> with
+   <var>trailerState</var>'s <a for="trailer state">error</a>.
+
+  <li>
+   <p>Otherwise (<var>trailerState</var>'s <a for="trailer state">state</a> is
+   "<code>pending</code>"):
+
+   <ol>
+    <li>
+     <p><a for=list>Append</a> the following steps to <var>trailerState</var>'s
+     <a for="trailer state">observers</a>:
+
+     <ol>
+      <li><p>If <var>trailerState</var>'s <a for="trailer state">state</a> is
+      "<code>complete</code>", then:
+
+      <ol>
+       <li><p>Let <var>headers</var> be a new {{Headers}} object whose
+       <a for=Headers>header list</a> is <var>trailerState</var>'s
+       <a for="trailer state">header list</a> and whose <a for=Headers>guard</a> is
+       "<code>immutable</code>".
+
+       <li><p><a for=/>Resolve</a> <var>promise</var> with <var>headers</var>.
+      </ol>
+
+      <li><p>Otherwise, <a for=/>reject</a> <var>promise</var> with
+      <var>trailerState</var>'s <a for="trailer state">error</a>.
+     </ol>
+   </ol>
+
+  <li><p>Set <a>this</a>'s <a for=Request>trailers promise</a> to <var>promise</var>.
+ </ol>
 
  <li><p>Return <a>this</a>'s <a for=Request>trailers promise</a>.
 </ol>
 </div>
 
-<p class=note>Client-side requests do not support sending trailer fields. The
-{{Request/trailers}} attribute always returns a promise that resolves to empty
-immutable {{Headers}}. This does not foreclose future extension to support sending
-trailer fields.
+<p class=note>When no {{RequestInit/trailers}} option is provided, the
+<a for=request>trailer state</a> is immediately "<code>complete</code>" with an
+empty <a for="trailer state">header list</a>, so the {{Request/trailers}} promise
+resolves to empty immutable {{Headers}}. When a {{RequestInit/trailers}} option is
+provided, the promise resolves to the filtered trailer fields once the provided
+promise fulfills.
 
 <hr>
 
@@ -9513,6 +9715,7 @@ dictionary ResponseInit {
   unsigned short status = 200;
   ByteString statusText = "";
   HeadersInit headers;
+  Promise&lt;HeadersInit> trailers;
 };
 
 enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredirect" };
@@ -9575,9 +9778,15 @@ enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredire
   <p>Returns a promise that resolves to {{Headers}} containing the response's trailer fields.
 
   <p>For responses obtained from {{WindowOrWorkerGlobalScope/fetch()}}, the promise resolves after the
-  response body has been fully received. For synthetically constructed responses (via the
-  {{Response/Response()}} constructor, {{Response/error()}}, {{Response/redirect()}}, or
-  {{Response/json()}}), the promise resolves immediately to empty immutable {{Headers}}.
+  response body has been fully received. For synthetically constructed responses (via
+  {{Response/error()}}, {{Response/redirect()}}, or
+  {{Response/json()}} and the {{Response/Response()}} constructor without a
+  {{ResponseInit/trailers}} option), the promise resolves immediately to empty immutable
+  {{Headers}}.
+
+  <p>If the {{ResponseInit/trailers}} option was provided (to the {{Response/Response()}}
+  constructor or {{Response/json()}}), the promise resolves when the provided promise fulfills,
+  with trailer fields filtered by the `<code>Trailer</code>` header declaration.
 
   <p>If the response body stream errors, the promise is rejected.
 
@@ -9675,8 +9884,17 @@ constructor steps are:
  <li><p>Perform <a>initialize a response</a> given <a>this</a>, <var>init</var>, and
  <var>bodyWithType</var>.
 
- <li><p><a>Complete a trailer state</a> given <a>this</a>'s <a for=Response>response</a>'s
- <a for=response>trailer state</a>.
+ <li>
+  <p>If <var>init</var>["{{ResponseInit/trailers}}"] <a for=map>exists</a>, then
+  <a>process a trailers init</a> given <a>this</a>'s <a for=Response>response</a>'s
+  <a for=response>trailer state</a>,
+  <var>init</var>["{{ResponseInit/trailers}}"],
+  <a>this</a>'s <a for=Response>headers</a>'s <a for=Headers>guard</a>, and
+  <a>this</a>'s <a for=Response>response</a>'s <a for=response>header list</a>.
+
+ <li>
+  <p>Otherwise, <a>complete a trailer state</a> given <a>this</a>'s
+  <a for=Response>response</a>'s <a for=response>trailer state</a>.
 </ol>
 </div>
 
@@ -9744,8 +9962,17 @@ are:
  <li><p>Perform <a>initialize a response</a> given <var>responseObject</var>, <var>init</var>, and
  (<var>body</var>, "<code>application/json</code>").
 
- <li><p><a>Complete a trailer state</a> given <var>responseObject</var>'s
- <a for=Response>response</a>'s <a for=response>trailer state</a>.
+ <li>
+  <p>If <var>init</var>["{{ResponseInit/trailers}}"] <a for=map>exists</a>, then
+  <a>process a trailers init</a> given <var>responseObject</var>'s
+  <a for=Response>response</a>'s <a for=response>trailer state</a>,
+  <var>init</var>["{{ResponseInit/trailers}}"],
+  <var>responseObject</var>'s <a for=Response>headers</a>'s <a for=Headers>guard</a>, and
+  <var>responseObject</var>'s <a for=Response>response</a>'s <a for=response>header list</a>.
+
+ <li>
+  <p>Otherwise, <a>complete a trailer state</a> given <var>responseObject</var>'s
+  <a for=Response>response</a>'s <a for=response>trailer state</a>.
 
  <li><p>Return <var>responseObject</var>.
 </ol>
