@@ -222,6 +222,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  (default null)
  <dt><dfn for="fetch params">process request end-of-body</dfn> (default null)
  <dt><dfn for="fetch params">process early hints response</dfn> (default null)
+ <dt><dfn for="fetch params">process informational response</dfn> (default null)
  <dt><dfn for="fetch params">process response</dfn> (default null)
  <dt><dfn for="fetch params">process response end-of-body</dfn> (default null)
  <dt><dfn for="fetch params">process response consume body</dfn> (default null)
@@ -4628,6 +4629,7 @@ optional algorithm
 optional algorithm
 <dfn export for=fetch id=process-request-end-of-body oldids=process-request-end-of-file><var>processRequestEndOfBody</var></dfn>,
 an optional algorithm <dfn export for=fetch><var>processEarlyHintsResponse</var></dfn>, an optional
+algorithm <dfn export for=fetch><var>processInformationalResponse</var></dfn>, an optional
 algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an optional
 algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
@@ -4636,7 +4638,9 @@ the steps below. If given, <var>processRequestBodyChunkLength</var> must be an a
 an integer representing the number of bytes transmitted. If given,
 <var>processRequestEndOfBody</var> must be an algorithm accepting no arguments. If given,
 <var>processEarlyHintsResponse</var> must be an algorithm accepting a <a for=/>response</a>. If
-given, <var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
+given, <var>processInformationalResponse</var> must be an algorithm accepting a
+<a for=/>response</a>. If given,
+<var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
 <var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a>. If
 given, <var>processResponseConsumeBody</var> must be an algorithm accepting a <a for=/>response</a>
 and null, failure, or a <a for=/>byte sequence</a>.
@@ -4658,7 +4662,8 @@ the response. [[!HTTP-CACHING]]
   <var>processEarlyHintsResponse</var> is null.
 
   <p class=note>Processing of early hints (<a for=/>responses</a> whose <a for=response>status</a>
-  is 103) is only vetted for navigations.
+  is 103) via <var>processEarlyHintsResponse</var> is only vetted for navigations.
+  The general <var>processInformationalResponse</var> callback has no such restriction.
 
  <li><p>Let <var>taskDestination</var> be null.
 
@@ -4700,6 +4705,7 @@ the response. [[!HTTP-CACHING]]
  <var>processRequestBodyChunkLength</var>,
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
  <a for="fetch params">process early hints response</a> is <var>processEarlyHintsResponse</var>,
+ <a for="fetch params">process informational response</a> is <var>processInformationalResponse</var>,
  <a for="fetch params">process response</a> is <var>processResponse</var>,
  <a for="fetch params">process response consume body</a> is <var>processResponseConsumeBody</var>,
  <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>,
@@ -6730,33 +6736,41 @@ optional boolean <var>forceNewConnection</var> (default false), run these steps:
 
        <li><p>Let <var>status</var> be the HTTP response's status code.
 
-       <li>
-        <p>If <var>status</var> is in the range 100 to 199, inclusive:
-        <!-- If there comes a time when there is another code besides 101 and 103 that needs special
-        processing we should generalize the "process early hints response" callback and invoke it
-        for each 1xx response and as such require callers like WebSockets to do the filtering and
-        processing we now perform here inline. -->
+        <li>
+         <p>If <var>status</var> is in the range 100 to 199, inclusive:
 
-        <ol>
-         <li><p>If <var>timingInfo</var>'s
-         <a for="fetch timing info">first interim network-response start time</a> is 0, then set
-         <var>timingInfo</var>'s
-         <a for="fetch timing info">first interim network-response start time</a> to
-         <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a>.
+         <ol>
+          <li><p>If <var>timingInfo</var>'s
+          <a for="fetch timing info">first interim network-response start time</a> is 0, then set
+          <var>timingInfo</var>'s
+          <a for="fetch timing info">first interim network-response start time</a> to
+          <var>timingInfo</var>'s <a for="fetch timing info">final network-response start time</a>.
 
-         <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" and
-         <var>status</var> is 101, then <a for=iteration>break</a>.
+          <li><p>If <var>fetchParams</var>'s
+          <a for="fetch params">process informational response</a> is non-null, then
+          the implementation MAY <a>queue a fetch task</a> to run
+          <var>fetchParams</var>'s
+          <a for="fetch params">process informational response</a> given
+          <var>response</var>.
 
-         <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
-         <a for="fetch params">process early hints response</a> is non-null, then
-         <a>queue a fetch task</a> to run <var>fetchParams</var>'s
-         <a for="fetch params">process early hints response</a>, with <a for=/>response</a>.
+          <li><p>If <var>status</var> is 103 and <var>fetchParams</var>'s
+          <a for="fetch params">process early hints response</a> is non-null, then
+          <a>queue a fetch task</a> to run <var>fetchParams</var>'s
+          <a for="fetch params">process early hints response</a> given
+          <var>response</var>.
 
-         <li><p><a for=iteration>Continue</a>.
-        </ol>
+          <li><p>If <var>request</var>'s <a for=request>mode</a> is "<code>websocket</code>" and
+          <var>status</var> is 101, then <a for=iteration>break</a>.
 
-        <p class=note>These kind of HTTP responses are eventually followed by a "final" HTTP
-        response.
+          <li><p><a for=iteration>Continue</a>.
+         </ol>
+
+         <p class=note>These kind of HTTP responses are eventually followed by a "final" HTTP
+         response. The <a for="fetch params">process informational response</a>
+         callback is invoked for all informational responses, including 100 (Continue),
+         101 (Switching Protocols), 102 (Processing), and 103 (Early Hints).
+         Support for invoking this callback is entirely optional; implementations that
+         never invoke it are fully compliant with this specification.
 
        <li><p><a for=iteration>Break</a>.
       </ol>
@@ -8621,6 +8635,8 @@ interface Request {
 };
 Request includes Body;
 
+callback InformationalCallback = undefined (unsigned short status, Headers headers);
+
 dictionary RequestInit {
   ByteString method;
   HeadersInit headers;
@@ -8636,6 +8652,7 @@ dictionary RequestInit {
   AbortSignal? signal;
   RequestDuplex duplex;
   RequestPriority priority;
+  InformationalCallback onInformation;
   any window; // can only be set to null
 };
 
@@ -8742,6 +8759,12 @@ object), initially null.
 
    <dt>{{RequestInit/priority}}
    <dd>A string to set <var>request</var>'s <a for=request>priority</a>.
+
+   <dt>{{RequestInit/onInformation}}
+   <dd>A callback invoked when an informational response (HTTP 1xx) is received. The callback
+   receives the 1xx status code and an immutable {{Headers}} object containing the informational
+   response's headers, appropriately filtered. Any return value is ignored. Implementations are
+   not required to support informational responses and may ignore this option entirely.
   </dl>
 
  <dt><code><var>request</var> . <a attribute for=Request>method</a></code>
@@ -9682,8 +9705,78 @@ method steps are:
   </ol>
 
  <li>
-  <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
-  <var>request</var> and <a for=fetch><i>processResponse</i></a> given <var>response</var> being
+  <p>Let <var>processInformationalResponse</var> be null.
+
+ <li>
+  <p>If <var>init</var>["{{RequestInit/onInformation}}"] <a for=map>exists</a>, then set
+  <var>processInformationalResponse</var> to the following steps given a <a for=/>response</a>
+  <var>response</var>:
+
+  <ol>
+   <li><p>If <var>locallyAborted</var> is true, then return.
+
+   <li><p>Let <var>headerList</var> be a new <a for=/>header list</a>.
+
+   <li>
+    <p>If <var>request</var>'s <a for=request>response tainting</a> is
+    "<code>basic</code>", then for each <var>header</var> of <var>response</var>'s
+    <a for=response>header list</a>, if <var>header</var>'s <a for=header>name</a>
+    is not a <a>forbidden response-header name</a>, then
+    <a for="header list">append</a> <var>header</var> to <var>headerList</var>.
+
+    <li>
+     <p>Otherwise, if <var>request</var>'s <a for=request>response tainting</a> is
+     "<code>cors</code>", then:
+
+     <ol>
+      <li><p>Let <var>headerNames</var> be the result of
+      <a>extracting header list values</a> given
+      `<code>Access-Control-Expose-Headers</code>` and <var>response</var>'s
+      <a for=response>header list</a>.
+
+      <li><p>If <var>headerNames</var> is not null and is not failure, and
+      <var>request</var>'s <a for=request>credentials mode</a> is not
+      "<code>include</code>", and <var>headerNames</var> <a for=list>contains</a>
+      `<code>*</code>`, then for each <var>header</var> of <var>response</var>'s
+      <a for=response>header list</a>, if <var>header</var>'s <a for=header>name</a>
+      is not a <a>forbidden response-header name</a>, then
+      <a for="header list">append</a> <var>header</var> to <var>headerList</var>.
+
+      <li>
+       <p>Otherwise:
+
+       <ol>
+        <li><p>If <var>headerNames</var> is null or failure, then set
+        <var>headerNames</var> to « ».
+
+        <li><p>For each <var>header</var> of <var>response</var>'s
+        <a for=response>header list</a>, if <var>header</var>'s <a for=header>name</a>
+        is a <a>CORS-safelisted response-header name</a> given <var>headerNames</var>,
+        then <a for="header list">append</a> <var>header</var> to
+        <var>headerList</var>.
+       </ol>
+     </ol>
+
+   <li>
+    <p class=note>If <var>request</var>'s <a for=request>response tainting</a> is
+    "<code>opaque</code>", <var>headerList</var> remains empty.
+
+   <li><p>Let <var>headers</var> be a <a for=/>new</a> {{Headers}} object with
+   <var>requestObject</var>'s <a>relevant realm</a>, whose
+   <a for=Headers>header list</a> is <var>headerList</var> and whose
+   <a for=Headers>guard</a> is "<code>immutable</code>".
+
+   <li><p><a lt="invoke a callback function">Invoke</a>
+   <var>init</var>["{{RequestInit/onInformation}}"] with
+   « <var>response</var>'s <a for=response>status</a>, <var>headers</var> ».
+  </ol>
+
+ <li>
+  <p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
+  <var>request</var>, with
+  <a for=fetch><i>processInformationalResponse</i></a> set to
+  <var>processInformationalResponse</var> and
+  <a for=fetch><i>processResponse</i></a> given <var>response</var> being
   these steps:
 
   <ol>
@@ -10345,9 +10438,11 @@ particular at what stage you would like to receive a callback:
 </dl>
 
 <p>Apart from the callbacks to handle responses, <a for=/>fetch</a> accepts additional callbacks
-for advanced cases. <a for=fetch><i>processEarlyHintsResponse</i></a> is intended specifically for
-<a for=/>responses</a> whose <a for=response>status</a> is 103, and is currently handled only by
-navigations. <a for=fetch><i>processRequestBodyChunkLength</i></a> and
+for advanced cases. <a for=fetch><i>processInformationalResponse</i></a> is invoked for HTTP
+informational responses (1xx status codes) and is exposed to JavaScript through the
+{{RequestInit/onInformation}} option. <a for=fetch><i>processEarlyHintsResponse</i></a> is
+intended specifically for <a for=/>responses</a> whose <a for=response>status</a> is 103, and is
+currently handled only by navigations. <a for=fetch><i>processRequestBodyChunkLength</i></a> and
 <a for=fetch><i>processRequestEndOfBody</i></a> notify the caller of request body uploading
 progress.
 
