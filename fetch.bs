@@ -7991,16 +7991,18 @@ new Headers(meta2);
  <dd><p>Replaces the value of the first header whose name is <var>name</var> with <var>value</var>
  and removes any remaining headers whose name is <var>name</var>.
 
- <dt><code><var>result</var> = <var>headers</var> . <a method for=Headers lt=getStructured()>getStructured</a>(<var>name</var>, <var>type</var>)</code>
+ <dt><code><var>headers</var> . <a method for=Headers lt=getStructured()>getStructured</a>(<var>name</var>, <var>type</var>)</code>
  <dd>
   <p>Parses the value of the header named <var>name</var> as a structured field
   ([[RFC9651]]) of the given <var>type</var> and returns the result as a
   JavaScript value.
 
-  <p>Returns null if the header is not present or its value fails to parse as
-  the specified structured field type.
+  <p>Returns null if the header is not present, or if its value does not
+  strictly conform to the specified structured field type as defined in
+  [[RFC9651]]. No partial or lenient parsing is performed; any
+  deviation from the grammar causes an immediate null return.
 
-  <p>The <var>type</var> must be one of "<code>item</code>",
+  <p>The <var>type</var> argument is one of "<code>item</code>",
   "<code>list</code>", or "<code>dictionary</code>".
 
   <p>Structured field values are converted to JavaScript as follows:
@@ -8015,9 +8017,13 @@ new Headers(meta2);
   <p class=note>Tokens are represented as plain strings, following the same
   pattern as {{DOMString}}, {{USVString}}, and {{ByteString}} &mdash; they are a
   constrained profile of string rather than a separate type. When serializing
-  via {{Headers/setStructured()}}, strings that conform to
-  <a>structured field token</a> syntax are serialized as tokens; all other
-  strings are serialized as quoted structured field strings.
+  via {{Headers/setStructured()}}, strings are serialized as tokens or quoted
+  strings by default (auto-detected from syntax). To override the type, set
+  <code>sfType</code> on the item object (e.g.,
+  <code>{ value: "foo", sfType: "string" }</code> forces a quoted string).
+  The <code>sfType</code> property can also be used to produce
+  <a>structured field date</a> and <a>structured field display string</a>
+  values that cannot be expressed through auto-detection.
 
   <div class=example id=example-getstructured>
    <pre><code class=lang-javascript>
@@ -8047,11 +8053,18 @@ if (purpose?.value === "prefetch") { /* ... */ }  // direct string comparison
   <p>Throws a {{TypeError}} if <var>value</var> cannot be serialized as the
   specified structured field type or if the headers are immutable.
 
-  <p>For serialization, numbers serialize as integers or decimals (determined
-  by whether the number is an integer), booleans serialize as structured field
+  <p>By default, numbers serialize as integers or decimals (determined by
+  whether the number is an integer), booleans serialize as structured field
   booleans, {{Uint8Array}} serializes as a byte sequence, and strings
   serialize as tokens if they conform to <a>structured field token</a> syntax
-  or as quoted structured field strings otherwise.
+  or as quoted structured field strings otherwise. Item objects may include an
+  <code>sfType</code> property to override the auto-detected structured field
+  type &mdash; for example, <code>{ value: "foo", sfType: "string" }</code>
+  forces a quoted string even when the value matches token syntax. Supported
+  <code>sfType</code> values are "<code>boolean</code>",
+  "<code>integer</code>", "<code>decimal</code>", "<code>date</code>",
+  "<code>string</code>", "<code>token</code>",
+  "<code>displaystring</code>", and "<code>bytesequence</code>".
 
   <div class=example id=example-setstructured>
    <pre><code class=lang-javascript>
@@ -8075,6 +8088,21 @@ headers.setStructured("Priority", "dictionary", new Map([
   ["u", { value: 0 }],
   ["i", { value: true }]
 ]));
+
+// sfType overrides auto-detection of the structured field type:
+// Force a quoted string even though "foo" matches token syntax
+headers.setStructured("Example", "item", { value: "foo", sfType: "string" });
+// Result: Example: "foo"
+
+// Without sfType, "foo" would serialize as an unquoted token:
+headers.setStructured("Example", "item", { value: "foo" });
+// Result: Example: foo
+
+// Produce a Date value (not possible without sfType)
+headers.setStructured("Deprecation", "item", {
+  value: 1659578233, sfType: "date"
+});
+// Result: Deprecation: @1659578233
 </code></pre>
   </div>
 
@@ -8288,7 +8316,7 @@ given a structured field item <var>sfItem</var>:
 </ol>
 
 <p class=note>The returned object has the shape
-<code>{ value: <var>bareItem</var>, params: Map }</code>.
+<code>{ value, params: Map }</code>.
 </div>
 
 <div algorithm>
@@ -8423,9 +8451,123 @@ values for use with {{Headers/setStructured()}}.
 <div algorithm>
 <p>To
 <dfn>convert a JavaScript value to a structured field bare item</dfn>
-given a JavaScript value <var>jsValue</var>:
+given a JavaScript value <var>jsValue</var> and an optional string
+<var>sfType</var>:
 
 <ol>
+ <li>
+  <p>If <var>sfType</var> is given:
+
+  <ol>
+   <li>
+    <p>If <var>sfType</var> is "<code>boolean</code>":
+
+    <ol>
+     <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
+     is not Boolean, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field boolean</a> with
+     <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>If <var>sfType</var> is "<code>integer</code>":
+
+    <ol>
+     <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
+     is not Number, or <var>jsValue</var> is not an
+     <a href="https://tc39.es/ecma262/#sec-isinteger">integral number</a>,
+     then <a>throw</a> a {{TypeError}}.
+
+     <li><p>If <var>jsValue</var> is less than &minus;999,999,999,999,999
+     or greater than 999,999,999,999,999, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field integer</a> with
+     <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>If <var>sfType</var> is "<code>decimal</code>":
+
+    <ol>
+     <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
+     is not Number, or <var>jsValue</var> is NaN, +&infin;, or &minus;&infin;,
+     then <a>throw</a> a {{TypeError}}.
+
+     <li><p>If the absolute value of the integer component of
+     <var>jsValue</var> (i.e.,
+     <a href="https://tc39.es/ecma262/#eqn-truncate">truncate</a>(<var>jsValue</var>))
+     is greater than 999,999,999,999, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field decimal</a> with
+     <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>If <var>sfType</var> is "<code>date</code>":
+
+    <ol>
+     <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
+     is not Number, or <var>jsValue</var> is not an
+     <a href="https://tc39.es/ecma262/#sec-isinteger">integral number</a>,
+     then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field date</a> with
+     <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>If <var>sfType</var> is "<code>string</code>":
+
+    <ol>
+     <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
+     is not String, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field string</a> with
+     <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>If <var>sfType</var> is "<code>token</code>":
+
+    <ol>
+     <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
+     is not String, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>If <var>jsValue</var> does not conform to the
+     <a>structured field token</a> syntax defined in [[RFC9651]]
+     (<a href="https://httpwg.org/specs/rfc9651.html#token">Section 3.3.4</a>),
+     then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field token</a> with
+     <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>If <var>sfType</var> is "<code>displaystring</code>":
+
+    <ol>
+     <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
+     is not String, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field display string</a> with
+     <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>If <var>sfType</var> is "<code>bytesequence</code>":
+
+    <ol>
+     <li><p>If <var>jsValue</var> is not a {{Uint8Array}}, then
+     <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field byte sequence</a> whose
+     contents are a copy of <var>jsValue</var>'s buffer.
+    </ol>
+
+   <li><p><a>Throw</a> a {{TypeError}}.
+  </ol>
+
  <li><p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
  is Boolean, return a <a>structured field boolean</a> with <var>jsValue</var>'s value.
 
@@ -8437,13 +8579,37 @@ given a JavaScript value <var>jsValue</var>:
    <li><p>If <var>jsValue</var> is NaN, +&infin;, or &minus;&infin;,
    then <a>throw</a> a {{TypeError}}.
 
-   <li><p>If <var>jsValue</var> is an
-   <a href="https://tc39.es/ecma262/#sec-isinteger">integral number</a>,
-   return a <a>structured field integer</a> with <var>jsValue</var>'s value.
+   <li>
+    <p>If <var>jsValue</var> is an
+    <a href="https://tc39.es/ecma262/#sec-isinteger">integral number</a>:
 
-   <li><p>Otherwise, return a <a>structured field decimal</a> with
-   <var>jsValue</var>'s value.
+    <ol>
+     <li><p>If <var>jsValue</var> is less than &minus;999,999,999,999,999 or
+     greater than 999,999,999,999,999, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field integer</a> with <var>jsValue</var>'s value.
+    </ol>
+
+   <li>
+    <p>Otherwise:
+
+    <ol>
+     <li><p>If the absolute value of the integer component of
+     <var>jsValue</var> (i.e.,
+     <a href="https://tc39.es/ecma262/#eqn-truncate">truncate</a>(<var>jsValue</var>))
+     is greater than 999,999,999,999, then <a>throw</a> a {{TypeError}}.
+
+     <li><p>Return a <a>structured field decimal</a> with <var>jsValue</var>'s value.
+    </ol>
   </ol>
+
+  <p class=note>The integer range (15 digits) and decimal integer-component
+  limit (12 digits) match the constraints defined in [[RFC9651]]
+  (<a href="https://httpwg.org/specs/rfc9651.html#integer">Section 3.3.1</a>,
+  <a href="https://httpwg.org/specs/rfc9651.html#decimal">Section 3.3.2</a>).
+  Decimals are rounded to at most three fractional digits during
+  serialization per
+  <a href="https://httpwg.org/specs/rfc9651.html#ser-decimal">Section 4.1.5</a>.
 
  <li>
   <p>If <a href="https://tc39.es/ecma262/#sec-typeof-operator">Type</a>(<var>jsValue</var>)
@@ -8462,11 +8628,13 @@ given a JavaScript value <var>jsValue</var>:
    <var>jsValue</var>'s value.
   </ol>
 
-  <p class=note>Strings that match token syntax are serialized as
-  unquoted tokens; all other strings are serialized as quoted structured
-  field strings. This follows the pattern of treating tokens as a
-  constrained profile of string, similar to {{DOMString}} vs
-  {{ByteString}}.
+  <p class=note>When <var>sfType</var> is not provided, strings that match
+  token syntax are serialized as unquoted tokens; all other strings are
+  serialized as quoted structured field strings. Use
+  <code>sfType: "string"</code> to force a quoted string even
+  when the value matches token syntax, or
+  <code>sfType: "token"</code> to validate and serialize
+  explicitly as a token.
 
  <li><p>If <var>jsValue</var> is a {{Uint8Array}}, return a
  <a>structured field byte sequence</a> whose contents are a copy of
@@ -8568,9 +8736,13 @@ given a JavaScript value <var>jsObj</var>:
  is not Object, or <var>jsObj</var> does not have a property "<code>value</code>",
  then <a>throw</a> a {{TypeError}}.
 
+ <li><p>Let <var>sfType</var> be <var>jsObj</var>["<code>sfType</code>"]
+ if <var>jsObj</var> has a "<code>sfType</code>" property, or undefined
+ otherwise.
+
  <li><p>Let <var>bareItem</var> be the result of
  <a>converting a JavaScript value to a structured field bare item</a>
- given <var>jsObj</var>["<code>value</code>"].
+ given <var>jsObj</var>["<code>value</code>"] and <var>sfType</var>.
 
  <li><p>Let <var>jsParams</var> be <var>jsObj</var>["<code>params</code>"]
  if <var>jsObj</var> has a "<code>params</code>" property, or undefined
@@ -8759,7 +8931,7 @@ sequence of key-value pairs, or a plain object (record). This allows the
 ergonomic form
 <code>{ u: { value: 3 }, i: { value: true } }</code>
 in addition to
-<code>new Map([["u", { value: 3 }], ["i", { value: true }]])</code>.
+<code>new Map(&#91;["u", { value: 3 }], ["i", { value: true }]])</code>.
 </div>
 
 <hr>
@@ -8882,13 +9054,13 @@ method steps are:
 </ol>
 </div>
 
-<p class=note>Parsing structured fields and converting the result to
+<p class="note allow-2119">Parsing structured fields and converting the result to
 JavaScript objects is entirely optional. Implementations that do not
 support structured field parsing are fully compliant with this
 specification by having <a for="header list">get a structured field value</a>
 return null. Returning null matches the behavior when the header is absent or
-malformed, ensuring no feature-detection breakage. The presence of the
-{{Headers/getStructured()}} method itself is required.
+malformed, ensuring no feature-detection breakage. The
+{{Headers/getStructured()}} method itself must be present.
 
 <div algorithm>
 <p>The <dfn export for=Headers method><code>setStructured(<var>name</var>, <var>type</var>, <var>value</var>)</code></dfn>
@@ -8925,14 +9097,6 @@ method steps are:
  no-CORS request-headers</a> from <a>this</a>.
 </ol>
 </div>
-
-<p class=note>Serializing structured fields is entirely optional.
-Implementations that do not support structured field serialization are
-fully compliant with this specification. The minimum conformance
-requirement is that {{Headers/setStructured()}} does not throw for valid
-inputs &mdash; an implementation that silently ignores the call is compliant.
-Whether to actually serialize and set the header is an implementation
-decision.
 
 <p>The <a>value pairs to iterate over</a> are the return value of running
 <a for="header list">sort and combine</a> with <a>this</a>'s <a for=Headers>header list</a>.
