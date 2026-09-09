@@ -8260,13 +8260,16 @@ steps:
     <a><code>multipart/form-data</code> chunk serializer</a> with <var>object</var>'s
     <a for=FormData>entry list</a> and <a>UTF-8</a>.
 
+    <p>Set <var>length</var> to the <a for="multipart/form-data">length</a> of a
+    <code>multipart/form-data</code> payload given <var>chunks</var>.
+
     <p>Set <var>stream</var> to the result of <a>creating a <code>multipart/form-data</code>
     readable stream</a> from <var>chunks</var>.
 
-    <p>Set <var>source</var> to <var>object</var>.
+    <p class=note>Creating the stream consumes <var>chunks</var>, so
+    <var>length</var> has to be computed first.
 
-    <p>Set <var>length</var> to the <a for="multipart/form-data">length</a> of a
-    <code>multipart/form-data</code> payload given <var>chunks</var>.
+    <p>Set <var>source</var> to <var>object</var>.
 
     <p>Set <var>type</var> to `<code>multipart/form-data; boundary=</code>`, followed by
     <var>boundary</var>.
@@ -10038,7 +10041,8 @@ a yottabyte.
 <div algorithm="escape a multipart/form-data name">
 <p>To <dfn export>escape a <code>multipart/form-data</code> name</dfn> with a string
 <var>name</var>, an optional <a for=/>encoding</a> <var>encoding</var> (default <a>UTF-8</a>) and an
-optional boolean <dfn for="escape name"><var>isFilename</var></dfn> (default false):
+optional boolean <dfn for="escape a multipart/form-data name"><var>isFilename</var></dfn>
+(default false):
 
 <ol>
  <li><p>If <var>isFilename</var> is true, then set <var>name</var> to the result of
@@ -10121,9 +10125,9 @@ of chunks, each of which can be either a <a for=/>byte sequence</a> or a {{File}
      <li><p><a for=/>Assert</a>: <var>value</var> is a {{File}}.
 
      <li><p>Append `<code>; filename="</code>`, followed by the result of
-     <a>escaping a <code>multipart/form-data</code> name</a> given <var>value</var>'s {{File/name}}
-     with <var>encoding</var> and <a><i>isFilename</i></a> set to true,
-     followed by 0x22 0x0D 0x0A (" CR LF), to <var>chunk</var>.
+     <a>escaping a <code>multipart/form-data</code> name</a> given <var>value</var>'s {{File/name}},
+     <var>encoding</var>, and <a><i>isFilename</i></a> set to true, followed by
+     0x22 0x0D 0x0A (" CR LF), to <var>chunk</var>.
 
      <li><p>Let <var>type</var> be <var>value</var>'s {{Blob/type}}, if it is not the empty string,
      or "<code>application/octet-stream</code>" otherwise.
@@ -10188,37 +10192,42 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
 <ol>
  <li><p>Let <var>fileStream</var> be null.
 
+ <li><p>Let <var>fileReader</var> be null.
+
  <li><p>Let <var>stream</var> be a <a>new</a> {{ReadableStream}}.
 
  <li>
   <p>Let <var>pullAlgorithm</var> be an algorithm that runs the following steps:
 
   <dl class=switch>
-   <dt>If <var>fileStream</var> is null and <var>chunks</var> is not <a for=list>empty</a>
+   <dt>If <var>fileStream</var> is null and <var>chunks</var> <a for=list>is not empty</a>
    <dd>
     <ol>
-     <li>
-      <p>If <var>chunks</var>[0] is a <a for=/>byte sequence</a>, then
-      <a for=ReadableStream>enqueue</a> the result of
-      [=ArrayBufferView/create|creating=] a {{Uint8Array}} from <var>chunks</var>[0] into
-      <var>stream</var>.
+     <li><p>Let <var>chunk</var> be <var>chunks</var>[0].
+
+     <li><p><a for=list>Remove</a> the first item from <var>chunks</var>.
+
+     <li><p>If <var>chunk</var> is a <a for=/>byte sequence</a>, then
+     <a for=ReadableStream>enqueue</a> the result of [=ArrayBufferView/create|creating=] a
+     {{Uint8Array}} from <var>chunk</var> into <var>stream</var>.
 
      <li>
       <p>Otherwise:
 
       <ol>
-       <li><p><a for=/>Assert</a>: <var>chunks</var>[0] is a {{File}} object.
+       <li><p><a for=/>Assert</a>: <var>chunk</var> is a {{File}} object.
 
-       <li><p>Set <var>fileStream</var> to the result of running <var>chunks</var>[0]'s
-       {{Blob/stream}} method.
+       <li><p>Set <var>fileStream</var> to the result of running <var>chunk</var>'s
+       <a for=Blob>get stream</a>.
+
+       <li><p>Set <var>fileReader</var> to the result of <a for=ReadableStream>getting a reader</a>
+       for <var>fileStream</var>.
 
        <li><p>Run <var>pullAlgorithm</var>.
       </ol>
-
-     <li><p><a for=list>Remove</a> the first item from <var>chunks</var>.
     </ol>
 
-   <dt>If <var>fileStream</var> is null and <var>chunks</var> is <a for=list>empty</a>
+   <dt>If <var>fileStream</var> is null and <var>chunks</var> <a for=list>is empty</a>
    <dd>
     <ol>
      <li><p><a for=ReadableStream>Close</a> <var>stream</var>.
@@ -10244,7 +10253,7 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
        <dt><a for="read request">close steps</a>
        <dd>
         <ol>
-         <li><p>Set <var>fileStream</var> to null.
+         <li><p>Set <var>fileStream</var> and <var>fileReader</var> to null.
 
          <li><p>Run <var>pullAlgorithm</var>.
         </ol>
@@ -10256,10 +10265,7 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
         </ol>
       </dl>
 
-     <li><p>Let <var>reader</var> be the result of <a for=ReadableStream>getting a reader</a> for
-     <var>fileStream</var>.
-
-     <li><p><a for=ReadableStreamDefaultReader>Read a chunk</a> from <var>reader</var> with
+     <li><p><a for=ReadableStreamDefaultReader>Read a chunk</a> from <var>fileReader</var> with
      <var>readRequest</var>.
     </ol>
   </dl>
@@ -10269,13 +10275,16 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
   <var>reason</var>:
 
   <ol>
+   <li><p><a for=list>Empty</a> <var>chunks</var>.
+
    <li><p>If <var>fileStream</var> is not null, then <a for=ReadableStream>cancel</a>
    <var>fileStream</var> with <var>reason</var>.
   </ol>
 
- <li><p><a for=ReadableStream>Set up</a> <var>stream</var> with
- <a for="ReadableStream/set up"><var>pullAlgorithm</var></a> set to <var>pullAlgorithm</var> and
- <a for="ReadableStream/set up"><var>cancelAlgorithm</var></a> set to <var>cancelAlgorithm</var>.
+ <li><p>[=ReadableStream/set up with byte reading support|Set up=] <var>stream</var> with byte
+ reading support with <var>[=ReadableStream/set up/pullAlgorithm=]</var> set to
+ <var>pullAlgorithm</var> and <var>[=ReadableStream/set up/cancelAlgorithm=]</var> set to
+ <var>cancelAlgorithm</var>.
 
  <li><p>Return <var>stream</var>.
 </ol>
@@ -10293,7 +10302,7 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
  "<code>multipart/form-data</code>".
 
  <li><p>If <var>mimeType</var>'s <a for="MIME type">parameters</a>["<code>boundary</code>"] does not
- <a for=map>exist</a>, then return failure.
+ <a for=map>exist</a> or is the empty string, then return failure.
 
  <li>
   <p>Let <var>boundary</var> be the result of <a>UTF-8 encoding</a> <var>mimeType</var>'s
@@ -10327,10 +10336,20 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
     (`<code>--</code>`):
 
     <ol>
-     <li><p>If <var>position</var> + 2 points to the end of <var>input</var>, or
-     <var>position</var> + 2 points to a sequence of bytes starting with 0x0D 0x0A (CR LF), then
-     return <var>entryList</var>.
+     <li><p>Advance <var>position</var> by 2.
+
+     <li><p>Collect a sequence of bytes that are <a>HTTP tab or space bytes</a> given
+     <var>position</var>. (Do nothing with those bytes.)
+
+     <li><p>If <var>position</var> points to the end of <var>input</var>, or <var>position</var>
+     points to a sequence of bytes starting with 0x0D 0x0A (CR LF), then return
+     <var>entryList</var>.
+
+     <li><p>Return failure.
     </ol>
+
+    <p class=note>If the close delimiter is followed by 0x0D 0x0A (CR LF), the remainder of
+    <var>input</var> is ignored.
 
    <li><p>If <var>position</var> does not point to a sequence of bytes starting with 0x0D 0x0A
    (CR LF), then return failure.
@@ -10358,7 +10377,8 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
 
      <li><p>Advance <var>position</var> by 1.
 
-     <li><p>If <var>body</var> ends with <var>boundary</var>:
+     <li><p>If <var>body</var> ends with 0x0D 0x0A 0x2D 0x2D (CR LF `<code>--</code>`) followed by
+     <var>boundary</var>:
 
       <ol>
        <li><p>Remove the last 4 + (length of <var>boundary</var>) bytes from <var>body</var>.
@@ -10381,8 +10401,10 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
      <li><p>If <var>contentType</var> is null, then set <var>contentType</var> to
      "<code>text/plain</code>".
 
-     <li><p>If <var>contentType</var> is not an <a>ASCII string</a>, then set <var>contentType</var> to
-     the empty string.
+     <li><p>If <var>contentType</var> contains a <a for=/>code point</a> that is not in the range
+     U+0020 to U+007E, inclusive, then set <var>contentType</var> to the empty string; otherwise,
+     set <var>contentType</var> to <var>contentType</var>, <a>ASCII lowercased</a>.
+     <!-- XXX This should probably use the MIME type parser instead? -->
 
      <li><p>Let <var>value</var> be a new {{File}} object with name <var>filename</var>, type
      <var>contentType</var>, and body <var>body</var>.
@@ -10406,7 +10428,7 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
 
 <div algorithm>
 <p>To <dfn export>parse <code>multipart/form-data</code> headers</dfn>, given a
-<a for=/>byte sequence</a> <var>input</var> and a pointer into it <var>position</var>:
+<a for=/>byte sequence</a> <var ignore>input</var> and a pointer into it <var>position</var>:
 
 <ol>
  <li><p>Let <var>name</var>, <var>filename</var> and <var>contentType</var> be null.
@@ -10447,33 +10469,23 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
      <dt>`<code>content-disposition</code>`
      <dd>
       <ol>
-       <li><p>Set <var>name</var> and <var>filename</var> to null.
+       <li><p>Let <var>headerValue</var> be the result of collecting a sequence of bytes that are
+       not 0x0A (LF) or 0x0D (CR), given <var>position</var>.
 
-       <li><p>If <var>position</var> does not point to a sequence of bytes starting with
-       `<code>form-data; name="</code>`, then return failure.
+       <li class=XXX>
+        <p>If <var>headerValue</var>'s disposition type is not `<code>form-data</code>`, or it has
+        no `<code>name</code>` parameter, then return failure. Otherwise, set <var>name</var> to
+        that parameter's value and <var>filename</var> to the value of the
+        `<code>filename</code>` parameter, or null if there is none. Both are the
+        <a>UTF-8 decode without BOM</a> of the parameter's value, and the `<code>%0A</code>`,
+        `<code>%0D</code>`, and `<code>%22</code>` sequences that
+        <a>escaping a <code>multipart/form-data</code> name</a> produces are not reversed.
 
-       <li><p>Advance <var>position</var> so it points at the byte after the next 0x22 (") byte (the
-       one in the sequence of bytes matched above).
-
-       <li><p>Set <var>name</var> to the result of <a>parsing a <code>multipart/form-data</code>
-       name</a> given <var>input</var> and <var>position</var>.
-
-       <li><p>If <var>name</var> is failure, then return failure.
-
-       <li>
-        <p>If <var>position</var> points to a sequence of bytes starting with
-        `<code>; filename="</code>`:
-
-        <ol>
-         <li><p>Advance <var>position</var> so it points at the byte after the next 0x22 (") byte
-         (the one in the sequence of bytes matched above).
-
-         <li><p>Set <var>filename</var> to the result of
-         <a>parsing a <code>multipart/form-data</code> name</a> given <var>input</var> and
-         <var>position</var>.
-
-         <li><p>If <var>filename</var> is failure, then return failure.
-        </ol>
+        <p>This needs a `<code>Content-Disposition</code>` parser, which does not exist yet.
+        Ideally it is the same one downloads need, rather than one specific to
+        <code>multipart/form-data</code>. Implementations parse the value as a disposition type
+        followed by a list of parameters, but disagree on how a quoted string escapes 0x22 ("),
+        which has to be settled first.
       </ol>
 
      <dt>`<code>content-type</code>`
@@ -10498,38 +10510,6 @@ chunks <var>chunks</var> which can be either <a for=/>byte sequences</a> or {{Fi
 
    <li><p>Advance <var>position</var> by 2. (This skips past the newline.)
   </ol>
-</ol>
-</div>
-
-<div algorithm>
-<p>To <dfn export>parse a <code>multipart/form-data</code> name</dfn>, given a
-<a for=/>byte sequence</a> <var ignore>input</var> and a pointer into it <var>position</var>:
-
-<ol>
- <li><p><a for=/>Assert</a>: The byte at (<var>position</var> − 1) is 0x22 (").
-
- <li><p>Let <var>name</var> be the result of collecting a sequence of bytes that are not 0x0A (LF),
- 0x0D (CR) or 0x22 ("), given <var>position</var>.
-
- <li><p>If the byte at <var>position</var> is not 0x22 ("), then return failure.
-
- <li><p>Advance <var>position</var> by 1.
-
- <li>
-  <p>Replace any occurrence of the following subsequences in <var>name</var> with the given byte:
-
-  <dl class=switch>
-   <dt>`<code>%0A</code>`
-   <dd><p>0x0A (LF)
-
-   <dt>`<code>%0D</code>`
-   <dd><p>0x0D (CR)
-
-   <dt>`<code>%22</code>`
-   <dd><p>0x22 (")
-  </dl>
-
- <li><p>Return the <a>UTF-8 decode without BOM</a> of <var>name</var>.
 </ol>
 </div>
 
