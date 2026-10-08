@@ -5268,8 +5268,6 @@ steps:
 
      <li><p>Let <var>cacheState</var> be <var>response</var>'s <a for=response>cache state</a>.
 
-     <li><p>Let <var>bodyInfo</var> be <var>response</var>'s <a for=response>body info</a>.
-
      <li>
       <p>If <var>response</var>'s <a for=response>timing allow passed flag</a> is not set,
       then set <var>timingInfo</var> to the result of <a>creating an opaque timing info</a> for
@@ -5279,13 +5277,27 @@ steps:
 
      <li><p>Let <var>responseStatus</var> be 0.
 
+     <li><p>Let <var>bodyInfo</var> be a new <a for=/>response body info</a>.
+
      <li>
-      <p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s <a for=request>mode</a> is
-      not "<code>navigate</code>" or <var>response</var>'s
-      <a for=response>redirect taint</a> is "<code>same-origin</code>":
+      <p>If one of the following is true
+
+      <ul class=brief>
+       <li><p><var>fetchParams</var>'s <a for="fetch params">request</a>'s
+       <a for=request>mode</a> is not "<code>navigate</code>".
+
+       <li><p><var>response</var>'s <a for=response>URL</a>'s
+       <a for=url>origin</a> is <a>same origin</a> with <var>fetchParams</var>'s
+       <a for="fetch params">request</a>'s <a for=request>origin</a> and <var>response</var>'s
+       <a for=response>redirect taint</a> is "<code>same-origin</code>".
+      </ul>
+
+      <p>then:
 
       <ol>
        <li><p>Set <var>responseStatus</var> to <var>response</var>'s <a for=response>status</a>.
+
+       <li><p>Set <var>bodyInfo</var> to <var>response</var>'s <a for=response>body info</a>.
 
        <li><p>Let <var>mimeType</var> be the result of
        <a for="header list">extracting a MIME type</a> from <var>response</var>'s
@@ -5295,6 +5307,12 @@ steps:
        <a for="response body info">content type</a> to the result of
        <a>minimizing a supported MIME type</a> given <var>mimeType</var>.
       </ol>
+
+      <p class=note>For cross-origin "<code>no-cors</code>" requests, <var>response</var> is an
+      <a>opaque filtered response</a>, whose <a for=response>status</a> is already 0 and whose
+      <a for=response>body info</a> is already a new <a for=/>response body info</a>. The actual
+      status and body info are in <var>response</var>'s
+      <a for="filtered response">internal response</a> and are not exposed.
 
      <li><p>If <var>fetchParams</var>'s <a for="fetch params">request</a>'s
      <a for=request>initiator type</a> is non-null, then <a for=/>mark resource timing</a> given
