@@ -1,4 +1,4 @@
-This repository hosts the [Fetch Standard](https://fetch.spec.whatwg.org/).
+This repository hosts the [Fetch Standard](https://fetch.spec.whatwg.org/). It is one of [many web standards](https://spec.whatwg.org/) developed by the [WHATWG community](https://whatwg.org/).
 
 ## Code of conduct
 
