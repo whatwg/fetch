@@ -135,6 +135,7 @@ urlPrefix:https://www.rfc-editor.org/rfc/rfc6454;type:dfn;spec:RFC6454
 
 <pre class=link-defaults>
 spec:dom; type:dfn; text:element
+spec:dom; type:dfn; text:event;
 spec:infra; type:dfn; text:implementation-defined
 spec:infra; type:dfn; text:success
 </pre>
@@ -222,6 +223,7 @@ lt="authentication entry">authentication entries</a> (for HTTP authentication). 
  (default null)
  <dt><dfn for="fetch params">process request end-of-body</dfn> (default null)
  <dt><dfn for="fetch params">process early hints response</dfn> (default null)
+ <dt><dfn for="fetch params">process response body chunk length</dfn> (default null)
  <dt><dfn for="fetch params">process response</dfn> (default null)
  <dt><dfn for="fetch params">process response end-of-body</dfn> (default null)
  <dt><dfn for="fetch params">process response consume body</dfn> (default null)
@@ -4619,7 +4621,7 @@ prefetch, or to treat it differently when counting page visits.
 
 <p class=note>The algorithm below defines <a lt=fetch for=/>fetching</a>. In broad strokes, it takes
 a <a for=/>request</a> and one or more algorithms to run at various points during the operation. A
-<a for=/>response</a> is passed to the last two algorithms listed below. The first two algorithms
+<a for=/>response</a> is passed to the response-handling algorithms. The first two algorithms
 can be used to capture uploads.
 
 <div algorithm="fetch">
@@ -4632,6 +4634,7 @@ an optional algorithm <dfn export for=fetch><var>processEarlyHintsResponse</var>
 algorithm <dfn export for=fetch id=process-response><var>processResponse</var></dfn>, an optional
 algorithm <dfn export for=fetch><var>processResponseEndOfBody</var></dfn>, an optional algorithm
 <dfn export for=fetch id=process-response-end-of-body oldids=process-response-end-of-file><var>processResponseConsumeBody</var></dfn>,
+an optional algorithm <dfn export for=fetch><var>processResponseBodyChunkLength</var></dfn>,
 and an optional boolean <dfn export for=fetch><var>useParallelQueue</var></dfn> (default false), run
 the steps below. If given, <var>processRequestBodyChunkLength</var> must be an algorithm accepting
 an integer representing the number of bytes transmitted. If given,
@@ -4640,7 +4643,9 @@ an integer representing the number of bytes transmitted. If given,
 given, <var>processResponse</var> must be an algorithm accepting a <a for=/>response</a>. If given,
 <var>processResponseEndOfBody</var> must be an algorithm accepting a <a for=/>response</a>. If
 given, <var>processResponseConsumeBody</var> must be an algorithm accepting a <a for=/>response</a>
-and null, failure, or a <a for=/>byte sequence</a>.
+and null, failure, or a <a for=/>byte sequence</a>. If given,
+<var>processResponseBodyChunkLength</var> must be an algorithm accepting an integer representing
+the number of decoded bytes passed through the response body stream.
 
 <p>The user agent may be asked to
 <dfn export for=fetch id=concept-fetch-suspend>suspend</dfn> the ongoing fetch.
@@ -4702,6 +4707,8 @@ the response. [[!HTTP-CACHING]]
  <a for="fetch params">process request end-of-body</a> is <var>processRequestEndOfBody</var>,
  <a for="fetch params">process early hints response</a> is <var>processEarlyHintsResponse</var>,
  <a for="fetch params">process response</a> is <var>processResponse</var>,
+ <a for="fetch params">process response body chunk length</a> is
+ <var>processResponseBodyChunkLength</var>,
  <a for="fetch params">process response consume body</a> is <var>processResponseConsumeBody</var>,
  <a for="fetch params">process response end-of-body</a> is <var>processResponseEndOfBody</var>,
  <a for="fetch params">task destination</a> is <var>taskDestination</var>, and
@@ -5352,8 +5359,23 @@ steps:
   <ol>
    <li><p>Let <var>transformStream</var> be a new {{TransformStream}}.
 
-   <li><p>Let <var>identityTransformAlgorithm</var> be an algorithm which, given <var>chunk</var>,
-   <a for=TransformStream lt=enqueue>enqueues</a> <var>chunk</var> in <var>transformStream</var>.
+   <li>
+    <p>Let <var>identityTransformAlgorithm</var> be these steps, given <var>chunk</var>:
+
+    <ol>
+     <li><p><a for=TransformStream lt=enqueue>Enqueue</a> <var>chunk</var> in
+     <var>transformStream</var>.
+
+     <li><p>If <var>response</var>'s <a for=response>body</a> is null or
+     <var>fetchParams</var>'s <a for="fetch params">process response body chunk length</a> is null,
+     then return.
+
+     <li><p>Let <var>bytesLength</var> be <var>chunk</var>'s [=BufferSource/byte length=].
+
+     <li><p><a>Queue a fetch task</a> to run <var>fetchParams</var>'s
+     <a for="fetch params">process response body chunk length</a> given <var>bytesLength</var>,
+     with <var>fetchParams</var>'s <a for="fetch params">task destination</a>.
+    </ol>
 
    <li><p><a for=TransformStream>Set up</a> <var>transformStream</var> with
    <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
@@ -9599,7 +9621,24 @@ otherwise false.
 
 <pre class=idl>
 partial interface mixin WindowOrWorkerGlobalScope {
-  [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional RequestInit init = {});
+  [NewObject] Promise&lt;Response> fetch(RequestInfo input, optional FetchInit init = {});
+};
+
+dictionary FetchInit : RequestInit {
+  FetchMonitorCallback monitor;
+};
+
+callback FetchMonitorCallback = undefined (FetchMonitor monitor);
+
+[Exposed=(Window,Worker)]
+interface FetchMonitor : EventTarget {
+  readonly attribute double requestLoaded;
+  readonly attribute double responseLoaded;
+  readonly attribute double requestTotal;
+  readonly attribute double responseTotal;
+
+  attribute EventHandler onrequestprogress;
+  attribute EventHandler onresponseprogress;
 };
 
 dictionary DeferredRequestInit : RequestInit {
@@ -9615,6 +9654,28 @@ partial interface Window {
   [NewObject, SecureContext] FetchLaterResult fetchLater(RequestInfo input, optional DeferredRequestInit init = {});
 };
 </pre>
+
+<p>A {{FetchMonitor}} has an associated <dfn for=FetchMonitor>request loaded</dfn>,
+<dfn for=FetchMonitor>response loaded</dfn>, <dfn for=FetchMonitor>request total</dfn>, and
+<dfn for=FetchMonitor>response total</dfn> (non-negative integers), initially 0.
+
+<p>The <dfn attribute for=FetchMonitor><code>requestLoaded</code></dfn> getter steps are to
+return <a>this</a>'s <a for=FetchMonitor>request loaded</a>.
+
+<p>The <dfn attribute for=FetchMonitor><code>responseLoaded</code></dfn> getter steps are to
+return <a>this</a>'s <a for=FetchMonitor>response loaded</a>.
+
+<p>The <dfn attribute for=FetchMonitor><code>requestTotal</code></dfn> getter steps are to
+return <a>this</a>'s <a for=FetchMonitor>request total</a>.
+
+<p>The <dfn attribute for=FetchMonitor><code>responseTotal</code></dfn> getter steps are to
+return <a>this</a>'s <a for=FetchMonitor>response total</a>.
+
+<p>The <dfn attribute for=FetchMonitor><code>onrequestprogress</code></dfn> and
+<dfn attribute for=FetchMonitor><code>onresponseprogress</code></dfn> attributes are
+<a>event handler IDL attributes</a> whose <a>event handler event types</a> are
+<a event for=FetchMonitor><code>requestprogress</code></a> and
+<a event for=FetchMonitor><code>responseprogress</code></a>, respectively.
 
 <div algorithm>
 <p>The
@@ -9651,6 +9712,38 @@ method steps are:
 
  <li><p>Let <var>relevantRealm</var> be <a>this</a>'s <a>relevant realm</a>.
 
+ <li><p>Let <var>monitor</var> be null.
+
+ <li>
+  <p>If <var>init</var>["{{FetchInit/monitor}}"] <a for=map>exists</a>, then:
+
+  <ol>
+   <li><p>Let <var>monitorCallback</var> be <var>init</var>["{{FetchInit/monitor}}"].
+
+   <li><p>Set <var>monitor</var> to a {{FetchMonitor}}.
+
+   <li><p>Set <var>monitor</var>'s <a for=FetchMonitor>request total</a> to <var>request</var>'s
+   <a for=request>body</a>'s <a for=body>length</a>, if <var>request</var>'s <a for=request>body</a>
+   is non-null and its <a for=body>length</a> is non-null; otherwise 0.
+
+   <li><p>Let <var>args</var> be « <var>monitor</var> ».
+
+   <li><p>[=invoke|Invoke=] <var>monitorCallback</var> with <var>args</var>
+   and <code>"rethrow"</code>. If this throws an exception, <a for=/>reject</a> <var>p</var> with it
+   and return <var>p</var>.
+  </ol>
+
+ <li>
+  <p>If <var>requestObject</var>'s <a for=Request>signal</a> is <a for=AbortSignal>aborted</a>,
+  then:
+
+  <ol>
+   <li><p><a>Abort the <code>fetch()</code> call</a> with <var>p</var>, <var>request</var>, null, and
+   <var>requestObject</var>'s <a for=Request>signal</a>'s <a for=AbortSignal>abort reason</a>.
+
+   <li><p>Return <var>p</var>.
+  </ol>
+
  <li>
   <p>Let <var>locallyAborted</var> be false.
 
@@ -9685,9 +9778,58 @@ method steps are:
   </ol>
 
  <li>
-  <p><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
-  <var>request</var> and <a for=fetch><i>processResponse</i></a> given <var>response</var> being
-  these steps:
+  <p>Let <var>processRequestBodyChunkLength</var>, given a <var>bytesLength</var>, be these steps:
+
+  <ol>
+   <li><p>If <var>monitor</var> is null, then return.
+
+   <li><p>Increase <var>monitor</var>'s <a for=FetchMonitor>request loaded</a> by <var>bytesLength</var>.
+
+   <li><p>If not roughly 50ms has passed since these steps were last invoked, then return.
+
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>requestprogress</code></a> at
+   <var>monitor</var>.
+  </ol>
+
+ <li>
+  <p>Let <var>processRequestEndOfBody</var> be these steps:
+
+  <ol>
+   <li><p>If <var>monitor</var> is null, then return.
+
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>requestprogress</code></a> at
+   <var>monitor</var>.
+  </ol>
+
+ <li>
+  <p>Let <var>processResponseBodyChunkLength</var>, given <var>bytesLength</var>, be these steps:
+
+  <ol>
+   <li><p>If <var>monitor</var> is null or <var>locallyAborted</var> is true, then return.
+
+   <li><p>Increase <var>monitor</var>'s <a for=FetchMonitor>response loaded</a> by
+   <var>bytesLength</var>.
+
+   <li><p>If not roughly 50ms has passed since these steps were last invoked, then return.
+
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>responseprogress</code></a> at
+   <var>monitor</var>.
+  </ol>
+
+ <li>
+  <p>Let <var>processResponseEndOfBody</var>, given <var>response</var>, be these steps:
+
+  <ol>
+   <li><p>If <var>monitor</var> is null, <var>locallyAborted</var> is true, or
+   <var>response</var>'s <a for=response>type</a> is "<code>error</code>",
+   "<code>opaque</code>", or "<code>opaqueredirect</code>", then return.
+
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>responseprogress</code></a> at
+   <var>monitor</var>.
+  </ol>
+
+ <li>
+  <p>Let <var>processResponse</var> given a <var>response</var> be these steps:
 
   <ol>
    <li><p>If <var>locallyAborted</var> is true, then abort these steps.
@@ -9709,15 +9851,32 @@ method steps are:
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and abort these steps.
 
+   <li><p>If <var>monitor</var> is non-null and <var>response</var>'s
+   <a for=response>body</a> is non-null, then set <var>monitor</var>'s
+   <a for=FetchMonitor>response total</a> to <var>response</var>'s <a for=response>body</a>'s
+   <a for=body>length</a>, if it is non-null; otherwise 0.
+
    <li><p>Set <var>responseObject</var> to the result of <a for=Response>creating</a> a {{Response}}
    object, given <var>response</var>, "<code>immutable</code>", and <var>relevantRealm</var>.
 
    <li><p><a for=/>Resolve</a> <var>p</var> with <var>responseObject</var>.
   </ol>
 
+ <li><p>Set <var>controller</var> to the result of calling <a for=/>fetch</a> given
+ <var>request</var> with <a for=fetch><i>processResponse</i></a> set to <var>processResponse</var>,
+ <a for=fetch><i>processRequestBodyChunkLength</i></a> set to <var>processRequestBodyChunkLength</var>,
+ <a for=fetch><i>processRequestEndOfBody</i></a> set to <var>processRequestEndOfBody</var>,
+ <a for=fetch><i>processResponseBodyChunkLength</i></a> set to
+ <var>processResponseBodyChunkLength</var>, and <a for=fetch><i>processResponseEndOfBody</i></a>
+ set to <var>processResponseEndOfBody</var>.
+
  <li><p>Return <var>p</var>.
 </ol>
 </div>
+
+<p>The <dfn id=event-fetchmonitor-requestprogress event for=FetchMonitor><code>requestprogress</code></dfn>
+and <dfn id=event-fetchmonitor-responseprogress event for=FetchMonitor><code>responseprogress</code></dfn>
+events use the {{Event}} interface.
 
 <div algorithm>
 <p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn>
@@ -10352,7 +10511,8 @@ for advanced cases. <a for=fetch><i>processEarlyHintsResponse</i></a> is intende
 <a for=/>responses</a> whose <a for=response>status</a> is 103, and is currently handled only by
 navigations. <a for=fetch><i>processRequestBodyChunkLength</i></a> and
 <a for=fetch><i>processRequestEndOfBody</i></a> notify the caller of request body uploading
-progress.
+progress. <a for=fetch><i>processResponseBodyChunkLength</i></a> notifies the caller of decoded
+bytes passing through the exposed response body stream.
 
 <p>Note that the <a for=/>fetch</a> operation starts in the same thread from which it was called,
 and then breaks off to run its internal operations <a>in parallel</a>. The aforementioned callbacks
@@ -10375,7 +10535,6 @@ if this was not done automatically by passing the <a for=request>initiator type<
 done only by navigations). The <a>fetch controller</a> is also used to
 <a for="fetch controller">process the next manual redirect</a> for <a for=/>requests</a> with
 <a for=request>redirect mode</a> set to "<code>manual</code>".
-
 
 <h2 id=acknowledgments class=no-num>Acknowledgments</h2>
 
