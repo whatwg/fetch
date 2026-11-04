@@ -2097,6 +2097,16 @@ Unless stated otherwise, it is "<code>no-cors</code>".
  standards are highly discouraged from using it for new features. It is rather unsafe.
 </div>
 
+<p>A <a for=/>request</a> has an associated boolean
+<dfn export for=request>user-agent-no-cors</dfn>. Unless stated otherwise, it is false.
+
+<p class=note>When a <a for=/>request</a>'s <a for=request>mode</a> is "<code>no-cors</code>" and
+its <a for=request>user-agent-no-cors</a> is true, its <a for=request>redirect mode</a> can be other
+than "<code>follow</code>" and the <a for=/>response</a> is not an
+<a>opaque filtered response</a>. This is for features where the user agent makes the request on
+behalf of a web page, reads the <a for=/>response</a> itself, and does not expose it to the web
+page, such as FedCM. [[FEDCM]]
+
 <p>A <a for=/>request</a> has an associated
 <dfn id=use-cors-preflight-flag export for=request>use-CORS-preflight flag</dfn>. Unless stated
 otherwise, it is unset.
@@ -5019,10 +5029,16 @@ steps:
    <dt><var>request</var>'s <a for=request>mode</a> is "<code>no-cors</code>"
    <dd>
     <ol>
-     <li><p>If <var>request</var>'s <a for=request>redirect mode</a> is not "<code>follow</code>",
-     then return a <a>network error</a>.
+     <li>
+      <p>If <var>request</var>'s <a for=request>user-agent-no-cors</a> is false, then:
 
-     <li><p>Set <var>request</var>'s <a for=request>response tainting</a> to "<code>opaque</code>".
+      <ol>
+       <li><p>If <var>request</var>'s <a for=request>redirect mode</a> is not
+       "<code>follow</code>", then return a <a>network error</a>.
+
+       <li><p>Set <var>request</var>'s <a for=request>response tainting</a> to
+       "<code>opaque</code>".
+      </ol>
 
      <li><p>Return the result of running <a>override fetch</a> given "<code>scheme-fetch</code>" and
      <var>fetchParams</var>.
