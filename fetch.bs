@@ -6338,15 +6338,28 @@ these steps:
 
     <ol>
      <li>
-      <p>If <var>request</var>'s <a for=request>initiator type</a> is "<code>beacon</code>",
-      "<code>fetch</code>", or "<code>ping</code>", then set <var>internalResponse</var>'s
-      <a for=response>body</a> to null.
+      <p>If <var>request</var>'s <a for=request>initiator type</a> is "<code>beacon</code>" or
+      "<code>ping</code>", then set <var>internalResponse</var>'s <a for=response>body</a> to null.
 
       <p class=note>The response bodies of beacon and hyperlink auditing requests are ignored, so
       there is no need to block them. [[BEACON]] [[HTML]]
 
-     <li><p>Otherwise, if the <a>opaque-response-safelist check</a> given <var>request</var> and
-     <var>response</var> returns false, then return a <a>network error</a>.
+     <li>
+      <p>Otherwise, if the <a>opaque-response-safelist check</a> given <var>request</var> and
+      <var>response</var> returns false, then:
+
+      <ol>
+       <li><p>If <var>request</var>'s <a for=request>initiator type</a> is "<code>fetch</code>",
+       then set <var>internalResponse</var>'s <a for=response>body</a> to null.
+
+       <li><p>Otherwise, return a <a>network error</a>.
+      </ol>
+
+      <p class=note>For {{fetch()}} the body is removed rather than returning a
+      <a>network error</a>, so that the returned promise does not reject where it would have
+      resolved before. The body of an <a>opaque filtered response</a> is not exposed to script, but
+      a service worker can pass its <a for="filtered response">internal response</a> on to, e.g.,
+      an <code>img</code> element, which is why it is only removed when blocked.
     </ol>
 
    <li><p>If <var>request</var>'s <a for=request>response tainting</a> is "<code>cors</code>" and
