@@ -59,7 +59,6 @@ urlPrefix:https://tc39.es/ecma262/#;type:dfn;spec:ecma-262
     url:current-realm;text:current realm
     url:sec-parsetext;text:ParseText
     url:prod-Script;text:Script
-    url:script-record;text:Script Record
 
 urlPrefix:https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cookies#;type:dfn;spec:cookies
     url:name-cookie-default-path;text:cookie default path
@@ -3809,11 +3808,11 @@ needs more. See <a href=https://github.com/whatwg/mimesniff/issues/218>whatwg/mi
   steps:
 
   <ol>
-   <li><p>Set <var>responseBodyBytes</var> to <var>bytes</var>.
-
    <li><p>Set <var>response</var>'s <a for=response>body</a> to the
    <a for="body with type">body</a> of the result of <a for=BodyInit>safely extracting</a>
    <var>bytes</var>.
+
+   <li><p>Set <var>responseBodyBytes</var> to <var>bytes</var>.
   </ol>
 
  <li><p>Let <var>processBodyError</var> be this step: set <var>responseBodyBytes</var> to failure.
@@ -3825,21 +3824,19 @@ needs more. See <a href=https://github.com/whatwg/mimesniff/issues/218>whatwg/mi
   <p>Otherwise:
 
   <ol>
-   <li><p><a>Fully read</a> <var>response</var>'s <a for=response>body</a> given
+   <li><p><a for=body>Fully read</a> <var>response</var>'s <a for=response>body</a> given
    <var>processBody</var> and <var>processBodyError</var>.
 
    <li><p>Wait for <var>responseBodyBytes</var> to be non-null.
   </ol>
 
+  <p class=note>Partially parsing JavaScript is unfortunately infeasible, so this reads the whole
+  body. This might leak the size of responses that reach this step. See
+  <a href=https://github.com/annevk/orb/issues/22>annevk/orb #22</a>.
+
  <li><p>If <var>responseBodyBytes</var> is failure, then return false.
 
  <li><p><a for=/>Assert</a>: <var>responseBodyBytes</var> is a <a for=/>byte sequence</a>.
-
- <li>
-  <p>If <a>parse JSON bytes to a JavaScript value</a> given <var>responseBodyBytes</var> does not
-  throw, then return false. If it throws, catch the exception and ignore it.
-
-  <p class=note>If there is an exception, <var>response</var> is not JSON. If there is not, it is.
 
  <li><p>Let <var>potentialMIMETypeForEncoding</var> be the result of
  <a>extracting a MIME type</a> given <var>response</var>'s <a for=response>header list</a>.
@@ -3855,13 +3852,16 @@ needs more. See <a href=https://github.com/whatwg/mimesniff/issues/218>whatwg/mi
  <li><p>Let <var>sourceText</var> be the result of <a for=/>decoding</a>
  <var>responseBodyBytes</var> given <var>encoding</var>.
 
- <li><p>If <a>ParseText</a>(<var>sourceText</var>, <a>Script</a>) returns a <a>Script Record</a>,
- then return true.
- <!-- Ideally HTML owns this so ECMAScript changes don't end up impacting Fetch. We could
-      potentially make this use "create a classic script" instead with some mock data. Maybe that is
-      better? -->
+ <li><p>If <a>ParseText</a>(<var>sourceText</var>, <a>Script</a>) is a <a for=/>list</a> of errors,
+ then return false.
 
- <li><p>Return false.
+ <li>
+  <p>If <var>sourceText</var> is a valid JSON text, then return false. [[!ECMA-404]]
+
+  <p class=note>This is the grammar <code>JSON.parse()</code> uses, but checking it does not need a
+  <a>realm</a>.
+
+ <li><p>Return true.
 </ol>
 </div>
 
