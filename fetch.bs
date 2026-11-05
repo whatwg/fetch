@@ -1435,6 +1435,79 @@ values, but it is the most common form used by user agents when requesting media
 downloads. This format of range header value can be set using <a>add a range header</a>.
 </div>
 
+<div algorithm>
+<p>To <dfn export>parse a single byte content-range value</dfn> from a <a>byte sequence</a>
+<var>value</var>, run these steps:
+
+<ol>
+ <li><p>Let <var>data</var> be the <a>isomorphic decoding</a> of <var>value</var>.
+
+ <li><p>If <var>data</var> does not <a for=string>start with</a> "<code>bytes </code>", then return
+ failure.
+
+ <li><p>Let <var>position</var> be a <a>position variable</a> for <var>data</var>, initially
+ pointing at the 7th <a>code point</a> of <var>data</var>.
+
+ <li><p>Let <var>firstBytePos</var> be the result of <a>collecting a sequence of code points</a>
+ that are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
+
+ <li><p>If <var>firstBytePos</var> is the empty string, then return failure.
+
+ <li><p>If the <a>code point</a> at <var>position</var> within <var>data</var> is not U+002D (-),
+ then return failure.
+
+ <li><p>Advance <var>position</var> by 1.
+
+ <li><p>Let <var>lastBytePos</var> be the result of <a>collecting a sequence of code points</a>
+ that are <a>ASCII digits</a>, from <var>data</var> given <var>position</var>.
+
+ <li><p>If <var>lastBytePos</var> is the empty string, then return failure.
+
+ <li><p>If the <a>code point</a> at <var>position</var> within <var>data</var> is not U+002F (/),
+ then return failure.
+
+ <li><p>Advance <var>position</var> by 1.
+
+ <li><p>Let <var>completeLengthValue</var> be null.
+
+ <li><p>If the <a>code point</a> at <var>position</var> within <var>data</var> is U+002A (*), then
+ advance <var>position</var> by 1.
+
+ <li>
+  <p>Otherwise:
+
+  <ol>
+   <li><p>Let <var>completeLength</var> be the result of
+   <a>collecting a sequence of code points</a> that are <a>ASCII digits</a>, from <var>data</var>
+   given <var>position</var>.
+
+   <li><p>If <var>completeLength</var> is the empty string, then return failure.
+
+   <li><p>Set <var>completeLengthValue</var> to <var>completeLength</var>, interpreted as decimal
+   number.
+  </ol>
+
+ <li><p>If <var>position</var> is not past the end of <var>data</var>, then return failure.
+
+ <li><p>Let <var>firstBytePosValue</var> be <var>firstBytePos</var>, interpreted as decimal
+ number.
+
+ <li><p>Let <var>lastBytePosValue</var> be <var>lastBytePos</var>, interpreted as decimal number.
+
+ <li><p>If <var>firstBytePosValue</var> is greater than <var>lastBytePosValue</var>, then return
+ failure.
+
+ <li><p>If <var>completeLengthValue</var> is non-null and <var>lastBytePosValue</var> is greater
+ than or equal to <var>completeLengthValue</var>, then return failure.
+
+ <li><p>Return (<var>firstBytePosValue</var>, <var>lastBytePosValue</var>,
+ <var>completeLengthValue</var>).
+</ol>
+
+<p class=note><a>Parse a single byte content-range value</a> succeeds for a subset of allowed
+`<code>Content-Range</code>` header values: a single byte range without whitespace. [[HTTP]]
+</div>
+
 <hr>
 
 <p>A <dfn id=default-user-agent-value export>default `<code>User-Agent</code>` value</dfn> is an
@@ -3650,52 +3723,37 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
 <hr>
 
 <div algorithm>
-<p>To <dfn>extract content-range values</dfn>, given a <a for=/>response</a> <var>response</var>,
-run these steps:
+<p>To <dfn export>extract content-range values</dfn>, given a <a for=/>response</a>
+<var>response</var>, run these steps:
 
 <ol>
- <li><p>If <var>response</var>'s <a for=response>header list</a>
- <a for="header list">does not contain</a> `<code>Content-Range</code>`, then return failure.
+ <li><p>Let <var>value</var> be the result of <a for="header list">getting</a>
+ `<code>Content-Range</code>` from <var>response</var>'s <a for=response>header list</a>.
 
- <li><p>Let <var>contentRangeValue</var> be the <a for=header>value</a> of the first
- <a for=/>header</a> whose <a for=header>name</a> is a <a>byte-case-insensitive</a> match for
- `<code>Content-Range</code>` in <var>response</var>'s <a for=response>header list</a>.
+ <li><p>If <var>value</var> is null, then return failure.
 
- <li><p>If parsing <var>contentRangeValue</var> per <a>single byte content-range</a> fails, then
- return failure.
-
- <li><p>Let <var>firstBytePos</var> be the portion of <var>contentRangeValue</var> named
- first-byte-pos when parsed as <a>single byte content-range</a>, parsed as an integer.
-
- <li><p>Let <var>lastBytePos</var> be the portion of <var>contentRangeValue</var> named
- last-byte-pos when parsed as <a>single byte content-range</a>, parsed as an integer.
-
- <li><p>Let <var>completeLength</var> be the portion of <var>contentRangeValue</var> named
- complete-length when parsed as <a>single byte content-range</a>.
-
- <li><p>If <var>completeLength</var> is "<code>*</code>", then set <var>completeLength</var> to
- null; otherwise set <var>completeLength</var> to <var>completeLength</var> parsed as an integer.
-
- <li><p>Return <var>firstBytePos</var>, <var>lastBytePos</var>, and <var>completeLength</var>.
+ <li><p>Return the result of <a>parsing a single byte content-range value</a> from
+ <var>value</var>.
 </ol>
-
-<p class=XXX>Parsing as an integer:
-<a href="https://github.com/whatwg/infra/issues/189">infra/189</a>.
 </div>
 
 <hr>
 
 <div algorithm>
-<p>To <dfn>validate a partial response</dfn>, given an integer <var>expectedRangeStart</var>, a
+<p>To <dfn export>validate a partial response</dfn>, given an integer <var>expectedRangeStart</var>, a
 <a for=/>response</a> <var>partialResponse</var>, and an optional <a for=/>response</a>
 <var>previousResponse</var> (default null), run these steps:
 
 <ol>
  <li><p><a for=/>Assert</a>: <var>partialResponse</var>'s <a for=response>status</a> is 206.
 
- <li><p>Let <var>responseFirstBytePos</var>, <var ignore>responseLastBytePos</var>, and
- <var>responseCompleteLength</var> be the result of <a>extracting content-range values</a> from
- <var>partialResponse</var>. If this fails, then return invalid.
+ <li><p>Let <var>contentRangeValues</var> be the result of <a>extracting content-range values</a>
+ from <var>partialResponse</var>.
+
+ <li><p>If <var>contentRangeValues</var> is failure, then return invalid.
+
+ <li><p>Let (<var>responseFirstBytePos</var>, <var ignore>responseLastBytePos</var>,
+ <var>responseCompleteLength</var>) be <var>contentRangeValues</var>.
 
  <li><p>If <var>responseFirstBytePos</var> does not equal <var>expectedRangeStart</var>, then return
  invalid.
@@ -3721,10 +3779,14 @@ run these steps:
     <p>If <var>previousResponse</var>'s <a for=response>status</a> is 206, then:
 
     <ol>
-     <li><p>Let <var ignore>previousResponseFirstBytePos</var>,
-     <var ignore>previousResponseLastBytePos</var>, and <var>previousResponseCompleteLength</var> be
-     the result of <a>extracting content-range values</a> from <var>previousResponse</var>. If this
-     fails, then return invalid.
+     <li><p>Let <var>previousContentRangeValues</var> be the result of
+     <a>extracting content-range values</a> from <var>previousResponse</var>.
+
+     <li><p>If <var>previousContentRangeValues</var> is failure, then return invalid.
+
+     <li><p>Let (<var ignore>previousResponseFirstBytePos</var>,
+     <var ignore>previousResponseLastBytePos</var>, <var>previousResponseCompleteLength</var>) be
+     <var>previousContentRangeValues</var>.
 
      <li><p>If <var>previousResponseCompleteLength</var> is not null and
      <var>responseCompleteLength</var> does not equal <var>previousResponseCompleteLength</var>,
@@ -4371,47 +4433,6 @@ Access-Control-Allow-Headers     = #<a spec=http>field-name</a>
 response <a for=/>headers</a>, the <a for=header>value</a> `<code>*</code>` counts as a wildcard for
 <a for=/>requests</a> without <a for=/>credentials</a>. For such <a for=/>requests</a> there is no
 way to solely match a <a for=/>header name</a> or <a for=/>method</a> that is `<code>*</code>`.
-
-<p><a>ABNF</a> for a <dfn export>single byte content-range</dfn>:
-
-<pre><code class=lang-abnf>
-single-byte-content-range = "bytes" SP first-byte-pos "-" last-byte-pos "/" complete-length
-first-byte-pos  = 1*DIGIT
-last-byte-pos   = 1*DIGIT
-complete-length = ( 1*DIGIT / "*" )
-</code></pre>
-
-<p class=note>This is a subset of what `<code>Content-Range</code>` allows.
-[[HTTP]]
-
-<div class="note">
-
-  The above as a railroad diagram:
-
-  <pre class="railroad">
-  T: "bytes "
-  Stack:
-    Sequence:
-      Comment: first-byte-pos
-      OneOrMore:
-        N: digit
-      Comment: /first-byte-pos
-      N: "-"
-    Sequence:
-      Comment: last-byte-pos
-      OneOrMore:
-        N: digit
-      Comment: /last-byte-pos
-      N: "/"
-    Sequence:
-      Comment: complete-length
-      Choice:
-        N: "*"
-        OneOrMore:
-          N: digit
-      Comment: /complete-length
-  </pre>
-</div>
 
 <h4 id=cors-protocol-and-credentials>CORS protocol and credentials</h4>
 
