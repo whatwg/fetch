@@ -3565,7 +3565,7 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
  false.
 
  <li><p>Let <var>bytes</var> be the result of running
- <a>obtain a copy of the first 1024 bytes of response</a> given <var>response</var>.
+ <a>obtain a copy of the first bytes of response</a> given <var>response</var>.
 
  <li><p>If <var>bytes</var> is failure, then return false.
 
@@ -3587,8 +3587,13 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
  <li><p>If the <a>image type pattern matching algorithm</a> given <var>bytes</var> does not return
  undefined, then return true.
 
- <li><p>If <var>request</var>'s <a for=request>no-cors media request state</a> is not
- "<code>N/A</code>", then return false.
+ <li>
+  <p>If <var>request</var>'s <a for=request>no-cors media request state</a> is not
+  "<code>N/A</code>", then return false.
+
+  <p class=note>Media playlists can reference arbitrary URLs, including other playlists. Requests
+  for those also need their <a for=request>no-cors media request state</a> to be set, so their
+  responses are subject to this step.
 
  <li>
   <p>If <var>nosniff</var> is true, then return false.
@@ -3704,14 +3709,14 @@ run these steps:
 <hr>
 
 <div algorithm>
-<p>To <dfn>obtain a copy of the first 1024 bytes of response</dfn>, given a <a for=/>response</a>
+<p>To <dfn>obtain a copy of the first bytes of response</dfn>, given a <a for=/>response</a>
 <var>response</var>, run these steps:
 
 <ol>
  <li><p>If <var>response</var>'s <a for=response>body</a> is null, then return the empty
  <a for=/>byte sequence</a>.
 
- <li><p>Let <var>first1024Bytes</var> be null.
+ <li><p>Let <var>firstBytes</var> be null.
 
  <li>
   <p><a for=/>In parallel</a>:
@@ -3728,7 +3733,7 @@ run these steps:
      <li><p><a for=TransformStream>Enqueue</a> <var>chunk</var> in <var>transformStream</var>.
 
      <li>
-      <p>If <var>first1024Bytes</var> is null, then:
+      <p>If <var>firstBytes</var> is null, then:
 
       <ol>
        <li><p>Let <var>chunkBytes</var> be
@@ -3739,18 +3744,18 @@ run these steps:
 
        <li>
         <p>If <var>bytes</var>'s <a for="byte sequence">length</a> is greater than or equal to
-        1024, then:
+        8096, then:
 
         <ol>
-         <li><p>Truncate <var>bytes</var> from the end so that it only contains 1024 bytes.
+         <li><p>Truncate <var>bytes</var> from the end so that it only contains 8096 bytes.
 
-         <li><p>Set <var>first1024Bytes</var> to <var>bytes</var>.
+         <li><p>Set <var>firstBytes</var> to <var>bytes</var>.
         </ol>
       </ol>
     </ol>
 
-   <li><p>Let <var>flushAlgorithm</var> be this step: if <var>first1024Bytes</var> is null, then set
-   <var>first1024Bytes</var> to <var>bytes</var>.
+   <li><p>Let <var>flushAlgorithm</var> be this step: if <var>firstBytes</var> is null, then set
+   <var>firstBytes</var> to <var>bytes</var>.
 
    <li><p><a for=TransformStream>Set up</a> <var>transformStream</var> with
    <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
@@ -3762,13 +3767,16 @@ run these steps:
    <a for=ReadableStream>piped through</a> <var>transformStream</var>.
   </ol>
 
- <li><p>Wait until <var>first1024Bytes</var> is non-null or <var>response</var>'s
+ <li><p>Wait until <var>firstBytes</var> is non-null or <var>response</var>'s
  <a for=response>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>errored</a>.
 
- <li><p>If <var>first1024Bytes</var> is null, then return failure.
+ <li><p>If <var>firstBytes</var> is null, then return failure.
 
- <li><p>Return <var>first1024Bytes</var>.
+ <li><p>Return <var>firstBytes</var>.
 </ol>
+
+<p class=note>Most signatures need at most 1445 bytes, but sniffing AAC in ADTS with large frames
+needs more. See <a href=https://github.com/whatwg/mimesniff/issues/218>whatwg/mimesniff #218</a>.
 </div>
 
 <hr>
@@ -3848,8 +3856,25 @@ run these steps:
 <a>opaque-response-safelist check</a>. They are not suited for usage elsewhere.
 
 <p>An <dfn>opaque-response-safelisted MIME type</dfn> is a <a>JavaScript MIME type</a> or a
-<a for=/>MIME type</a> whose <a for="MIME type">essence</a> is "<code>text/css</code>" or
-"<code>image/svg+xml</code>".
+<a for=/>MIME type</a> whose <a for="MIME type">essence</a> is one of:
+
+<ul class=brief>
+ <li>"<code>application/dash+xml</code>"
+ <li>"<code>application/vnd.apple.mpegurl</code>"
+ <li>"<code>audio/aac</code>"
+ <li>"<code>audio/aacp</code>"
+ <li>"<code>audio/mpeg</code>"
+ <li>"<code>audio/mpegurl</code>"
+ <li>"<code>image/svg+xml</code>"
+ <li>"<code>multipart/x-mixed-replace</code>"
+ <li>"<code>text/css</code>"
+ <li>"<code>text/vtt</code>"
+</ul>
+
+<p class=note>The audio, playlist, manifest, text track, and multipart MIME types are allowed
+without sniffing as their responses cannot always be sniffed. E.g., an MP3 or AAC stream does not
+necessarily start at a frame boundary and <code>multipart/x-mixed-replace</code> is used for Motion
+JPEG.
 
 <p>An <dfn>opaque-response-blocklisted MIME type</dfn> is an <a>HTML MIME type</a>,
 <a>JSON MIME type</a>, or <a>XML MIME type</a>.
@@ -3858,14 +3883,12 @@ run these steps:
 whose <a for="MIME type">essence</a> is one of:
 
 <ul class=brief>
- <li>"<code>application/dash+xml</code>"
  <li>"<code>application/gzip</code>"
  <li>"<code>application/msexcel</code>"
  <li>"<code>application/mspowerpoint</code>"
  <li>"<code>application/msword</code>"
  <li>"<code>application/msword-template</code>"
  <li>"<code>application/pdf</code>"
- <li>"<code>application/vnd.apple.mpegurl</code>"
  <li>"<code>application/vnd.ces-quickpoint</code>"
  <li>"<code>application/vnd.ces-quicksheet</code>"
  <li>"<code>application/vnd.ces-quickword</code>"
@@ -3891,16 +3914,10 @@ whose <a for="MIME type">essence</a> is one of:
  <li>"<code>application/x-protobuf</code>"
  <li>"<code>application/x-protobuffer</code>"
  <li>"<code>application/zip</code>"
- <li>"<code>audio/aac</code>"
- <li>"<code>audio/aacp</code>"
- <li>"<code>audio/mpegurl</code>"
- <li>"<code>audio/mpeg</code>"
  <li>"<code>multipart/byteranges</code>"
  <li>"<code>multipart/signed</code>"
- <li>"<code>multipart/x-mixed-replace</code>"
  <li>"<code>text/event-stream</code>"
  <li>"<code>text/csv</code>"
- <li>"<code>text/vtt</code>"
 </ul>
 
 
