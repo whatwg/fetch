@@ -2283,11 +2283,15 @@ consisting of an <dfn export for=WebTransport-hash>algorithm</dfn> (a <a for=/>s
 <var ignore>options</var> contains {{WebTransportOptions/serverCertificateHashes}}.
 
 <p>A <a for=/>request</a> has an associated
-<dfn export for=request>no-cors media request state</dfn>, which is "<code>N/A</code>",
+<dfn export for=request>no-cors media request state</dfn>, which is "<code>none</code>",
 "<code>initial</code>", or "<code>subsequent</code>". Unless stated otherwise, it is
-"<code>N/A</code>".
+"<code>none</code>".
 
-<p class=note>This is for exclusive use by the <a>opaque-response-safelist check</a>.
+<p class=note>This is for exclusive use by the <a>opaque-response-safelist check</a>. HTML sets it
+to "<code>initial</code>" for the first request a media element makes for a resource and to
+"<code>subsequent</code>" for the range requests that follow. A "<code>subsequent</code>" request's
+response skips sniffing only if an earlier "<code>initial</code>" request's response for the same
+<a for=/>URL</a> sniffed as audio or video. See <a for="fetch group">ORB media URLs</a>. [[HTML]]
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request>no-cors JavaScript fallback encoding</dfn> (an <a for=/>encoding</a>).
@@ -2907,6 +2911,14 @@ functionality.
 
  <dt><dfn for="fetch group">deferred fetch records</dfn>
  <dd>A <a for=/>list</a> of <a for=/>deferred fetch records</a>.
+
+ <dt><dfn for="fetch group">ORB media URLs</dfn>
+ <dd>
+  <p>A <a for=/>list</a> of <a for=/>URLs</a> whose responses sniffed as audio or video in the
+  <a>opaque-response-safelist check</a>.
+
+  <p class=note>Implementations need to keep this record where the process that made the
+  <a for=/>request</a> cannot change it.
 </dl>
 
 <p>A <dfn export>fetch record</dfn> is a <a for=/>struct</a> with the following
@@ -3557,8 +3569,17 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
    "<code>text/plain</code>", then return false.
   </ol>
 
- <li><p>If <var>request</var>'s <a for=request>no-cors media request state</a> is
- "<code>subsequent</code>", then return true.
+ <li>
+  <p>If <var>request</var>'s <a for=request>no-cors media request state</a> is
+  "<code>subsequent</code>", <var>request</var>'s <a for=request>client</a> is non-null, and
+  <var>request</var>'s <a for=request>client</a>'s
+  <a for="environment settings object">fetch group</a>'s <a for="fetch group">ORB media URLs</a>
+  contains a <a for=/>URL</a> that <a for=url>equals</a> <var>response</var>'s
+  <a for=response>URL</a> with <a for=url/equals><i>exclude fragments</i></a> set to true, then
+  return true.
+
+  <p class=note>This uses <var>response</var>'s <a for=response>URL</a>, so a
+  "<code>subsequent</code>" request that is redirected elsewhere does not skip sniffing.
 
  <li><p>If <var>response</var>'s <a for=response>status</a> is 206 and
  <a>validate a partial response</a> given 0 and <var>response</var> returns invalid, then return
@@ -3574,9 +3595,19 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
   return undefined, then:
 
   <ol>
-   <li><p>If <var>request</var>'s <a for=request>no-cors media request state</a> is
-   "<code>initial</code>" and <var>response</var>'s <a for=response>status</a> is not 200 or 206,
-   then return false.
+   <li>
+    <p>If <var>request</var>'s <a for=request>no-cors media request state</a> is
+    "<code>initial</code>", then:
+
+    <ol>
+     <li><p>If <var>response</var>'s <a for=response>status</a> is not 200 or 206, then return
+     false.
+
+     <li><p>If <var>request</var>'s <a for=request>client</a> is non-null, then
+     <a for=list>append</a> <var>response</var>'s <a for=response>URL</a> to <var>request</var>'s
+     <a for=request>client</a>'s <a for="environment settings object">fetch group</a>'s
+     <a for="fetch group">ORB media URLs</a>.
+    </ol>
 
    <li><p>Return true.
   </ol>
@@ -3589,7 +3620,7 @@ through TLS using ALPN. The protocol cannot be spoofed through HTTP requests in 
 
  <li>
   <p>If <var>request</var>'s <a for=request>no-cors media request state</a> is not
-  "<code>N/A</code>", then return false.
+  "<code>none</code>", then return false.
 
   <p class=note>Media playlists can reference arbitrary URLs, including other playlists. Requests
   for those also need their <a for=request>no-cors media request state</a> to be set, so their
@@ -9481,6 +9512,12 @@ constructor steps are:
 
    <dt><a for=request>initiator type</a>
    <dd>"<code>fetch</code>".
+
+   <dt><a for=request>no-cors media request state</a>
+   <dd><var>request</var>'s <a for=request>no-cors media request state</a>.
+
+   <dt><a for=request>no-cors JavaScript fallback encoding</a>
+   <dd><var>request</var>'s <a for=request>no-cors JavaScript fallback encoding</a>.
   </dl>
 
  <li>
