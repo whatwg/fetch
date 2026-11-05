@@ -3747,61 +3747,46 @@ run these steps:
  <li><p>If <var>response</var>'s <a for=response>body</a> is null, then return the empty
  <a for=/>byte sequence</a>.
 
+ <li><p>Let <var>bodyCopy</var> be the result of <a for=body>cloning</a> <var>response</var>'s
+ <a for=response>body</a>.
+
+ <li><p>Let <var>bytes</var> be the empty <a for=/>byte sequence</a>.
+
  <li><p>Let <var>firstBytes</var> be null.
 
  <li>
-  <p><a for=/>In parallel</a>:
+  <p>Let <var>processBodyChunk</var> given a <a for=/>byte sequence</a> <var>chunk</var> be these
+  steps:
 
   <ol>
-   <li><p>Let <var>bytes</var> be the empty <a for=/>byte sequence</a>.
+   <li><p>If <var>firstBytes</var> is non-null, then return.
 
-   <li><p>Let <var>transformStream</var> be a new {{TransformStream}}.
+   <li><p>Append <var>chunk</var> to <var>bytes</var>.
 
    <li>
-    <p>Let <var>transformAlgorithm</var> given a <var>chunk</var> be these steps:
+    <p>If <var>bytes</var>'s <a for="byte sequence">length</a> is greater than or equal to 8096,
+    then:
 
     <ol>
-     <li><p><a for=TransformStream>Enqueue</a> <var>chunk</var> in <var>transformStream</var>.
+     <li><p>Truncate <var>bytes</var> from the end so that it only contains 8096 bytes.
 
-     <li>
-      <p>If <var>firstBytes</var> is null, then:
+     <li><p>Set <var>firstBytes</var> to <var>bytes</var>.
 
-      <ol>
-       <li><p>Let <var>chunkBytes</var> be
-       <a lt="get a copy of the bytes held by the buffer source">a copy of the bytes held by</a>
-       <var>chunk</var>.
-
-       <li><p>Append <var>chunkBytes</var> to <var>bytes</var>.
-
-       <li>
-        <p>If <var>bytes</var>'s <a for="byte sequence">length</a> is greater than or equal to
-        8096, then:
-
-        <ol>
-         <li><p>Truncate <var>bytes</var> from the end so that it only contains 8096 bytes.
-
-         <li><p>Set <var>firstBytes</var> to <var>bytes</var>.
-        </ol>
-      </ol>
+     <li><p><a for=ReadableStream>Cancel</a> <var>bodyCopy</var>'s <a for=body>stream</a> with
+     undefined.
     </ol>
-
-   <li><p>Let <var>flushAlgorithm</var> be this step: if <var>firstBytes</var> is null, then set
-   <var>firstBytes</var> to <var>bytes</var>.
-
-   <li><p><a for=TransformStream>Set up</a> <var>transformStream</var> with
-   <a for="TransformStream/set up"><i>transformAlgorithm</i></a> set to
-   <var>transformAlgorithm</var> and <a for="TransformStream/set up"><i>flushAlgorithm</i></a> set
-   to <var>flushAlgorithm</var>.
-
-   <li><p>Set <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a> to the result
-   of <var>response</var>'s <a for=response>body</a>'s <a for=body>stream</a>
-   <a for=ReadableStream>piped through</a> <var>transformStream</var>.
   </ol>
 
- <li><p>Wait until <var>firstBytes</var> is non-null or <var>response</var>'s
- <a for=response>body</a>'s <a for=body>stream</a> is <a for=ReadableStream>errored</a>.
+ <li><p>Let <var>processEndOfBody</var> be this step: if <var>firstBytes</var> is null, then set
+ <var>firstBytes</var> to <var>bytes</var>.
 
- <li><p>If <var>firstBytes</var> is null, then return failure.
+ <li><p>Let <var>processBodyError</var> be this step: if <var>firstBytes</var> is null, then set
+ <var>firstBytes</var> to failure.
+
+ <li><p><a for=body>Incrementally read</a> <var>bodyCopy</var> given <var>processBodyChunk</var>,
+ <var>processEndOfBody</var>, and <var>processBodyError</var>.
+
+ <li><p>Wait for <var>firstBytes</var> to be non-null.
 
  <li><p>Return <var>firstBytes</var>.
 </ol>
