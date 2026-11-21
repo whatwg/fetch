@@ -7544,8 +7544,9 @@ fetchLater(a_62_kb_url /* with a 3kb referrer */);
  throw.
 
  <pre><code class=lang-javascript>
-fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
-fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+// Each body is sized so that the complete request occupies 64 KiB.
+fetchLater("https://a.example.com", {method: "POST", body: body_for_64_kib_request_to_a});
+fetchLater("https://b.example.com", {method: "POST", body: body_for_64_kib_request_to_b});
 fetchLater("https://a.example.com");
 </code></pre>
 
@@ -7555,14 +7556,14 @@ fetchLater("https://a.example.com");
 
  <pre><code class=lang-javascript>
 // In main page
-fetchLater("https://a.example.com", {method: "POST", body: a_64kb_body});
+fetchLater("https://a.example.com", {method: "POST", body: a_60kb_body});
 
 // In same-origin nested document
-fetchLater("https://b.example.com", {method: "POST", body: a_64kb_body});
+fetchLater("https://b.example.com", {method: "POST", body: a_60kb_body});
 
 // In cross-origin nested document at https://fratop.example.com
-fetchLater("https://a.example.com", {body: a_5kb_body});
-fetchLater("https://a.example.com", {body: a_12kb_body});
+fetchLater("https://a.example.com", {method: "POST", body: a_5kb_body});
+fetchLater("https://a.example.com", {method: "POST", body: a_12kb_body});
 </code></pre>
 
  <p>To make the previous example not throw, the top-level document can delegate some of its quota
@@ -7575,10 +7576,10 @@ fetchLater("https://a.example.com", {body: a_12kb_body});
 
  <pre><code class=lang-javascript>
 // In cross-origin nested document at https://fratop.example.com/frame-1
-fetchLater("https://a.example.com", {body: a_6kb_body});
+fetchLater("https://a.example.com", {method: "POST", body: a_6kb_body});
 
 // In cross-origin nested document at https://fratop.example.com/frame-2
-fetchLater("https://a.example.com", {body: a_6kb_body});
+fetchLater("https://a.example.com", {method: "POST", body: a_6kb_body});
 </code></pre>
 
  <p>The following tree illustrates how quota is distributed to different nested documents in a tree:
