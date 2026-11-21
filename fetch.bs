@@ -9850,7 +9850,7 @@ function check_if_fetched() {
  <pre><code class=lang-javascript>
 let accumulated_events = [];
 let previous_result = null;
-const abort_signal = new AbortSignal();
+let controller = null;
 function accumulate_event(event) {
   if (previous_result) {
     if (previous_result.activated) {
@@ -9858,17 +9858,18 @@ function accumulate_event(event) {
       accumulated_events = [];
     } else {
       // Abort this request, and start a new one with all the events.
-      signal.abort();
+      controller.abort();
     }
   }
 
   accumulated_events.push(event);
-  result = fetchLater("https://report.example.com", {
+  controller = new AbortController();
+  previous_result = fetchLater("https://report.example.com", {
     method: "POST",
     body: JSON.stringify(accumulated_events),
     headers: { "Content-Type": "application/json" },
     activateAfter: 5000,
-    abort_signal
+    signal: controller.signal
   });
 }
 </code></pre>
