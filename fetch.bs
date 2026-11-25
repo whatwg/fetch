@@ -70,6 +70,20 @@ urlPrefix:https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cooki
 
 urlPrefix:https://www.rfc-editor.org/rfc/rfc6454;type:dfn;spec:RFC6454
     url:section-7.1;text:serialized-origin
+
+<!-- TEMPORARY: remove after companion whatwg/html PR lands and Shepherd/Webref updates -->
+urlPrefix:https://html.spec.whatwg.org/multipage/browsers.html#;type:dfn;spec:HTML
+    url:document-isolation-policy-value;text:document isolation policy value
+    url:dip-none;text:none;for:document isolation policy value
+    url:dip-isolate-and-require-corp;text:isolate-and-require-corp;for:document isolation policy value
+    url:dip-isolate-and-credentialless;text:isolate-and-credentialless;for:document isolation policy value
+    url:document-isolation-policy;text:document isolation policy
+    url:document-isolation-policy-value-2;text:value;for:document isolation policy
+    url:document-isolation-policy-reporting-endpoint;text:reporting endpoint;for:document isolation policy
+    url:document-isolation-policy-report-only-value;text:report-only value;for:document isolation policy
+    url:document-isolation-policy-report-only-reporting-endpoint;text:report-only reporting endpoint;for:document isolation policy
+    url:dip-report-type;text:"dip" report type
+    url:policy-container-document-isolation-policy;text:document isolation policy;for:policy container
 </pre>
 
 <pre class=biblio>
@@ -2522,6 +2536,35 @@ source of security bugs. Please seek security review for features that deal with
 </ol>
 </div>
 
+<div algorithm>
+<p>To check if <dfn export>Document-Isolation-Policy allows credentials</dfn>, given a
+<a for=/>request</a> <var>request</var>, run these steps:
+
+<ol>
+ <li><p><a for=/>Assert</a>: <var>request</var>'s <a for=request>origin</a> is not
+ "<code>client</code>".
+
+ <li><p>If <var>request</var>'s <a for=request>mode</a> is not "<code>no-cors</code>", then return
+ true.
+
+ <li><p>If <var>request</var>'s <a for=request>client</a> is null, then return true.
+
+ <li><p>If <var>request</var>'s <a for=request>client</a>'s
+ <a for="environment settings object">policy container</a>'s
+ <a for="policy container">document isolation policy</a>'s
+ <a for="document isolation policy">value</a> is not
+ "<a for="document isolation policy value"><code>isolate-and-credentialless</code></a>", then
+ return true.
+
+ <li><p>If <var>request</var>'s <a for=request>origin</a> is <a>same origin</a> with
+ <var>request</var>'s <a for=request>current URL</a>'s <a for=url>origin</a> and
+ <var>request</var>'s <a for=request>redirect-taint</a> is "<code>same-origin</code>", then return
+ true.
+
+ <li><p>Return false.
+</ol>
+</div>
+
 
 <h4 id=responses>Responses</h4>
 
@@ -4424,25 +4467,42 @@ Cross-Origin-Resource-Policy     = %s"same-origin" / %s"same-site" / %s"cross-or
  <a for="environment settings object">policy container</a>'s
  <a for="policy container">embedder policy</a>.
 
- <li>
-  <p>If the <a>cross-origin resource policy internal check</a> with <var>origin</var>,
-  "<a for="embedder policy value"><code>unsafe-none</code></a>", <var>response</var>, and
-  <var>forNavigation</var> returns <b>blocked</b>, then return <b>blocked</b>.
+ <li><p>Let <var>documentIsolationPolicy</var> be <var>settingsObject</var>'s
+ <a for="environment settings object">policy container</a>'s
+ <a for="policy container">document isolation policy</a>.
 
-  <p class="note">This step is needed because we don't want to report violations not related to
-  Cross-Origin Embedder Policy below.
+ <li><p>Let <var>reportOnlyResult</var> be the result of performing a
+ <a>cross-origin resource policy internal check</a> with <var>origin</var>,
+ <var>embedderPolicy</var>'s <a for="embedder policy">report-only value</a>,
+ <var>documentIsolationPolicy</var>'s <a for="document isolation policy">report-only value</a>,
+ <var>response</var>, and <var>forNavigation</var>.
 
- <li><p>If the <a>cross-origin resource policy internal check</a> with <var>origin</var>,
- <var>embedderPolicy</var>'s <a for="embedder policy">report-only value</a>, <var>response</var>,
- and <var>forNavigation</var> returns <b>blocked</b>, then
+ <li><p>If <var>reportOnlyResult</var> is "<code>blocked-by-coep</code>" or
+ "<code>blocked-by-coep-and-dip</code>", then
  <a>queue a cross-origin embedder policy CORP violation report</a> with <var>response</var>,
  <var>settingsObject</var>, <var>destination</var>, and true.
 
- <li><p>If the <a>cross-origin resource policy internal check</a> with <var>origin</var>,
- <var>embedderPolicy</var>'s <a for="embedder policy">value</a>, <var>response</var>, and
- <var>forNavigation</var> returns <b>allowed</b>, then return <b>allowed</b>.
+ <li><p>If <var>reportOnlyResult</var> is "<code>blocked-by-dip</code>" or
+ "<code>blocked-by-coep-and-dip</code>", then
+ <a>queue a document isolation policy CORP violation report</a> with <var>response</var>,
+ <var>settingsObject</var>, <var>destination</var>, and true.
 
- <li><p><a>Queue a cross-origin embedder policy CORP violation report</a> with <var>response</var>,
+ <li><p>Let <var>result</var> be the result of performing a
+ <a>cross-origin resource policy internal check</a> with <var>origin</var>,
+ <var>embedderPolicy</var>'s <a for="embedder policy">value</a>,
+ <var>documentIsolationPolicy</var>'s <a for="document isolation policy">value</a>,
+ <var>response</var>, and <var>forNavigation</var>.
+
+ <li><p>If <var>result</var> is "<code>allowed</code>", then return <b>allowed</b>.
+
+ <li><p>If <var>result</var> is "<code>blocked-by-coep</code>" or
+ "<code>blocked-by-coep-and-dip</code>", then
+ <a>queue a cross-origin embedder policy CORP violation report</a> with <var>response</var>,
+ <var>settingsObject</var>, <var>destination</var>, and false.
+
+ <li><p>If <var>result</var> is "<code>blocked-by-dip</code>" or
+ "<code>blocked-by-coep-and-dip</code>", then
+ <a>queue a document isolation policy CORP violation report</a> with <var>response</var>,
  <var>settingsObject</var>, <var>destination</var>, and false.
 
  <li><p>Return <b>blocked</b>.
@@ -4458,12 +4518,15 @@ true, and it's always for nested navigations. Otherwise, <var>response</var> is 
 <div algorithm>
 <p>To perform a <dfn>cross-origin resource policy internal check</dfn>, given an
 <a for=url>origin</a> <var>origin</var>, an <a for=/>embedder policy value</a>
-<var>embedderPolicyValue</var>, a <a for=/>response</a> <var>response</var>, and a boolean
-<var>forNavigation</var>, run these steps:
+<var>embedderPolicyValue</var>, a <a for=/>document isolation policy value</a>
+<var>documentIsolationPolicyValue</var>, a <a for=/>response</a> <var>response</var>, and a
+boolean <var>forNavigation</var>, run these steps. They return "<code>allowed</code>",
+"<code>blocked</code>", "<code>blocked-by-coep</code>", "<code>blocked-by-dip</code>", or
+"<code>blocked-by-coep-and-dip</code>".
 
 <ol>
  <li><p>If <var>forNavigation</var> is true and <var>embedderPolicyValue</var> is
- "<a for="embedder policy value"><code>unsafe-none</code></a>", then return <b>allowed</b>.
+ "<a for="embedder policy value"><code>unsafe-none</code></a>", then return "<code>allowed</code>".
 
  <li>
   <p>Let <var>policy</var> be the result of <a for="header list">getting</a>
@@ -4471,33 +4534,81 @@ true, and it's always for nested navigations. Otherwise, <var>response</var> is 
   <a for=response>header list</a>.
 
   <p class=note>This means that `<code>Cross-Origin-Resource-Policy: same-site, same-origin</code>`
-  ends up as <b>allowed</b> below as it will never match anything, as long as
-  <var>embedderPolicyValue</var> is "<a for="embedder policy value"><code>unsafe-none</code></a>".
-  Two or more `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` headers will have the
-  same effect.
+  ends up as "<code>allowed</code>" below as it will never match anything, as long as
+  <var>embedderPolicyValue</var> is "<a for="embedder policy value"><code>unsafe-none</code></a>"
+  and <var>documentIsolationPolicyValue</var> is
+  "<a for="document isolation policy value"><code>none</code></a>". Two or more
+  `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` headers will have the same effect.
 
  <li><p>If <var>policy</var> is neither `<code>same-origin</code>`, `<code>same-site</code>`, nor
  `<code>cross-origin</code>`, then set <var>policy</var> to null.
 
  <li>
-  <p>If <var>policy</var> is null, then switch on <var>embedderPolicyValue</var>:</p>
+  <p>Let <var>blockedResult</var> be "<code>blocked-by-coep</code>" if <var>forNavigation</var> is
+  true; otherwise "<code>blocked</code>".
 
-  <dl class=switch>
-   <dt>"<a for="embedder policy value"><code>unsafe-none</code></a>"
-   <dd><p>Do nothing.
+  <p class=note>When <var>forNavigation</var> is true, reaching this step means
+  <var>embedderPolicyValue</var> is not
+  "<a for="embedder policy value"><code>unsafe-none</code></a>", so any failure (including from an
+  explicit `<a http-header><code>Cross-Origin-Resource-Policy</code></a>` header) is attributable to
+  Cross-Origin Embedder Policy.
 
-   <dt>"<a for="embedder policy value"><code>credentialless</code></a>"
-   <dd>
-    <p>Set <var>policy</var> to `<code>same-origin</code>` if:
+ <li>
+  <p>If <var>policy</var> is null, then:
 
-    <ul>
-     <li><var>response</var>'s <a for="response">request-includes-credentials</a> is true, or
-     <li><var>forNavigation</var> is true.
-    </ul>
+  <ol>
+   <li><p>Let <var>upgradeDueToCOEP</var> be false.
 
-   <dt>"<a for="embedder policy value"><code>require-corp</code></a>"
-   <dd><p>Set <var>policy</var> to `<code>same-origin</code>`.
-  </dl>
+   <li><p>Let <var>upgradeDueToDIP</var> be false.
+
+   <li>
+    <p>Switch on <var>embedderPolicyValue</var>:
+
+    <dl class=switch>
+     <dt>"<a for="embedder policy value"><code>unsafe-none</code></a>"
+     <dd><p>Do nothing.
+
+     <dt>"<a for="embedder policy value"><code>credentialless</code></a>"
+     <dd>
+      <p>Set <var>upgradeDueToCOEP</var> to true if:
+
+      <ul>
+       <li><var>response</var>'s <a for="response">request-includes-credentials</a> is true, or
+       <li><var>forNavigation</var> is true.
+      </ul>
+
+     <dt>"<a for="embedder policy value"><code>require-corp</code></a>"
+     <dd><p>Set <var>upgradeDueToCOEP</var> to true.
+    </dl>
+
+   <li>
+    <p>If <var>forNavigation</var> is false, then switch on
+    <var>documentIsolationPolicyValue</var>:
+
+    <dl class=switch>
+     <dt>"<a for="document isolation policy value"><code>none</code></a>"
+     <dd><p>Do nothing.
+
+     <dt>"<a for="document isolation policy value"><code>isolate-and-credentialless</code></a>"
+     <dd><p>Set <var>upgradeDueToDIP</var> to true if <var>response</var>'s
+     <a for="response">request-includes-credentials</a> is true.
+
+     <dt>"<a for="document isolation policy value"><code>isolate-and-require-corp</code></a>"
+     <dd><p>Set <var>upgradeDueToDIP</var> to true.
+    </dl>
+
+   <li><p>If <var>upgradeDueToCOEP</var> is true or <var>upgradeDueToDIP</var> is true, then set
+   <var>policy</var> to `<code>same-origin</code>`.
+
+   <li><p>If <var>upgradeDueToCOEP</var> is true and <var>upgradeDueToDIP</var> is true, then set
+   <var>blockedResult</var> to "<code>blocked-by-coep-and-dip</code>".
+
+   <li><p>Otherwise, if <var>upgradeDueToCOEP</var> is true, then set <var>blockedResult</var> to
+   "<code>blocked-by-coep</code>".
+
+   <li><p>Otherwise, if <var>upgradeDueToDIP</var> is true, then set <var>blockedResult</var> to
+   "<code>blocked-by-dip</code>".
+  </ol>
 
  <li>
   <p>Switch on <var>policy</var>:
@@ -4505,14 +4616,14 @@ true, and it's always for nested navigations. Otherwise, <var>response</var> is 
   <dl class=switch>
    <dt>null
    <dt>`<code>cross-origin</code>`
-   <dd><p>Return <b>allowed</b>.
+   <dd><p>Return "<code>allowed</code>".
 
    <dt>`<code>same-origin</code>`
    <dd>
-    <p>If <var>origin</var> is <a>same origin</a> with <var>response</var>'s <a for=response>URL</a>'s
-    <a for=url>origin</a>, then return <b>allowed</b>.
+    <p>If <var>origin</var> is <a>same origin</a> with <var>response</var>'s
+    <a for=response>URL</a>'s <a for=url>origin</a>, then return "<code>allowed</code>".
 
-    <p>Otherwise, return <b>blocked</b>.
+    <p>Otherwise, return <var>blockedResult</var>.
 
    <dt>`<code>same-site</code>`
    <dd>
@@ -4527,9 +4638,9 @@ true, and it's always for nested navigations. Otherwise, <var>response</var> is 
      "<code>https</code>"
     </ul>
 
-    <p>then return <b>allowed</b>.
+    <p>then return "<code>allowed</code>".
 
-    <p>Otherwise, return <b>blocked</b>.
+    <p>Otherwise, return <var>blockedResult</var>.
 
     <p class=note>`<code>Cross-Origin-Resource-Policy: same-site</code>` does not consider a
     response delivered via a secure transport to match a non-secure requesting origin,
@@ -4594,6 +4705,64 @@ run these steps:
  <li><p><a>Generate and queue a report</a> for <var>settingsObject</var>'s
  <a for="environment settings object">global object</a> given the
  <a>"<code>coep</code>" report type</a>, <var>endpoint</var>, and <var>body</var>. [[!REPORTING]]
+</ol>
+</div>
+
+<div algorithm>
+<p>To <dfn>queue a document isolation policy CORP violation report</dfn>, given a
+<a for=/>response</a> <var>response</var>, an <a for=/>environment settings object</a>
+<var>settingsObject</var>, a string <var>destination</var>, and a boolean <var>reportOnly</var>,
+run these steps:
+
+<ol>
+ <li><p>Let <var>endpoint</var> be <var>settingsObject</var>'s
+ <a for="environment settings object">policy container</a>'s
+ <a for="policy container">document isolation policy</a>'s
+ <a for="document isolation policy">report-only reporting endpoint</a> if <var>reportOnly</var> is
+ true and <var>settingsObject</var>'s <a for="environment settings object">policy container</a>'s
+ <a for="policy container">document isolation policy</a>'s
+ <a for="document isolation policy">reporting endpoint</a> otherwise.
+
+ <li><p>Let <var>serializedURL</var> be the result of
+ <a lt="serialize a response URL for reporting">serializing a response URL for reporting</a> with
+ <var>response</var>.
+
+ <li><p>Let <var>disposition</var> be "<code>reporting</code>" if <var>reportOnly</var> is true;
+ otherwise "<code>enforce</code>".
+
+ <li>
+  <p>Let <var>body</var> be a new object containing the following properties:
+
+  <table>
+   <thead>
+    <tr>
+     <th>key
+     <th>value
+    </tr>
+   </thead>
+   <tbody>
+    <tr>
+     <td>"<code>type</code>"
+     <td>"<code>corp</code>"
+    </tr>
+    <tr>
+     <td>"<code>blockedURL</code>"
+     <td><var>serializedURL</var>
+    </tr>
+    <tr>
+     <td>"<code>destination</code>"
+     <td><var>destination</var>
+    </tr>
+    <tr>
+     <td>"<code>disposition</code>"
+     <td><var>disposition</var>
+    </tr>
+   </tbody>
+  </table>
+
+ <li><p><a>Generate and queue a report</a> for <var>settingsObject</var>'s
+ <a for="environment settings object">global object</a> given the
+ <a>"<code>dip</code>" report type</a>, <var>endpoint</var>, and <var>body</var>. [[!REPORTING]]
 </ol>
 </div>
 
@@ -5905,7 +6074,7 @@ these steps:
   <p class=note>The <a>cross-origin resource policy check</a> runs for responses coming from the
   network and responses coming from the service worker. This is different from the
   <a>CORS check</a>, as <var>request</var>'s <a for=request>client</a> and the service worker can
-  have different embedder policies.
+  have different embedder policies or document isolation policies.
 
  <li>
   <p>If <var>internalResponse</var>'s <a for=response>status</a> is a <a>redirect status</a>:
@@ -6162,6 +6331,9 @@ run these steps:
     <p>is true; otherwise false.
 
    <li><p>If <a>Cross-Origin-Embedder-Policy allows credentials</a> with <var>request</var> returns
+   false, then set <var>includeCredentials</var> to false.
+
+   <li><p>If <a>Document-Isolation-Policy allows credentials</a> with <var>request</var> returns
    false, then set <var>includeCredentials</var> to false.
 
    <li><p>Let <var>contentLength</var> be <var>httpRequest</var>'s <a for=request>body</a>'s
@@ -10409,6 +10581,7 @@ Brad Porter,
 Bryan Smith,
 Caitlin Potter,
 Cameron McCormack,
+Camille Lamy,
 Carlo Cannas,
 白丞祐 (Cheng-You Bai)<!-- CYBAI; GitHub -->,
 Chirag S Kumar<!-- fictionistique; GitHub -->,
