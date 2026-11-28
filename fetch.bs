@@ -2104,9 +2104,10 @@ Unless stated otherwise, it is "<code>no-cors</code>".
 otherwise, it is unset.
 
 <p class=note>The <a>use-CORS-preflight flag</a> being set is one of several conditions that results
-in a <a>CORS-preflight request</a>. The <a>use-CORS-preflight flag</a> is set if either one or more
-event listeners are registered on an {{XMLHttpRequestUpload}} object or if a {{ReadableStream}}
-object is used in a request.
+in a <a>CORS-preflight request</a>. The <a>use-CORS-preflight flag</a> is set if one or more event
+listeners are registered on an {{XMLHttpRequestUpload}} object, if a {{ReadableStream}} object is
+used in a request, or if a {{FetchInit/requestMonitor}} is passed to
+{{WindowOrWorkerGlobalScope/fetch()}}.
 
 <p>A <a for=/>request</a> has an associated
 <dfn export for=request id=concept-request-credentials-mode>credentials mode</dfn>,
@@ -9625,20 +9626,18 @@ partial interface mixin WindowOrWorkerGlobalScope {
 };
 
 dictionary FetchInit : RequestInit {
-  FetchMonitorCallback monitor;
+  FetchMonitorCallback requestMonitor;
+  FetchMonitorCallback responseMonitor;
 };
 
 callback FetchMonitorCallback = undefined (FetchMonitor monitor);
 
 [Exposed=(Window,Worker)]
 interface FetchMonitor : EventTarget {
-  readonly attribute double requestLoaded;
-  readonly attribute double responseLoaded;
-  readonly attribute double requestTotal;
-  readonly attribute double responseTotal;
+  readonly attribute double loaded;
+  readonly attribute double total;
 
-  attribute EventHandler onrequestprogress;
-  attribute EventHandler onresponseprogress;
+  attribute EventHandler onprogress;
 };
 
 dictionary DeferredRequestInit : RequestInit {
@@ -9655,27 +9654,18 @@ partial interface Window {
 };
 </pre>
 
-<p>A {{FetchMonitor}} has an associated <dfn for=FetchMonitor>request loaded</dfn>,
-<dfn for=FetchMonitor>response loaded</dfn>, <dfn for=FetchMonitor>request total</dfn>, and
-<dfn for=FetchMonitor>response total</dfn> (non-negative integers), initially 0.
+<p>A {{FetchMonitor}} has an associated <dfn for=FetchMonitor>loaded</dfn> and
+<dfn for=FetchMonitor>total</dfn> (non-negative integers), initially 0.
 
-<p>The <dfn attribute for=FetchMonitor><code>requestLoaded</code></dfn> getter steps are to
-return <a>this</a>'s <a for=FetchMonitor>request loaded</a>.
+<p>The <dfn attribute for=FetchMonitor><code>loaded</code></dfn> getter steps are to return
+<a>this</a>'s <a for=FetchMonitor>loaded</a>.
 
-<p>The <dfn attribute for=FetchMonitor><code>responseLoaded</code></dfn> getter steps are to
-return <a>this</a>'s <a for=FetchMonitor>response loaded</a>.
+<p>The <dfn attribute for=FetchMonitor><code>total</code></dfn> getter steps are to return
+<a>this</a>'s <a for=FetchMonitor>total</a>.
 
-<p>The <dfn attribute for=FetchMonitor><code>requestTotal</code></dfn> getter steps are to
-return <a>this</a>'s <a for=FetchMonitor>request total</a>.
-
-<p>The <dfn attribute for=FetchMonitor><code>responseTotal</code></dfn> getter steps are to
-return <a>this</a>'s <a for=FetchMonitor>response total</a>.
-
-<p>The <dfn attribute for=FetchMonitor><code>onrequestprogress</code></dfn> and
-<dfn attribute for=FetchMonitor><code>onresponseprogress</code></dfn> attributes are
-<a>event handler IDL attributes</a> whose <a>event handler event types</a> are
-<a event for=FetchMonitor><code>requestprogress</code></a> and
-<a event for=FetchMonitor><code>responseprogress</code></a>, respectively.
+<p>The <dfn attribute for=FetchMonitor><code>onprogress</code></dfn> attribute is an
+<a>event handler IDL attribute</a> whose <a>event handler event type</a> is
+<a event for=FetchMonitor><code>progress</code></a>.
 
 <div algorithm>
 <p>The
@@ -9712,21 +9702,44 @@ method steps are:
 
  <li><p>Let <var>relevantRealm</var> be <a>this</a>'s <a>relevant realm</a>.
 
- <li><p>Let <var>monitor</var> be null.
+ <li><p>Let <var>requestMonitor</var> be null.
 
  <li>
-  <p>If <var>init</var>["{{FetchInit/monitor}}"] <a for=map>exists</a>, then:
+  <p>If <var>init</var>["{{FetchInit/requestMonitor}}"] <a for=map>exists</a>, then:
 
   <ol>
-   <li><p>Let <var>monitorCallback</var> be <var>init</var>["{{FetchInit/monitor}}"].
+   <li><p>If <var>request</var>'s <a for=request>mode</a> is neither "<code>same-origin</code>" nor
+   "<code>cors</code>", then <a for=/>reject</a> <var>p</var> with a {{TypeError}} and return
+   <var>p</var>.
 
-   <li><p>Set <var>monitor</var> to a {{FetchMonitor}}.
+   <li><p>Set <var>request</var>'s <a for=request>use-CORS-preflight flag</a>.
 
-   <li><p>Set <var>monitor</var>'s <a for=FetchMonitor>request total</a> to <var>request</var>'s
+   <li><p>Let <var>monitorCallback</var> be <var>init</var>["{{FetchInit/requestMonitor}}"].
+
+   <li><p>Set <var>requestMonitor</var> to a {{FetchMonitor}}.
+
+   <li><p>Set <var>requestMonitor</var>'s <a for=FetchMonitor>total</a> to <var>request</var>'s
    <a for=request>body</a>'s <a for=body>length</a>, if <var>request</var>'s <a for=request>body</a>
    is non-null and its <a for=body>length</a> is non-null; otherwise 0.
 
-   <li><p>Let <var>args</var> be « <var>monitor</var> ».
+   <li><p>Let <var>args</var> be « <var>requestMonitor</var> ».
+
+   <li><p>[=invoke|Invoke=] <var>monitorCallback</var> with <var>args</var>
+   and <code>"rethrow"</code>. If this throws an exception, <a for=/>reject</a> <var>p</var> with it
+   and return <var>p</var>.
+  </ol>
+
+ <li><p>Let <var>responseMonitor</var> be null.
+
+ <li>
+  <p>If <var>init</var>["{{FetchInit/responseMonitor}}"] <a for=map>exists</a>, then:
+
+  <ol>
+   <li><p>Let <var>monitorCallback</var> be <var>init</var>["{{FetchInit/responseMonitor}}"].
+
+   <li><p>Set <var>responseMonitor</var> to a {{FetchMonitor}}.
+
+   <li><p>Let <var>args</var> be « <var>responseMonitor</var> ».
 
    <li><p>[=invoke|Invoke=] <var>monitorCallback</var> with <var>args</var>
    and <code>"rethrow"</code>. If this throws an exception, <a for=/>reject</a> <var>p</var> with it
@@ -9781,51 +9794,52 @@ method steps are:
   <p>Let <var>processRequestBodyChunkLength</var>, given a <var>bytesLength</var>, be these steps:
 
   <ol>
-   <li><p>If <var>monitor</var> is null, then return.
+   <li><p>If <var>requestMonitor</var> is null, then return.
 
-   <li><p>Increase <var>monitor</var>'s <a for=FetchMonitor>request loaded</a> by <var>bytesLength</var>.
+   <li><p>Increase <var>requestMonitor</var>'s <a for=FetchMonitor>loaded</a> by
+   <var>bytesLength</var>.
 
    <li><p>If not roughly 50ms has passed since these steps were last invoked, then return.
 
-   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>requestprogress</code></a> at
-   <var>monitor</var>.
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>progress</code></a> at
+   <var>requestMonitor</var>.
   </ol>
 
  <li>
   <p>Let <var>processRequestEndOfBody</var> be these steps:
 
   <ol>
-   <li><p>If <var>monitor</var> is null, then return.
+   <li><p>If <var>requestMonitor</var> is null, then return.
 
-   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>requestprogress</code></a> at
-   <var>monitor</var>.
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>progress</code></a> at
+   <var>requestMonitor</var>.
   </ol>
 
  <li>
   <p>Let <var>processResponseBodyChunkLength</var>, given <var>bytesLength</var>, be these steps:
 
   <ol>
-   <li><p>If <var>monitor</var> is null or <var>locallyAborted</var> is true, then return.
+   <li><p>If <var>responseMonitor</var> is null or <var>locallyAborted</var> is true, then return.
 
-   <li><p>Increase <var>monitor</var>'s <a for=FetchMonitor>response loaded</a> by
+   <li><p>Increase <var>responseMonitor</var>'s <a for=FetchMonitor>loaded</a> by
    <var>bytesLength</var>.
 
    <li><p>If not roughly 50ms has passed since these steps were last invoked, then return.
 
-   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>responseprogress</code></a> at
-   <var>monitor</var>.
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>progress</code></a> at
+   <var>responseMonitor</var>.
   </ol>
 
  <li>
   <p>Let <var>processResponseEndOfBody</var>, given <var>response</var>, be these steps:
 
   <ol>
-   <li><p>If <var>monitor</var> is null, <var>locallyAborted</var> is true, or
+   <li><p>If <var>responseMonitor</var> is null, <var>locallyAborted</var> is true, or
    <var>response</var>'s <a for=response>type</a> is "<code>error</code>",
    "<code>opaque</code>", or "<code>opaqueredirect</code>", then return.
 
-   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>responseprogress</code></a> at
-   <var>monitor</var>.
+   <li><p><a>Fire an event</a> named <a event for=FetchMonitor><code>progress</code></a> at
+   <var>responseMonitor</var>.
   </ol>
 
  <li>
@@ -9851,9 +9865,9 @@ method steps are:
    <li><p>If <var>response</var> is a <a>network error</a>, then <a for=/>reject</a> <var>p</var>
    with a {{TypeError}} and abort these steps.
 
-   <li><p>If <var>monitor</var> is non-null and <var>response</var>'s
-   <a for=response>body</a> is non-null, then set <var>monitor</var>'s
-   <a for=FetchMonitor>response total</a> to <var>response</var>'s <a for=response>body</a>'s
+   <li><p>If <var>responseMonitor</var> is non-null and <var>response</var>'s
+   <a for=response>body</a> is non-null, then set <var>responseMonitor</var>'s
+   <a for=FetchMonitor>total</a> to <var>response</var>'s <a for=response>body</a>'s
    <a for=body>length</a>, if it is non-null; otherwise 0.
 
    <li><p>Set <var>responseObject</var> to the result of <a for=Response>creating</a> a {{Response}}
@@ -9874,9 +9888,8 @@ method steps are:
 </ol>
 </div>
 
-<p>The <dfn id=event-fetchmonitor-requestprogress event for=FetchMonitor><code>requestprogress</code></dfn>
-and <dfn id=event-fetchmonitor-responseprogress event for=FetchMonitor><code>responseprogress</code></dfn>
-events use the {{Event}} interface.
+<p>The <dfn id=event-fetchmonitor-progress event for=FetchMonitor><code>progress</code></dfn> event
+uses the {{Event}} interface.
 
 <div algorithm>
 <p>To <dfn lt="Abort the fetch() call" export id=abort-fetch>abort a <code>fetch()</code> call</dfn>
